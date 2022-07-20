@@ -5,7 +5,7 @@ In this doc we will specify the exact V1 encoding for a match config which encom
 ## Match Config Register Game Input (Concise Encoding)
 
 ```
-rc|
+r|
 matchConfigVersion|
 definition|
 definition|
@@ -15,7 +15,7 @@ definition|
 In practice:
 
 ```
-re|1|definition|definition|...
+r|1|definition|definition|...
 ```
 
 ## Match Config Json Encoding
