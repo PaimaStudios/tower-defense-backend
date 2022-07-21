@@ -1,13 +1,15 @@
 # TD Game Tick Events
 
-Each unit and structure has a deterministic id generated for it when it is created. Every game tick, processing happens as such:
+Each unit and structure has a deterministic id generated for it when it is created. Every game tick, processing happens as such inside of the round executor:
 
 1. All spawned units process movement logic (aka. move from square A to B, or are 1 tick closer to moving squares).
 2. After moving, any units which have moved onto the defender’s base cause the defender's base to lose 1 health and the unit gets deleted. (If the defender's base ever hits 0 health, the round, and the match, instantly end)
 3. All towers/crypts perform their action if they are not on cooldown (ie. attack a unit if it’s in range, or spawn a new unit).
 4. If all units are killed, both the attacker/defender are awarded gold, and the round concludes.
 
-As each action is processed during a game tick, it generates a game tick event. Below we will specify the different types of game tick events which will be supported.
+As each action is processed during a game tick, it generates a game tick event. The round executor returns a list of game tick events based on all of the actions which took place in said tick. It is up to the frontend to process all of these events visually.
+
+Below we will specify the different types of game tick events which will be supported.
 
 ## Gold Reward Events
 
