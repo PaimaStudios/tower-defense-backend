@@ -24,7 +24,7 @@ In raw encoding each element in contents can be one of the following values:
 
 An example map in raw encoding is constructed below:
 
-````json
+```json
 {
     "name": "Jungle-1",
     "width": 22,
@@ -45,7 +45,7 @@ An example map in raw encoding is constructed below:
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
     ]
 }
-`````json
+```
 
 ## Annotated Encoding
 
