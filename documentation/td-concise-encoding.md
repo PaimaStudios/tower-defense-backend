@@ -33,7 +33,7 @@ selectedAnimal|
 Encoding Example:
 
 ```
-c|3|8|20|10|0x234a...|map1|Piranha
+c|3|8|20|10|0x234a...,0x89a3...|map1|Piranha
 ```
 
 ### Join Lobby

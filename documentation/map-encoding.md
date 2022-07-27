@@ -15,12 +15,12 @@ The contents of the map is a one dimensional array which defines all of the squa
 
 In raw encoding each element in contents can be one of the following values:
 
-- `0`: An immovable object (neither player can place structures here, intended for maps with cool visual features to force them to stay on screen)
 - `1`: An open defender square (defender can place structures here)
 - `2`: An open attacker square (attacker can place structures here)
-- `3`: A path/road square (neither player can place structures here, but units can walk on these squares)
-- `4`: The defender base
-- `5`: The attacker base
+- `3`: The defender base
+- `4`: The attacker base
+- `5`: A defender path/road square (neither player can place structures here, but units can walk on these squares)
+- `6`: An attacker path/road square (neither player can place structures here, but units can walk on these squares)
 
 An example map in raw encoding is constructed below:
 
@@ -31,16 +31,16 @@ An example map in raw encoding is constructed below:
     "height": 13,
     "contents": [
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-        0, 0, 1, 1, 3, 3, 3, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-        0, 4, 3, 3, 3, 1, 3, 3, 3, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-        0, 0, 1, 1, 3, 1, 1, 1, 3, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-        1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-        1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 2, 2, 2, 2, 
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 2, 2, 2, 2, 
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 2, 3, 2, 2, 2, 2, 
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 2, 3, 2, 2, 0, 0, 
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 5, 0, 
+        0, 0, 1, 1, 5, 5, 5, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+        0, 3, 5, 5, 5, 1, 5, 5, 5, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+        0, 0, 1, 1, 5, 1, 1, 1, 5, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+        1, 1, 1, 1, 5, 5, 5, 5, 5, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+        1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 6, 2, 2, 6, 2, 2, 2, 2, 
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 6, 2, 2, 6, 2, 2, 2, 2, 
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 6, 6, 2, 6, 2, 2, 2, 2, 
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 6, 2, 6, 2, 2, 0, 0, 
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 6, 6, 6, 6, 6, 4, 0, 
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
     ]
@@ -62,6 +62,7 @@ Pre-processing `leads-to` will make it easier for when a unit hits a fork in the
 ```json
 {
   "type": "path",
+  "faction": "attacker",
   "leads-to": [
     {
       "x": 5,
@@ -80,6 +81,7 @@ OR
 ```json
 {
   "type": "path",
+  "faction": "defender",
   "leads-to": [
     {
       "x": 8,
