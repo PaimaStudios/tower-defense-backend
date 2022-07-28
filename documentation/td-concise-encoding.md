@@ -15,7 +15,7 @@ These are the types of game input a user can submit:
 Middleware endpoint:
 
 ```js
-
+createLobby(numberOfLives: Num, numberOfRounds: number, roundLength: number, map: string, selectedAnimal: string)
 ```
 
 Encoding:
@@ -23,23 +23,40 @@ Encoding:
 ```
 c|
 numberOfLives|
-gridSize|
 numOfRounds|
 roundLength|
 allowedWallets|
 map|
 selectedAnimal|
+matchConfigId
 ```
 
 Encoding Example:
 
 ```
-c|3|8|20|10|0x234a...,0x89a3...|map1|Piranha
+c|3|20|10|0x234a...,0x89a3...|map1|Piranha|9al2309a...
 ```
 
 ### Join Lobby
 
-...
+Middleware endpoint:
+
+```js
+joinLobby(lobbyID: String, selectedAnimal: String)
+```
+
+Encoding:
+
+```
+j|
+*lobbyID|
+selectedAnimal|
+```
+
+Encoding Example:
+
+````
+j|*92aomafiooao...|Piranha
 
 ### Register Match Config
 
@@ -49,7 +66,7 @@ Middleware endpoint:
 
 ```js
 
-```
+````
 
 Encoding:
 
