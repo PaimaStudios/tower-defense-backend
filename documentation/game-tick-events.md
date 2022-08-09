@@ -33,6 +33,24 @@ OR
 }
 ```
 
+## Unit Spawned Event
+
+When a crypt spawns a unit, this event specifies all of the relevant details about the unit.
+
+```json
+{
+  "event": "spawn",
+  "crypt-id": 923,
+  "unit-id": 362,
+  "unit-x": 10,
+  "unit-y": 5,
+  "unit-type": "jaguar",
+  "unit-health": 100,
+  "unit-speed": 2,
+  "unit-attack": 0
+}
+```
+
 ## Unit Movement Event
 
 An event which specifies the current state of each unit on the map after processing movement logic for the current tick. This event includes:
@@ -47,12 +65,49 @@ By knowing what the upcoming x/y position will be, and how many ticks until the 
 ```json
 {
   "event": "movement",
-  "id": 5262,
-  "x": 10,
-  "y": 5,
+  "unit-id": 5262,
+  "unit-x": 10,
+  "unit-y": 5,
   "next-x": 11,
   "next-y": 5,
   "ticks-to-move": 3
+}
+```
+
+## Damage Event
+
+Both units and defender towers can take damage. When they do take damage we emit an event.
+
+```json
+{
+  "event": "damage",
+  "source-id": 923,
+  "target-id": 362,
+  "damage-type": "neutral",
+  "damage-amount": 20
+}
+```
+
+## Defender Base Update Event
+
+When the attacker’s units walk onto the square of the defender’s base, the base takes damage and emits an event (and the unit is deleted).
+Returns the defender's base remaining health (if == 0, then the match is over and the defender lost).
+
+```json
+{
+  "event": "defender-base-update",
+  "health": 25
+}
+```
+
+## Actor Deleted Event
+
+When an attacker’s unit or a defender’s tower hit 0 hp, then they are deleted and must be visually removed from the game (tower falls apart, unit dies at current position).
+
+```json
+{
+  "event": "actor-deleted",
+  "id": 2593
 }
 ```
 
@@ -88,60 +143,5 @@ When a status effect is removed due to expiring or otherwise, an event is emitte
   "event": "status-remove",
   "id": 362,
   "status-type": "speed-debuff"
-}
-```
-
-## Damage Event
-
-Both units and defender towers can take damage. When they do take damage we emit an event.
-
-```json
-{
-  "event": "damage",
-  "source-id": 923,
-  "target-id": 362,
-  "damage-type": "neutral",
-  "damage-amount": 20
-}
-```
-
-## Defender Base Event
-
-When the attacker’s units walk onto the square of the defender’s base, the base takes damage and emits an event (and the unit is deleted).
-Defender Base Remaining Health (if == 0, then the match is over and the defender lost)
-
-```json
-{
-  "event": "defender-base-update",
-  "health": 25
-}
-```
-
-## Unit Spawned Event
-
-When a crypt spawns a unit, this event specifies all of the relevant details about the unit.
-
-```json
-{
-  "event": "unit-spawned",
-  "crypt-id": 923,
-  "unit-id": 362,
-  "unit-x": 10,
-  "unit-y": 5,
-  "unit-type": "jaguar",
-  "unit-health": 100,
-  "unit-speed": 2,
-  "unit-attack": 0
-}
-```
-
-## Actor Deleted Event
-
-When an attacker’s unit or a defender’s tower hit 0 hp, then they are deleted and must be visually removed from the game (tower falls apart, unit dies at current position).
-
-```json
-{
-  "event": "actor-deleted",
-  "id": 2593
 }
 ```
