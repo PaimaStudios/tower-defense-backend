@@ -213,16 +213,10 @@ z|*83aomafiooao...
 
 ### User Stats Update
 
-Specifies that the given user's stats need to be updated with the resulting wind/tie/loss:
+Specifies that the given user's stats need to be updated with the resulting win/loss:
 
 ```
 u|*0x9akau3...|w
-```
-
-or
-
-```
-u|*0x9akau3...|t
 ```
 
 or
