@@ -1,10 +1,24 @@
-export interface MatchState {
+export interface RawMap{
   name: string;
   width: number;
   height: number;
-  contents: [Tile[], Tile[]]; // 2d array x-y
+  contents: TileNumber[];
+}
+type TileNumber = 1 | 2 | 3 | 4 | 5 | 6;
+export interface AnnotatedMap{
+  name: string;
+  width: number;
+  height: number;
+  contents: Tile[][];
+}
+
+export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
   defender: Wallet;
+  config: MatchConfig
+}
+interface MatchConfig{
+
 }
 
 export type Tile = PathTile
@@ -68,9 +82,6 @@ export interface AttackerOpenTile{
 export interface ImmovableObjectTile{
   type: "immovable-object"
 }
-export interface GoldMineTile{
-  type: "gold-mine"
-};
 export type Wallet = string;
 
 export type TurnAction = BuildStructure

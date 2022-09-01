@@ -61,6 +61,8 @@ function structureEvent(m: TurnAction, count: number): StructureEvent {
   }
 }
 
+// timers per unit!!
+
 function ticksFromMatchState(m: MatchState, currentTick: number): TickEvent[] | null {
   // compute all spawn, movement, damage, status-damage, structure-upgrade and unit-destroy events given a certain map state
   // in that order (?)
@@ -68,6 +70,8 @@ function ticksFromMatchState(m: MatchState, currentTick: number): TickEvent[] | 
   const moves: TickEvent[] = []
   return [...moves, ...computeGoldRewards(m)]
 }
+
+
 const REWARD_BOOST = 5; // TODO FIGURE OUT
 const BASE_GOLD_RATE = 25;
 // TODO random gold bags
@@ -83,12 +87,8 @@ function computeGoldRewards(m: MatchState): [GoldRewardEvent, GoldRewardEvent] {
         : 0 // shouldn't happen
   const attackerBaseGold = baseGoldProduction((attackerBase as AttackerBaseTile).level)
   const defenderBaseGold = baseGoldProduction((defenderBase as DefenderBaseTile).level)
-
-  const mines = m.contents.filter(tile => tile.structure === "gold-mine");
-  const attackers = mines.filter(tile => tile.type.includes("attacker"));
-  const defenders = mines.filter(tile => tile.type.includes("defender"));
-  const attackerReward = (attackers.length * REWARD_BOOST) + attackerBaseGold + BASE_GOLD_RATE;
-  const defenderReward = defenders.length * REWARD_BOOST + defenderBaseGold + BASE_GOLD_RATE
+  const attackerReward = attackerBaseGold + BASE_GOLD_RATE;
+  const defenderReward = defenderBaseGold + BASE_GOLD_RATE
   return [
     { event: "gold-reward", faction: "attacker", amount: attackerReward },
     { event: "gold-reward", faction: "defender", amount: defenderReward },
