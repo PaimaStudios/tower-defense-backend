@@ -11,11 +11,19 @@ export interface AnnotatedMap{
   height: number;
   contents: Tile[][];
 }
-
+export type AttackerUnitType = "macaw" | "jaguar" | "gorilla"
+export interface AttackerUnit {
+  type: AttackerUnitType;
+  id: UnitID
+}
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
+  attackerGold: number;
   defender: Wallet;
-  config: MatchConfig
+  defenderGold: number;
+  config: MatchConfig,
+  unitSum: number;
+  units: AttackerUnit[]
 }
 interface MatchConfig{
 
@@ -34,7 +42,9 @@ export interface PathTile{
   type: "path";
   faction: Faction;
   "leads-to": Coordinates[]
+  unit: UnitID | null;
 }
+export type UnitID = number;
 export interface Coordinates{
   x: number;
   y: number;
@@ -51,6 +61,7 @@ export interface AttackerStructureTile{
     "health": number;
     "path-1-upgrades": number;
     "path-2-upgrades": number;
+    spawned: UnitID[]
 }
 export type DefenderStructureType = "anaconda-tower"
 | "sloth-tower"
@@ -186,7 +197,7 @@ export interface UnitMovementEvent {
 }
 export type DamageType = "neutral" | string;
 export interface DamageEvent {
-  event: "damager";
+  event: "damage";
   sourceID: number;
   targetID: number;
   damageType: DamageType;

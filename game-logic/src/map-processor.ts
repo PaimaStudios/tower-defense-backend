@@ -65,12 +65,14 @@ function findTile(c: number): Tile {
   else if (c === 5) return {
     "type": "path",
     "faction": "defender",
-    "leads-to": []
+    "leads-to": [],
+    unit: null
   }
   else if (c === 6) return {
     "type": "path",
     "faction": "attacker",
-    "leads-to": []
+    "leads-to": [],
+    unit: null
   }
   else return {
     type: "immovable-object"

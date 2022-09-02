@@ -21,7 +21,8 @@ const atto : AttackerStructureTile = {
   "structure": "jaguar-crypt",
   "health": 10,
   "path-1-upgrades": 1,
-  "path-2-upgrades": 1
+  "path-2-upgrades": 1,
+  spawned: []
 }
 const deop: DefenderOpenTile = {
   type: "defender-open"
