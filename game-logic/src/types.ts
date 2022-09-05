@@ -1,96 +1,147 @@
-export interface RawMap{
+export interface RawMap {
   name: string;
   width: number;
   height: number;
   contents: TileNumber[];
 }
 type TileNumber = 1 | 2 | 3 | 4 | 5 | 6;
-export interface AnnotatedMap{
+export interface AnnotatedMap {
   name: string;
   width: number;
   height: number;
   contents: Tile[][];
 }
-export type AttackerUnitType = "macaw" | "jaguar" | "gorilla"
-export interface AttackerUnit {
-  type: AttackerUnitType;
-  id: UnitID
+
+export interface MatchConfig {
+  lol: "lmao"
 }
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
   attackerGold: number;
   defender: Wallet;
   defenderGold: number;
-  config: MatchConfig,
-  unitSum: number;
-  units: AttackerUnit[]
+  units: StatefulUnitGraph;
 }
-interface MatchConfig{
+// ordered maps for stateful units
+export interface StatefulUnitGraph {
+  0: DefenderBase;
+  1: AttackerBase;
+  [UnitID: UnitID]: StatefulUnit
+}
 
+export type StatefulUnit = DefenderBase
+  | AttackerBase
+  | AttackerUnit
+  | AttackerStructure
+  | DefenderStructure
+
+export type AttackerUnitType = "macaw" | "jaguar" | "gorilla"
+export interface AttackerUnit {
+  type: "attacker-unit";
+  subType: AttackerUnitType;
+  id: UnitID;
+  coordinates: Coordinates;
+  health: number;
+  status: Status | null;
 }
+export interface Status {
+  statusType: "speed-debuff" | string // TODO
+  statusAmount: number;
+  statusDuration: number;
+}
+
+export interface Coordinates{
+  x: number;
+  y: number;
+}
+export interface AttackerStructure {
+  type: "attacker-structure";
+  "id": number;
+  "structure": AttackerStructureType
+  "health": number;
+  "path-1-upgrades": number;
+  "path-2-upgrades": number;
+  coordinates: Coordinates;
+  builtOnRound: number; // + 3 it stops spawning
+  spawned: UnitID[]
+}
+export interface DefenderStructure {
+  type: "defender-structure";
+  "id": number;
+  "structure": DefenderStructureType;
+  "health": number;
+  coordinates: Coordinates;
+  "path-1-upgrades": number;
+  "path-2-upgrades": number;
+}
+interface DefenderBase {
+  type: "defender-base";
+  health: number;
+  level: number;
+}
+interface AttackerBase {
+  type: "attacker-base";
+  level: number;
+}
+
 
 export type Tile = PathTile
-| DefenderBaseTile
-| AttackerBaseTile
-| DefenderOpenTile
-| AttackerOpenTile
-| AttackerStructureTile
-| DefenderStructureTile
-| ImmovableObjectTile
+  | DefenderBaseTile
+  | AttackerBaseTile
+  | DefenderOpenTile
+  | AttackerOpenTile
+  | AttackerStructureTile
+  | DefenderStructureTile
+  | ImmovableObjectTile
 
-export interface PathTile{
+export interface PathTile {
   type: "path";
   faction: Faction;
   "leads-to": Coordinates[]
   unit: UnitID | null;
 }
 export type UnitID = number;
-export interface Coordinates{
+export interface Coordinates {
   x: number;
   y: number;
 }
 
 export type AttackerStructureType = "macaw-crypt"
-| "gorilla-crypt"
-| "jaguar-crypt"
+  | "gorilla-crypt"
+  | "jaguar-crypt"
 
-export interface AttackerStructureTile{
-    "type": "attacker-structure",
-    "id": number;
-    "structure": AttackerStructureType
-    "health": number;
-    "path-1-upgrades": number;
-    "path-2-upgrades": number;
-    spawned: UnitID[]
+export interface AttackerStructureTile {
+  "type": "attacker-structure",
+  "id": number;
+  // "structure": AttackerStructureType
+  // "health": number;
+  // "path-1-upgrades": number;
+  // "path-2-upgrades": number;
+  // spawned: UnitID[]
 }
 export type DefenderStructureType = "anaconda-tower"
-| "sloth-tower"
-| "piranha-tower"
+  | "sloth-tower"
+  | "piranha-tower"
 
-export interface DefenderStructureTile{
-    "type": "defender-structure",
-    "id": number;
-    "structure": DefenderStructureType
-    "health": number;
-    "path-1-upgrades": number;
-    "path-2-upgrades": number;
+export interface DefenderStructureTile {
+  "type": "defender-structure",
+  "id": number;
+  // "structure": DefenderStructureType
 }
 export type Level = 0 | 1 | 2
-export interface DefenderBaseTile{
+export interface DefenderBaseTile {
   type: "defender-base";
-  level: Level;
 }
-export interface AttackerBaseTile{
+export interface AttackerBaseTile {
   type: "attacker-base";
-  level: Level;
 }
-export interface DefenderOpenTile{
+export interface DefenderOpenTile {
   type: "defender-open"
 }
-export interface AttackerOpenTile{
+export interface AttackerOpenTile {
   type: "attacker-open"
 }
-export interface ImmovableObjectTile{
+export interface ImmovableObjectTile {
   type: "immovable-object"
 }
 export type Wallet = string;
@@ -127,9 +178,9 @@ export interface UpgradeStructure {
   path: number;
 }
 export type StructureEvent = BuildStructureEvent
-| RepairStructureEvent
-| UpgradeStructureEvent
-| DestroyStructureEvent
+  | RepairStructureEvent
+  | UpgradeStructureEvent
+  | DestroyStructureEvent
 export interface BuildStructureEvent {
   event: "build";
   x: number;
@@ -174,7 +225,7 @@ export interface GoldRewardEvent {
   faction: Faction;
   amount: number;
 }
-export type UnitType = "jaguar" | string;
+export type UnitType = "jaguar" | "macaw" | "gorilla";
 export interface UnitSpawnedEvent {
   event: "spawn"
   cryptID: number;

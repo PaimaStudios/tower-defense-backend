@@ -35,7 +35,8 @@ export function setPath(map: Tile[][]): Tile[][]{
         const right = row?.[tileidx + 1];
         // check horizontal neighbors
         if (isPath(left)) t["leads-to"] = [...t["leads-to"], {x: tileidx -1, y: rowidx}];
-        if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
+        // path right is going backwards!
+        // if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
         // check vertical neighbors
         const up = map[rowidx - 1]?.[tileidx];
         const down = map[rowidx + 1]?.[tileidx];
@@ -56,11 +57,11 @@ function findTile(c: number): Tile {
   }
   else if (c === 3) return {
     "type": "defender-base",
-    level: 1
+    // id: 1 by default
   }
   else if (c === 4) return {
     "type": "attacker-base",
-    level: 1
+    // id: 2 by default
   }
   else if (c === 5) return {
     "type": "path",
