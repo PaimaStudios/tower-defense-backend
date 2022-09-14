@@ -9,6 +9,27 @@ export default function (m: RawMap): AnnotatedMap {
   }
 }
 
+// export function annotateMap(contents: number[], width: number): AccBunt {
+//   const tiles = contents.map(c => findTile(c));
+//   const accBunt: AccBunt = {bases: {
+//     defenderBase: {type: "defender-base", coordinates: {x: 0, y: 0}, health: 100, level: 1},
+//     attackerBase: {type: "attacker-base", level: 1},
+//     towers: {},
+//     crypts: {},
+//     attackers: {}
+//   }, map: []};
+//   const reduced =  tiles.reduce((acc, tile, index) => {
+//     const row = Math.floor(index / width);
+//     const existing = acc.map[row] || []
+//     acc.map[row] = [...existing, tile]
+//     // set the coordinates if we find the base
+//     if (tile.type === "defender-base")
+//     acc.bases.defenderBase.coordinates = {x: row, y: acc.map[row].indexOf(tile)};
+//     return acc
+//   }, accBunt)
+//   return reduced
+// }
+
 export function annotateMap(contents: number[], width: number): Tile[][] {
   const tiles = contents.map(c => findTile(c));
   const accBunt: Tile[][] = [];
@@ -26,9 +47,9 @@ function isPath(tile: Tile){
 // mutating logic
 export function setPath(map: Tile[][]): Tile[][]{
   for (let [rowidx, row] of map.entries()){
-    console.log(row, "Row")
+    // console.log(row, "Row")
     for (let [tileidx, tile] of row.entries()){
-      console.log(tile, "tile")
+      // console.log(tile, "tile")
       if (isPath(tile)){
         const t = tile as PathTile
         const left = row?.[tileidx - 1];
@@ -49,7 +70,10 @@ export function setPath(map: Tile[][]): Tile[][]{
 }
 
 function findTile(c: number): Tile {
-  if (c === 1) return {
+  if (c === 0) return {
+    type: "immovable-object"
+  }
+  else if (c === 1) return {
     "type": "defender-open"
   }
   else if (c === 2) return {

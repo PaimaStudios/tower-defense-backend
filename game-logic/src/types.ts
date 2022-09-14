@@ -13,20 +13,27 @@ export interface AnnotatedMap {
 }
 
 export interface MatchConfig {
-  lol: "lmao"
+  something: "something"
 }
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
   attackerGold: number;
   defender: Wallet;
   defenderGold: number;
-  units: StatefulUnitGraph;
+  units: UnitsObject;
+  currentRound: number;
 }
 // ordered maps for stateful units
-export interface StatefulUnitGraph {
-  0: DefenderBase;
-  1: AttackerBase;
-  [UnitID: UnitID]: StatefulUnit
+export interface UnitsObject {
+  defenderBase: DefenderBase;
+  attackerBase: AttackerBase;
+  towers: StatefulUnitGraph<DefenderStructure>
+  crypts: StatefulUnitGraph<AttackerStructure>
+  attackers: StatefulUnitGraph<AttackerUnit>
+}
+export type UnitID = number;
+export interface StatefulUnitGraph<UnitType> {
+  [UnitID: UnitID]: UnitType
 }
 
 export type StatefulUnit = DefenderBase
@@ -44,8 +51,11 @@ export interface AttackerUnit {
   health: number;
   status: Status | null;
 }
+
+export type StatusType = "speed-debuff" | string // TODO;
 export interface Status {
-  statusType: "speed-debuff" | string // TODO
+  statusType: StatusType
+  statusCaughtAt: number;
   statusAmount: number;
   statusDuration: number;
 }
@@ -76,6 +86,7 @@ export interface DefenderStructure {
 }
 interface DefenderBase {
   type: "defender-base";
+  // coordinates: Coordinates;
   health: number;
   level: number;
 }
@@ -100,7 +111,6 @@ export interface PathTile {
   "leads-to": Coordinates[]
   unit: UnitID | null;
 }
-export type UnitID = number;
 export interface Coordinates {
   x: number;
   y: number;
@@ -249,6 +259,7 @@ export interface UnitMovementEvent {
 export type DamageType = "neutral" | string;
 export interface DamageEvent {
   event: "damage";
+  faction: Faction; // the one doing the damage
   sourceID: number;
   targetID: number;
   damageType: DamageType;
@@ -260,6 +271,7 @@ export interface DefenderBaseUpdateEvent {
 }
 export interface ActorDeletedEvent {
   event: "actor-deleted";
+  faction: Faction; // which faction the unit to delete belongs to
   id: number;
 }
 export interface StatusEffectAppliedEvent {
@@ -273,8 +285,9 @@ export interface StatusEffectAppliedEvent {
 export interface StatusEffectRemovedEvent {
   event: "status-remove";
   id: number;
-  statusType: "speed-debuff";
+  statusType: StatusType;
 }
+export type TowerAttack = DamageEvent | StatusEffectAppliedEvent | ActorDeletedEvent;
 
 interface PlayersState {
   user1: PlayerState;
