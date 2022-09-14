@@ -121,6 +121,7 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number) {
           status: null,
           coordinates: { x: event.unitX, y: event.unitY }
         }
+        console.log(event.unitID, "spawning attacker")
         m.units.attackers[event.unitID] = spawnedUnit;
         break;
       case "movement":
@@ -179,30 +180,30 @@ function determineFactionFromEvent(event: TickEvent): Faction | null {
   if ("faction" in event) return event.faction
   else return null
 }
-function setStructureFromEvent(m: MatchState, event: BuildStructureEvent, faction: Faction, id: number): void{
-  if (faction === "attacker"){
-    const unit: AttackerStructure= {
+function setStructureFromEvent(m: MatchState, event: BuildStructureEvent, faction: Faction, id: number): void {
+  if (faction === "attacker") {
+    const unit: AttackerStructure = {
       type: "attacker-structure",
       "id": id,
       "structure": (event.structure as AttackerStructureType),
       "health": 100, // TODO
       "path-1-upgrades": 0,
       "path-2-upgrades": 0,
-      coordinates: {x: event.x, y: event.y},
+      coordinates: { x: event.x, y: event.y },
       builtOnRound: m.currentRound, // + 3 it stops spawning
       spawned: []
     }
     m.units.crypts[unit.id] = unit;
   }
-  else{
-    const unit: DefenderStructure= {
+  else {
+    const unit: DefenderStructure = {
       type: "defender-structure",
       "id": id,
       "structure": (event.structure as DefenderStructureType),
       "health": 100, // TODO
       "path-1-upgrades": 0,
       "path-2-upgrades": 0,
-      coordinates: {x: event.x, y: event.y}
+      coordinates: { x: event.x, y: event.y }
     }
     m.units.towers[unit.id] = unit;
   }
@@ -238,7 +239,7 @@ function ticksFromMatchState(m: MatchState, currentTick: number, randomnessGener
   // compute all spawn, movement, damage, status-damage events given a certain map state
   // in that order (?)
   // where to cache intermediate match state? e.g. a structure was updates, a bag of gold was found
-  const spawn = spawnEvents(m, currentTick);
+  const spawn = spawnEvents(m, currentTick, randomnessGenerator);
   const movement = movementEvents(m, currentTick, randomnessGenerator);
   const damage = damageEvents(m, randomnessGenerator);
   const status = statusEvents(m, currentTick);
@@ -246,20 +247,21 @@ function ticksFromMatchState(m: MatchState, currentTick: number, randomnessGener
   return [...spawn, ...movement, ...damage, ...computeGoldRewards(m)]
 }
 
-function spawnEvents(m: MatchState, currentTick: number): UnitSpawnedEvent[] {
+function spawnEvents(m: MatchState, currentTick: number, rng: Prando): UnitSpawnedEvent[] {
   const crypts =
     Object.keys(m.units.crypts)
       .map(index => m.units.crypts[parseInt(index)]);
+  let unitCount = Object.keys(m.units.attackers).length
   const events = crypts.map(s => {
-    const unitCount = Object.keys(m.units).length;
     const ss = (s as AttackerStructure);
     const { spawnCapacity, spawnRate } = getCryptStats(ss.structure)
     const hasCapacity = ss.spawned.length < spawnCapacity;
-    const aboutTime = (currentTick -2) % spawnRate === 0;
+    const aboutTime = (currentTick - 2) % spawnRate === 0;
     // const notSpawnedYet = Math.ceil(currentTick / spawnRate) < ss.spawned.length;
     if (hasCapacity && aboutTime) {
+      unitCount ++
       const unitType = ss.structure.replace("-crypt", "") as AttackerUnitType;
-      const newUnit = spawn(ss.id, unitCount + 1, ss.coordinates.x, ss.coordinates.y, unitType);
+      const newUnit = spawn(m, ss.id, unitCount, ss.coordinates, unitType, rng);
       return newUnit
     }
     else return null;
@@ -277,6 +279,8 @@ function movementEvents(m: MatchState, currentTick: number, randomnessGenerator:
     const currentSpeed = getCurrentSpeed(aa)
     const aboutTime = (currentTick - 1) % currentSpeed === 0;
     const busyAttacking = aa.subType === "macaw" && findClosebyTowers(m, aa.coordinates, 1).length > 0
+    console.log(aboutTime, "should I move?")
+    console.log(busyAttacking, "macaws attacking")
     if (aboutTime && !busyAttacking) {
       const tile = m.contents[aa.coordinates.y][aa.coordinates.x];
       const t = (tile as PathTile);
@@ -335,6 +339,7 @@ function damageEvents(m: MatchState, randomnessGenerator: Prando): TowerAttack[]
 }
 function computerTowerDamage(m: MatchState, a: AttackerUnit): (DamageEvent | ActorDeletedEvent)[] {
   const nearbyStructures = findClosebyTowers(m, a.coordinates, 1);
+  if (nearbyStructures.length === 0) return []
   const pickedOne = nearbyStructures.reduce(pickOne);
   const damageEvent: DamageEvent = {
     event: "damage",
@@ -479,6 +484,25 @@ function findClosebyTowers(m: MatchState, coords: Coordinates, range: number): D
   const structures = tiles.map(t => m.units.towers[(t as DefenderStructureTile).id]);
   return (structures as DefenderStructure[]);
 }
+function findClosebyPath(m: MatchState, coords: Coordinates, rng: Prando, range = 1): Coordinates {
+  const c: Coordinates[] = [];
+  if (m.contents[coords.y]?.[coords.x - range]?.type === "path") c.push({ x: coords.x - range, y: coords.y })
+  if (m.contents[coords.y]?.[coords.x + range]?.type === "path") c.push({ x: coords.x + range, y: coords.y })
+  if (m.contents[coords.y - range]?.[coords.x]?.type === "path") c.push({ x: coords.x, y: coords.y - range })
+  if (m.contents[coords.y + range]?.[coords.x]?.type === "path") c.push({ x: coords.x, y: coords.y + range })
+  console.log(c.length, "how many paths can I choose to spawn to?")
+  if (c.length === 0) {
+    console.log(coords)
+    return findClosebyPath(m, coords, rng, range + 1);
+  }
+  else if (c.length > 1) {
+    const randomness = rng.next();
+    console.log(randomness, "rng output choosing spawning path")
+    return c[Math.floor(randomness * c.length)]
+  }
+  else return c[0]
+
+}
 
 
 
@@ -488,14 +512,15 @@ function getCryptStats(type: AttackerStructureType) {
   return { spawnCapacity, spawnRate }
 }
 
-function spawn(structureID: number, unitID: number, x: number, y: number, type: AttackerUnitType): UnitSpawnedEvent {
+function spawn(m: MatchState, structureID: number, unitID: number, coords: Coordinates, type: AttackerUnitType, rng: Prando): UnitSpawnedEvent {
   const { unitHealth, unitSpeed, unitAttack } = getStats(type);
+  const path = findClosebyPath(m, coords, rng);
   return {
     event: "spawn",
     cryptID: structureID,
     unitID: unitID,
-    unitX: x,
-    unitY: y,
+    unitX: path.x,
+    unitY: path.y,
     unitType: type,
     unitHealth,
     unitSpeed,
@@ -511,15 +536,15 @@ function getStats(type: AttackerUnitType) {
 
 function statusEvents(m: MatchState, currentTick: number): StatusEffectRemovedEvent[] {
   const attackers = Object.keys(m.units.attackers)
-  .map(index => m.units.attackers[parseInt(index)]);
+    .map(index => m.units.attackers[parseInt(index)]);
   const events: (StatusEffectRemovedEvent | null)[] = attackers.map(a => {
     if (a.status && a.status.statusCaughtAt === currentTick - a.status.statusDuration)
-    return {
-      event: "status-remove",
-      id: a.id,
-      statusType: a.status.statusType
-    }
-    else return null 
+      return {
+        event: "status-remove",
+        id: a.id,
+        statusType: a.status.statusType
+      }
+    else return null
   });
   const eventTypeGuard = (e: StatusEffectRemovedEvent | null): e is StatusEffectRemovedEvent => !!e;
   return events.filter(eventTypeGuard);
