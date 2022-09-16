@@ -33,7 +33,7 @@ export default function (m: RawMap): AnnotatedMap {
 export function annotateMap(contents: number[], width: number): Tile[][] {
   const tiles = contents.map(c => findTile(c));
   const accBunt: Tile[][] = [];
-  const reduced =  tiles.reduce((acc, tile, index) => {
+  const reduced = tiles.reduce((acc, tile, index) => {
     const row = Math.floor(index / width);
     const existing = acc[row] || []
     acc[row] = [...existing, tile]
@@ -41,28 +41,37 @@ export function annotateMap(contents: number[], width: number): Tile[][] {
   }, accBunt)
   return reduced
 }
-function isPath(tile: Tile){
+function isPath(tile: Tile) {
   return tile?.type === "path"
 }
+function isBase(tile: Tile) {
+  return tile?.type === "defender-base"
+}
 // mutating logic
-export function setPath(map: Tile[][]): Tile[][]{
-  for (let [rowidx, row] of map.entries()){
+export function setPath(map: Tile[][]): Tile[][] {
+  for (let [rowidx, row] of map.entries()) {
     // console.log(row, "Row")
-    for (let [tileidx, tile] of row.entries()){
+    for (let [tileidx, tile] of row.entries()) {
       // console.log(tile, "tile")
-      if (isPath(tile)){
+      if (isPath(tile)) {
         const t = tile as PathTile
         const left = row?.[tileidx - 1];
         const right = row?.[tileidx + 1];
-        // check horizontal neighbors
-        if (isPath(left)) t["leads-to"] = [...t["leads-to"], {x: tileidx -1, y: rowidx}];
-        // path right is going backwards!
-        // if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
-        // check vertical neighbors
         const up = map[rowidx - 1]?.[tileidx];
         const down = map[rowidx + 1]?.[tileidx];
-        if (isPath(up)) t["leads-to"] = [...t["leads-to"], {x: tileidx, y: rowidx -1}];
-        if (isPath(down)) t["leads-to"] = [...t["leads-to"], {x: tileidx, y: rowidx + 1}];
+        // set one single possible path if the defender base is nearby, as we want to go there and nowhere else
+        if (isBase(left)) t["leads-to"] = [...t["leads-to"], { x: tileidx - 1, y: rowidx }];
+        else if (isBase(right)) t["leads-to"] = [...t["leads-to"], { x: tileidx + 1, y: rowidx }];
+        else if (isBase(up)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx - 1 }];
+        else if (isBase(down)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx + 1 }];
+        // set all possible paths if the defender base is not around
+        else {
+          if (isPath(left)) t["leads-to"] = [...t["leads-to"], { x: tileidx - 1, y: rowidx }];
+          // path right is going backwards!
+          // if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
+          if (isPath(up)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx - 1 }];
+          if (isPath(down)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx + 1 }];
+        }
       }
     }
   }

@@ -5,7 +5,6 @@ import type { MatchConfig, MatchState, TurnAction, TickEvent, StructureEvent, Go
 
 function moveToTickEvent(matchconf: MatchConfig, matchState: MatchState, moves: TurnAction[], currentTick: number, randomnessGenerator: Prando): TickEvent[] | null {
   let randomness = 0;
-  console.log(currentTick, "current tick")
   for (let tick of Array(currentTick)) randomness = randomnessGenerator.next()
   // check if match is still active, i.e. if defender base still has health
   if (currentTick === 1) {
@@ -121,14 +120,17 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number) {
           status: null,
           coordinates: { x: event.unitX, y: event.unitY }
         }
-        console.log(event.unitID, "spawning attacker")
         m.units.attackers[event.unitID] = spawnedUnit;
         break;
       case "movement":
+        // change coordinates at the unit
+        const unitMoving = m.units.attackers[event.unitID]
+        unitMoving.coordinates = { x: event.nextX, y: event.nextY };
         // clear the unit from the current path
         (m.contents[event.unitY][event.unitX] as PathTile)["unit"] = null;
-        // add unit to next path
-        (m.contents[event.nextY][event.nextX] as PathTile)["unit"] = event.unitID
+        // add unit to next path if path
+        const newpath = m.contents[event.nextY][event.nextX];
+        if (newpath.type === "path") newpath.unit = event.unitID
         break;
       case "damage":
         const damageEvent = (event as DamageEvent)
@@ -138,13 +140,15 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number) {
         else {
           // find the affected unit
           const damagedUnit = faction === "attacker" ? m.units.towers[damageEvent.targetID] : m.units.attackers[damageEvent.targetID]
-          if (damageEvent.damageType === "neutral") // TODO 
-            damagedUnit.health = damagedUnit.health - event.damageAmount
+          if (damagedUnit && damageEvent.damageType === "neutral") // TODO 
+            damagedUnit.health = damagedUnit.health - event.damageAmount // TODO this bugs out if the unit has been killed already
         }
         break;
       case "actor-deleted":
+        console.log(event, "deletion event")
         const deleteEvent = (event as ActorDeletedEvent);
         const unitToDelete = event.faction === "attacker" ? m.units.attackers[deleteEvent.id] : m.units.towers[deleteEvent.id];
+        // TODO this up here bugged once. Apparently the same tower is being deleted twice.
         // remove from map
         const tileToWipe = m.contents[unitToDelete.coordinates.y][unitToDelete.coordinates.x];
         if (tileToWipe.type === "path") tileToWipe.unit = null;
@@ -238,13 +242,16 @@ function applyUpgrade(structure: AttackerStructure | DefenderStructure): void {
 function ticksFromMatchState(m: MatchState, currentTick: number, randomnessGenerator: Prando): TickEvent[] | null {
   // compute all spawn, movement, damage, status-damage events given a certain map state
   // in that order (?)
-  // where to cache intermediate match state? e.g. a structure was updates, a bag of gold was found
-  const spawn = spawnEvents(m, currentTick, randomnessGenerator);
-  const movement = movementEvents(m, currentTick, randomnessGenerator);
-  const damage = damageEvents(m, randomnessGenerator);
-  const status = statusEvents(m, currentTick);
+  // check if base is alive
+  if (m.units.defenderBase.health <= 0) return null
+  else {
+    const spawn = spawnEvents(m, currentTick, randomnessGenerator);
+    const movement = movementEvents(m, currentTick, randomnessGenerator);
+    const damage = damageEvents(m, randomnessGenerator);
+    const status = statusEvents(m, currentTick);
 
-  return [...spawn, ...movement, ...damage, ...computeGoldRewards(m)]
+    return [...spawn, ...movement, ...damage, ...status, ...computeGoldRewards(m)]
+  }
 }
 
 function spawnEvents(m: MatchState, currentTick: number, rng: Prando): UnitSpawnedEvent[] {
@@ -256,10 +263,11 @@ function spawnEvents(m: MatchState, currentTick: number, rng: Prando): UnitSpawn
     const ss = (s as AttackerStructure);
     const { spawnCapacity, spawnRate } = getCryptStats(ss.structure)
     const hasCapacity = ss.spawned.length < spawnCapacity;
-    const aboutTime = (currentTick - 2) % spawnRate === 0;
+    // const aboutTime = (currentTick - 2) % spawnRate === 0;
+    const aboutTime = currentTick === 2; // TODO temporary, delete and replace by above
     // const notSpawnedYet = Math.ceil(currentTick / spawnRate) < ss.spawned.length;
     if (hasCapacity && aboutTime) {
-      unitCount ++
+      unitCount++
       const unitType = ss.structure.replace("-crypt", "") as AttackerUnitType;
       const newUnit = spawn(m, ss.id, unitCount, ss.coordinates, unitType, rng);
       return newUnit
@@ -277,20 +285,24 @@ function movementEvents(m: MatchState, currentTick: number, randomnessGenerator:
   const events = attackers.map(a => {
     const aa = (a as AttackerUnit);
     const currentSpeed = getCurrentSpeed(aa)
-    const aboutTime = (currentTick - 1) % currentSpeed === 0;
+    // const aboutTime = (currentTick - 1) % currentSpeed === 0;
+    const aboutTime = true; // TODO remove this
     const busyAttacking = aa.subType === "macaw" && findClosebyTowers(m, aa.coordinates, 1).length > 0
-    console.log(aboutTime, "should I move?")
-    console.log(busyAttacking, "macaws attacking")
     if (aboutTime && !busyAttacking) {
       const tile = m.contents[aa.coordinates.y][aa.coordinates.x];
-      const t = (tile as PathTile);
-      console.log(t, "t")
-      // if there is more than one available path (i.e. go left or go up/down) determine according to randomness.
-      // TODO revise this a few times, make sure randomness is deterministic
-      const nextCoords = t["leads-to"].length > 1
-        ? t["leads-to"][randomizePath(t["leads-to"].length, randomnessGenerator)]
-        : t["leads-to"][0]
-      return move(aa.id, aa.coordinates, nextCoords)
+      // if the unit is at the defender base, they don't move anymore, time to die
+      if (tile.type === "defender-base") return null
+      else {
+        const t = (tile as PathTile);
+        // if there is more than one available path (i.e. go left or go up/down) determine according to randomness.
+        // TODO revise this a few times, make sure randomness is deterministic
+        console.log(t, "present tile of the unit")
+        console.log(aa.id)
+        const nextCoords = t["leads-to"].length > 1
+          ? t["leads-to"][randomizePath(t["leads-to"].length, randomnessGenerator)]
+          : t["leads-to"][0]
+        return move(aa.id, aa.coordinates, nextCoords)
+      }
     } else return null
   })
   const eventTypeGuard = (e: UnitMovementEvent | null): e is UnitMovementEvent => !!e;
@@ -307,7 +319,7 @@ function getCurrentSpeed(a: AttackerUnit): number {
 
 function randomizePath(paths: number, randomnessGenerator: Prando): number {
   const randomness = randomnessGenerator.next();
-  console.log(randomnessGenerator.iteration, "randomizing path")
+  // console.log(randomnessGenerator.iteration, "randomizing path")
   return Math.floor(randomness * paths)
 
 }
@@ -333,7 +345,7 @@ function damageEvents(m: MatchState, randomnessGenerator: Prando): TowerAttack[]
     const unitDamage = computeUnitDamage(m, aa, randomnessGenerator)
     const baseDamage = computeBaseDamage(m, aa);
     const eventTypeGuard = (e: TowerAttack | null): e is DamageEvent => !!e;
-    return [...towerDamage, ...unitDamage, baseDamage].filter(eventTypeGuard)
+    return [...towerDamage, ...unitDamage, ...baseDamage].filter(eventTypeGuard)
   });
   return events.flat()
 }
@@ -359,6 +371,7 @@ function computerTowerDamage(m: MatchState, a: AttackerUnit): (DamageEvent | Act
 }
 function computeUnitDamage(m: MatchState, a: AttackerUnit, rng: Prando): (TowerAttack | null)[] {
   const nearbyStructures = findClosebyTowers(m, a.coordinates, 4); // maximum possible range
+  // console.log(nearbyStructures, "these towers might attack")
   const events: TowerAttack[][] = nearbyStructures.map(tower => {
     const inRange = isInRange(tower, a);
     if (inRange) {
@@ -441,17 +454,21 @@ function pickOne(acc: DefenderStructure, item: DefenderStructure) {
   else return acc
 }
 
-function computeBaseDamage(m: MatchState, a: AttackerUnit): DamageEvent | null {
+function computeBaseDamage(m: MatchState, a: AttackerUnit): (DamageEvent | ActorDeletedEvent)[] {
   if (m.contents[a.coordinates.y][a.coordinates.x].type === "defender-base")
-    return {
+    return [{
       event: "damage",
       faction: "attacker",
       sourceID: a.id,
       targetID: 0,
       damageType: "neutral",
       damageAmount: 1 // TODO 
-    }
-  else return null
+    }, {
+      event: "actor-deleted",
+      faction: "attacker",
+      id: a.id
+    }]
+  else return []
 }
 // Determines whether a macaw attacker unit should start attacking a tower.
 // Macaws have a range of 1. Diagonals count as 1.
@@ -471,13 +488,13 @@ function canReach(attackerCoordinates: Coordinates, structureCoordinates: Coordi
 }
 
 function findClosebyTowers(m: MatchState, coords: Coordinates, range: number): DefenderStructure[] {
-  const up = m.contents[coords.y]?.[coords.x - range];
-  const upright = m.contents[coords.y + range]?.[coords.x - range];
-  const right = m.contents[coords.y + range]?.[coords.x]; // 
+  const up = m.contents[coords.y - range]?.[coords.x];
+  const upright = m.contents[coords.y - range]?.[coords.x + range];
+  const right = m.contents[coords.y]?.[coords.x + range]; // 
   const downright = m.contents[coords.y + range]?.[coords.x + range]; // 
-  const down = m.contents[coords.y]?.[coords.x + range];
-  const downleft = m.contents[coords.y - range]?.[coords.x + range];
-  const left = m.contents[coords.y - range]?.[coords.x];
+  const down = m.contents[coords.y + range]?.[coords.x];
+  const downleft = m.contents[coords.y + range]?.[coords.x - range];
+  const left = m.contents[coords.y]?.[coords.x - range];
   const upleft = m.contents[coords.y - range]?.[coords.x - range];
   const tiles = [up, upright, right, downright, down, downleft, left, upleft]
     .filter(s => s && s.type === "defender-structure")
@@ -486,13 +503,29 @@ function findClosebyTowers(m: MatchState, coords: Coordinates, range: number): D
 }
 function findClosebyPath(m: MatchState, coords: Coordinates, rng: Prando, range = 1): Coordinates {
   const c: Coordinates[] = [];
-  if (m.contents[coords.y]?.[coords.x - range]?.type === "path") c.push({ x: coords.x - range, y: coords.y })
-  if (m.contents[coords.y]?.[coords.x + range]?.type === "path") c.push({ x: coords.x + range, y: coords.y })
-  if (m.contents[coords.y - range]?.[coords.x]?.type === "path") c.push({ x: coords.x, y: coords.y - range })
-  if (m.contents[coords.y + range]?.[coords.x]?.type === "path") c.push({ x: coords.x, y: coords.y + range })
+  const up = m.contents[coords.y - range]?.[coords.x];
+  const upright = m.contents[coords.y - range]?.[coords.x + range];
+  const right = m.contents[coords.y]?.[coords.x + range]; // 
+  const downright = m.contents[coords.y + range]?.[coords.x + range]; // 
+  const down = m.contents[coords.y + range]?.[coords.x];
+  const downleft = m.contents[coords.y + range]?.[coords.x - range];
+  const left = m.contents[coords.y]?.[coords.x - range];
+  const upleft = m.contents[coords.y - range]?.[coords.x - range];
+  if (up?.type === "path") c.push({ y: coords.y - range, x: coords.x })
+  if (upleft?.type === "path") c.push({ y: coords.y - range, x: coords.x - range })
+  if (upright?.type === "path") c.push({ y: coords.y - range, x: coords.x + range })
+  if (down?.type === "path") c.push({ y: coords.y + range, x: coords.x })
+  if (downleft?.type === "path") c.push({ y: coords.y + range, x: coords.x - range })
+  if (downright?.type === "path") c.push({ y: coords.y + range, x: coords.x + range })
+  if (left?.type === "path") c.push({ y: coords.y, x: coords.x - range })
+  if (right?.type === "path") c.push({ y: coords.y, x: coords.x + range })
   console.log(c.length, "how many paths can I choose to spawn to?")
   if (c.length === 0) {
     console.log(coords)
+    console.log(up)
+    console.log(down)
+    console.log(left)
+    console.log(right)
     return findClosebyPath(m, coords, rng, range + 1);
   }
   else if (c.length > 1) {
