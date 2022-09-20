@@ -53,14 +53,15 @@ When a crypt spawns a unit, this event specifies all of the relevant details abo
 
 ## Unit Movement Event
 
-An event which specifies the current state of each unit on the map after processing movement logic for the current tick. This event includes:
+An event which specifies the current position of the unit on the map and how fast/where it is moving to. This is emitted when a unit moves onto a new square or has a speed buff/debuff applied to it. This event includes:
 
 - Unit ID
 - Current X/Y Position (what square on the map)
 - Next X/Y Position (square the unit is moving towards)
-- Ticks to move (number of ticks left before they finish moving to the upcoming position)
+- Completion (an integer between 0-100 that represents how much of the square has been completed)
+- Movement Speed (an integer between 0-100 that represents how much completion of a square a unit makes per tick)
 
-By knowing what the upcoming x/y position will be, and how many ticks until the unit moves to said next position, it will be possible to visualize their speed across their current square properly.
+This event is emitted when
 
 ```json
 {
@@ -70,7 +71,8 @@ By knowing what the upcoming x/y position will be, and how many ticks until the 
   "unit-y": 5,
   "next-x": 11,
   "next-y": 5,
-  "ticks-to-move": 3
+  "completion": 7,
+  "movement-speed": 20
 }
 ```
 
@@ -113,14 +115,16 @@ When an attacker’s unit or a defender’s tower hit 0 hp, then they are delete
 
 ## Status Effect Applied Event
 
-Some structures target units to apply status to them (attacker applies buffs, defender applies debuffs). The status effect game tick event is emitted when a status effect is applied to a unit, and it carries with that unit for the duration specified (ex. increase movement speed by 100% for 10 ticks). Of note, besides visually displaying the status effect being applied to the unit, the frontend doesn't need to calculate anything based off of this event. The round executor will take into account all changes this applies to the state/stats internally.
+Some structures target units to apply status to them (attacker applies buffs, defender applies debuffs). The status effect game tick event is emitted when a status effect is applied to a unit, and it carries with that unit for the duration specified (ex. increase movement speed by 20 speed for 10 ticks). Of note, besides visually displaying the status effect being applied to the unit, the frontend doesn't need to calculate anything based off of this event. The round executor will take into account all changes this applies to the state/stats internally.
+
+If a speed buff/debuff is applied, a movement event will follow this event for the target unit.
 
 The tick event includes:
 
 - Source Structure ID
 - Target Unit ID
 - Status type
-- Status amount
+- Status amount (absolute value that buff has increased, ie. 20 speed buff means a base unit's 20 + 20 buff speed, results in 40 total speed, a 100% increase)
 - Status duration (in game ticks)
 
 ```json
@@ -137,6 +141,8 @@ The tick event includes:
 ## Status Effect Removed Event
 
 When a status effect is removed due to expiring or otherwise, an event is emitted.
+
+If a speed buff/debuff is removed, a movement event will follow this event for the target unit.
 
 ```json
 {
