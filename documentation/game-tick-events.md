@@ -46,22 +46,30 @@ When a crypt spawns a unit, this event specifies all of the relevant details abo
   "unit-y": 5,
   "unit-type": "jaguar",
   "unit-health": 100,
-  "unit-speed": 2,
+  "unit-movement-speed": 35,
+  "unit-attack-speed": 0,
   "unit-attack": 0
 }
 ```
 
 ## Unit Movement Event
 
-An event which specifies the current position of the unit on the map and how fast/where it is moving to. This is emitted when a unit moves onto a new square or has a speed buff/debuff applied to it. This event includes:
+An event which specifies the current position of the unit on the map and how fast/where it is moving to.
+
+This is emitted when:
+
+- A unit moves onto a new square (has completed the previous square)
+- Has a speed buff/debuff applied to it
+- Has a speed buff/debuff removed from it
+- A unit is spawned and begins moving (units spawn with completion 0)
+
+This event includes:
 
 - Unit ID
 - Current X/Y Position (what square on the map)
 - Next X/Y Position (square the unit is moving towards)
 - Completion (an integer between 0-100 that represents how much of the square has been completed)
 - Movement Speed (an integer between 0-100 that represents how much completion of a square a unit makes per tick)
-
-This event is emitted when
 
 ```json
 {
