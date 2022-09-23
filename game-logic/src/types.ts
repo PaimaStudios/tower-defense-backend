@@ -47,7 +47,11 @@ export interface AttackerUnit {
   type: "attacker-unit";
   subType: AttackerUnitType;
   id: UnitID;
+  previousCoordinates: Coordinates | null;
   coordinates: Coordinates;
+  nextCoordinates: Coordinates | null;
+  moving: boolean;
+  movementCompletion: number;
   health: number;
   status: Status | null;
 }
@@ -72,7 +76,7 @@ export interface AttackerStructure {
   "path-1-upgrades": number;
   "path-2-upgrades": number;
   coordinates: Coordinates;
-  builtOnRound: number; // + 3 it stops spawning
+  builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
   spawned: UnitID[]
 }
 export interface DefenderStructure {
@@ -109,7 +113,7 @@ export interface PathTile {
   type: "path";
   faction: Faction;
   "leads-to": Coordinates[]
-  unit: UnitID | null;
+  units: UnitID[];
 }
 export interface Coordinates {
   x: number;
@@ -123,11 +127,6 @@ export type AttackerStructureType = "macaw-crypt"
 export interface AttackerStructureTile {
   "type": "attacker-structure",
   "id": number;
-  // "structure": AttackerStructureType
-  // "health": number;
-  // "path-1-upgrades": number;
-  // "path-2-upgrades": number;
-  // spawned: UnitID[]
 }
 export type DefenderStructureType = "anaconda-tower"
   | "sloth-tower"
@@ -254,7 +253,8 @@ export interface UnitMovementEvent {
   unitY: number;
   nextX: number;
   nextY: number;
-  ticksToMove: number;
+  completion: number;
+  movementSpeed: number;
 }
 export type DamageType = "neutral" | string;
 export interface DamageEvent {

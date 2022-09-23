@@ -9,27 +9,6 @@ export default function (m: RawMap): AnnotatedMap {
   }
 }
 
-// export function annotateMap(contents: number[], width: number): AccBunt {
-//   const tiles = contents.map(c => findTile(c));
-//   const accBunt: AccBunt = {bases: {
-//     defenderBase: {type: "defender-base", coordinates: {x: 0, y: 0}, health: 100, level: 1},
-//     attackerBase: {type: "attacker-base", level: 1},
-//     towers: {},
-//     crypts: {},
-//     attackers: {}
-//   }, map: []};
-//   const reduced =  tiles.reduce((acc, tile, index) => {
-//     const row = Math.floor(index / width);
-//     const existing = acc.map[row] || []
-//     acc.map[row] = [...existing, tile]
-//     // set the coordinates if we find the base
-//     if (tile.type === "defender-base")
-//     acc.bases.defenderBase.coordinates = {x: row, y: acc.map[row].indexOf(tile)};
-//     return acc
-//   }, accBunt)
-//   return reduced
-// }
-
 export function annotateMap(contents: number[], width: number): Tile[][] {
   const tiles = contents.map(c => findTile(c));
   const accBunt: Tile[][] = [];
@@ -66,9 +45,9 @@ export function setPath(map: Tile[][]): Tile[][] {
         else if (isBase(down)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx + 1 }];
         // set all possible paths if the defender base is not around
         else {
+          // check where the base is so units don't backtrack
           if (isPath(left)) t["leads-to"] = [...t["leads-to"], { x: tileidx - 1, y: rowidx }];
-          // path right is going backwards!
-          // if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
+          if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
           if (isPath(up)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx - 1 }];
           if (isPath(down)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx + 1 }];
         }
@@ -100,13 +79,13 @@ function findTile(c: number): Tile {
     "type": "path",
     "faction": "defender",
     "leads-to": [],
-    unit: null
+    units: []
   }
   else if (c === 6) return {
     "type": "path",
     "faction": "attacker",
     "leads-to": [],
-    unit: null
+    units: []
   }
   else return {
     type: "immovable-object"
