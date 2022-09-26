@@ -87,15 +87,40 @@ import util from "util";
 import moveToTickEvent from "./index.js";
 // console.log(ms, "ms")
 
-function toEmoji(t: Tile, unitType = "", unitID = 0, unitHealth="", double = false): string {
-  if (t.type === "attacker-structure") return `🕌${unitID}`
+function toEmoji(m: MatchState, t: Tile): string {
+  if (t.type === "attacker-structure") {
+    const unit = m.units.crypts[t.id];
+    return `🕌-${t.id}`
+  }
   else if (t.type === "attacker-base") return "🕋"
-  else if (t.type === "path" && double) return `🙉`
-  else if (t.type === "path" && unitType === "gorilla") return `${unitHealth}🦍${unitID}`
-  else if (t.type === "path" && unitType === "jaguar") return `${unitHealth}🐆${unitID}`
-  else if (t.type === "path" && unitType === "macaw") return `${unitHealth}🦆${unitID}`
-  else if (t.type === "path") return "="
-  else if (t.type === "defender-structure") return `${unitHealth}🏛${unitID}`
+  else if (t.type === "path"){
+   const units = t.units;
+   if (t.units.length === 0) return "="
+   else return t.units.reduce((acc: string, item: number) => {
+    const unit = m.units.attackers[item];
+    if (!unit) return acc
+    else if (unit.subType === "gorilla") {
+      if (acc === "")
+      return acc + `${unit.health}🦍${item}`
+      else return acc + "🦍"
+    }
+    else if (unit.subType === "jaguar") {
+      if (acc === "")
+      return acc + `${unit.health}🐆${item}`
+      else return acc + "🐆"
+    }
+    else if (unit.subType === "macaw") {
+      if (acc === "")
+      return acc + `${unit.health}🦆${item}`
+      else return acc + "🦆"
+    }
+    else return acc
+   }, "")
+  } 
+  else if (t.type === "defender-structure") {
+    const unit = m.units.towers[t.id];
+    return `${unit.health}-🏛-${t.id}`
+  }
   else if (t.type === "defender-base") return "🏰"
   else if (t.type === "attacker-open") return "🌳"
   else if (t.type === "defender-open") return "🌵"
@@ -105,46 +130,23 @@ function toEmoji(t: Tile, unitType = "", unitID = 0, unitHealth="", double = fal
 function ppmap(m: MatchState) {
   const c = m.contents;
   return c.map(row => {
-    return row.map(tile => {
-      if (tile.type === "path" && tile.units.length > 0) {
-        try {
-          if (tile.units.length > 1) {
-            const unit = m.units.attackers[tile.units[0]]
-            return toEmoji(tile, unit.subType, unit.id, `${unit.health}`, true)
-          }
-          else {
-            const unit = m.units.attackers[tile.units[0]]
-          return toEmoji(tile, unit.subType, unit.id, `${unit.health}`)
-          }
-        } catch (e) {
-          console.log(tile)
-          // console.log(m.units.attackers)
-        }
-      }
-      else if (tile.type === "defender-structure"){ 
-        const tower = m.units.towers[tile.id]
-        return toEmoji(tile, "", tile.id, `${tower.health}`)
-      }
-      else if (tile.type === "attacker-structure")  return toEmoji(tile, "", tile.id)
-      else return toEmoji(tile)
-    })
-  })
+    return row.map(tile => toEmoji(m, tile))
+  });
 }
 // console.log(util.inspect(ppmap(ms.contents), { showHidden: false, depth: null, colors: true }))
 
 function testRun() {
   const rng = new Prando("oh hi");
   const moves = build();
-  const matchState = ms;
-  for (let [tick, _] of Array(200).entries()) {
-    const events = moveToTickEvent(matchConfig, matchState, moves, tick + 1, rng);
-    if (!events || matchState.units.defenderBase.health < 1) {
+  for (let [tick, _] of Array(1500).entries()) {
+    const events = moveToTickEvent(matchConfig, ms, moves, tick + 1, rng);
+    if (!events || ms.units.defenderBase.health < 1) {
       // console.log("round over")
     }
     else {
       console.log(tick, "current tick")
-      console.table(ppmap(matchState))
-      console.log(matchState.units.defenderBase)
+      console.table(ppmap(ms))
+      console.log(ms.units.defenderBase)
     }
   }
   // console.log(util.inspect(matchState, { showHidden: false, depth: null, colors: true }))

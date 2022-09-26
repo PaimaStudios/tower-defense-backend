@@ -647,10 +647,10 @@ function spawn(m: MatchState, structureID: number, unitID: number, coords: Coord
   }
 }
 function getStats(type: AttackerUnitType) {
-  if (type === "gorilla") return { unitSpeed: 3, unitHealth: 5, unitAttack: 3 }
-  else if (type === "macaw") return { unitSpeed: 4, unitHealth: 3, unitAttack: 3 }
-  else if (type === "jaguar") return { unitSpeed: 5, unitHealth: 3, unitAttack: 3 }
-  else return { unitSpeed: 3, unitHealth: 3, unitAttack: 3 }
+  if (type === "gorilla") return { unitSpeed: 3, unitHealth: 50, unitAttack: 3 }
+  else if (type === "macaw") return { unitSpeed: 4, unitHealth: 30, unitAttack: 3 }
+  else if (type === "jaguar") return { unitSpeed: 5, unitHealth: 30, unitAttack: 3 }
+  else return { unitSpeed: 3, unitHealth: 30, unitAttack: 3 }
 };
 
 function statusEvents(m: MatchState, currentTick: number, rng: Prando): StatusEffectRemovedEvent[] {
