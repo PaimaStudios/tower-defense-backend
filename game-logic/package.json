@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "esbuild": "^0.15.9",
+    "executors": "file:../../paima-engine/executors",
     "prando": "../../paima-engine/paima-prando"
   },
   "devDependencies": {

@@ -1,8 +1,8 @@
 import { annotateMap, setPath } from "./map-processor.js"
-import type { StatefulUnitGraph, MatchState, UnitsObject, Coordinates, TurnAction, MatchConfig, Tile, PathTile } from "./types";
+import type { MatchState, ActorsObject, Coordinates, TurnAction, MatchConfig, Tile, PathTile } from "./types";
 import Prando from "prando";
 
-const testmap = [
+export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5, 5, 1, 2, 6, 6, 6, 2, 6, 6, 6, 2,
   1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 2, 6, 2, 6, 2, 6, 2, 6, 2,
@@ -36,12 +36,10 @@ const mapHeight = 13;
 const mapWidth = 22;
 const am = annotateMap(testmap, mapWidth);
 const withPath = setPath(am);
-const defaultUnits: UnitsObject = {
-  defenderBase: { type: "defender-base", health: 100, level: 1 },
-  attackerBase: { type: "attacker-base", level: 1 },
+const defaultUnits: ActorsObject = {
   towers: {},
   crypts: {},
-  attackers: {}
+  units: {}
 }
 
 const ms: MatchState = {
@@ -51,7 +49,9 @@ const ms: MatchState = {
   attacker: "0x1",
   defenderGold: 100,
   attackerGold: 100,
-  units: defaultUnits,
+  defenderBase: { health: 100, level: 1 },
+  attackerBase: { level: 1 },
+  actors: defaultUnits,
   contents: withPath,
   name: "jungle",
   currentRound: 1
@@ -61,9 +61,9 @@ function randomFromArray<T>(array: T[]): T {
   return array[index];
 }
 
-function build(): TurnAction[] {
+export function build(towerCount: number, cryptCount: number): TurnAction[] {
   const available = availableForBuilding(testmap);
-  const towers: TurnAction[] = available.towers.sort(() => 0.5 - Math.random()).slice(0, 20).map(coords => {
+  const towers: TurnAction[] = available.towers.sort(() => 0.5 - Math.random()).slice(0, towerCount).map(coords => {
     return {
       action: "build",
       x: coords.x,
@@ -71,7 +71,7 @@ function build(): TurnAction[] {
       structure: randomFromArray(["piranha-tower", "anaconda-tower", "sloth-tower"])
     }
   })
-  const crypts: TurnAction[] = available.crypts.sort(() => 0.5 - Math.random()).slice(0, 10).map(coords => {
+  const crypts: TurnAction[] = available.crypts.sort(() => 0.5 - Math.random()).slice(0, cryptCount).map(coords => {
     return {
       action: "build",
       x: coords.x,
@@ -84,41 +84,42 @@ function build(): TurnAction[] {
 
 
 import util from "util";
-import moveToTickEvent from "./index.js";
+import processTick from "./index.js";
+import { getRoundExecutor } from "./middleware.js";
 // console.log(ms, "ms")
 
 function toEmoji(m: MatchState, t: Tile): string {
   if (t.type === "attacker-structure") {
-    const unit = m.units.crypts[t.id];
+    // const unit = m.actors.crypts[t.id];
     return `🕌-${t.id}`
   }
   else if (t.type === "attacker-base") return "🕋"
-  else if (t.type === "path"){
-   const units = t.units;
-   if (t.units.length === 0) return "="
-   else return t.units.reduce((acc: string, item: number) => {
-    const unit = m.units.attackers[item];
-    if (!unit) return acc
-    else if (unit.subType === "gorilla") {
-      if (acc === "")
-      return acc + `${unit.health}🦍${item}`
-      else return acc + "🦍"
-    }
-    else if (unit.subType === "jaguar") {
-      if (acc === "")
-      return acc + `${unit.health}🐆${item}`
-      else return acc + "🐆"
-    }
-    else if (unit.subType === "macaw") {
-      if (acc === "")
-      return acc + `${unit.health}🦆${item}`
-      else return acc + "🦆"
-    }
-    else return acc
-   }, "")
-  } 
+  else if (t.type === "path") {
+    const units = t.units;
+    if (t.units.length === 0) return "="
+    else return t.units.reduce((acc: string, item: number) => {
+      const unit = m.actors.units[item];
+      if (!unit) return acc
+      else if (unit.subType === "gorilla") {
+        if (acc === "")
+          return acc + `${unit.health}🦍${item}`
+        else return acc + "🦍"
+      }
+      else if (unit.subType === "jaguar") {
+        if (acc === "")
+          return acc + `${unit.health}🐆${item}`
+        else return acc + "🐆"
+      }
+      else if (unit.subType === "macaw") {
+        if (acc === "")
+          return acc + `${unit.health}🦆${item}`
+        else return acc + "🦆"
+      }
+      else return acc
+    }, "")
+  }
   else if (t.type === "defender-structure") {
-    const unit = m.units.towers[t.id];
+    const unit = m.actors.towers[t.id];
     return `${unit.health}-🏛-${t.id}`
   }
   else if (t.type === "defender-base") return "🏰"
@@ -137,18 +138,25 @@ function ppmap(m: MatchState) {
 
 function testRun() {
   const rng = new Prando("oh hi");
-  const moves = build();
+  const moves = build(20, 10);
   for (let [tick, _] of Array(1500).entries()) {
-    const events = moveToTickEvent(matchConfig, ms, moves, tick + 1, rng);
-    if (!events || ms.units.defenderBase.health < 1) {
+    const events = processTick(matchConfig, ms, moves, tick + 1, rng);
+    if (!events || ms.defenderBase.health < 1) {
       // console.log("round over")
     }
     else {
       console.log(tick, "current tick")
       console.table(ppmap(ms))
-      console.log(ms.units.defenderBase)
+      console.log(ms.defenderBase)
     }
   }
   // console.log(util.inspect(matchState, { showHidden: false, depth: null, colors: true }))
 }
-testRun()
+// testRun()
+async function testExec(){
+  const res = await getRoundExecutor()
+  const exec = res.result;
+  console.log(exec.tick())
+  console.log(exec.tick())
+}
+testExec()

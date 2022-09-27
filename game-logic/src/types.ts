@@ -18,25 +18,25 @@ export interface MatchConfig {
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
   attackerGold: number;
+  attackerBase: AttackerBase;
   defender: Wallet;
   defenderGold: number;
-  units: UnitsObject;
+  defenderBase: DefenderBase;
+  actors: ActorsObject;
   currentRound: number;
 }
 // ordered maps for stateful units
-export interface UnitsObject {
-  defenderBase: DefenderBase;
-  attackerBase: AttackerBase;
-  towers: StatefulUnitGraph<DefenderStructure>
-  crypts: StatefulUnitGraph<AttackerStructure>
-  attackers: StatefulUnitGraph<AttackerUnit>
+export interface ActorsObject {
+  towers: ActorGraph<DefenderStructure>
+  crypts: ActorGraph<AttackerStructure>
+  units: ActorGraph<AttackerUnit>
 }
-export type UnitID = number;
-export interface StatefulUnitGraph<UnitType> {
-  [UnitID: UnitID]: UnitType
+export type ActorID = number;
+export interface ActorGraph<UnitType> {
+  [actorID: ActorID]: UnitType
 }
 
-export type StatefulUnit = DefenderBase
+export type Actor = DefenderBase
   | AttackerBase
   | AttackerUnit
   | AttackerStructure
@@ -46,7 +46,7 @@ export type AttackerUnitType = "macaw" | "jaguar" | "gorilla"
 export interface AttackerUnit {
   type: "attacker-unit";
   subType: AttackerUnitType;
-  id: UnitID;
+  id: ActorID;
   previousCoordinates: Coordinates | null;
   coordinates: Coordinates;
   nextCoordinates: Coordinates | null;
@@ -77,7 +77,7 @@ export interface AttackerStructure {
   "path-2-upgrades": number;
   coordinates: Coordinates;
   builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
-  spawned: UnitID[]
+  spawned: ActorID[]
 }
 export interface DefenderStructure {
   type: "defender-structure";
@@ -89,13 +89,11 @@ export interface DefenderStructure {
   "path-2-upgrades": number;
 }
 interface DefenderBase {
-  type: "defender-base";
   // coordinates: Coordinates;
   health: number;
   level: number;
 }
 interface AttackerBase {
-  type: "attacker-base";
   level: number;
 }
 
@@ -113,7 +111,7 @@ export interface PathTile {
   type: "path";
   faction: Faction;
   "leads-to": Coordinates[]
-  units: UnitID[];
+  units: ActorID[];
 }
 export interface Coordinates {
   x: number;
@@ -238,7 +236,7 @@ export type UnitType = "jaguar" | "macaw" | "gorilla";
 export interface UnitSpawnedEvent {
   event: "spawn"
   cryptID: number;
-  unitID: number;
+  actorID: number;
   unitX: number;
   unitY: number;
   unitType: UnitType;
@@ -248,7 +246,7 @@ export interface UnitSpawnedEvent {
 }
 export interface UnitMovementEvent {
   event: "movement";
-  unitID: number;
+  actorID: number;
   unitX: number;
   unitY: number;
   nextX: number;
