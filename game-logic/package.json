@@ -1,9 +1,12 @@
 {
   "name": "game-logic",
   "version": "1.0.0",
-  "description": "",
+  "description": "Game Logic package for PaimaStudios Tower Defense, to be imported for Round Executors",
   "type": "module",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "files": [
+    "/lib"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
