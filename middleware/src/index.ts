@@ -15,7 +15,7 @@ import { postString } from "./helpers/contract-interaction";
 
 import {mockEndpoints} from "./endpoints/mock";
 const endpoints = {
-    ...accountsEndpoints,
+    // ...accountsEndpoints,
     ...mockEndpoints,
     // ...queryEndpoints,
     // ...writeEndpoints,
