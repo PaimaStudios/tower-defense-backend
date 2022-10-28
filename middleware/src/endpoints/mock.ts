@@ -51,8 +51,10 @@ async function getLobbyState(
     lobby: {
       lobby_id: lobbyID,
       created_at: new Date(),
-      lobby_creator: "0x1",
-      player_two: "0x2",
+      lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+      creator_faction: "attacker",
+      player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
+      player_two_faction: "defender",
       current_round: 1,
       num_of_rounds: 100,
       map: "jungle",
@@ -60,7 +62,11 @@ async function getLobbyState(
       spawnLimit: 10,
       creation_block_height: 1,
       round_start_height: 2,
-      lobby_state: "open"
+      lobby_state: "open",
+      round_length: 500,
+      round_ends_in_blocks: 100,
+      round_ends_in_secs: 400,
+      initial_gold: 1000
     }
   }
 }
@@ -71,8 +77,10 @@ async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
     lobby: {
       lobby_id: "abcdefabcdef",
       created_at: new Date(),
-      lobby_creator: "0x1",
-      player_two: "0x2",
+      lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+      creator_faction: "attacker",
+      player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
+      player_two_faction: "defender",
       current_round: 1,
       num_of_rounds: 100,
       map: "jungle",
@@ -80,7 +88,11 @@ async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
       spawnLimit: 10,
       creation_block_height: 1,
       round_start_height: 2,
-      lobby_state: "open"
+      lobby_state: "open",
+      round_length: 500,
+      round_ends_in_blocks: 100,
+      round_ends_in_secs: 400,
+      initial_gold: 1000
     }
   }
 }
@@ -94,8 +106,10 @@ async function getOpenLobbies(
     lobbies: [{
       lobby_id: "abcdefabcdef",
       created_at: new Date(),
-      lobby_creator: "0x1",
-      player_two: "0x2",
+      lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+      creator_faction: "attacker",
+      player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
+      player_two_faction: "defender",
       current_round: 1,
       num_of_rounds: 100,
       map: "jungle",
@@ -103,7 +117,11 @@ async function getOpenLobbies(
       spawnLimit: 10,
       creation_block_height: 1,
       round_start_height: 2,
-      lobby_state: "open"
+      lobby_state: "open",
+      round_length: 500,
+      round_ends_in_blocks: 100,
+      round_ends_in_secs: 400,
+      initial_gold: 1000
     }]
   }
 }
@@ -119,8 +137,10 @@ async function getUserLobbiesMatches(
         {
           lobby_id: "abcdefabcdef",
           created_at: new Date(),
-          lobby_creator: "0x1",
-          player_two: "0x2",
+          lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+          creator_faction: "attacker",
+          player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
+          player_two_faction: "defender",
           current_round: 1,
           num_of_rounds: 100,
           map: "jungle",
@@ -128,7 +148,32 @@ async function getUserLobbiesMatches(
           spawnLimit: 10,
           creation_block_height: 1,
           round_start_height: 2,
-          lobby_state: "open"
+          lobby_state: "open",
+          round_length: 500,
+          round_ends_in_blocks: 100,
+          round_ends_in_secs: 400,
+          initial_gold: 1000
+        },
+        {
+          lobby_id: "defdefabcabc",
+          created_at: new Date(),
+          lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+          creator_faction: "defender",
+          player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
+          player_two_faction: "attacker",
+          current_round: 3,
+          num_of_rounds: 10,
+          map: "jungle",
+          health: 100,
+          spawnLimit: 10,
+          creation_block_height: 1,
+          round_start_height: 2,
+          lobby_state: "active",
+          round_length: 500,
+          round_ends_in_blocks: 100,
+          round_ends_in_secs: 400,
+          player_turn: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+          initial_gold: 2000
         }
       ]
   }
@@ -243,6 +288,13 @@ async function getRoundExecutor(
 //     result: executor
 //   }
 // }
+
+async function userWalletLogin(){
+  return {
+    success: true,
+    walletAddress: "0xdDA309096477b89D7066948b31aB05924981DF2B"
+  }
+}
 export const mockEndpoints = {
   getUserStats,
   getLobbyState,
@@ -256,4 +308,5 @@ export const mockEndpoints = {
   getRoundExecutor,
   // getMatchExecutor,
   getRoundExecutionState,
+  userWalletLogin
 }

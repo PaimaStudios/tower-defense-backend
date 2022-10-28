@@ -149,10 +149,18 @@ export interface BasicLobbyInfo {
   map: MapName;
   created_at: Date;
   creation_block_height: number;
+  round_length: number;
+  round_ends_in_blocks: number;
+  round_ends_in_secs: number;
   round_start_height: number;
   lobby_creator: UserAddress;
+  creator_faction: Faction
   player_two: UserAddress;
+  player_two_faction: Faction;
+  initial_gold: number;
 }
+
+export type Faction = "attacker" | "defender";
 
 export interface OpenLobbyState extends BasicLobbyInfo {
   lobby_state: "open";
@@ -160,6 +168,7 @@ export interface OpenLobbyState extends BasicLobbyInfo {
 
 export interface ActiveLobbyState extends BasicLobbyInfo {
   lobby_state: "active";
+  player_turn: UserAddress
 }
 
 export interface FinishedLobbyState extends BasicLobbyInfo {
