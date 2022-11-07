@@ -1,4 +1,4 @@
-import { retryPromise } from "paima-utils";
+import { retryPromise } from "paima-engine/paima-utils";
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from "../errors";
 import {
     awaitBlock,

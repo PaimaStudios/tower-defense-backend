@@ -1,5 +1,5 @@
-import Prando from "prando";
-import { MatchExecutor, RoundExecutor } from "executors";
+import Prando from "paima-engine/paima-prando";
+import { MatchExecutor, RoundExecutor } from "paima-engine/paima-executors";
 import processTick from "./index.js";
 import { build, testmap } from "./test.js";
 import { annotateMap, setPath } from "./map-processor.js";

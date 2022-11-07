@@ -1,4 +1,4 @@
-import { UserAddress } from "td-utils";
+import { UserAddress } from "@tower-defense/utils";
 import { QueryOptions, QueryValue } from "../types";
 
 function queryValueToString(value: QueryValue): string {

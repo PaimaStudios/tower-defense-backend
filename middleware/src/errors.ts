@@ -3,7 +3,7 @@ import {
     ErrorCode,
     ErrorMessageFxn,
     ErrorMessageMapping,
-} from "paima-utils";
+} from "paima-engine/paima-utils";
 import type { FailedResult } from "./types";
 
 type EndpointErrorFxn = (errorCode: ErrorCode, err?: any) => FailedResult;

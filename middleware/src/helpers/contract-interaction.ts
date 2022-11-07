@@ -1,7 +1,7 @@
 import { numberToHex, utf8ToHex } from "web3-utils";
 
-import { getTxTemplate } from "paima-tx";
-import { retrieveFee, wait } from "paima-utils";
+import { getTxTemplate } from "paima-engine/paima-tx";
+import { retrieveFee, wait } from "paima-engine/paima-utils";
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from "../errors";
 import {
     getFee,

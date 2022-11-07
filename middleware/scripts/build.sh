@@ -1,9 +1,3 @@
-echo "Installing dependencies"
-npm i
-
-echo "Compiling all libraries"
-sh scripts/compile_libraries.sh
-
 
 sh scripts/set_fs_removal.sh
 echo "FS dependency removed"

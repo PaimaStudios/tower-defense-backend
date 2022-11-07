@@ -1,6 +1,6 @@
 import { annotateMap, setPath } from "./map-processor.js"
 import type { MatchState, ActorsObject, Coordinates, TurnAction, MatchConfig, Tile, PathTile } from "./types";
-import Prando from "prando";
+import Prando from "paima-engine/paima-prando";
 
 export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,

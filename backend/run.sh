@@ -1,0 +1,1 @@
+DB_HOST=localhost DB_USER=y DB_PW=dcspark DB_NAME=paima_td node --experimental-specifier-resolution=node build/index.js
