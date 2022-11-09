@@ -1,4 +1,4 @@
-import { MatchState, TurnAction } from "td-utils";
+import { MatchState, TurnAction } from "@tower-defense/utils";
 
 export type Hash = string;
 export type URI = string;

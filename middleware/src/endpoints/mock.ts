@@ -1,7 +1,7 @@
 import {
   MatchExecutor as MatchExecutorConstructor,
   RoundExecutor as RoundExecutorConstructor,
-} from "executors";
+} from "paima-engine/paima-executors";
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from "../errors";
 import {
@@ -22,10 +22,10 @@ import {
   SuccessfulResult,
   UserStats,
 } from "../types";
-import type { MatchConfig } from "td-utils";
-import Prando from "prando";
+import type { MatchConfig } from "@tower-defense/utils";
+import Prando from "paima-engine/paima-prando";
 import { annotateMap, testmap, setPath, build } from "./mock-helpers";
-import processTick from "game-logic";
+import processTick from "@tower-defense/game-logic";
 
 async function getUserStats(
   walletAddress: string
@@ -198,7 +198,7 @@ async function getUserSetNFT(
     result: {
       title: "NFT",
       imageUrl: `https://pbs.twimg.com/profile_images/1557038736218722304/vnXi5VbL_400x400.jpg`,
-      nftAddress: "0x1",
+      nftAddress: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
       tokenId: 1
     }
   }
@@ -212,13 +212,13 @@ async function getUserWalletNfts(
       {
         title: "NFT",
         imageUrl: `https://pbs.twimg.com/profile_images/1557038736218722304/vnXi5VbL_400x400.jpg`,
-        nftAddress: "0x1",
+        nftAddress: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
         tokenId: 1
       },
       {
         title: "NFT2",
         imageUrl: `https://www.nftsstreet.com/wp-content/uploads/2021/04/cryptopunk7804.png`,
-        nftAddress: "0x1",
+        nftAddress: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
         tokenId: 2
       }
     ]
@@ -240,7 +240,7 @@ async function getRoundExecutionState(
     success: true,
     round: {
       executed: false,
-      usersWhoSubmittedMoves: ["0x0"],
+      usersWhoSubmittedMoves: ["0xdDA309096477b89D7066948b31aB05924981DF2B"],
       roundEndsInBlocks: 100,
       roundEndsInSeconds: 400
     }
@@ -259,8 +259,8 @@ async function getRoundExecutor(
   const matchState = {
     width: 22,
     height: 13,
-    defender: "0x0",
-    attacker: "0x1",
+    defender: "0xdDA309096477b89D7066948b31aB05924981DF2B",
+    attacker: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
     defenderGold: 100,
     attackerGold: 100,
     defenderBase: { health: 100, level: 1 },

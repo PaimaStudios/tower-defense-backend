@@ -12,9 +12,9 @@ import {
     INDEXER_URI,
     STORAGE_ADDRESS,
     URI,
-} from "td-utils";
-import type { ETHAddress, Web3 } from "paima-utils";
-import { initWeb3 } from "paima-utils";
+} from "@tower-defense/utils";
+import type { ETHAddress, Web3 } from "paima-engine/paima-utils";
+import { initWeb3 } from "paima-engine/paima-utils";
 import { CatapultMiddlewareErrorCode, errorMessageFxn } from "./errors";
 import type {
     CardanoApi,

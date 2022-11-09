@@ -1,4 +1,4 @@
-import { gameBackendVersion } from "td-utils";
+import { gameBackendVersion } from "@tower-defense/utils";
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from "../errors";
 import { cardanoLogin } from "../helpers/wallet-cardano";
 import { rawWalletLogin } from "../helpers/wallet-metamask";

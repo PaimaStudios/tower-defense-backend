@@ -1,5 +1,5 @@
-import { URI, UserAddress } from "td-utils";
-import { retryPromise } from "paima-utils";
+import { URI, UserAddress } from "@tower-defense/utils";
+import { retryPromise } from "paima-engine/paima-utils";
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from "../errors";
 import {

@@ -1,9 +1,12 @@
 // defender
-type Config = {
+interface Config {
   health: "low" | "mid" | "high"
   pace: "slow" | "normal" | "fast"
 };
+
 type Stat = "low" | "mid" | "high"
+
+
 function towerSpeed(config: Config, stat: Stat): number {
   if (config.pace === "slow" && stat === "low") return 3
   else if (config.pace === "slow" && stat === "mid") return 4

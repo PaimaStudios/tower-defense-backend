@@ -1,0 +1,7 @@
+node_modules
+*.tsbuildinfo
+**/src/**.js
+**/src/**.d.ts
+**/build
+.vscode
+**/build

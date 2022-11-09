@@ -1,9 +1,9 @@
-import processTick from "game-logic";
+import processTick from "@tower-defense/game-logic";
 import {
     MatchExecutor as MatchExecutorConstructor,
     RoundExecutor as RoundExecutorConstructor,
-} from "executors";
-import Prando from "prando";
+} from "paima-engine/paima-executors";
+import Prando from "paima-engine/paima-prando";
 
 import {
     ExecutorDataPlayerState,
@@ -14,7 +14,7 @@ import {
     RoundExecutor,
     RoundExecutorData,
 } from "../types";
-import { MatchConfig, MatchState, TurnAction } from "td-utils";
+import { MatchConfig, MatchState, TurnAction } from "@tower-defense/utils";
 
 // executor
 

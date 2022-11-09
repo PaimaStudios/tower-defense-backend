@@ -1,4 +1,4 @@
-import type { Tile, PathTile, Coordinates, TurnAction } from "td-utils";
+import type { Tile, PathTile, Coordinates, TurnAction } from "@tower-defense/utils";
 
 export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
