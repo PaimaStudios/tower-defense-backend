@@ -24,7 +24,7 @@ function isPath(tile: Tile) {
   return tile?.type === "path"
 }
 function isBase(tile: Tile) {
-  return tile?.type === "defender-base"
+  return tile?.type === "base" && tile?.faction === "defender"
 }
 // mutating logic
 export function setPath(map: Tile[][]): Tile[][] {
@@ -39,17 +39,17 @@ export function setPath(map: Tile[][]): Tile[][] {
         const up = map[rowidx - 1]?.[tileidx];
         const down = map[rowidx + 1]?.[tileidx];
         // set one single possible path if the defender base is nearby, as we want to go there and nowhere else
-        if (isBase(left)) t["leads-to"] = [...t["leads-to"], { x: tileidx - 1, y: rowidx }];
-        else if (isBase(right)) t["leads-to"] = [...t["leads-to"], { x: tileidx + 1, y: rowidx }];
-        else if (isBase(up)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx - 1 }];
-        else if (isBase(down)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx + 1 }];
+        if (isBase(left)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx - 1, y: rowidx }];
+        else if (isBase(right)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx + 1, y: rowidx }];
+        else if (isBase(up)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx, y: rowidx - 1 }];
+        else if (isBase(down)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx, y: rowidx + 1 }];
         // set all possible paths if the defender base is not around
         else {
           // check where the base is so units don't backtrack
-          if (isPath(left)) t["leads-to"] = [...t["leads-to"], { x: tileidx - 1, y: rowidx }];
-          if (isPath(right)) t["leads-to"] = [...t["leads-to"], {x: tileidx +1, y: rowidx}];
-          if (isPath(up)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx - 1 }];
-          if (isPath(down)) t["leads-to"] = [...t["leads-to"], { x: tileidx, y: rowidx + 1 }];
+          if (isPath(left)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx - 1, y: rowidx }];
+          if (isPath(right)) t["leadsTo"] = [...t["leadsTo"], {x: tileidx +1, y: rowidx}];
+          if (isPath(up)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx, y: rowidx - 1 }];
+          if (isPath(down)) t["leadsTo"] = [...t["leadsTo"], { x: tileidx, y: rowidx + 1 }];
         }
       }
     }
@@ -59,35 +59,35 @@ export function setPath(map: Tile[][]): Tile[][] {
 
 function findTile(c: number): Tile {
   if (c === 0) return {
-    type: "immovable-object"
+    type: "immovableObject"
   }
   else if (c === 1) return {
-    "type": "defender-open"
+    "type": "open", faction: "defender"
   }
   else if (c === 2) return {
-    "type": "attacker-open"
+    "type": "open", faction: "attacker"
   }
   else if (c === 3) return {
-    "type": "defender-base",
+    "type": "base", faction: "defender"
     // id: 1 by default
   }
   else if (c === 4) return {
-    "type": "attacker-base",
+    "type": "base", faction: "attacker"
     // id: 2 by default
   }
   else if (c === 5) return {
     "type": "path",
     "faction": "defender",
-    "leads-to": [],
+    "leadsTo": [],
     units: []
   }
   else if (c === 6) return {
     "type": "path",
     "faction": "attacker",
-    "leads-to": [],
+    "leadsTo": [],
     units: []
   }
   else return {
-    type: "immovable-object"
+    type: "immovableObject"
   }
 }
