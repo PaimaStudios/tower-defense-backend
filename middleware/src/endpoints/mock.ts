@@ -271,7 +271,8 @@ async function getRoundExecutor(
     },
     contents: withPath,
     name: "jungle",
-    currentRound: 1
+    currentRound: 1,
+    unitCount: 2,
   };
   const moves = build(20, 10);
   const executor = RoundExecutorConstructor.initialize(matchConfig, matchState, moves, rng, processTick);

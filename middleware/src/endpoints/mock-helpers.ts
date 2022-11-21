@@ -20,8 +20,11 @@ export function annotateMap(contents: number[], width: number): Tile[][] {
   const accBunt: Tile[][] = [];
   const reduced = tiles.reduce((acc, tile, index) => {
     const row = Math.floor(index / width);
-    const existing = acc[row] || []
-    acc[row] = [...existing, tile]
+    const existing = acc[row] || [];
+    const t = {...tile, x: row + 1};
+    acc[row] = [...existing, t];
+    const y = acc[row].indexOf(t);
+    acc[row][y] = {...t, y: y+ 1}
     return acc
   }, accBunt)
   return reduced

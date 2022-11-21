@@ -19,7 +19,8 @@
     "@esbuild-plugins/node-resolve": "^0.1.4",
     "@metamask/providers": "^9.0.0",
     "esbuild": "^0.14.38",
-    "game-logic": "@tower-defense/game-logic",
+    "@tower-defense/game-logic": "1.0.0",
+    "@tower-defense/utils": "1.0.0",
     "web3-utils": "^1.7.3"
   }
 }
