@@ -1,5 +1,5 @@
 {
-  "name": "@paima/catapult",
+  "name": "@tower-defense/game",
   "version": "1.0.0",
   "private": true,
   "scripts": {
