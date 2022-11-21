@@ -18,9 +18,9 @@ function processTick(matchconf: MatchConfig, matchState: MatchState, moves: Turn
     return events
   }
 }
-function structuralTick(matchState: MatchState, moves: TurnAction[]): TickEvent[] {
-  const unitCount = getUnitCount(matchState)
-  const accumulator: [StructureEvent[], number] = [[], unitCount]
+
+function structuralTick(m: MatchState, moves: TurnAction[]): TickEvent[] {
+  const accumulator: [StructureEvent[], number] = [[], m.unitCount + 1]
   const structuralTick: [StructureEvent[], number] = moves.reduce((acc, item) => {
     const newEvent = structureEvent(item, acc[1]);
     const newList = [...acc[0], newEvent];
@@ -29,6 +29,7 @@ function structuralTick(matchState: MatchState, moves: TurnAction[]): TickEvent[
   }, accumulator);
   return structuralTick[0]
 }
+
 function structureEvent(m: TurnAction, count: number): StructureEvent {
   if (m.action === "build")
     return {
@@ -76,6 +77,7 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
         const tile = buildTileFromEvent(event, (faction as Faction), event.id)
         // replace old tile with new tile 
         m.contents[event.y][event.x] = tile;
+        m.unitCount ++
         break;
       case "repair":
         const repairStructureID = (m.contents[event.y][event.x] as AttackerStructureTile | DefenderStructureTile).id;
@@ -128,10 +130,11 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
           movementCompletion: 0
         }
         // add unit to unit list
+        if (m.actors.units[event.actorID]) console.log(m.actors.units[event.actorID], "spawning user ID already exists?")
         m.actors.units[event.actorID] = spawnedUnit;
         // add unit to spawned list of its crypt
         m.actors.crypts[event.cryptID].spawned = [...m.actors.crypts[event.cryptID].spawned, event.actorID]
-
+        m.unitCount ++
         break;
       case "movement":
         // change coordinates at the unit
@@ -148,7 +151,9 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
           movementPath.units = movementPath.units.filter(u => u !== unitMoving.id);
           // add unit to next path if path
           const newpath = m.contents[event.nextY][event.nextX];
-          if (newpath.type === "path") newpath.units = [...newpath.units, event.actorID]
+          if (newpath.type === "path") {
+            newpath.units = [...newpath.units, event.actorID]
+          }
         } else
           unitMoving.movementCompletion = event.completion;
         break;
@@ -168,7 +173,6 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
         // it may happen that several actorDeleted events are issued about one single unit
         // if e.g. several units attack her at the same tick
         // TODO let's ignore them?
-        console.log(event, "deletion event")
         const deleteEvent = (event as ActorDeletedEvent);
         const unitToDelete = event.faction === "attacker" ? m.actors.units[deleteEvent.id] : m.actors.towers[deleteEvent.id];
         if (!unitToDelete) // because already wiped out by a previous event
@@ -176,7 +180,6 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
         else {
           // remove from map
           const tileToWipe = m.contents[unitToDelete.coordinates.y][unitToDelete.coordinates.x];
-          console.log(tileToWipe, "tile to wipe")
           if (tileToWipe.type === "path") tileToWipe.units = tileToWipe.units.filter(u => u !== deleteEvent.id);
           else if (tileToWipe.type === "structure" && tileToWipe.faction === "defender")
             m.contents[unitToDelete.coordinates.y][unitToDelete.coordinates.x] = { type: "open", faction: "defender" };
@@ -184,6 +187,7 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
           if (event.faction === "attacker")
             delete m.actors.units[deleteEvent.id];
           else delete m.actors.towers[deleteEvent.id];
+          // we do not decrement the MatchState unitCount as we don't want to recycle ids
           // return gold
           // m.attackerGold += 20 // TODO get amount right
           break;
@@ -205,12 +209,14 @@ function applyEvents(m: MatchState, events: TickEvent[], currentTick: number, rn
     }
   }
 }
+
 function determineFactionFromEvent(eventType: TickEvent): Faction | null {
   if ("x" in eventType && eventType.x > 12) return "attacker"
   if ("x" in eventType && eventType.x <= 12) return "defender"
   if ("faction" in eventType) return eventType.faction
   else return null
 }
+
 function setStructureFromEvent(m: MatchState, eventType: BuildStructureEvent, faction: Faction, id: number): void {
   if (faction === "attacker") {
     const unit: AttackerStructure = {
@@ -241,6 +247,7 @@ function setStructureFromEvent(m: MatchState, eventType: BuildStructureEvent, fa
     m.actors.towers[unit.id] = unit;
   }
 }
+
 function buildTileFromEvent(eventType: BuildStructureEvent, faction: Faction, id: number): AttackerStructureTile | DefenderStructureTile {
   if (faction === "attacker")
     return {
@@ -258,15 +265,14 @@ function buildTileFromEvent(eventType: BuildStructureEvent, faction: Faction, id
 function applyTowerRepair(tower: DefenderStructure) {
   tower.health++ // TODO
 }
+
 function applyCryptRepair(crypt: AttackerStructure) {
   crypt.spawned = crypt.spawned.slice(1)// add one more spawn slot
 }
 
-
 function applyUpgrade(structure: AttackerStructure | DefenderStructure): void {
   structure["path1Upgrades"]++
 }
-
 
 // // timers per unit!!
 
@@ -282,7 +288,7 @@ function ticksFromMatchState(m: MatchState, currentTick: number, rng: Prando): T
     const status = statusEvents(m, currentTick, rng);
     const unitAttacks = unitAttackEvents(m, currentTick, rng);
 
-    return [...spawn, ...movement, ...towerAttacks, ...status, ...unitAttacks, ]
+    return [...spawn, ...movement, ...towerAttacks, ...status, ...unitAttacks,]
   }
 }
 
@@ -290,7 +296,6 @@ function spawnEvents(m: MatchState, currentTick: number, rng: Prando): UnitSpawn
   const crypts =
     Object.keys(m.actors.crypts)
       .map(index => m.actors.crypts[parseInt(index)]);
-  let unitCount = getUnitCount(m);
   const events = crypts.map(s => {
     const ss = (s as AttackerStructure);
     const { spawnCapacity, spawnRate } = getCryptStats(ss.structure)
@@ -299,9 +304,8 @@ function spawnEvents(m: MatchState, currentTick: number, rng: Prando): UnitSpawn
     const stillNew = (ss.builtOnRound + 3) > m.currentRound;
     // const notSpawnedYet = Math.ceil(currentTick / spawnRate) < ss.spawned.length;
     if (hasCapacity && aboutTime && stillNew) {
-      unitCount++
-      const unitType = ss.structure.replace("-crypt", "") as AttackerUnitType;
-      const newUnit = spawn(m, ss.id, unitCount, ss.coordinates, unitType, rng);
+      const unitType = ss.structure.replace("Crypt", "") as AttackerUnitType;
+      const newUnit = spawn(m, ss.id, ss.coordinates, unitType, rng);
       applyEvents(m, [newUnit], currentTick, rng) // one by one now
       return newUnit
     }
@@ -356,6 +360,7 @@ function findDestination(m: MatchState, a: AttackerUnit, randomnessGenerator: Pr
     return nextCoords
   }
 }
+
 function getCurrentSpeed(a: AttackerUnit): number {
   const baseSpeed = getStats(a.subType).unitSpeed;
   if (a.status?.statusType === "speedDebuff")
@@ -363,12 +368,10 @@ function getCurrentSpeed(a: AttackerUnit): number {
   else return baseSpeed
 }
 
-
 function randomizePath(paths: number, randomnessGenerator: Prando): number {
   const randomness = randomnessGenerator.next();
   // console.log(randomnessGenerator.iteration, "randomizing path")
   return Math.floor(randomness * paths)
-
 }
 
 function move(a: AttackerUnit, newcoords: Coordinates): UnitMovementEvent {
@@ -396,6 +399,7 @@ function unitAttackEvents(m: MatchState, currentTick: number, rng: Prando): Towe
   });
   return events.flat()
 }
+// damage made by tower to attacker unit
 function computerTowerDamage(m: MatchState, a: AttackerUnit, currentTick: number, rng: Prando): (DamageEvent | ActorDeletedEvent)[] {
   const nearbyStructures = findClosebyTowers(m, a.coordinates, 1);
   if (nearbyStructures.length === 0) return []
@@ -425,6 +429,7 @@ function towerAttackEvents(m: MatchState, currentTick: number, rng: Prando): Tow
   const events = towers.map(t => computeUnitDamage(t, m, currentTick, rng))
   return events.flat()
 }
+// damage made by unit to defender tower
 function computeUnitDamage(t: DefenderStructure, m: MatchState, currentTick: number, rng: Prando): TowerAttack[] {
   const range = computeRange(t);
   const unitsNearby = scanForUnits(m, t.coordinates, range);
@@ -436,10 +441,12 @@ function computeUnitDamage(t: DefenderStructure, m: MatchState, currentTick: num
   else if (t.structure === "anacondaTower") return anacondaDamage(t, pickedOne, m, currentTick, rng);
   else return []
 }
+
 function isInRange(t: DefenderStructure, a: AttackerUnit): boolean {
   const range = computeRange(t);
   return canReach(a.coordinates, t.coordinates, range);
 }
+
 function computeRange(t: DefenderStructure): number {
   if (t.structure === "piranhaTower" && t["path1Upgrades"] > 1) return 4
   else if (t.structure === "piranhaTower") return 3
@@ -447,6 +454,7 @@ function computeRange(t: DefenderStructure): number {
   else if (t.structure === "anacondaTower" && t["path2Upgrades"] > 1) return 2
   else return 1
 }
+
 function piranhaDamage(tower: DefenderStructure, a: AttackerUnit, m: MatchState, currentTick: number, rng: Prando): TowerAttack[] {
   const damageAmount = tower["path2Upgrades"] === 2 ? 1 : 2;
   const damageEvent: DamageEvent = {
@@ -464,6 +472,7 @@ function piranhaDamage(tower: DefenderStructure, a: AttackerUnit, m: MatchState,
   applyEvents(m, events, currentTick, rng);
   return events
 }
+
 function slothDamage(tower: DefenderStructure, a: AttackerUnit, m: MatchState, currentTick: number, rng: Prando): TowerAttack[] {
   const statusEvent: StatusEffectAppliedEvent = {
     eventType: "statusApply",
@@ -489,6 +498,7 @@ function slothDamage(tower: DefenderStructure, a: AttackerUnit, m: MatchState, c
   applyEvents(m, events, currentTick, rng);
   return events
 }
+
 function anacondaDamage(tower: DefenderStructure, a: AttackerUnit, m: MatchState, currentTick: number, rng: Prando): TowerAttack[] {
   const killChance = tower["path1Upgrades"] === 0 ? 0.1
     : tower["path1Upgrades"] === 1 ? 0.15
@@ -509,6 +519,7 @@ function anacondaDamage(tower: DefenderStructure, a: AttackerUnit, m: MatchState
   applyEvents(m, events, currentTick, rng);
   return events
 }
+
 function pickOne(acc: DefenderStructure, item: DefenderStructure): DefenderStructure
 function pickOne(acc: AttackerUnit, item: AttackerUnit): AttackerUnit;
 
@@ -562,6 +573,7 @@ function scanForUnits(m: MatchState, coords: Coordinates, range: number): Attack
   }, []);
   return ids.map(id => m.actors.units[id])
 }
+
 function findClosebyAttackers(m: MatchState, coords: Coordinates, range: number): ActorID[] {
   const up = m.contents[coords.y - range]?.[coords.x];
   const upright = m.contents[coords.y - range]?.[coords.x + range];
@@ -613,12 +625,12 @@ function findClosebyPath(m: MatchState, coords: Coordinates, rng: Prando, range 
   if (left?.type === "path") c.push({ y: coords.y, x: coords.x - range })
   if (right?.type === "path") c.push({ y: coords.y, x: coords.x + range })
   if (c.length === 0) {
-    console.log("no path??")
-    console.log(coords)
-    console.log(up)
-    console.log(down)
-    console.log(left)
-    console.log(right)
+    // console.log("no path??")
+    // console.log(coords)
+    // console.log(up)
+    // console.log(down)
+    // console.log(left)
+    // console.log(right)
     return findClosebyPath(m, coords, rng, range + 1);
   }
   else if (c.length > 1) {
@@ -637,13 +649,13 @@ function getCryptStats(type: AttackerStructureType) {
   return { spawnCapacity, spawnRate }
 }
 
-function spawn(m: MatchState, structureID: number, actorID: number, coords: Coordinates, type: AttackerUnitType, rng: Prando): UnitSpawnedEvent {
+function spawn(m: MatchState, structureID: number, coords: Coordinates, type: AttackerUnitType, rng: Prando): UnitSpawnedEvent {
   const { unitHealth, unitSpeed, unitAttack } = getStats(type);
   const path = findClosebyPath(m, coords, rng);
   return {
     eventType: "spawn",
     cryptID: structureID,
-    actorID: actorID,
+    actorID: m.unitCount + 1, // increment
     unitX: path.x,
     unitY: path.y,
     unitType: type,

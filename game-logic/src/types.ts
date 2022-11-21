@@ -23,6 +23,7 @@ export interface MatchState extends AnnotatedMap {
   defenderGold: number;
   defenderBase: DefenderBase;
   actors: ActorsObject;
+  unitCount: number;
   currentRound: number;
 }
 // ordered maps for stateful units
