@@ -15,7 +15,8 @@ function processTick(matchconf: MatchConfig, matchState: MatchState, moves: Turn
   else {
     const events = ticksFromMatchState(matchState, currentTick, randomnessGenerator) || [];
     // applyEvents(matchState, events, currentTick, randomnessGenerator);
-    return events
+    if (events.length === 0) return null
+    else return events
   }
 }
 
@@ -288,7 +289,7 @@ function ticksFromMatchState(m: MatchState, currentTick: number, rng: Prando): T
     const status = statusEvents(m, currentTick, rng);
     const unitAttacks = unitAttackEvents(m, currentTick, rng);
 
-    return [...spawn, ...movement, ...towerAttacks, ...status, ...unitAttacks,]
+    return [...spawn, ...movement, ...towerAttacks, ...status, ...unitAttacks]
   }
 }
 
