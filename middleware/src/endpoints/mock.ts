@@ -270,6 +270,7 @@ async function getRoundExecutor(
       units: {}
     },
     contents: withPath,
+    mapState: withPath.flat(),
     name: "jungle",
     currentRound: 1,
     unitCount: 2,
