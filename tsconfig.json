@@ -1,25 +1,5 @@
 {
   "exclude": ["node-modules", "docker", "documentation", "WebGL"],
-  "references": [
-    {
-      "path": "./utils"
-    },
-    {
-      "path": "./game-logic"
-    },
-    {
-      "path": "./db"
-    },
-    {
-      "path": "./api"
-    },
-    {
-      "path": "./backend"
-    },
-    {
-      "path": "./middleware"
-    }
-  ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
     /* Projects */

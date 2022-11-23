@@ -55,7 +55,8 @@ export type Actor = DefenderBase
 
 export type AttackerUnitType = "macaw" | "jaguar" | "gorilla"
 export interface AttackerUnit {
-  type: "attacker-unit";
+  type: "unit";
+  faction: "attacker";
   subType: AttackerUnitType;
   id: ActorID;
   previousCoordinates: Coordinates | null;
@@ -67,7 +68,7 @@ export interface AttackerUnit {
   status: Status | null;
 }
 
-export type StatusType = "speed-debuff" | string // TODO;
+export type StatusType = "speedDebuff" | string // TODO;
 export interface Status {
   statusType: StatusType
   statusCaughtAt: number;
@@ -75,29 +76,31 @@ export interface Status {
   statusDuration: number;
 }
 
-export interface Coordinates{
+export interface Coordinates {
   x: number;
   y: number;
 }
 export interface AttackerStructure {
-  type: "attacker-structure";
+  type: "structure";
   "id": number;
+  faction: "attacker";
   "structure": AttackerStructureType
   "health": number;
-  "path-1-upgrades": number;
-  "path-2-upgrades": number;
+  "path1Upgrades": number;
+  "path2Upgrades": number;
   coordinates: Coordinates;
   builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
   spawned: ActorID[]
 }
 export interface DefenderStructure {
-  type: "defender-structure";
+  type: "structure";
+  faction: "defender";
   "id": number;
   "structure": DefenderStructureType;
   "health": number;
   coordinates: Coordinates;
-  "path-1-upgrades": number;
-  "path-2-upgrades": number;
+  "path1Upgrades": number;
+  "path2Upgrades": number;
 }
 interface DefenderBase {
   // coordinates: Coordinates;
@@ -121,7 +124,7 @@ export type Tile = PathTile
 export interface PathTile {
   type: "path";
   faction: Faction;
-  "leads-to": Coordinates[]
+  "leadsTo": Coordinates[]
   units: ActorID[];
 }
 export interface Coordinates {
@@ -129,38 +132,44 @@ export interface Coordinates {
   y: number;
 }
 
-export type AttackerStructureType = "macaw-crypt"
-  | "gorilla-crypt"
-  | "jaguar-crypt"
+export type AttackerStructureType = "macawCrypt"
+  | "gorillaCrypt"
+  | "jaguarCrypt"
 
 export interface AttackerStructureTile {
-  "type": "attacker-structure",
+  "type": "structure",
   "id": number;
+  faction: "attacker";
 }
-export type DefenderStructureType = "anaconda-tower"
-  | "sloth-tower"
-  | "piranha-tower"
+export type DefenderStructureType = "anacondaTower"
+  | "slothTower"
+  | "piranhaTower"
 
 export interface DefenderStructureTile {
-  "type": "defender-structure",
+  "type": "structure",
   "id": number;
+  faction: "defender"
   // "structure": DefenderStructureType
 }
 export type Level = 0 | 1 | 2
 export interface DefenderBaseTile {
-  type: "defender-base";
+  type: "base";
+  faction: "defender"
 }
 export interface AttackerBaseTile {
-  type: "attacker-base";
+  type: "base";
+  faction: "attacker";
 }
 export interface DefenderOpenTile {
-  type: "defender-open"
+  type: "open";
+  faction: "defender";
 }
 export interface AttackerOpenTile {
-  type: "attacker-open"
+  type: "open";
+  faction: "attacker";
 }
 export interface ImmovableObjectTile {
-  type: "immovable-object"
+  type: "immovableObject"
 }
 export type Wallet = string;
 
@@ -170,26 +179,30 @@ export type TurnAction = BuildStructure
   | UpgradeStructure
 
 export type Structure = Tower | Crypt;
-export type Tower = "piranha-tower" | "sloth-tower" | "anaconda-tower";
-export type Crypt = "macaw-crypt" | "jaguar-crypt" | "gorilla-crypt";
+export type Tower = "piranhaTower" | "slothTower" | "anacondaTower";
+export type Crypt = "macawCrypt" | "jaguarCrypt" | "gorillaCrypt";
 
 export interface BuildStructure {
+  round: number;
   action: "build";
   x: number;
   y: number;
   structure: Structure;
 }
 export interface RepairStructure {
+  round: number;
   action: "repair";
   x: number;
   y: number;
 }
 export interface DestroyStructure {
+  round: number;
   action: "destroy";
   x: number;
   y: number;
 }
 export interface UpgradeStructure {
+  round: number;
   action: "upgrade",
   x: number;
   y: number;
@@ -199,29 +212,29 @@ export type StructureEvent = BuildStructureEvent
   | RepairStructureEvent
   | UpgradeStructureEvent
   | DestroyStructureEvent
-export interface BuildStructureEvent {
-  event: "build";
-  x: number;
-  y: number;
-  structure: Structure;
-  id: number;
-}
-export interface RepairStructureEvent {
-  event: "repair";
-  x: number;
-  y: number;
-}
-export interface DestroyStructureEvent {
-  event: "destroy";
-  x: number;
-  y: number;
-}
-export interface UpgradeStructureEvent {
-  event: "upgrade",
-  x: number;
-  y: number;
-  path: number;
-}
+  export interface BuildStructureEvent {
+    eventType: "build";
+    x: number;
+    y: number;
+    structure: Structure;
+    id: number;
+  }
+  export interface RepairStructureEvent {
+    eventType: "repair";
+    x: number;
+    y: number;
+  }
+  export interface DestroyStructureEvent {
+    eventType: "destroy";
+    x: number;
+    y: number;
+  }
+  export interface UpgradeStructureEvent {
+    eventType: "upgrade",
+    x: number;
+    y: number;
+    path: number;
+  }
 
 
 export type TickEvent = GoldRewardEvent
@@ -239,13 +252,14 @@ export type TickEvent = GoldRewardEvent
 
 export type Faction = "attacker" | "defender";
 export interface GoldRewardEvent {
-  event: "gold-reward";
+  eventType: "goldReward";
   faction: Faction;
   amount: number;
 }
+
 export type UnitType = "jaguar" | "macaw" | "gorilla";
 export interface UnitSpawnedEvent {
-  event: "spawn"
+  eventType: "spawn"
   cryptID: number;
   actorID: number;
   unitX: number;
@@ -256,7 +270,7 @@ export interface UnitSpawnedEvent {
   unitAttack: number;
 }
 export interface UnitMovementEvent {
-  event: "movement";
+  eventType: "movement";
   actorID: number;
   unitX: number;
   unitY: number;
@@ -267,7 +281,7 @@ export interface UnitMovementEvent {
 }
 export type DamageType = "neutral" | string;
 export interface DamageEvent {
-  event: "damage";
+  eventType: "damage";
   faction: Faction; // the one doing the damage
   sourceID: number;
   targetID: number;
@@ -275,24 +289,24 @@ export interface DamageEvent {
   damageAmount: number;
 }
 export interface DefenderBaseUpdateEvent {
-  event: "defender-base-update";
+  eventType: "defenderBaseUpdate";
   health: 25;
 }
 export interface ActorDeletedEvent {
-  event: "actor-deleted";
+  eventType: "actorDeleted";
   faction: Faction; // which faction the unit to delete belongs to
   id: number;
 }
 export interface StatusEffectAppliedEvent {
-  event: "status-apply";
+  eventType: "statusApply";
   sourceID: number;
   targetID: number;
-  statusType: "speed-debuff";
+  statusType: "speedDebuff";
   statusAmount: number;
   statusDuration: number;
 }
 export interface StatusEffectRemovedEvent {
-  event: "status-remove";
+  eventType: "statusRemove";
   id: number;
   statusType: StatusType;
 }

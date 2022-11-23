@@ -36,8 +36,7 @@ async function getUserStats(
     stats: {
       wallet: walletAddress,
       wins: 666,
-      losses: 10,
-      ties: 10
+      losses: 10    
     }
   }
 }
@@ -53,8 +52,8 @@ async function getLobbyState(
       created_at: new Date(),
       lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
       creator_faction: "attacker",
-      player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
-      player_two_faction: "defender",
+      player_two: null,
+      player_two_faction: null,
       current_round: 1,
       num_of_rounds: 100,
       map: "jungle",
@@ -79,8 +78,8 @@ async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
       created_at: new Date(),
       lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
       creator_faction: "attacker",
-      player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
-      player_two_faction: "defender",
+      player_two: null,
+      player_two_faction: null,
       current_round: 1,
       num_of_rounds: 100,
       map: "jungle",
@@ -108,8 +107,8 @@ async function getOpenLobbies(
       created_at: new Date(),
       lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
       creator_faction: "attacker",
-      player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
-      player_two_faction: "defender",
+      player_two: null,
+      player_two_faction: null,
       current_round: 1,
       num_of_rounds: 100,
       map: "jungle",
@@ -139,8 +138,8 @@ async function getUserLobbiesMatches(
           created_at: new Date(),
           lobby_creator: "0xdDA309096477b89D7066948b31aB05924981DF2B",
           creator_faction: "attacker",
-          player_two: "0xcede5F9E2F8eDa3B6520779427AF0d052B106B57",
-          player_two_faction: "defender",
+          player_two: null,
+          player_two_faction: null,
           current_round: 1,
           num_of_rounds: 100,
           map: "jungle",
@@ -271,8 +270,10 @@ async function getRoundExecutor(
       units: {}
     },
     contents: withPath,
+    mapState: withPath.flat(),
     name: "jungle",
-    currentRound: 1
+    currentRound: 1,
+    unitCount: 2,
   };
   const moves = build(20, 10);
   const executor = RoundExecutorConstructor.initialize(matchConfig, matchState, moves, rng, processTick);

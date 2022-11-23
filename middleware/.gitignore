@@ -2,3 +2,5 @@ node_modules
 lib
 packaged
 .DS_store
+*.js
+*.d.ts

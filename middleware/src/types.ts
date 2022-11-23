@@ -155,8 +155,6 @@ export interface BasicLobbyInfo {
   round_start_height: number;
   lobby_creator: UserAddress;
   creator_faction: Faction
-  player_two: UserAddress;
-  player_two_faction: Faction;
   initial_gold: number;
 }
 
@@ -164,15 +162,21 @@ export type Faction = "attacker" | "defender";
 
 export interface OpenLobbyState extends BasicLobbyInfo {
   lobby_state: "open";
+  player_two: null;
+  player_two_faction:  null;
 }
 
 export interface ActiveLobbyState extends BasicLobbyInfo {
   lobby_state: "active";
-  player_turn: UserAddress
+  player_turn: UserAddress;
+  player_two: UserAddress;
+  player_two_faction: Faction;
 }
 
 export interface FinishedLobbyState extends BasicLobbyInfo {
   lobby_state: "finished";
+  player_two: UserAddress;
+  player_two_faction: Faction;
 }
 
 export type LobbyState = OpenLobbyState | ActiveLobbyState | FinishedLobbyState;
@@ -228,7 +232,6 @@ export interface UserStats {
   wallet: UserAddress;
   wins: number;
   losses: number;
-  ties: number;
 }
 
 export interface PackedUserStats {
