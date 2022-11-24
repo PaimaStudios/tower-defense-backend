@@ -67,25 +67,136 @@ Json Encoding:
   "rate": 100
 }
 ```
+### Defender Towers
 
+The following attributes from defender towers are configurable:
+
+`health`: the HP of the Tower.
+`cooldown`: How long it takes for the Tower to overheat and stop attacking. 
+`damage`: How much damage a tower hit does to an attacker unit.
+`range`: The hit range of a tower's attack.
 ### Anaconda Tower
 
 Concise Encoding:
 
 ```
-an;h100;c10;
+at;h100;c10;d5;r2;
 ```
 
 Json Encoding:
 
 ```json
 {
-  "name": "anaconda-tower",
+  "name": "anacondaTower",
+  "health": 100,
+  "cooldown": 10,
+  "damage": 5,
+  "range": 2
+}
+```
+
+### Sloth Tower
+
+Concise Encoding:
+
+```
+st;h100;c10;d5;r2;
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "slothTower",
   "health": 100,
   "cooldown": 10
 }
 ```
 
-### ... Tower
+### Piranha Tower
 
-...
+Concise Encoding:
+
+```
+pt;h100;c10;d5;r2;
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "piranhaTower",
+  "health": 100,
+  "cooldown": 10,
+  "damage": 5,
+  "range": 2
+}
+```
+
+### Crypts
+The following attributes from defender towers are configurable:
+
+`health`: The health of the individual units spawned by the crypt.
+`capacity`: How many units can a crypt spawn before stopping.
+`damage`: The damage done by units spawned by a crypt.
+`speed`: The movement speed of units spawned by a crypt.
+
+### Macaw Crypt
+
+Concise Encoding:
+
+```
+mc;h100;c10;d5;s2;
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "macawCrypt",
+  "health": 100,
+  "capacity": 10,
+  "damage": 5,
+  "speed": 2
+}
+```
+
+### Jaguar Crypt
+
+Concise Encoding:
+
+```
+jc;h100;c10;d5;s2
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "jaguarCrypt",
+  "health": 100,
+  "capacity": 10,
+  "damage": 5,
+  "speed": 2
+}
+```
+
+### Gorilla Crypt
+
+Concise Encoding:
+
+```
+gc;h100;c10;d5;s2
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "gorillaCrypt",
+  "health": 100,
+  "capacity": 10,
+  "damage": 5,
+  "speed": 2
+}
+```
