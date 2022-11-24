@@ -24,7 +24,27 @@ export interface AnnotatedMap {
 }
 
 export interface MatchConfig {
-  something: "something"
+  baseAttackerGoldRate: number;
+  baseDefenderGoldRate: number;
+  anaconda: TowerConfig;
+  piranha: TowerConfig;
+  sloth: TowerConfig;
+  macaw: CryptConfig;
+  gorilla: CryptConfig;
+  jaguar: CryptConfig;
+  baseSpeed: number;
+}
+export interface TowerConfig {
+  health: number;
+  cooldown: number;
+  damage: number;
+  range: number;
+}
+export interface CryptConfig{
+  health: number;
+  capacity: number;
+  damage: number;
+  speed: number;
 }
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
@@ -34,6 +54,7 @@ export interface MatchState extends AnnotatedMap {
   defenderGold: number;
   defenderBase: DefenderBase;
   actors: ActorsObject;
+  unitCount: number;
   currentRound: number;
 }
 // ordered maps for stateful units
