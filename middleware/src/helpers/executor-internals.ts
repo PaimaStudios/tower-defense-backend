@@ -15,6 +15,7 @@ import {
     RoundExecutorData,
 } from "../types";
 import { MatchConfig, MatchState, TurnAction } from "@tower-defense/utils";
+import { baseConfig } from "../endpoints/mock-helpers";
 
 // executor
 
@@ -22,7 +23,7 @@ export async function buildRoundExecutor(
     data: RoundExecutorData
 ): Promise<RoundExecutor> {
     const { seed } = data.block_height;
-    const matchEnvironment: MatchConfig = { something: "something" };
+    const matchEnvironment: MatchConfig = baseConfig;
     const matchState = data.state;
     const rng = new Prando(seed);
     return RoundExecutorConstructor.initialize(
@@ -38,7 +39,7 @@ export async function buildMatchExecutor(
     data: MatchExecutorData
 ): Promise<MatchExecutor> {
     const { config, states, seeds, moves } = data;
-    const matchEnvironment: MatchConfig = { something: "something" };
+    const matchEnvironment: MatchConfig = baseConfig;
     console.log(seeds, "seeds used for the match executor at the middleware");
     const stateMutator = (m: MatchState[]) => m[0]
     return MatchExecutorConstructor.initialize(

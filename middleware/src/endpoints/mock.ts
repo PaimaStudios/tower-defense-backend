@@ -24,8 +24,9 @@ import {
 } from "../types";
 import type { MatchConfig } from "@tower-defense/utils";
 import Prando from "paima-engine/paima-prando";
-import { annotateMap, testmap, setPath, build } from "./mock-helpers";
+import { annotateMap, testmap, setPath, build, parseConfig } from "./mock-helpers";
 import processTick from "@tower-defense/game-logic";
+import parseCode from "@pgtyped/query/lib/loader/typescript";
 
 async function getUserStats(
   walletAddress: string
@@ -252,7 +253,8 @@ async function getRoundExecutor(
   // const executor = RoundExecutor.initialize(matchEnvironment, playerStates, randomizedInputs, randomnessGenerator, processTick);
   const seed = "td";
   const rng = new Prando(seed);
-  const matchConfig: MatchConfig = { something: "something" };
+  const configString = "r|1|gr;d;105|st;h150;d5;r2" // we would get this from the db in production
+  const matchConfig: MatchConfig = parseConfig(configString);
   const am = annotateMap(testmap, 22);
   const withPath = setPath(am);
   const matchState = {

@@ -1,4 +1,5 @@
-import type { Tile, PathTile, Coordinates, TurnAction } from "@tower-defense/utils";
+import type { Tile, PathTile, Coordinates, TurnAction, MatchConfig } from "@tower-defense/utils";
+import {consumer} from "paima-engine/paima-concise"
 
 export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -137,4 +138,32 @@ function availableForBuilding(map: number[]): { towers: Coordinates[], crypts: C
       crypts.push({ x: col, y: row })
   }
   return { towers, crypts }
+}
+export function parseConfig(s: string): MatchConfig{
+
+return {...baseConfig}
+}
+
+const baseTowerConfig = {
+  health: 100,
+  cooldown: 10,
+  damage: 1,
+  range: 1
+}
+const baseCryptConfig = {
+  health: 100,
+  capacity: 10,
+  damage: 1,
+  speed: 5
+}
+export const baseConfig = {
+  baseAttackerGoldRate: 100,
+  baseDefenderGoldRate: 100,
+  baseSpeed: 20,
+  anaconda: baseTowerConfig,
+  piranha: baseTowerConfig,
+  sloth: baseTowerConfig,
+  macaw: baseCryptConfig,
+  gorilla: baseCryptConfig,
+  jaguar: baseCryptConfig,
 }
