@@ -1,4 +1,4 @@
-import type { AnnotatedMap, MatchState, PathTile, RawMap, Tile } from "./types";
+import type { AnnotatedMap, MatchState, PathTile, RawMap, Tile } from "@tower-defense/utils";
 
 export default function (m: RawMap): AnnotatedMap {
   return {
