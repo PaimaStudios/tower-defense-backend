@@ -1,5 +1,6 @@
 import type { Tile, PathTile, Coordinates, TurnAction, MatchConfig } from "@tower-defense/utils";
-import {consumer} from "paima-engine/paima-concise"
+import { consumer } from "paima-engine/paima-concise";
+import { parse } from "@tower-defense/utils";
 
 export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -22,10 +23,10 @@ export function annotateMap(contents: number[], width: number): Tile[][] {
   const reduced = tiles.reduce((acc, tile, index) => {
     const row = Math.floor(index / width);
     const existing = acc[row] || [];
-    const t = {...tile, x: row + 1};
+    const t = { ...tile, x: row + 1 };
     acc[row] = [...existing, t];
     const y = acc[row].indexOf(t);
-    acc[row][y] = {...t, y: y+ 1}
+    acc[row][y] = { ...t, y: y + 1 }
     return acc
   }, accBunt)
   return reduced
@@ -139,9 +140,52 @@ function availableForBuilding(map: number[]): { towers: Coordinates[], crypts: C
   }
   return { towers, crypts }
 }
-export function parseConfig(s: string): MatchConfig{
+type ConciseValue = {
+  value: string;
+  isStateIdentifier?: boolean;
+};
+export function parseConfig(s: string): MatchConfig {
+  // "r|1|gr;d;105|st;h150;c6;d5;r2
+  const c = consumer.initialize(s);
+  const version = c.nextValue();
+  const definitions = c.remainingValues();
+  const parsed= definitions.map(d => parse(d.value))
+  for (let p of parsed){
+    if (!("error" in p)) 
+    switch (p.name){
+      case "baseGoldRate": 
+        p.faction === "defender" 
+        ? baseConfig.baseDefenderGoldRate = p.value 
+        : baseConfig.baseAttackerGoldRate = p.value
+        break;
+      case "anacondaTower":
+        baseConfig.anaconda.health = p.health;
+        baseConfig.anaconda.cooldown = p.cooldown;
+        baseConfig.anaconda.damage = p.damage;
+        baseConfig.anaconda.range = p.range;
+        break;
+      case "slothTower":
+        baseConfig.sloth.health = p.health;
+        baseConfig.sloth.cooldown = p.cooldown;
+        baseConfig.sloth.damage = p.damage;
+        baseConfig.sloth.range = p.range;
+        break;
+      case "piranhaTower":
+        baseConfig.piranha.health = p.health;
+        baseConfig.piranha.cooldown = p.cooldown;
+        baseConfig.piranha.damage = p.damage;
+        baseConfig.piranha.range = p.range;
+        break;
+      case "gorillaCrypt":
+        baseConfig.gorilla.health = p.health;
+        baseConfig.gorilla.capacity = p.capacity;
+        baseConfig.gorilla.damage = p.damage;
+        baseConfig.gorilla.speed = p.speed;
+        break;
+    }
+  }
 
-return {...baseConfig}
+  return { ...baseConfig }
 }
 
 const baseTowerConfig = {
