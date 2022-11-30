@@ -166,7 +166,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-jc;h100;c10;d5;s2
+jc;h100;c10;d5;s2;
 ```
 
 Json Encoding:
@@ -186,7 +186,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-gc;h100;c10;d5;s2
+gc;h100;c10;d5;s2;
 ```
 
 Json Encoding:
