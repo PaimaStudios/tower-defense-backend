@@ -3,6 +3,7 @@ import P from 'parsimmon';
 // Parser for Match Config Definitions
 const semicolon = P.string(";");
 interface BaseGoldRate{
+  name: "baseGoldRate"
   faction: "defender" | "attacker",
   value: number;
 }
@@ -60,14 +61,14 @@ interface PiranhaTower extends Tower{
   name: "piranhaTower"
 }
 
-export const tower = P.seqMap(
+export const tower: P.Parser<Tower> = P.seqMap(
   health,
   cooldown,
   damage,
   range,
   function(h, c, d, r){ return {...h, ...c, ...d, ...r}}
 )
-const anacondaTower = P.seqMap(
+const anacondaTower: P.Parser<AnacondaTower> = P.seqMap(
   P.string("at"),
   semicolon,
   tower,
@@ -75,7 +76,7 @@ const anacondaTower = P.seqMap(
     return {name: "anacondaTower", ...t}
   }
 )
-const slothTower = P.seqMap(
+const slothTower: P.Parser<SlothTower> = P.seqMap(
   P.string("st"),
   semicolon,
   tower,
@@ -93,7 +94,23 @@ const piranhaTower = P.seqMap(
 )
 
 // crypts
+interface Crypt{
+  health: number;
+  capacity: number;
+  damage: number;
+  range: number;
+}
+interface GorillaCrypt extends Tower{
+  name: "gorillaCrypt"
+}
+interface JaguarCrypt extends Tower{
+  name: "jaguarCrypt"
+}
+interface MacawCrypt extends Tower{
+  name: "macawCrypt"
+}
 interface Capacity {capacity: number;}
+
 export const capacity = P.seqObj<Capacity>(
   P.string("c"),
   ["capacity", P.digits.map(Number)],
@@ -133,7 +150,13 @@ const macawCrypt = P.seqMap(
   }
 )
 
-type ParsedSubmittedInput = any;
+type ParsedSubmittedInput = AnacondaTower
+| PiranhaTower
+| SlothTower
+| GorillaCrypt
+| JaguarCrypt
+| MacawCrypt
+| BaseGoldRate;
 const parser: P.Parser<ParsedSubmittedInput> = P.alt(baseGoldRate, anacondaTower, slothTower, piranhaTower, gorillaCrypt, jaguarCrypt, macawCrypt);
 
 export function parse(s: string): ParsedSubmittedInput {
