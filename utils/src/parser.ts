@@ -9,11 +9,9 @@ interface BaseGoldRate{
 export const baseGoldRate = P.seqObj<BaseGoldRate>(
   P.string("gr"),
   semicolon,
-  P.alt(P.string("a"), P.string("d")).map(value => {
-    return value === "a" 
-    ? ['faction', "defender"]
-    : ['faction', 'attacker']
-  }),
+  ['faction', P.alt(P.string("a"), P.string("d")).map(value => {
+    return value === "a" ? 'attacker': 'defender' 
+  })],
   semicolon,
   ['value', P.digits.map(Number)]
 );
@@ -134,7 +132,7 @@ const macawCrypt = P.seqMap(
 )
 
 type ParsedSubmittedInput = any;
-const parser: P.Parser<ParsedSubmittedInput> = P.alt(anacondaTower, slothTower, piranhaTower, gorillaCrypt, jaguarCrypt, macawCrypt);
+const parser: P.Parser<ParsedSubmittedInput> = P.alt(baseGoldRate, anacondaTower, slothTower, piranhaTower, gorillaCrypt, jaguarCrypt, macawCrypt);
 
 export function parse(s: string): ParsedSubmittedInput {
   try {
