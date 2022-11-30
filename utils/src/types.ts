@@ -215,6 +215,7 @@ export interface RepairStructure {
   action: "repair";
   x: number;
   y: number;
+  value: number; // percentage of health restored
 }
 export interface DestroyStructure {
   round: number;
@@ -227,7 +228,6 @@ export interface UpgradeStructure {
   action: "upgrade",
   x: number;
   y: number;
-  path: number;
 }
 export type StructureEvent = BuildStructureEvent
   | RepairStructureEvent
