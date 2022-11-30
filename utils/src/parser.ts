@@ -98,21 +98,27 @@ interface Crypt{
   health: number;
   capacity: number;
   damage: number;
-  range: number;
+  speed: number;
 }
-interface GorillaCrypt extends Tower{
+interface GorillaCrypt extends Crypt{
   name: "gorillaCrypt"
 }
-interface JaguarCrypt extends Tower{
+interface JaguarCrypt extends Crypt{
   name: "jaguarCrypt"
 }
-interface MacawCrypt extends Tower{
+interface MacawCrypt extends Crypt{
   name: "macawCrypt"
 }
 interface Capacity {capacity: number;}
+interface Speed {speed: number;}
 
 export const capacity = P.seqObj<Capacity>(
   P.string("c"),
+  ["capacity", P.digits.map(Number)],
+  semicolon
+);
+export const speed = P.seqObj<Capacity>(
+  P.string("s"),
   ["capacity", P.digits.map(Number)],
   semicolon
 );
@@ -121,7 +127,7 @@ export const crypt = P.seqMap(
   health,
   capacity,
   damage,
-  range,
+  speed,
   function(h, c, d, r){ return {...h, ...c, ...d, ...r}}
 )
 
@@ -150,13 +156,17 @@ const macawCrypt = P.seqMap(
   }
 )
 
+interface InvalidInput{
+  error: 'invalidString'
+}
 type ParsedSubmittedInput = AnacondaTower
 | PiranhaTower
 | SlothTower
 | GorillaCrypt
 | JaguarCrypt
 | MacawCrypt
-| BaseGoldRate;
+| BaseGoldRate
+| InvalidInput;
 const parser: P.Parser<ParsedSubmittedInput> = P.alt(baseGoldRate, anacondaTower, slothTower, piranhaTower, gorillaCrypt, jaguarCrypt, macawCrypt);
 
 export function parse(s: string): ParsedSubmittedInput {
@@ -166,7 +176,7 @@ export function parse(s: string): ParsedSubmittedInput {
   } catch (e) {
     console.log(e, 'parsing failure');
     return {
-      input: 'invalidString',
+      error: 'invalidString',
     };
   }
 }
