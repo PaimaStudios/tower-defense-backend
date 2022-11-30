@@ -14,7 +14,9 @@ export const baseGoldRate = P.seqObj<BaseGoldRate>(
   })],
   semicolon,
   ['value', P.digits.map(Number)]
-);
+).map(r => {
+  return {...r, name: "baseGoldRate"}
+})
 
 // Tower Config Definitions
 interface Health {health: number;}
