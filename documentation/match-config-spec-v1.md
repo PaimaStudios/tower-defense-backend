@@ -79,7 +79,7 @@ Json Encoding:
 {
   "name": "base-gold-rate",
   "faction": "attacker",
-  "rate": 100
+  "value": 100
 }
 ```
 ### Defender Towers
