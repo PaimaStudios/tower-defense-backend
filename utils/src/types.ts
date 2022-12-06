@@ -26,12 +26,12 @@ export interface AnnotatedMap {
 export interface MatchConfig {
   baseAttackerGoldRate: number;
   baseDefenderGoldRate: number;
-  anaconda: TowerConfig;
-  piranha: TowerConfig;
-  sloth: TowerConfig;
-  macaw: CryptConfig;
-  gorilla: CryptConfig;
-  jaguar: CryptConfig;
+  anacondaTower: TowerConfig;
+  piranhaTower: TowerConfig;
+  slothTower: TowerConfig;
+  macawCrypt: CryptConfig;
+  gorillaCrypt: CryptConfig;
+  jaguarCrypt: CryptConfig;
   baseSpeed: number;
 }
 export interface TowerConfig {
@@ -41,10 +41,11 @@ export interface TowerConfig {
   range: number;
 }
 export interface CryptConfig{
-  health: number;
-  capacity: number;
-  damage: number;
-  speed: number;
+  unitHealth: number; // 100
+  spawnRate: number; // 2
+  capacity: number; // 50
+  damage: number; // 1
+  unitSpeed: number; // 
 }
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
@@ -103,12 +104,10 @@ export interface Coordinates {
 }
 export interface AttackerStructure {
   type: "structure";
-  "id": number;
+  id: number;
   faction: "attacker";
-  "structure": AttackerStructureType
-  "health": number;
-  "path1Upgrades": number;
-  "path2Upgrades": number;
+  structure: AttackerStructureType
+  upgrades: number;
   coordinates: Coordinates;
   builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
   spawned: ActorID[]
@@ -116,12 +115,11 @@ export interface AttackerStructure {
 export interface DefenderStructure {
   type: "structure";
   faction: "defender";
-  "id": number;
-  "structure": DefenderStructureType;
-  "health": number;
+  id: number;
+  structure: DefenderStructureType;
+  health: number;
   coordinates: Coordinates;
-  "path1Upgrades": number;
-  "path2Upgrades": number;
+  upgrades: number;
 }
 interface DefenderBase {
   // coordinates: Coordinates;
@@ -254,7 +252,6 @@ export type StructureEvent = BuildStructureEvent
     eventType: "upgrade",
     x: number;
     y: number;
-    path: number;
   }
 
 
