@@ -2,10 +2,17 @@ import P from 'parsimmon';
 
 // Parser for Match Config Definitions
 const semicolon = P.string(";");
-interface baseSpeed{
+interface BaseSpeed{
   name: "baseGoldRate"
   value: number;
 }
+export const baseSpeed = P.seqObj<BaseSpeed>(
+  P.string("bs"),
+  semicolon,
+  ['value', P.digits.map(Number)]
+).map(r => {
+  return {...r, name: "baseGoldRate"}
+})
 interface BaseGoldRate{
   name: "baseGoldRate"
   faction: "defender" | "attacker",
@@ -47,7 +54,7 @@ interface Range {range: number;}
 export const range = P.seqObj<Range>(
   P.string("r"),
   ["range", P.digits.map(Number)],
-  semicolon
+  // no semicolon, it ends here
 );
 interface Tower{
   health: number;
