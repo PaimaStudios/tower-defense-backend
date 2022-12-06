@@ -44,7 +44,22 @@ A `definition` is the specification of a single piece of the match config. Like 
 
 In this section we will list out all of the supported definitions part of this version of the configuration.
 
+### Base Speed
+How many ticks are processed per second.
+
+```
+bs;5
+```
+Json Encoding:
+
+```json
+{
+  "name": "baseSpeed",
+  "value": 5
+}
+```
 ### Base Gold Rate
+Gold received by each faction at the end of each round.
 
 Concise Encoding:
 
@@ -64,7 +79,7 @@ Json Encoding:
 {
   "name": "base-gold-rate",
   "faction": "attacker",
-  "rate": 100
+  "value": 100
 }
 ```
 ### Defender Towers
@@ -80,7 +95,7 @@ The following attributes from defender towers are configurable:
 Concise Encoding:
 
 ```
-at;h100;c10;d5;r2;
+at;h100;c10;d5;r2
 ```
 
 Json Encoding:
@@ -100,7 +115,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-st;h100;c10;d5;r2;
+st;h100;c10;d5;r2
 ```
 
 Json Encoding:
@@ -109,7 +124,8 @@ Json Encoding:
 {
   "name": "slothTower",
   "health": 100,
-  "cooldown": 10
+  "cooldown": 10,
+  "range": 2
 }
 ```
 
@@ -118,7 +134,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-pt;h100;c10;d5;r2;
+pt;h100;c10;d5;r2
 ```
 
 Json Encoding:
@@ -136,17 +152,18 @@ Json Encoding:
 ### Crypts
 The following attributes from defender towers are configurable:
 
-`health`: The health of the individual units spawned by the crypt.
+`unitHealth`: The health of the individual units spawned by the crypt.
+`spawnRate`: The speed at which crypts spawn units. e.g. `2` = One unit spawned every game 2 ticks.
 `capacity`: How many units can a crypt spawn before stopping.
 `damage`: The damage done by units spawned by a crypt.
-`speed`: The movement speed of units spawned by a crypt.
+`unitSpeed`: The movement speed of units spawned by a crypt.
 
 ### Macaw Crypt
 
 Concise Encoding:
 
 ```
-mc;h100;c10;d5;s2;
+mc;h100;r2;c10;d5;s2
 ```
 
 Json Encoding:
@@ -154,10 +171,11 @@ Json Encoding:
 ```json
 {
   "name": "macawCrypt",
-  "health": 100,
+  "unitHealth": 100,
+  "spawnRate": 2,
   "capacity": 10,
   "damage": 5,
-  "speed": 2
+  "unitSpeed": 2
 }
 ```
 
@@ -166,7 +184,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-jc;h100;c10;d5;s2;
+jc;h100;r2;c10;d5;s2
 ```
 
 Json Encoding:
@@ -174,10 +192,11 @@ Json Encoding:
 ```json
 {
   "name": "jaguarCrypt",
-  "health": 100,
+  "unitHealth": 100,
+  "spawnRate": 2,
   "capacity": 10,
   "damage": 5,
-  "speed": 2
+  "unitSpeed": 2
 }
 ```
 
@@ -186,7 +205,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-gc;h100;c10;d5;s2;
+gc;h100;c10;d5;s2
 ```
 
 Json Encoding:
@@ -194,9 +213,10 @@ Json Encoding:
 ```json
 {
   "name": "gorillaCrypt",
-  "health": 100,
+  "unitHealth": 100,
+  "spawnRate": 2,
   "capacity": 10,
   "damage": 5,
-  "speed": 2
+  "unitSpeed": 2
 }
 ```

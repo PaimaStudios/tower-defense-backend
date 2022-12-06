@@ -11,30 +11,24 @@ These are the types of game input a user can submit:
    ...
 
 ### Create Lobby
-
 Middleware endpoint:
 
 ```js
-createLobby(numberOfLives: Num, numberOfRounds: number, roundLength: number, map: string, selectedAnimal: string)
+createLobby(matchConfigId: string, map: string)
 ```
 
 Encoding:
 
 ```
 c|
-numberOfLives|
-numOfRounds|
-roundLength|
-allowedWallets|
+matchConfigId|
 map|
-selectedAnimal|
-matchConfigId
 ```
 
 Encoding Example:
 
 ```
-c|3|20|10|0x234a...,0x89a3...|map1|Piranha|9al2309a...
+c|9al2309a...|jungle
 ```
 
 ### Join Lobby
@@ -42,21 +36,20 @@ c|3|20|10|0x234a...,0x89a3...|map1|Piranha|9al2309a...
 Middleware endpoint:
 
 ```js
-joinLobby(lobbyID: String, selectedAnimal: String)
+joinLobby(lobbyID: String)
 ```
 
 Encoding:
 
 ```
 j|
-*lobbyID|
-selectedAnimal|
+*lobbyID
 ```
 
 Encoding Example:
 
 ````
-j|*92aomafiooao...|Piranha
+j|*92aomafiooao...
 
 ### Register Match Config
 
