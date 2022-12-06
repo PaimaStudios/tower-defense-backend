@@ -2,6 +2,10 @@ import P from 'parsimmon';
 
 // Parser for Match Config Definitions
 const semicolon = P.string(";");
+interface baseSpeed{
+  name: "baseGoldRate"
+  value: number;
+}
 interface BaseGoldRate{
   name: "baseGoldRate"
   faction: "defender" | "attacker",
@@ -95,10 +99,11 @@ const piranhaTower = P.seqMap(
 
 // crypts
 interface Crypt{
-  health: number;
+  unitHealth: number;
+  spawnRate: number;
   capacity: number;
   damage: number;
-  speed: number;
+  unitSpeed: number;
 }
 interface GorillaCrypt extends Crypt{
   name: "gorillaCrypt"
@@ -109,25 +114,38 @@ interface JaguarCrypt extends Crypt{
 interface MacawCrypt extends Crypt{
   name: "macawCrypt"
 }
+interface UnitHealth {unitHealth: number;}
 interface Capacity {capacity: number;}
-interface Speed {speed: number;}
+interface SpawnRate {spawnRate: number;}
+interface UnitSpeed {unitSpeed: number;}
 
+export const unitHealth = P.seqObj<UnitHealth>(
+  P.string("h"),
+  ["unitHealth", P.digits.map(Number)],
+  semicolon
+)
+export const spawnRate = P.seqObj<SpawnRate>(
+  P.string("r"),
+  ["spawnRate", P.digits.map(Number)],
+  semicolon
+);
 export const capacity = P.seqObj<Capacity>(
   P.string("c"),
   ["capacity", P.digits.map(Number)],
   semicolon
 );
-export const speed = P.seqObj<Capacity>(
+export const unitSpeed = P.seqObj<UnitSpeed>(
   P.string("s"),
-  ["capacity", P.digits.map(Number)],
-  semicolon
+  ["unitSpeed", P.digits.map(Number)]
+  // no semicolon, this is the last piece
 );
 
 export const crypt = P.seqMap(
-  health,
+  unitHealth,
+  spawnRate,
   capacity,
   damage,
-  speed,
+  unitSpeed,
   function(h, c, d, r){ return {...h, ...c, ...d, ...r}}
 )
 
