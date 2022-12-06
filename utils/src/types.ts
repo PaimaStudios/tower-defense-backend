@@ -24,7 +24,28 @@ export interface AnnotatedMap {
 }
 
 export interface MatchConfig {
-  something: "something"
+  baseAttackerGoldRate: number;
+  baseDefenderGoldRate: number;
+  anacondaTower: TowerConfig;
+  piranhaTower: TowerConfig;
+  slothTower: TowerConfig;
+  macawCrypt: CryptConfig;
+  gorillaCrypt: CryptConfig;
+  jaguarCrypt: CryptConfig;
+  baseSpeed: number;
+}
+export interface TowerConfig {
+  health: number;
+  cooldown: number;
+  damage: number;
+  range: number;
+}
+export interface CryptConfig{
+  unitHealth: number; // 100
+  spawnRate: number; // 2
+  capacity: number; // 50
+  damage: number; // 1
+  unitSpeed: number; // 
 }
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
@@ -34,6 +55,7 @@ export interface MatchState extends AnnotatedMap {
   defenderGold: number;
   defenderBase: DefenderBase;
   actors: ActorsObject;
+  unitCount: number;
   currentRound: number;
 }
 // ordered maps for stateful units
@@ -82,12 +104,10 @@ export interface Coordinates {
 }
 export interface AttackerStructure {
   type: "structure";
-  "id": number;
+  id: number;
   faction: "attacker";
-  "structure": AttackerStructureType
-  "health": number;
-  "path1Upgrades": number;
-  "path2Upgrades": number;
+  structure: AttackerStructureType
+  upgrades: number;
   coordinates: Coordinates;
   builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
   spawned: ActorID[]
@@ -95,12 +115,11 @@ export interface AttackerStructure {
 export interface DefenderStructure {
   type: "structure";
   faction: "defender";
-  "id": number;
-  "structure": DefenderStructureType;
-  "health": number;
+  id: number;
+  structure: DefenderStructureType;
+  health: number;
   coordinates: Coordinates;
-  "path1Upgrades": number;
-  "path2Upgrades": number;
+  upgrades: number;
 }
 interface DefenderBase {
   // coordinates: Coordinates;
@@ -194,6 +213,7 @@ export interface RepairStructure {
   action: "repair";
   x: number;
   y: number;
+  value: number; // percentage of health restored
 }
 export interface DestroyStructure {
   round: number;
@@ -206,7 +226,6 @@ export interface UpgradeStructure {
   action: "upgrade",
   x: number;
   y: number;
-  path: number;
 }
 export type StructureEvent = BuildStructureEvent
   | RepairStructureEvent
@@ -233,7 +252,6 @@ export type StructureEvent = BuildStructureEvent
     eventType: "upgrade",
     x: number;
     y: number;
-    path: number;
   }
 
 
