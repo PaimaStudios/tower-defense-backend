@@ -33,6 +33,9 @@ export interface MatchConfig {
   gorillaCrypt: CryptConfig;
   jaguarCrypt: CryptConfig;
   baseSpeed: number;
+  repairCost: number;
+  upgradeCost: number;
+  recoupAmount: number; // cash we get on destroying towers
 }
 export interface TowerConfig {
   health: number;
@@ -41,7 +44,7 @@ export interface TowerConfig {
   range: number;
 }
 export interface CryptConfig{
-  unitHealth: number; // 100
+  unitHealth: number; // 2
   spawnRate: number; // 2
   capacity: number; // 50
   damage: number; // 1
@@ -55,7 +58,7 @@ export interface MatchState extends AnnotatedMap {
   defenderGold: number;
   defenderBase: DefenderBase;
   actors: ActorsObject;
-  unitCount: number;
+  actorCount: number;
   currentRound: number;
 }
 // ordered maps for stateful units
@@ -87,16 +90,9 @@ export interface AttackerUnit {
   moving: boolean;
   movementCompletion: number;
   health: number;
-  status: Status | null;
+  status: StatusType[];
 }
 
-export type StatusType = "speedDebuff" | string // TODO;
-export interface Status {
-  statusType: StatusType
-  statusCaughtAt: number;
-  statusAmount: number;
-  statusDuration: number;
-}
 
 export interface Coordinates {
   x: number;
@@ -266,11 +262,16 @@ export type TickEvent = GoldRewardEvent
   | DefenderBaseUpdateEvent
   | ActorDeletedEvent
   | StatusEffectAppliedEvent
-  | StatusEffectRemovedEvent
 
 export type Faction = "attacker" | "defender";
+// export interface GoldRewardEvent {
+//   eventType: "goldReward";
+//   faction: Faction;
+//   amount: number;
+// }
+// cat-astrophe complained about not wanting diffs, they want absolute numbers of gold
 export interface GoldRewardEvent {
-  eventType: "goldReward";
+  eventType: "goldUpdate";
   faction: Faction;
   amount: number;
 }
@@ -315,19 +316,14 @@ export interface ActorDeletedEvent {
   faction: Faction; // which faction the unit to delete belongs to
   id: number;
 }
+export type StatusType = "speedDebuff" | "speedBuff" | "healthBuff"
 export interface StatusEffectAppliedEvent {
   eventType: "statusApply";
   sourceID: number;
   targetID: number;
-  statusType: "speedDebuff";
-  statusAmount: number;
-  statusDuration: number;
+  statusType: StatusType
 }
-export interface StatusEffectRemovedEvent {
-  eventType: "statusRemove";
-  id: number;
-  statusType: StatusType;
-}
+
 export type TowerAttack = DamageEvent | StatusEffectAppliedEvent | ActorDeletedEvent;
 
 interface PlayersState {
