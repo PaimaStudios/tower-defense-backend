@@ -61,27 +61,56 @@ export function parseConfig(s: string): MatchConfig {
   return { ...baseConfig }
 }
 
-const baseTowerConfig: TowerConfig = {
-  health: 100,
+const basePiranhaTowerConfig: TowerConfig = {
+  health: 10,
+  cooldown: 4,
+  damage: 1,
+  range: 5,
+}
+const baseAnacondaTowerConfig: TowerConfig = {
+  health: 8,
+  cooldown: 7,
+  damage: 1,
+  range: 3
+}
+const baseSlothTowerConfig: TowerConfig = {
+  health: 5,
   cooldown: 10,
   damage: 1,
-  range: 1
+  range: 3
 }
-const baseCryptConfig: CryptConfig = {
-  unitHealth: 100,
+const baseMacawCryptConfig: CryptConfig = {
+  unitHealth: 2, // TODO seriously?
+  spawnRate: 2,
+  capacity: 9,
+  damage: 1,
+  unitSpeed:6
+}
+const baseJaguarCryptConfig: CryptConfig = {
+  unitHealth: 1,
+  spawnRate: 2,
+  capacity: 7,
+  damage: 1,
+  unitSpeed: 4
+}
+const baseGorillaCryptConfig: CryptConfig = {
+  unitHealth: 5,
   spawnRate: 2,
   capacity: 10,
   damage: 1,
-  unitSpeed: 5
+  unitSpeed: 9
 }
-export const baseConfig = {
-  baseAttackerGoldRate: 100,
-  baseDefenderGoldRate: 100,
+export const baseConfig: MatchConfig = {
+  baseAttackerGoldRate: 25,
+  baseDefenderGoldRate: 25,
+  repairCost: 10,
+  upgradeCost: 20,
+  recoupAmount: 20,
   baseSpeed: 10,
-  anacondaTower: baseTowerConfig,
-  piranhaTower: baseTowerConfig,
-  slothTower: baseTowerConfig,
-  macawCrypt: baseCryptConfig,
-  gorillaCrypt: baseCryptConfig,
-  jaguarCrypt: baseCryptConfig,
+  anacondaTower: baseAnacondaTowerConfig,
+  piranhaTower: basePiranhaTowerConfig,
+  slothTower: baseSlothTowerConfig,
+  macawCrypt: baseMacawCryptConfig,
+  gorillaCrypt: baseGorillaCryptConfig,
+  jaguarCrypt: baseJaguarCryptConfig,
 }
