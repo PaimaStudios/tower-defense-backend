@@ -24,8 +24,9 @@ import {
 } from '../types';
 import type { MatchConfig } from '@tower-defense/utils';
 import Prando from 'paima-engine/paima-prando';
-import { annotateMap, testmap, setPath, build, parseConfig } from './mock-helpers';
+import { annotateMap, testmap, setPath, build } from './mock-helpers';
 import processTick from '@tower-defense/game-logic';
+import { parseConfig } from '@tower-defense/game-logic';
 import parseCode from '@pgtyped/query/lib/loader/typescript';
 
 async function getUserStats(walletAddress: string): Promise<PackedUserStats | FailedResult> {
@@ -40,31 +41,66 @@ async function getUserStats(walletAddress: string): Promise<PackedUserStats | Fa
   };
 }
 
-async function getLobbyState(lobbyID: string, joining?: string): Promise<PackedLobbyState | FailedResult> {
+
+const myOpenLobby = {
+  lobby_id: "abcdefabcdef",
+  created_at: new Date(),
+  lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
+  creator_faction: 'attacker',
+  player_two: null,
+  player_two_faction: null,
+  current_round: 1,
+  num_of_rounds: 100,
+  map: 'jungle',
+  health: 100,
+  spawnLimit: 10,
+  creation_block_height: 1,
+  round_start_height: 2,
+  lobby_state: "open",
+  round_length: 500,
+  round_ends_in_blocks: 100,
+  round_ends_in_secs: 400,
+  initial_gold: 1000,
+};
+const myActiveLobby = {
+  lobby_id: 'defdefabcabc',
+  created_at: new Date(),
+  lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
+  creator_faction: 'defender',
+  player_two: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
+  player_two_faction: 'attacker',
+  current_round: 3,
+  num_of_rounds: 10,
+  map: 'jungle',
+  health: 100,
+  spawnLimit: 10,
+  creation_block_height: 1,
+  round_start_height: 2,
+  lobby_state: 'active',
+  round_length: 500,
+  round_ends_in_blocks: 100,
+  round_ends_in_secs: 400,
+  player_turn: '0xdDA309096477b89D7066948b31aB05924981DF2B',
+  initial_gold: 2000,
+}
+async function getLobbyState(
+  lobbyID: string,
+): Promise<PackedLobbyState | FailedResult> {
   // const errorFxn = buildEndpointErrorFxn("getLobbyState");
+  const lobby = lobbyID === "abcdefabcdef" 
+  ? myOpenLobby
+  : lobbyID === "defdefabcabc"
+  ? myActiveLobby
+  : null;
+  if (lobby)
   return {
     success: true,
-    lobby: {
-      lobby_id: lobbyID,
-      created_at: new Date(),
-      lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-      creator_faction: 'attacker',
-      player_two: joining ? joining : null,
-      player_two_faction: joining ? "defender" : null,
-      current_round: 1,
-      num_of_rounds: 100,
-      map: 'jungle',
-      health: 100,
-      spawnLimit: 10,
-      creation_block_height: 1,
-      round_start_height: 2,
-      lobby_state: joining ? 'open' : "active",
-      round_length: 500,
-      round_ends_in_blocks: 100,
-      round_ends_in_secs: 400,
-      initial_gold: 1000,
-    },
+    lobby
   };
+  else return{
+    success: false,
+    message: "lobby does not exist"
+  }
 }
 
 async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
@@ -238,7 +274,7 @@ async function getRoundExecutor(
   // const executor = RoundExecutor.initialize(matchEnvironment, playerStates, randomizedInputs, randomnessGenerator, processTick);
   const seed = 'td';
   const rng = new Prando(seed);
-  const configString = 'r|1|gr;d;105|st;h150;d5;r2'; // we would get this from the db in production
+  const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2'; // we would get this from the db in production
   const matchConfig: MatchConfig = parseConfig(configString);
   const am = annotateMap(testmap, 22);
   const withPath = setPath(am);
@@ -260,7 +296,7 @@ async function getRoundExecutor(
     mapState: withPath.flat(),
     name: 'jungle',
     currentRound: 1,
-    unitCount: 2,
+    actorCount: 2,
   };
   const moves = build(20, 10);
   const executor = RoundExecutorConstructor.initialize(
