@@ -19,6 +19,7 @@ import type {
   DefenderStructureType,
   PathTile,
   DamageEvent,
+  DefenderBaseUpdateEvent,
   AttackerUnit,
   ActorDeletedEvent,
   AttackerStructure,
@@ -27,6 +28,7 @@ import type {
   UnitMovementEvent,
   Coordinates,
   TowerAttack,
+  UnitAttack,
   ActorID,
   Actor,
 } from '@tower-defense/utils';
@@ -41,7 +43,6 @@ function processTick(
   currentTick: number,
   randomnessGenerator: Prando
 ): TickEvent[] | null {
-  console.log(currentTick, "current tick")
   let randomness = 0;
   // We generate new randomness for every tick. Seeds vary every round.
   for (let tick of Array(currentTick)) randomness = randomnessGenerator.next();
@@ -364,11 +365,11 @@ function towerAttackEvents(
   rng: Prando
 ): TowerAttack[] {
   const towers: DefenderStructure[] = Object.values(m.actors.towers);
-  const events = towers.map(t => computeUnitDamage(config, t, m, currentTick, rng));
+  const events = towers.map(t => computeDamageToUnit(config, t, m, currentTick, rng));
   return events.flat();
 }
-// damage made by unit to defender tower
-function computeUnitDamage(
+// damage made by defender towers against units
+function computeDamageToUnit(
   config: MatchConfig,
   t: DefenderStructure,
   m: MatchState,
@@ -550,13 +551,13 @@ function unitAttackEvents(
   m: MatchState,
   currentTick: number,
   rng: Prando
-): TowerAttack[] {
+): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(m.actors.units);
   const events = attackers.map(a => {
     const damageToTower =
       a.subType === 'macaw' ? computeDamageToTower(config, m, a, currentTick, rng) : [];
-    const damageToBase = computeDamageToBase(config, m, a, currentTick, rng);
-    const eventTypeGuard = (e: TowerAttack | null): e is DamageEvent => !!e;
+    const damageToBase: UnitAttack[] = computeDamageToBase(config, m, a, currentTick, rng);
+    const eventTypeGuard = (e: UnitAttack | null): e is DamageEvent => !!e;
     return [...damageToTower, ...damageToBase].filter(eventTypeGuard);
   });
   return events.flat();
@@ -603,23 +604,20 @@ function computeDamageToBase(
   a: AttackerUnit,
   currentTick: number,
   rng: Prando
-): (DamageEvent | ActorDeletedEvent)[] {
+): [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] {
   const t: Tile = m.contents[a.coordinates.y][a.coordinates.x];
-  const damageEvent: DamageEvent = {
-    eventType: 'damage',
-    faction: 'attacker',
-    sourceID: a.id,
-    targetID: 0,
-    damageType: 'neutral',
-    damageAmount: getUnitStats(config, a.subType).unitAttack,
+  const damageAmount = getUnitStats(config, a.subType).unitAttack;
+  const baseEvent: DefenderBaseUpdateEvent = {
+    eventType: 'defenderBaseUpdate',
+    health: m.defenderBase.health - damageAmount
   };
   const killEvent: ActorDeletedEvent = {
     eventType: 'actorDeleted',
     faction: 'attacker',
     id: a.id,
   };
-  const events: (DamageEvent | ActorDeletedEvent)[] =
-    t.type === 'base' && t.faction === 'defender' ? [damageEvent, killEvent] : [];
+  const events: [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] =
+    t.type === 'base' && t.faction === 'defender' ? [baseEvent, killEvent] : [];
   applyEvents(config, m, events, currentTick, rng);
   return events;
 }

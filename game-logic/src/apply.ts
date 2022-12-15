@@ -106,7 +106,6 @@ export default function applyEvents(
         };
         // add unit to unit list
         if (m.actors.units[event.actorID])
-          console.log(m.actors.units[event.actorID], 'spawning user ID already exists?');
         m.actors.units[event.actorID] = spawnedUnit;
         // add unit to spawned list of its crypt
         m.actors.crypts[event.cryptID].spawned = [
@@ -181,7 +180,7 @@ export default function applyEvents(
           break;
         }
       case 'defenderBaseUpdate':
-        m.defenderBase.health += 25;
+        m.defenderBase.health = event.health;
         break;
       case 'statusApply':
         m.actors.units[event.targetID].status = [

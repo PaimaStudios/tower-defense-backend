@@ -80,21 +80,21 @@ const baseSlothTowerConfig: TowerConfig = {
   range: 3
 }
 const baseMacawCryptConfig: CryptConfig = {
-  unitHealth: 2, // TODO seriously?
+  unitHealth: 200, // TODO seriously?
   spawnRate: 2,
   capacity: 9,
   damage: 1,
   unitSpeed:6
 }
 const baseJaguarCryptConfig: CryptConfig = {
-  unitHealth: 1,
+  unitHealth: 100,
   spawnRate: 2,
   capacity: 7,
   damage: 1,
   unitSpeed: 4
 }
 const baseGorillaCryptConfig: CryptConfig = {
-  unitHealth: 5,
+  unitHealth: 500,
   spawnRate: 2,
   capacity: 10,
   damage: 1,
