@@ -1,4 +1,5 @@
 import {
+  MatchExecutor,
   MatchExecutor as MatchExecutorConstructor,
   RoundExecutor as RoundExecutorConstructor,
 } from 'paima-engine/paima-executors';
@@ -41,9 +42,8 @@ async function getUserStats(walletAddress: string): Promise<PackedUserStats | Fa
   };
 }
 
-
 const myOpenLobby = {
-  lobby_id: "abcdefabcdef",
+  lobby_id: 'abcdefabcdef',
   created_at: new Date(),
   lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
   creator_faction: 'attacker',
@@ -56,7 +56,7 @@ const myOpenLobby = {
   spawnLimit: 10,
   creation_block_height: 1,
   round_start_height: 2,
-  lobby_state: "open",
+  lobby_state: 'open',
   round_length: 500,
   round_ends_in_blocks: 100,
   round_ends_in_secs: 400,
@@ -82,25 +82,21 @@ const myActiveLobby = {
   round_ends_in_secs: 400,
   player_turn: '0xdDA309096477b89D7066948b31aB05924981DF2B',
   initial_gold: 2000,
-}
-async function getLobbyState(
-  lobbyID: string,
-): Promise<PackedLobbyState | FailedResult> {
+};
+async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   // const errorFxn = buildEndpointErrorFxn("getLobbyState");
-  const lobby = lobbyID === "abcdefabcdef" 
-  ? myOpenLobby
-  : lobbyID === "defdefabcabc"
-  ? myActiveLobby
-  : null;
+  const lobby =
+    lobbyID === 'abcdefabcdef' ? myOpenLobby : lobbyID === 'defdefabcabc' ? myActiveLobby : null;
   if (lobby)
-  return {
-    success: true,
-    lobby
-  };
-  else return{
-    success: false,
-    message: "lobby does not exist"
-  }
+    return {
+      success: true,
+      lobby,
+    };
+  else
+    return {
+      success: false,
+      message: 'lobby does not exist',
+    };
 }
 
 async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
@@ -298,7 +294,7 @@ async function getRoundExecutor(
     currentRound: 1,
     actorCount: 2,
   };
-  const moves = build(20, 10);
+  const moves = build(3, 10);
   const executor = RoundExecutorConstructor.initialize(
     matchConfig,
     matchState,
@@ -311,12 +307,48 @@ async function getRoundExecutor(
     result: executor,
   };
 }
-// async function getMatchExecutor(): Promise<SuccessfulResult<typeof RoundExecutor> | FailedResult> {
-//   const executor = MatchExecutor.initialize()
-//   return{
+// async function getMatchExecutor(
+//   lobbyId: string
+// ): Promise<SuccessfulResult<typeof MatchExecutor> | FailedResult> {
+//   const seeds = [
+//     { round: 1, block_height: 0, seed: 'td' },
+//     { round: 2, block_height: 0, seed: 'td2' },
+//     { round: 3, block_height: 0, seed: 'td3' },
+//     { round: 4, block_height: 0, seed: 'td4' },
+//   ];
+//   const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2'; // we would get this from the db in production
+//   const matchConfig: MatchConfig = parseConfig(configString);
+//   const am = annotateMap(testmap, 22);
+//   const withPath = setPath(am);
+//   const initialMatchState = {
+//     width: 22,
+//     height: 13,
+//     defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
+//     attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
+//     defenderGold: 100,
+//     attackerGold: 100,
+//     defenderBase: { health: 100, level: 1 },
+//     attackerBase: { level: 1 },
+//     actors: {
+//       towers: {},
+//       crypts: {},
+//       units: {},
+//     },
+//     contents: withPath,
+//     mapState: withPath.flat(),
+//     name: 'jungle',
+//     currentRound: 1,
+//     actorCount: 2,
+//   };
+//   const moves = build(3, 3);
+//   const executor = MatchExecutor.initialize(
+//     matchConfig,
+//     5,
+//     );
+//   return {
 //     success: true,
-//     result: executor
-//   }
+//     result: executor,
+//   };
 // }
 
 async function userWalletLogin() {
@@ -328,7 +360,7 @@ async function userWalletLogin() {
 async function createLobby() {
   return {
     success: true,
-    lobbyID: 'deadbeefdead',
+    lobbyID: 'abcdefabcdef',
     lobbyStatus: 'open',
   };
 }
