@@ -309,7 +309,7 @@ export interface DamageEvent {
 }
 export interface DefenderBaseUpdateEvent {
   eventType: "defenderBaseUpdate";
-  health: 25;
+  health: number;
 }
 export interface ActorDeletedEvent {
   eventType: "actorDeleted";
@@ -323,8 +323,12 @@ export interface StatusEffectAppliedEvent {
   targetID: number;
   statusType: StatusType
 }
-
-export type TowerAttack = DamageEvent | StatusEffectAppliedEvent | ActorDeletedEvent;
+export type TowerAttack = DamageEvent
+| ActorDeletedEvent
+| StatusEffectAppliedEvent 
+export type UnitAttack = DamageEvent 
+| DefenderBaseUpdateEvent
+| ActorDeletedEvent;
 
 interface PlayersState {
   user1: PlayerState;
