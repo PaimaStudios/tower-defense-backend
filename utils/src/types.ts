@@ -68,8 +68,8 @@ export interface ActorsObject {
   units: ActorGraph<AttackerUnit>
 }
 export type ActorID = number;
-export interface ActorGraph<UnitType> {
-  [actorID: ActorID]: UnitType
+export interface ActorGraph<ActorType> {
+  [actorID: ActorID]: ActorType
 }
 
 export type Actor = DefenderBase
@@ -188,40 +188,37 @@ export interface ImmovableObjectTile {
 }
 export type Wallet = string;
 
-export type TurnAction = BuildStructure
-  | RepairStructure
-  | DestroyStructure
-  | UpgradeStructure
+export type TurnAction = BuildStructureAction
+  | RepairStructureAction
+  | DestroyStructureAction
+  | UpgradeStructureAction
 
 export type Structure = Tower | Crypt;
 export type Tower = "piranhaTower" | "slothTower" | "anacondaTower";
 export type Crypt = "macawCrypt" | "jaguarCrypt" | "gorillaCrypt";
 
-export interface BuildStructure {
+export interface BuildStructureAction {
   round: number;
   action: "build";
   x: number;
   y: number;
   structure: Structure;
 }
-export interface RepairStructure {
+export interface RepairStructureAction {
   round: number;
   action: "repair";
-  x: number;
-  y: number;
+  id: number;
   value: number; // percentage of health restored
 }
-export interface DestroyStructure {
+export interface DestroyStructureAction {
   round: number;
   action: "destroy";
-  x: number;
-  y: number;
+  id: number;
 }
-export interface UpgradeStructure {
+export interface UpgradeStructureAction {
   round: number;
   action: "upgrade",
-  x: number;
-  y: number;
+  id: number;
 }
 export type StructureEvent = BuildStructureEvent
   | RepairStructureEvent
@@ -231,23 +228,20 @@ export type StructureEvent = BuildStructureEvent
     eventType: "build";
     x: number;
     y: number;
-    structure: Structure;
     id: number;
+    structure: Structure;
   }
   export interface RepairStructureEvent {
     eventType: "repair";
-    x: number;
-    y: number;
+    id: number;
   }
   export interface DestroyStructureEvent {
     eventType: "destroy";
-    x: number;
-    y: number;
+    id: number;
   }
   export interface UpgradeStructureEvent {
     eventType: "upgrade",
-    x: number;
-    y: number;
+    id: number;
   }
 
 
