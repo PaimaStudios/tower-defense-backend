@@ -1,9 +1,3 @@
-import {
-  MatchExecutor,
-  MatchExecutor as MatchExecutorConstructor,
-  RoundExecutor as RoundExecutorConstructor,
-} from 'paima-engine/paima-executors';
-
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
   AccountNftsData,
@@ -24,11 +18,7 @@ import {
   UserStats,
 } from '../types';
 import type { MatchConfig } from '@tower-defense/utils';
-import Prando from 'paima-engine/paima-prando';
-import { annotateMap, testmap, setPath, build } from './mock-helpers';
-import processTick from '@tower-defense/game-logic';
-import { parseConfig } from '@tower-defense/game-logic';
-import parseCode from '@pgtyped/query/lib/loader/typescript';
+import { annotateMap, testmap, setPath, build, getFirstRound, getNewRound } from './mock-helpers';
 
 async function getUserStats(walletAddress: string): Promise<PackedUserStats | FailedResult> {
   // const errorFxn = buildEndpointErrorFxn("getUserStats");
@@ -267,41 +257,7 @@ async function getRoundExecutor(
   lobbyId: string,
   roundNumber: number
 ): Promise<SuccessfulResult<RoundExecutor> | FailedResult> {
-  // const executor = RoundExecutor.initialize(matchEnvironment, playerStates, randomizedInputs, randomnessGenerator, processTick);
-  const seed = 'td';
-  const rng = new Prando(seed);
-  const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2'; // we would get this from the db in production
-  const matchConfig: MatchConfig = parseConfig(configString);
-  const am = annotateMap(testmap, 22);
-  const withPath = setPath(am);
-  const matchState = {
-    width: 22,
-    height: 13,
-    defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-    attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
-    defenderGold: 100,
-    attackerGold: 100,
-    defenderBase: { health: 100, level: 1 },
-    attackerBase: { level: 1 },
-    actors: {
-      towers: {},
-      crypts: {},
-      units: {},
-    },
-    contents: withPath,
-    mapState: withPath.flat(),
-    name: 'jungle',
-    currentRound: 1,
-    actorCount: 2,
-  };
-  const moves = build(3, 10);
-  const executor = RoundExecutorConstructor.initialize(
-    matchConfig,
-    matchState,
-    moves,
-    rng,
-    processTick
-  );
+  const executor = roundNumber === 1 ? getFirstRound() : getNewRound(roundNumber);
   return {
     success: true,
     result: executor,
