@@ -28,6 +28,7 @@ import type {
   Coordinates,
   TowerAttack,
   ActorID,
+  DestroyStructureEvent,
 } from '@tower-defense/utils';
 
 // function to mutate the match state after events are processed.
@@ -40,7 +41,7 @@ export default function applyEvents(
 ) {
   for (let event of events) {
     // let's find who's side is doing thing
-    const faction = determineFactionFromEvent(event);
+    const faction = determineFactionFromEvent(m, event);
     switch (event.eventType) {
       case 'build':
         // mutate map with new unit
@@ -52,38 +53,32 @@ export default function applyEvents(
         m.actorCount++;
         break;
       case 'repair':
-        const repairStructureID = (
-          m.contents[event.y][event.x] as AttackerStructureTile | DefenderStructureTile
-        ).id;
         if (faction === 'attacker') {
           m.attackerGold -= config.repairCost; // TODO get amount right
-          applyCryptRepair(m.actors.crypts[repairStructureID]);
+          applyCryptRepair(m.actors.crypts[event.id]);
         }
         if (faction === 'defender') {
           m.defenderGold -= config.repairCost; // TODO get amount right
-          applyTowerRepair(m.actors.towers[repairStructureID]);
+          applyTowerRepair(m.actors.towers[event.id]);
         }
         break;
       case 'upgrade':
-        const upgradeStructureID = (
-          m.contents[event.y][event.x] as AttackerStructureTile | DefenderStructureTile
-        ).id;
         if (faction === 'attacker') {
           m.attackerGold -= config.upgradeCost;
-          applyUpgrade(m.actors.crypts[upgradeStructureID]);
+          applyUpgrade(m.actors.crypts[event.id]);
         } // TODO get amount right
         if (faction === 'defender') {
           m.defenderGold -= config.upgradeCost;
-          applyUpgrade(m.actors.towers[upgradeStructureID]);
+          applyUpgrade(m.actors.towers[event.id]);
         }
         break;
       case 'destroy':
-        // const tileToDestroy = m.contents[event.y][event.x];
+        const coords = findActorCoords(m, event)
         if (faction === 'attacker') {
-          m.contents[event.y][event.x] = { type: 'open', faction: 'attacker' };
+          m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
           m.attackerGold += config.recoupAmount; // TODO get amount right
         } else if (faction === 'defender') {
-          m.contents[event.y][event.x] = { type: 'open', faction: 'defender' };
+          m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
           m.defenderGold += config.recoupAmount; // TODO get amount right
         }
         break;
@@ -219,11 +214,26 @@ function randomizePath(paths: number, randomnessGenerator: Prando): number {
   return Math.floor(randomness * paths);
 }
 
-function determineFactionFromEvent(eventType: TickEvent): Faction | null {
+function determineFactionFromEvent(m:MatchState, eventType: TickEvent): Faction | null {
   if ('faction' in eventType) return eventType.faction;
   if ('x' in eventType && eventType.x > 12) return 'attacker';
   if ('x' in eventType && eventType.x <= 12) return 'defender';
-  else return null;
+  else if ('id' in eventType) {
+    const crypt = m.actors.crypts[eventType.id]
+    const tower = m.actors.towers[eventType.id]
+    const unit = m.actors.units[eventType.id];
+    if (tower) return "defender"
+    else if (crypt || unit) return "attacker"
+    else return null
+  }
+  else  return null;
+}
+function findActorCoords(m: MatchState, eventType: DestroyStructureEvent): Coordinates{
+  const crypt = m.actors.crypts[eventType.id]
+  const tower = m.actors.towers[eventType.id]
+  const unit = m.actors.units[eventType.id];
+  const actor = crypt || tower || unit;
+  return actor.coordinates
 }
 
 function setStructureFromEvent(

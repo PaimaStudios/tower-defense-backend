@@ -88,27 +88,23 @@ function structureEvent(m: TurnAction, count: number): StructureEvent {
   else if (m.action === 'repair')
     return {
       eventType: 'repair',
-      x: m.x,
-      y: m.y,
+      id: m.id
     };
   else if (m.action === 'upgrade')
     return {
       eventType: 'upgrade',
-      x: m.x,
-      y: m.y,
+      id: m.id,
     };
   else if (m.action === 'destroy')
     return {
       eventType: 'destroy',
-      x: m.x,
-      y: m.y,
+      id: m.id
     };
   else
     return {
-      // typescript should be better than this
+      // so typescript shuts up
       eventType: 'destroy',
-      x: 0,
-      y: 0,
+      id: 2
     };
 }
 // Events produced from Tick 2 forward, follow deterministically from match state.
