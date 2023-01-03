@@ -145,17 +145,3 @@ The tick event includes:
   "status-duration": 30
 }
 ```
-
-## Status Effect Removed Event
-
-When a status effect is removed due to expiring or otherwise, an event is emitted.
-
-If a speed buff/debuff is removed, a movement event will follow this event for the target unit.
-
-```json
-{
-  "event": "status-remove",
-  "id": 362,
-  "status-type": "speed-debuff"
-}
-```
