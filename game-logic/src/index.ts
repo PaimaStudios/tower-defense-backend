@@ -32,7 +32,7 @@ import type {
   ActorID,
   Actor,
 } from '@tower-defense/utils';
-import applyEvents from './apply.js';
+import applyEvents from './apply';
 
 // Main function, exported as default.
 
@@ -728,4 +728,3 @@ function computeGoldRewards(
 }
 
 export default processTick;
-export { parseConfig } from './config.js';

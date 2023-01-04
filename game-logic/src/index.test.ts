@@ -4,13 +4,14 @@ import processTick from './index';
 import { parseConfig } from './config';
 import { annotateMap, setPath } from './map-processor';
 import type {
-  MatchState,
-  ActorsObject,
   Coordinates,
   TurnAction,
   MatchConfig,
-  Tile,
-  PathTile,
+  MatchState,
+  DefenderStructure,
+  AttackerStructure,
+  RepairStructureAction,
+  ActorGraph,
 } from '@tower-defense/utils';
 
 export const testmap = [
@@ -53,6 +54,31 @@ export function build(towerCount: number, cryptCount: number): TurnAction[] {
     });
   return [...towers, ...crypts];
 }
+
+function repair(m: MatchState){
+  const structures: Array<DefenderStructure | AttackerStructure> = [
+    ...Object.values(m.actors.towers),
+    ...Object.values(m.actors.crypts),
+  ];
+  const toRepair: RepairStructureAction[] = structures
+  .map(a => {
+    return {
+      round: 1,
+      action: 'repair',
+      id: a.id,
+      value: 25, // this should be in config
+    };
+  });
+  return toRepair
+}
+function damageTowers(m: MatchState): MatchState{
+  const damagedTowers = Object.entries(m.actors.towers).reduce((acc, item) => {
+    const health = item[1].health - 50;
+    const tower = {...item[1], health}
+    return {...acc, [item[0]]: tower}
+  }, m.actors.towers)
+  return {...m, actors: {...m.actors, towers: damagedTowers}}
+}
 function randomFromArray<T>(array: T[]): T {
   const index = Math.floor(Math.random() * array.length);
   return array[index];
@@ -75,7 +101,7 @@ function getMatchConfig(){
   return matchConfig
 }
 
-function getMatchState() {
+function getMatchState(): MatchState {
   const am = annotateMap(testmap, 22);
   const withPath = setPath(am);
   return {
@@ -93,7 +119,7 @@ function getMatchState() {
       units: {},
     },
     contents: withPath,
-    mapState: withPath.flat(),
+    // mapState: withPath.flat(),
     name: 'jungle',
     currentRound: 1,
     actorCount: 2, // the two bases
@@ -109,10 +135,34 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     return { matchConfig, matchState, moves, currentTick, randomnessGenerator };
   };
-
-  test('built structures show up in the MatchState', () => {
-    const { matchConfig, matchState, moves, currentTick, randomnessGenerator } = getTestData();
+  // structure tests
+  test('built structures show up in the match state', () => {
+    const matchConfig = getMatchConfig();
+    const matchState = getMatchState();
+    const moves = build(10, 10);
+    const currentTick = 1;
+    const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
-    expect(matchState.actorCount).toBe(5);
+    const counts = [Object.keys(matchState.actors.crypts).length, Object.keys(matchState.actors.towers).length, matchState.actorCount];
+    const numbers = [10, 10, 22]
+    expect(counts).toStrictEqual(numbers);
+  });
+  test('repaired structures are repaired', () => {
+    const matchConfig = getMatchConfig();
+    const matchState = getMatchState();
+    const moves = build(2, 0);
+    const currentTick = 1;
+    const randomnessGenerator = new Prando(1);
+    const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
+    const towerState1: ActorGraph<DefenderStructure>  = structuredClone(matchState.actors.towers);
+    const damagedMatchState = damageTowers(matchState)
+    const moves2 = repair(damagedMatchState);
+    const events2 = processTick(matchConfig, matchState, moves2, currentTick, randomnessGenerator);
+    const towerHealthDiff = Object.keys(towerState1).map(tower => {
+      const originalHealth =  towerState1[parseInt(tower)].health
+      const newHealth =  matchState.actors.towers[parseInt(tower)].health
+      return newHealth - originalHealth
+    })
+    expect(towerHealthDiff).toStrictEqual([25, 25, 25])
   });
 });

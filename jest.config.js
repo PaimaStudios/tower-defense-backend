@@ -3,12 +3,6 @@ const ignorePaths = ['/node_modules/', '/build/', '/integration-testing/'];
 module.exports =  {
   verbose: true,
   preset: 'ts-jest/presets/default-esm-legacy',
-  globals: {
-    'ts-jest': {
-        tsconfig: './tsconfig.json',
-        useESM: true
-    }
-},
   moduleFileExtensions: ['js', 'json', 'ts'],
   extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
