@@ -68,8 +68,6 @@ export const baseConfig: MatchConfig = {
   gorillaCrypt: baseGorillaCryptConfig,
   jaguarCrypt: baseJaguarCryptConfig,
 }
-
-
 export function parseConfig(s: string): MatchConfig {
   // "r|1|gr;d;105|st;h150;c6;d5;r2
   const c = consumer.initialize(s);
@@ -127,5 +125,3 @@ export function parseConfig(s: string): MatchConfig {
   }
   return { ...baseConfig };
 }
-
-
