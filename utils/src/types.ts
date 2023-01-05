@@ -33,6 +33,7 @@ export interface MatchConfig {
   gorillaCrypt: CryptConfig;
   jaguarCrypt: CryptConfig;
   baseSpeed: number;
+  towerRepairValue: number;
   repairCost: number;
   upgradeCost: number;
   recoupAmount: number; // cash we get on destroying towers
@@ -208,7 +209,6 @@ export interface RepairStructureAction {
   round: number;
   action: "repair";
   id: number;
-  value: number; // percentage of health restored
 }
 export interface DestroyStructureAction {
   round: number;
