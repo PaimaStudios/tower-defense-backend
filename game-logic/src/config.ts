@@ -16,13 +16,13 @@ const baseCryptConfig = {
   unitSpeed: 1
 };
 const basePiranhaTowerConfig: TowerConfig = {
-  health: 10,
+  health: 100,
   cooldown: 4,
   damage: 1,
   range: 5,
 }
 const baseAnacondaTowerConfig: TowerConfig = {
-  health: 8,
+  health: 100,
   cooldown: 7,
   damage: 1,
   range: 3
@@ -57,6 +57,7 @@ const baseGorillaCryptConfig: CryptConfig = {
 export const baseConfig: MatchConfig = {
   baseAttackerGoldRate: 25,
   baseDefenderGoldRate: 25,
+  towerRepairValue: 25,
   repairCost: 10,
   upgradeCost: 20,
   recoupAmount: 20,

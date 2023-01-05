@@ -1,7 +1,7 @@
 import Prando from 'paima-engine/paima-prando';
 import processTick from './index';
 
-import { parseConfig } from './config';
+import { baseConfig, parseConfig } from './config';
 import { annotateMap, setPath } from './map-processor';
 import type {
   Coordinates,
@@ -13,6 +13,7 @@ import type {
   RepairStructureAction,
   ActorGraph,
 } from '@tower-defense/utils';
+import { crypt } from '@tower-defense/utils/src/parser';
 
 export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
@@ -55,29 +56,31 @@ export function build(towerCount: number, cryptCount: number): TurnAction[] {
   return [...towers, ...crypts];
 }
 
-function repair(m: MatchState){
+function repair(m: MatchState) {
   const structures: Array<DefenderStructure | AttackerStructure> = [
     ...Object.values(m.actors.towers),
     ...Object.values(m.actors.crypts),
   ];
-  const toRepair: RepairStructureAction[] = structures
-  .map(a => {
+  const toRepair: RepairStructureAction[] = structures.map(a => {
     return {
       round: 1,
       action: 'repair',
       id: a.id,
-      value: 25, // this should be in config
     };
   });
-  return toRepair
+  return toRepair;
 }
-function damageTowers(m: MatchState): MatchState{
-  const damagedTowers = Object.entries(m.actors.towers).reduce((acc, item) => {
-    const health = item[1].health - 50;
-    const tower = {...item[1], health}
-    return {...acc, [item[0]]: tower}
-  }, m.actors.towers)
-  return {...m, actors: {...m.actors, towers: damagedTowers}}
+function damageTowers(m: MatchState): void {
+  const towers: DefenderStructure[] = Object.values(m.actors.towers)
+  for (let tower of towers){
+    tower.health -= 50
+  }
+  // const damagedTowers = Object.entries(m.actors.towers).reduce((acc, item) => {
+  //   const health = item[1].health - 50;
+  //   const tower = { ...item[1], health };
+  //   return { ...acc, [item[0]]: tower };
+  // }, m.actors.towers);
+  // return { ...m, actors: { ...m.actors, towers: damagedTowers } };
 }
 function randomFromArray<T>(array: T[]): T {
   const index = Math.floor(Math.random() * array.length);
@@ -95,10 +98,10 @@ function availableForBuilding(map: number[]): { towers: Coordinates[]; crypts: C
   return { towers, crypts };
 }
 
-function getMatchConfig(){
+function getMatchConfig() {
   const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2';
   const matchConfig: MatchConfig = parseConfig(configString);
-  return matchConfig
+  return matchConfig;
 }
 
 function getMatchState(): MatchState {
@@ -143,26 +146,58 @@ describe('Game Logic', () => {
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
-    const counts = [Object.keys(matchState.actors.crypts).length, Object.keys(matchState.actors.towers).length, matchState.actorCount];
-    const numbers = [10, 10, 22]
+    const counts = [
+      Object.keys(matchState.actors.crypts).length,
+      Object.keys(matchState.actors.towers).length,
+      matchState.actorCount,
+    ];
+    const numbers = [10, 10, 22];
     expect(counts).toStrictEqual(numbers);
   });
-  test('repaired structures are repaired', () => {
-    const matchConfig = getMatchConfig();
+  test('repaired towers are repaired', () => {
+    const matchConfig = baseConfig;
     const matchState = getMatchState();
-    const moves = build(2, 0);
+    const moves = build(3, 0);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
-    const towerState1: ActorGraph<DefenderStructure>  = structuredClone(matchState.actors.towers);
-    const damagedMatchState = damageTowers(matchState)
-    const moves2 = repair(damagedMatchState);
+    damageTowers(matchState); // mutating
+    // make copy of match state after damaging
+    const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
+    const moves2 = repair(matchState);
     const events2 = processTick(matchConfig, matchState, moves2, currentTick, randomnessGenerator);
+    // match state here should be repaired
+    // compare
     const towerHealthDiff = Object.keys(towerState1).map(tower => {
-      const originalHealth =  towerState1[parseInt(tower)].health
-      const newHealth =  matchState.actors.towers[parseInt(tower)].health
-      return newHealth - originalHealth
-    })
-    expect(towerHealthDiff).toStrictEqual([25, 25, 25])
+      const originalHealth = towerState1[parseInt(tower)].health;
+      const newHealth = matchState.actors.towers[parseInt(tower)].health;
+      return newHealth - originalHealth;
+    });
+    expect(towerHealthDiff).toStrictEqual([25, 25, 25]);
   });
+  test('repaired crypts are repaired', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const moves = build(0, 3);;
+    const randomnessGenerator = new Prando(1);
+    const ticks = [...Array(10).keys()] // [0..10]
+    // do a bunch of ticks so the crypts do some spawning
+    for (let tick of ticks){
+      processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
+    }
+    const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
+    const moves2 = repair(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    // match state here should be repaired
+    // compare
+    const cryptSpawnedDiff = Object.keys(cryptState1).map(crypt => {
+      const originalSpawned = cryptState1[parseInt(crypt)].spawned;
+      const newSpawned = matchState.actors.crypts[parseInt(crypt)].spawned;
+      return originalSpawned.length - newSpawned.length
+    });
+    expect(cryptSpawnedDiff).toStrictEqual([1, 1, 1]);
+  });
+  // test('upgraded structures are upgraded', () => {
+  //   expect(newStructures).toStrictEqual([])
+  // })
 });

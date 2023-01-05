@@ -59,7 +59,7 @@ export default function applyEvents(
         }
         if (faction === 'defender') {
           m.defenderGold -= config.repairCost; // TODO get amount right
-          applyTowerRepair(m.actors.towers[event.id]);
+          applyTowerRepair(config, m.actors.towers[event.id]);
         }
         break;
       case 'upgrade':
@@ -289,8 +289,8 @@ function buildTileFromEvent(
     };
 }
 
-function applyTowerRepair(tower: DefenderStructure) {
-  tower.health++; // TODO
+function applyTowerRepair(config: MatchConfig, tower: DefenderStructure) {
+  tower.health += config.towerRepairValue;
 }
 
 function applyCryptRepair(crypt: AttackerStructure) {
