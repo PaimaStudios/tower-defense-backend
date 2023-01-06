@@ -12,6 +12,8 @@ import type {
   AttackerStructure,
   RepairStructureAction,
   ActorGraph,
+  UpgradeStructureAction,
+  DestroyStructureAction,
 } from '@tower-defense/utils';
 import { crypt } from '@tower-defense/utils/src/parser';
 
@@ -63,12 +65,40 @@ function repair(m: MatchState) {
   ];
   const toRepair: RepairStructureAction[] = structures.map(a => {
     return {
-      round: 1,
+      round: 2,
       action: 'repair',
       id: a.id,
     };
   });
   return toRepair;
+}
+function upgrade(m: MatchState) {
+  const structures: Array<DefenderStructure | AttackerStructure> = [
+    ...Object.values(m.actors.towers),
+    ...Object.values(m.actors.crypts),
+  ];
+  const toUpgrade: UpgradeStructureAction[] = structures.map(a => {
+    return {
+      round: 2,
+      action: "upgrade",
+      id: a.id,
+    };
+  });
+  return toUpgrade;
+}
+function destroy(m: MatchState) {
+  const structures: Array<DefenderStructure | AttackerStructure> = [
+    ...Object.values(m.actors.towers),
+    ...Object.values(m.actors.crypts),
+  ];
+  const toDestroy: DestroyStructureAction[] = structures.map(a => {
+    return {
+      round: 2,
+      action: 'destroy',
+      id: a.id,
+    };
+  });
+  return toDestroy;
 }
 function damageTowers(m: MatchState): void {
   const towers: DefenderStructure[] = Object.values(m.actors.towers)
@@ -197,7 +227,39 @@ describe('Game Logic', () => {
     });
     expect(cryptSpawnedDiff).toStrictEqual([1, 1, 1]);
   });
-  // test('upgraded structures are upgraded', () => {
-  //   expect(newStructures).toStrictEqual([])
-  // })
+  test('upgraded structures are upgraded', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const moves = build(1, 1);;
+    const randomnessGenerator = new Prando(1);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
+    const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
+    const moves2 = upgrade(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const cryptUpgradeDiff = Object.keys(cryptState1).map(crypt => {
+      const originalState = cryptState1[parseInt(crypt)].upgrades;
+      const newState = matchState.actors.crypts[parseInt(crypt)].upgrades;
+      return newState - originalState
+    });
+    const towerUpgradeDiff = Object.keys(towerState1).map(tower => {
+      const originalState = towerState1[parseInt(tower)].upgrades;
+      const newState = matchState.actors.towers[parseInt(tower)].upgrades;
+      return newState - originalState
+    }); 
+    expect([...cryptUpgradeDiff, ...towerUpgradeDiff]).toStrictEqual([1, 1])
+  })
+  test('destroyed structures are destroyed', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const moves = build(3, 3);;
+    const randomnessGenerator = new Prando(1);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const moves2 = destroy(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const extantTowers = Object.values(matchState.actors.towers);
+    const extantCrypts = Object.values(matchState.actors.crypts);
+    const totalCount = [...extantCrypts, ...extantTowers].length;
+    expect(totalCount).toBe(0);
+  })
 });

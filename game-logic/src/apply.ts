@@ -77,9 +77,12 @@ export default function applyEvents(
         if (faction === 'attacker') {
           m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
           m.attackerGold += config.recoupAmount; // TODO get amount right
+          if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id]
+          else if (m.actors.units[event.id]) delete m.actors.units[event.id]
         } else if (faction === 'defender') {
           m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
           m.defenderGold += config.recoupAmount; // TODO get amount right
+          delete m.actors.towers[event.id];
         }
         break;
       case 'spawn':
