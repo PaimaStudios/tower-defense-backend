@@ -112,7 +112,7 @@ export default function applyEvents(
           health: event.unitHealth,
           speed: event.unitSpeed,
           damage: event.unitAttack,
-          upgradeTier: event.tier.
+          upgradeTier: event.tier,
           status: [],
           previousCoordinates: null,
           coordinates: { x: event.unitX, y: event.unitY },

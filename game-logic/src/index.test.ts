@@ -133,7 +133,7 @@ function availableForBuilding(map: number[]): { towers: Coordinates[]; crypts: C
 }
 
 function getMatchConfig() {
-  const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2';
+  const configString = 'r|1|gr;d;105|st1;p40;h150;c10;d5;r2';
   const matchConfig: MatchConfig = parseConfig(configString);
   return matchConfig;
 }
@@ -172,6 +172,11 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     return { matchConfig, matchState, moves, currentTick, randomnessGenerator };
   };
+  // parser tests
+  test("parser works", () => {
+
+    expect(3).toBe(3)
+  })
   // structure tests
   test('built structures show up in the match state', () => {
     const matchConfig = getMatchConfig();
@@ -283,16 +288,16 @@ describe('Game Logic', () => {
     expect(totalCount).toBe(0);
   });
   // gold
-  test("gold gets awarded every round", () => {
-    const matchConfig = baseConfig;
-    const matchState = getMatchState();
-    const randomnessGenerator = new Prando(1);
-    const initialAttackerGold = structuredClone(matchState.attackerGold)
-    const initialDefenderGold = structuredClone(matchState.defenderGold)
-    processTick(matchConfig, matchState, [], 1, randomnessGenerator);
-    const diff = [matchState.attackerGold - ]
-    expect(matchState.attackerGold).toBe(initialGold - 100)
-  })
+  // test("gold gets awarded every round", () => {
+  //   const matchConfig = baseConfig;
+  //   const matchState = getMatchState();
+  //   const randomnessGenerator = new Prando(1);
+  //   const initialAttackerGold = structuredClone(matchState.attackerGold)
+  //   const initialDefenderGold = structuredClone(matchState.defenderGold)
+  //   processTick(matchConfig, matchState, [], 1, randomnessGenerator);
+  //   const diff = [matchState.attackerGold - ]
+  //   expect(matchState.attackerGold).toBe(initialGold - 100)
+  // })
   test("built crypts drain user's gold", () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();

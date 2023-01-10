@@ -69,7 +69,11 @@ export const range = P.seqObj<Range>(
 );
 interface UpgradeTier {tier: 1 | 2 | 3};
 export const tier = P.seqObj<UpgradeTier>(
-  P.regexp(/[1-3]/).map(Number),
+  ["tier", P.regexp(/[1-3]/).map(n => {
+    if (n === "2") return 2
+    else if (n === "3") return 3
+    else return 1
+  })]
 )
 interface Tower{
   price: number;
