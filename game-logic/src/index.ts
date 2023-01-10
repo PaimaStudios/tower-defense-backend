@@ -31,6 +31,7 @@ import type {
   UnitAttack,
   ActorID,
   Actor,
+  UnitType,
 } from '@tower-defense/utils';
 import applyEvents from './apply';
 
@@ -137,7 +138,7 @@ function spawnEvents(
   const crypts: AttackerStructure[] = Object.values(m.actors.crypts);
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
-    const { spawnCapacity, spawnRate } = getCryptStats(config, ss.structure);
+    const {spawnCapacity, spawnRate} = config[ss.structure][ss.upgrades];
     // Crypts spawn units if three conditions are met:
     // 1.- They have remaining spawn capacity
     const hasCapacity = ss.spawned.length < spawnCapacity;
@@ -147,8 +148,7 @@ function spawnEvents(
     // 3.- The crypt is still active. They become inactive 3 rounds after being built. upgrades reset this
     const stillNew = (m.currentRound - ss.builtOnRound) < (3 * (ss.upgrades + 1));
     if (hasCapacity && aboutTime && stillNew) {
-      const unitType = ss.structure.replace('Crypt', '') as AttackerUnitType;
-      const newUnit = spawn(config, m, ss.id, ss.coordinates, unitType, rng);
+      const newUnit = spawn(config, m, ss, rng);
       applyEvents(config, m, [newUnit], currentTick, rng); // one by one now
       return newUnit;
     } else return null;
@@ -160,49 +160,24 @@ function spawnEvents(
 function spawn(
   config: MatchConfig,
   m: MatchState,
-  structureID: number,
-  coords: Coordinates,
-  type: AttackerUnitType,
+  crypt: AttackerStructure,
   rng: Prando
 ): UnitSpawnedEvent {
   // First we look up the unit stats with the Match Config
-  const { unitHealth, unitSpeed, unitAttack } = getUnitStats(config, type);
   // Then we compute the path tile in the map where the units will spawn at.
-  const path = findClosebyPath(m, coords, rng);
+  const path = findClosebyPath(m, crypt.coordinates, rng);
   return {
     eventType: 'spawn',
-    cryptID: structureID,
+    cryptID: crypt.id,
     actorID: m.actorCount + 1, // increment
     unitX: path.x,
     unitY: path.y,
-    unitType: type,
-    unitHealth,
-    unitSpeed,
-    unitAttack,
+    unitType: crypt.structure.replace("Crypt", "") as UnitType,
+    unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
+    unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
+    unitAttack: config[crypt.structure][crypt.upgrades].attackDamage,
+    tier: crypt.upgrades
   };
-}
-// Simple function to compute unit stats from a given Match Config
-function getUnitStats(config: MatchConfig, type: AttackerUnitType) {
-  if (type === 'gorilla')
-    return {
-      unitSpeed: config.gorillaCrypt.unitSpeed,
-      unitHealth: config.gorillaCrypt.unitHealth,
-      unitAttack: config.gorillaCrypt.damage,
-    };
-  else if (type === 'macaw')
-    return {
-      unitSpeed: config.macawCrypt.unitSpeed,
-      unitHealth: config.macawCrypt.unitHealth,
-      unitAttack: config.macawCrypt.damage,
-    };
-  else if (type === 'jaguar')
-    return {
-      unitSpeed: config.jaguarCrypt.unitSpeed,
-      unitHealth: config.jaguarCrypt.unitHealth,
-      unitAttack: config.jaguarCrypt.damage,
-    };
-  // just to shut up typescript
-  else return { unitSpeed: 2, unitHealth: 50, unitAttack: 2 };
 }
 // Function to find an available path next to a crypt to place a newly spawned unit.
 // If there is more than one candidate then randomness is used to select one.
@@ -316,12 +291,11 @@ function move(config: MatchConfig, a: AttackerUnit, newcoords: Coordinates): Uni
 }
 // Simple function to lookup the unit speed on the match config and check for speed debuff status.
 function getCurrentSpeed(config: MatchConfig, a: AttackerUnit): number {
-  const baseSpeed = getUnitStats(config, a.subType).unitSpeed;
   return a.status.reduce((acc, item) => {
     if (item === 'speedDebuff') return acc - Math.ceil(acc * 0.2); // TODO stack on the current speed or the base speed?
     if (item === 'speedBuff') return acc + Math.ceil(acc * 0.2); //  exponential sounds more fun
     else return acc;
-  }, baseSpeed);
+  }, a.speed);
 }
 
 // Buff events, status events which happen as units pass next to friendly crypts.
@@ -374,10 +348,11 @@ function computeDamageToUnit(
 ): TowerAttack[] {
   //  Towers attack once every n ticks, the number being their "shot delay" or "cooldown" in this config.
   //  If not cooled down yet, return an empty array
-  const cool = checkCool(config, t.structure) % (currentTick - 2);
+  const cooldown = config[t.structure][t.upgrades].cooldown;
+  const cool = cooldown % (currentTick - 2);
   if (!cool) return [];
   //  Check the attack range of the tower with the Match Config
-  const range = computeRange(config, t);
+  const range = config[t.structure][t.upgrades].range;
   // Given the computed rate, scan for all units that can be attacked
   const unitsNearby = scanForUnits(m, t.coordinates, range);
   if (unitsNearby.length === 0) return [];
@@ -385,32 +360,13 @@ function computeDamageToUnit(
   const pickedOne = unitsNearby.reduce(pickOne);
   // Sloth towers attack a whole range, so we pass the whole array of nearby units. Same for upgraded Piranha tower.
   // Else we pass the single unit chosen.
-  if (t.structure === 'piranhaTower' && t.upgrades === 2)
-    return piranhaDamage(config, t, unitsNearby, m, currentTick, rng);
-  else if (t.structure === 'piranhaTower')
+  if (t.structure === 'piranhaTower')
     return piranhaDamage(config, t, [pickedOne], m, currentTick, rng);
   else if (t.structure === 'slothTower')
     return slothDamage(config, t, unitsNearby, m, currentTick, rng);
   else if (t.structure === 'anacondaTower')
     return anacondaDamage(config, t, [pickedOne], m, currentTick, rng);
   else return [];
-}
-// Simple function to check tower cooldown rate with Match Config
-function checkCool(config: MatchConfig, t: DefenderStructureType): number {
-  if (t === 'piranhaTower') return config.piranhaTower.cooldown;
-  else if (t === 'anacondaTower') return config.anacondaTower.cooldown;
-  else if (t === 'slothTower') return config.slothTower.cooldown;
-  // ...
-  else return 5;
-}
-// Simple function to check tower range with Match Config
-function computeRange(config: MatchConfig, t: DefenderStructure): number {
-  if (t.structure === 'piranhaTower') return config.piranhaTower.range;
-  else if (t.structure === 'anacondaTower') return config.anacondaTower.range;
-  else if (t.structure === 'slothTower' && t.upgrades === 2) return config.slothTower.range;
-  else if (t.structure === 'slothTower') return config.slothTower.range + 1;
-  // ...
-  else return 1;
 }
 
 // Reducer function to pass to computeUnitDamage() above. Selects the unit with the least health.
@@ -419,6 +375,7 @@ function pickOne(acc: DefenderStructure, item: DefenderStructure): DefenderStruc
 function pickOne(acc: AttackerUnit, item: AttackerUnit): AttackerUnit;
 
 function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure | AttackerUnit) {
+  console.log(item)
   if (item.health < acc.health) return item;
   else if (item.id < acc.id) return item;
   else return acc;
@@ -432,9 +389,7 @@ function piranhaDamage(
   currentTick: number,
   rng: Prando
 ): TowerAttack[] {
-  // Compute damage amount according to Match Config
-  const damageAmount =
-    tower.upgrades === 2 ? config.piranhaTower.damage : config.piranhaTower.damage + 1;
+  const damageAmount = config.piranhaTower[tower.upgrades].damage;
   // Generate damage events iterating on affected units
   const damageEvents: TowerAttack[][] = a.map(unit => {
     // Generate single damage event per unit
@@ -478,7 +433,7 @@ function anacondaDamage(
   const killChance = tower.upgrades === 2 ? 0.5 : 0; // 50/50 chance of instakill if upgraded twice
   const damageEvents: TowerAttack[][] = a.map(unit => {
     // Damage amount equals to unit health if instakill
-    const damageAmount = rng.next() < killChance ? unit.health : config.anacondaTower.damage;
+    const damageAmount = rng.next() < killChance ? unit.health : config.anacondaTower[tower.upgrades].damage;
     const damageEvent: DamageEvent = {
       eventType: 'damage',
       faction: 'defender',
@@ -509,8 +464,7 @@ function slothDamage(
   rng: Prando
 ): TowerAttack[] {
   // Compute damage amount according to Match Config
-  const damageAmount =
-    tower.upgrades === 2 ? config.slothTower.damage : config.slothTower.damage + 1;
+  const damageAmount = config.slothTower[tower.upgrades].damage;
   // Sloth towers are special in that they impose speed debuff statuses on affected units.
   const damageEvents: TowerAttack[][] = a.map(unit => {
     const statusEvent: StatusEffectAppliedEvent = {
@@ -533,13 +487,24 @@ function slothDamage(
       id: unit.id,
     };
     const dying = damageAmount >= unit.health;
-    const events = dying ? [statusEvent, damageEvent, killEvent] : [statusEvent, damageEvent];
+    const events = dying ? [statusEvent, damageEvent, ...deflectingDamage(unit, tower.id, damageAmount), killEvent] : [statusEvent, damageEvent, ...deflectingDamage(unit, tower.id, damageAmount)];
     applyEvents(config, m, events, currentTick, rng);
     return events;
   });
   return damageEvents.flat();
 }
-
+function deflectingDamage(attacker: AttackerUnit, towerID: number, amount: number): DamageEvent[]{
+if (attacker.subType === "macaw" && attacker.upgradeTier === 2)
+  return [{
+    eventType: "damage",
+    faction: "attacker",
+    sourceID: attacker.id,
+    targetID: towerID,
+    damageAmount: amount,
+    damageType: "neutral"
+  }]
+  else return []
+}
 // Events where Units attack the defender.
 // Either Macaws attacking Towers, or any unit attacking the Defender Base
 function unitAttackEvents(
@@ -567,7 +532,6 @@ function computeDamageToTower(
   rng: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
   // Find all towers in range (range = 1) // TOO confirm
-  const damageAmount = config.macawCrypt.damage;
   const nearbyStructures = findClosebyTowers(m, a.coordinates, 1);
   if (nearbyStructures.length === 0) return [];
   // choose one Tower to attack on the same basis: weakest or oldest
@@ -578,10 +542,10 @@ function computeDamageToTower(
     sourceID: a.id,
     targetID: pickedOne.id,
     damageType: 'neutral',
-    damageAmount,
+    damageAmount: a.damage,
   };
   // If damage kills the tower, generate kill event
-  const dying = damageAmount >= pickedOne.health;
+  const dying = a.damage >= pickedOne.health;
   const killEvent: ActorDeletedEvent = {
     eventType: 'actorDeleted',
     faction: 'defender',
@@ -602,10 +566,9 @@ function computeDamageToBase(
   rng: Prando
 ): [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] {
   const t: Tile = m.contents[a.coordinates.y][a.coordinates.x];
-  const damageAmount = getUnitStats(config, a.subType).unitAttack;
   const baseEvent: DefenderBaseUpdateEvent = {
     eventType: 'defenderBaseUpdate',
-    health: m.defenderBase.health - damageAmount
+    health: m.defenderBase.health - a.damage // TODO: Do Macaws do the same damage to the base as they do to towers?
   };
   const killEvent: ActorDeletedEvent = {
     eventType: 'actorDeleted',
@@ -694,12 +657,6 @@ function findClosebyCrypts(m: MatchState, coords: Coordinates, range: number): A
   );
   const structures = tiles.map(t => m.actors.crypts[(t as AttackerStructureTile).id]);
   return structures as AttackerStructure[];
-}
-
-function getCryptStats(config: MatchConfig, type: AttackerStructureType) {
-  const spawnCapacity = config[type].capacity;
-  const spawnRate = config[type].spawnRate;
-  return { spawnCapacity, spawnRate };
 }
 
 function computeGoldRewards(

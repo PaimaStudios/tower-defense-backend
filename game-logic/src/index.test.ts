@@ -14,8 +14,12 @@ import type {
   ActorGraph,
   UpgradeStructureAction,
   DestroyStructureAction,
+  AttackerUnit,
+  TickEvent,
+  DamageEvent,
 } from '@tower-defense/utils';
 import { crypt } from '@tower-defense/utils/src/parser';
+import applyEvents from './apply';
 
 export const testmap = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
@@ -80,7 +84,7 @@ function upgrade(m: MatchState) {
   const toUpgrade: UpgradeStructureAction[] = structures.map(a => {
     return {
       round: 2,
-      action: "upgrade",
+      action: 'upgrade',
       id: a.id,
     };
   });
@@ -101,9 +105,9 @@ function destroy(m: MatchState) {
   return toDestroy;
 }
 function damageTowers(m: MatchState): void {
-  const towers: DefenderStructure[] = Object.values(m.actors.towers)
-  for (let tower of towers){
-    tower.health -= 50
+  const towers: DefenderStructure[] = Object.values(m.actors.towers);
+  for (let tower of towers) {
+    tower.health -= 50;
   }
   // const damagedTowers = Object.entries(m.actors.towers).reduce((acc, item) => {
   //   const health = item[1].health - 50;
@@ -184,6 +188,22 @@ describe('Game Logic', () => {
     const numbers = [10, 10, 22];
     expect(counts).toStrictEqual(numbers);
   });
+  test('built structures show up in the match state with their respective ids', () => {
+    const matchConfig = getMatchConfig();
+    const matchState = getMatchState();
+    const moves = build(10, 10);
+    const currentTick = 1;
+    const randomnessGenerator = new Prando(1);
+    const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
+    const counts = [
+      Object.keys(matchState.actors.crypts).length,
+      Object.keys(matchState.actors.towers).length,
+      matchState.actorCount,
+    ];
+    const numbers = [10, 10, 22];
+    expect(counts).toStrictEqual(numbers);
+  });
+
   test('repaired towers are repaired', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
@@ -208,11 +228,11 @@ describe('Game Logic', () => {
   test('repaired crypts are repaired', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
-    const moves = build(0, 3);;
+    const moves = build(0, 3);
     const randomnessGenerator = new Prando(1);
-    const ticks = [...Array(10).keys()] // [0..10]
+    const ticks = [...Array(10).keys()].map(i => i + 1); // [1..11]
     // do a bunch of ticks so the crypts do some spawning
-    for (let tick of ticks){
+    for (let tick of ticks) {
       processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
     }
     const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
@@ -223,14 +243,14 @@ describe('Game Logic', () => {
     const cryptSpawnedDiff = Object.keys(cryptState1).map(crypt => {
       const originalSpawned = cryptState1[parseInt(crypt)].spawned;
       const newSpawned = matchState.actors.crypts[parseInt(crypt)].spawned;
-      return originalSpawned.length - newSpawned.length
+      return originalSpawned.length - newSpawned.length;
     });
     expect(cryptSpawnedDiff).toStrictEqual([1, 1, 1]);
   });
   test('upgraded structures are upgraded', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
-    const moves = build(1, 1);;
+    const moves = build(1, 1);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
@@ -240,19 +260,19 @@ describe('Game Logic', () => {
     const cryptUpgradeDiff = Object.keys(cryptState1).map(crypt => {
       const originalState = cryptState1[parseInt(crypt)].upgrades;
       const newState = matchState.actors.crypts[parseInt(crypt)].upgrades;
-      return newState - originalState
+      return newState - originalState;
     });
     const towerUpgradeDiff = Object.keys(towerState1).map(tower => {
       const originalState = towerState1[parseInt(tower)].upgrades;
       const newState = matchState.actors.towers[parseInt(tower)].upgrades;
-      return newState - originalState
-    }); 
-    expect([...cryptUpgradeDiff, ...towerUpgradeDiff]).toStrictEqual([1, 1])
-  })
+      return newState - originalState;
+    });
+    expect([...cryptUpgradeDiff, ...towerUpgradeDiff]).toStrictEqual([1, 1]);
+  });
   test('destroyed structures are destroyed', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
-    const moves = build(3, 3);;
+    const moves = build(3, 3);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const moves2 = destroy(matchState);
@@ -261,5 +281,77 @@ describe('Game Logic', () => {
     const extantCrypts = Object.values(matchState.actors.crypts);
     const totalCount = [...extantCrypts, ...extantTowers].length;
     expect(totalCount).toBe(0);
+  });
+  // gold
+  test("gold gets awarded every round", () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const randomnessGenerator = new Prando(1);
+    const initialAttackerGold = structuredClone(matchState.attackerGold)
+    const initialDefenderGold = structuredClone(matchState.defenderGold)
+    processTick(matchConfig, matchState, [], 1, randomnessGenerator);
+    const diff = [matchState.attackerGold - ]
+    expect(matchState.attackerGold).toBe(initialGold - 100)
   })
+  test("built crypts drain user's gold", () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const randomnessGenerator = new Prando(1);
+    const initialGold = structuredClone(matchState.attackerGold)
+    const moves = build(0, 3);
+    processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+
+    expect(matchState.attackerGold).toBe(initialGold - 100)
+  })
+      // movement
+   test("spawned units show up in the actors graph", () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const moves = build(1, 3);
+    const randomnessGenerator = new Prando(1);
+    const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
+    // do a bunch of ticks so the crypts do some spawning
+    for (let tick of ticks) {
+      processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
+    }
+    
+    const unitCount = 0;
+    expect(unitCount).toBe(3);
+   })
+
+  // damage
+  test('macaws attacks to towers are registered', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const moves = build(1, 3);
+    const randomnessGenerator = new Prando(1);
+    const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
+    // do a bunch of ticks so the crypts do some spawning
+    for (let tick of ticks) {
+      processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
+    }
+    const snapshot = structuredClone(matchState.actors.towers)
+    const units = Object.values(matchState.actors.units);
+    const events = units.map(u => {
+      return damage(u, Object.values(matchState.actors.towers));
+    });
+    applyEvents(matchConfig, matchState, events.flat(), 2, randomnessGenerator);
+    const oldState = Object.values(snapshot)[0].health;
+    const newState = Object.values(matchState.actors.towers)[0].health
+    const diff = oldState - newState;
+    expect(diff).toBe(units.length);
+  });
 });
+
+function damage(u: AttackerUnit, t: DefenderStructure[]): DamageEvent[] {
+  return t.map(tower => {
+    return {
+      eventType: 'damage',
+      faction: 'attacker',
+      sourceID: u.id,
+      targetID: tower.id,
+      damageType: 'neutral',
+      damageAmount: 1,
+    };
+  });
+}

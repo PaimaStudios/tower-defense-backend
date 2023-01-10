@@ -29,6 +29,7 @@ import type {
   TowerAttack,
   ActorID,
   DestroyStructureEvent,
+  UpgradeTier,
 } from '@tower-defense/utils';
 
 // function to mutate the match state after events are processed.
@@ -51,6 +52,9 @@ export default function applyEvents(
         // replace old tile with new tile
         m.contents[event.y][event.x] = tile;
         m.actorCount++;
+        // // drain gold
+        // if (faction === "attacker") m.attackerGold - config[event.structure].cost;
+        // else  m.defenderGold - config[event.structure].cost
         break;
       case 'repair':
         if (faction === 'attacker') {
@@ -64,21 +68,32 @@ export default function applyEvents(
         break;
       case 'upgrade':
         if (faction === 'attacker') {
-          m.attackerGold -= config.upgradeCost;
-          applyUpgrade(m.actors.crypts[event.id]);
-        } // TODO get amount right
-        if (faction === 'defender') {
-          m.defenderGold -= config.upgradeCost;
-          applyUpgrade(m.actors.towers[event.id]);
+          const crypt = m.actors.crypts[event.id];
+          const currentTier = crypt.upgrades;
+          if (currentTier < 3) {
+            const newTier: UpgradeTier = (currentTier + 1) as UpgradeTier;
+            const cost = config[crypt.structure][newTier].price;
+            m.attackerGold -= cost;
+            applyUpgrade(crypt);
+          }
+        }
+        else if (faction === 'defender') {
+          const tower = m.actors.towers[event.id];
+          const currentTier = tower.upgrades;
+          if (currentTier < 3) {
+            const newTier = (currentTier + 1) as UpgradeTier;
+            m.defenderGold -= config[tower.structure][newTier].price;
+            applyUpgrade(tower);
+          }
         }
         break;
       case 'destroy':
-        const coords = findActorCoords(m, event)
+        const coords = findActorCoords(m, event);
         if (faction === 'attacker') {
           m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
           m.attackerGold += config.recoupAmount; // TODO get amount right
-          if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id]
-          else if (m.actors.units[event.id]) delete m.actors.units[event.id]
+          if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id];
+          else if (m.actors.units[event.id]) delete m.actors.units[event.id];
         } else if (faction === 'defender') {
           m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
           m.defenderGold += config.recoupAmount; // TODO get amount right
@@ -95,6 +110,9 @@ export default function applyEvents(
           subType: event.unitType,
           id: event.actorID,
           health: event.unitHealth,
+          speed: event.unitSpeed,
+          damage: event.unitAttack,
+          upgradeTier: event.tier.
           status: [],
           previousCoordinates: null,
           coordinates: { x: event.unitX, y: event.unitY },
@@ -102,8 +120,7 @@ export default function applyEvents(
           moving: false,
           movementCompletion: 0,
         };
-        // add unit to unit list
-        if (m.actors.units[event.actorID])
+        // add unit to unit graph
         m.actors.units[event.actorID] = spawnedUnit;
         // add unit to spawned list of its crypt
         m.actors.crypts[event.cryptID].spawned = [
@@ -183,7 +200,7 @@ export default function applyEvents(
       case 'statusApply':
         m.actors.units[event.targetID].status = [
           ...m.actors.units[event.targetID].status,
-          event.statusType
+          event.statusType,
         ];
         break;
     }
@@ -217,26 +234,25 @@ function randomizePath(paths: number, randomnessGenerator: Prando): number {
   return Math.floor(randomness * paths);
 }
 
-function determineFactionFromEvent(m:MatchState, eventType: TickEvent): Faction | null {
+function determineFactionFromEvent(m: MatchState, eventType: TickEvent): Faction | null {
   if ('faction' in eventType) return eventType.faction;
   if ('x' in eventType && eventType.x > 12) return 'attacker';
   if ('x' in eventType && eventType.x <= 12) return 'defender';
   else if ('id' in eventType) {
-    const crypt = m.actors.crypts[eventType.id]
-    const tower = m.actors.towers[eventType.id]
+    const crypt = m.actors.crypts[eventType.id];
+    const tower = m.actors.towers[eventType.id];
     const unit = m.actors.units[eventType.id];
-    if (tower) return "defender"
-    else if (crypt || unit) return "attacker"
-    else return null
-  }
-  else  return null;
+    if (tower) return 'defender';
+    else if (crypt || unit) return 'attacker';
+    else return null;
+  } else return null;
 }
-function findActorCoords(m: MatchState, eventType: DestroyStructureEvent): Coordinates{
-  const crypt = m.actors.crypts[eventType.id]
-  const tower = m.actors.towers[eventType.id]
+function findActorCoords(m: MatchState, eventType: DestroyStructureEvent): Coordinates {
+  const crypt = m.actors.crypts[eventType.id];
+  const tower = m.actors.towers[eventType.id];
   const unit = m.actors.units[eventType.id];
   const actor = crypt || tower || unit;
-  return actor.coordinates
+  return actor.coordinates;
 }
 
 function setStructureFromEvent(
@@ -253,7 +269,7 @@ function setStructureFromEvent(
       faction: 'attacker',
       id: id,
       structure: eventType.structure as AttackerStructureType,
-      upgrades: 0,
+      upgrades: 1,
       coordinates: { x: eventType.x, y: eventType.y },
       builtOnRound: m.currentRound, // + 3 it stops spawning
       spawned: [],
@@ -265,8 +281,8 @@ function setStructureFromEvent(
       faction: 'defender',
       id: id,
       structure: eventType.structure as DefenderStructureType,
-      health: config[eventType.structure as DefenderStructureType].health,
-      upgrades: 0,
+      health: config[eventType.structure as DefenderStructureType][1].health,
+      upgrades: 1,
       coordinates: { x: eventType.x, y: eventType.y },
     };
     m.actors.towers[unit.id] = unit;

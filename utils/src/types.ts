@@ -26,30 +26,50 @@ export interface AnnotatedMap {
 export interface MatchConfig {
   baseAttackerGoldRate: number;
   baseDefenderGoldRate: number;
-  anacondaTower: TowerConfig;
-  piranhaTower: TowerConfig;
-  slothTower: TowerConfig;
-  macawCrypt: CryptConfig;
-  gorillaCrypt: CryptConfig;
-  jaguarCrypt: CryptConfig;
+  anacondaTower: TowerConfigGraph;
+  piranhaTower: TowerConfigGraph;
+  slothTower: TowerConfigGraph;
+  macawCrypt: CryptConfigGraph;
+  gorillaCrypt: CryptConfigGraph;
+  jaguarCrypt: CryptConfigGraph;
   baseSpeed: number;
   towerRepairValue: number;
   repairCost: number;
-  upgradeCost: number;
   recoupAmount: number; // cash we get on destroying towers
 }
 export interface TowerConfig {
+  price: number;
   health: number;
   cooldown: number;
   damage: number;
   range: number;
 }
+export type StructureUpgradetier = 1 | 2 | 3;
+export interface TowerConfigGraph{
+  1: TowerConfig;
+  2: TowerConfig;
+  3: TowerConfig;
+};
+export interface CryptConfigGraph{
+  1: CryptConfig,
+  2: CryptConfig,
+  3: CryptConfig
+}
 export interface CryptConfig{
-  unitHealth: number; // 2
+  // crypt stats
+  price: number;
+  cryptHealth: number;
+  buffRange: number;
+  buffCooldown: number;
   spawnRate: number; // 2
-  capacity: number; // 50
-  damage: number; // 1
+  spawnCapacity: number; // 50
+  // unit stats
+  attackDamage: number; // 1
+  attackWarmup: number,
+  attackRange: number;
+  attackCooldown: number;
   unitSpeed: number; // 
+  unitHealth: number; // 2
 }
 export interface MatchState extends AnnotatedMap {
   attacker: Wallet;
@@ -91,6 +111,9 @@ export interface AttackerUnit {
   moving: boolean;
   movementCompletion: number;
   health: number;
+  speed: number;
+  damage: number;
+  upgradeTier: UpgradeTier;
   status: StatusType[];
 }
 
@@ -99,12 +122,13 @@ export interface Coordinates {
   x: number;
   y: number;
 }
+export type UpgradeTier = 1 | 2 | 3;
 export interface AttackerStructure {
   type: "structure";
   id: number;
   faction: "attacker";
   structure: AttackerStructureType
-  upgrades: number;
+  upgrades: UpgradeTier;
   coordinates: Coordinates;
   builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
   spawned: ActorID[]
@@ -116,7 +140,7 @@ export interface DefenderStructure {
   structure: DefenderStructureType;
   health: number;
   coordinates: Coordinates;
-  upgrades: number;
+  upgrades: UpgradeTier;
 }
 interface DefenderBase {
   // coordinates: Coordinates;
@@ -281,6 +305,7 @@ export interface UnitSpawnedEvent {
   unitHealth: number;
   unitSpeed: number;
   unitAttack: number;
+  tier: UpgradeTier;
 }
 export interface UnitMovementEvent {
   eventType: "movement";
