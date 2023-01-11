@@ -146,8 +146,8 @@ function getMatchState(): MatchState {
     height: 13,
     defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
     attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
-    defenderGold: 100,
-    attackerGold: 100,
+    defenderGold: 500,
+    attackerGold: 500,
     defenderBase: { health: 100, level: 1 },
     attackerBase: { level: 1 },
     actors: {
@@ -181,7 +181,7 @@ describe('Game Logic', () => {
   test('built structures show up in the match state', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
-    const moves = build(10, 10);
+    const moves = build(5, 5);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
@@ -190,13 +190,13 @@ describe('Game Logic', () => {
       Object.keys(matchState.actors.towers).length,
       matchState.actorCount,
     ];
-    const numbers = [10, 10, 22];
+    const numbers = [5, 5, 12];
     expect(counts).toStrictEqual(numbers);
   });
   test('built structures show up in the match state with their respective ids', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
-    const moves = build(10, 10);
+    const moves = build(5, 5);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
@@ -205,7 +205,7 @@ describe('Game Logic', () => {
       Object.keys(matchState.actors.towers).length,
       matchState.actorCount,
     ];
-    const numbers = [10, 10, 22];
+    const numbers = [5, 5, 12];
     expect(counts).toStrictEqual(numbers);
   });
 
@@ -304,9 +304,17 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     const initialGold = structuredClone(matchState.attackerGold)
     const moves = build(0, 3);
+    const moneySpent = moves.reduce((price, buildEvent) => {
+      if (buildEvent.action !== "build")
+      return price
+      else {
+        const cost = matchConfig[buildEvent.structure][1].price;
+        return price + cost
+      }
+    }, 0)
+    console.log(moneySpent, "money spent")
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-
-    expect(matchState.attackerGold).toBe(initialGold - 100)
+    expect(matchState.attackerGold).toBe(initialGold - moneySpent)
   })
       // movement
    test("spawned units show up in the actors graph", () => {

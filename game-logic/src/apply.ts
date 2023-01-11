@@ -32,6 +32,15 @@ import type {
   UpgradeTier,
 } from '@tower-defense/utils';
 
+function gotTheMoney(m: MatchState, faction: Faction | null, amount: number): boolean {
+  if (faction === 'attacker' && m.attackerGold - amount >= 0) {
+    m.attackerGold -= amount;
+    return true;
+  } else if (faction === 'defender' && m.defenderGold - amount >= 0) {
+    m.defenderGold -= amount;
+    return true;
+  } else return false;
+}
 // function to mutate the match state after events are processed.
 export default function applyEvents(
   config: MatchConfig,
@@ -45,46 +54,32 @@ export default function applyEvents(
     const faction = determineFactionFromEvent(m, event);
     switch (event.eventType) {
       case 'build':
-        // mutate map with new unit
-        setStructureFromEvent(config, m, event, faction as Faction, event.id);
-        // create new tile object
-        const tile = buildTileFromEvent(event, faction as Faction, event.id);
-        // replace old tile with new tile
-        m.contents[event.y][event.x] = tile;
-        m.actorCount++;
-        // // drain gold
-        // if (faction === "attacker") m.attackerGold - config[event.structure].cost;
-        // else  m.defenderGold - config[event.structure].cost
+        const cost = config[event.structure][1].price;
+        if (gotTheMoney(m, faction, cost)) {
+          // mutate map with new actor
+          setStructureFromEvent(config, m, event, faction as Faction, event.id);
+          // create new tile object
+          const tile = buildTileFromEvent(event, faction as Faction, event.id);
+          // replace old tile with new tile
+          m.contents[event.y][event.x] = tile;
+          m.actorCount++;
+          // // drain gold
+        }
         break;
       case 'repair':
-        if (faction === 'attacker') {
-          m.attackerGold -= config.repairCost; // TODO get amount right
-          applyCryptRepair(m.actors.crypts[event.id]);
-        }
-        if (faction === 'defender') {
-          m.defenderGold -= config.repairCost; // TODO get amount right
-          applyTowerRepair(config, m.actors.towers[event.id]);
+        if (gotTheMoney(m, faction, config.repairCost)) {
+          if (faction === 'attacker') applyCryptRepair(m.actors.crypts[event.id]);
+          if (faction === 'defender') applyTowerRepair(config, m.actors.towers[event.id]);
         }
         break;
       case 'upgrade':
-        if (faction === 'attacker') {
-          const crypt = m.actors.crypts[event.id];
-          const currentTier = crypt.upgrades;
-          if (currentTier < 3) {
-            const newTier: UpgradeTier = (currentTier + 1) as UpgradeTier;
-            const cost = config[crypt.structure][newTier].price;
-            m.attackerGold -= cost;
-            applyUpgrade(crypt);
-          }
-        }
-        else if (faction === 'defender') {
-          const tower = m.actors.towers[event.id];
-          const currentTier = tower.upgrades;
-          if (currentTier < 3) {
-            const newTier = (currentTier + 1) as UpgradeTier;
-            m.defenderGold -= config[tower.structure][newTier].price;
-            applyUpgrade(tower);
-          }
+        const structure =
+          faction === 'attacker' ? m.actors.crypts[event.id] : m.actors.towers[event.id];
+        const currentTier = structure.upgrades;
+        if (currentTier < 3) {
+          const newTier = (currentTier + 1) as UpgradeTier;
+          const cost = config[structure.structure][newTier].price;
+          if (gotTheMoney(m, faction, cost)) applyUpgrade(structure);
         }
         break;
       case 'destroy':
