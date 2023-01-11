@@ -66,7 +66,9 @@ function processTick(
 }
 
 function structureEvents(m: MatchState, moves: TurnAction[]): TickEvent[] {
-  // We need to keep a global account of all actors in the match. We iterate over user actions and reduce to a tuple of events produced and actor count, then return the event array.
+  // We need to keep a global account of all actors in the match. 
+  // We iterate over user actions and reduce to a tuple of events produced and actor count, 
+  // then return the event array.
   const accumulator: [StructureEvent[], number] = [[], m.actorCount + 1];
   const structuralTick: [StructureEvent[], number] = moves.reduce((acc, item) => {
     const newEvent = structureEvent(item, acc[1]);
@@ -102,6 +104,7 @@ function structureEvent(m: TurnAction, count: number): StructureEvent {
       id: m.id
     };
   else
+      console.log("this shouldn't happen")
     return {
       // so typescript shuts up
       eventType: 'destroy',

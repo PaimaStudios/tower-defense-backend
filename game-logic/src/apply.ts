@@ -312,5 +312,5 @@ function applyCryptRepair(crypt: AttackerStructure) {
 }
 
 function applyUpgrade(structure: AttackerStructure | DefenderStructure): void {
-  structure.upgrades++;
+  if (structure.upgrades < 3) structure.upgrades++;
 }

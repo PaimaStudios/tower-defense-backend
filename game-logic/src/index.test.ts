@@ -343,10 +343,52 @@ describe('Game Logic', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
+    const moves = build(3, 0);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const initialGold = structuredClone(matchState.defenderGold);
+    const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
+    const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
+    const moves2 = repair(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const uEvents = events2 || [];
+    const moneySpent = uEvents.reduce((acc, item) => {
+      if (item.eventType === "repair")
+      return acc + matchConfig.repairCost;
+      else return acc
+    }, 0)
+    expect(matchState.defenderGold).toBe(initialGold - moneySpent)
   });
   test("upgrades spend gold", () => {
-
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const randomnessGenerator = new Prando(1);
+    const moves = build(0, 3);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const initialGold = structuredClone(matchState.attackerGold);
+    const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
+    const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
+    const moves2 = upgrade(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const moneySpent = moves2.reduce((acc, item) => {
+      const structure: AttackerStructure = matchState.actors.crypts[item.id];
+      const cost = matchConfig[structure.structure][structure.upgrades].price
+      return acc + cost;
+    }, 0)
+    expect(matchState.attackerGold).toBe(initialGold - moneySpent)
+  })
+  test("destroying structures recoups money", () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const randomnessGenerator = new Prando(1);
+    const moves = build(0, 3);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const initialGold = structuredClone(matchState.attackerGold);
+    const moves2 = destroy(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const moneyGained = moves2.reduce((acc, item) => {
+      return acc + matchConfig.recoupAmount;
+    }, 0)
+    expect(matchState.attackerGold).toBe(initialGold + moneyGained)
   })
   // movement
   test('spawned units show up in the actors graph', () => {
