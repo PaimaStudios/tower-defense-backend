@@ -20,7 +20,7 @@ export interface AnnotatedMap {
   name: string;
   width: number;
   height: number;
-  contents: Tile[][];
+  mapState: Tile[]
 }
 
 export interface MatchConfig {
