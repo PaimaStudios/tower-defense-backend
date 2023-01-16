@@ -156,6 +156,7 @@ export interface BasicLobbyInfo {
   lobby_creator: UserAddress;
   creator_faction: Faction
   initial_gold: number;
+  hidden: boolean;
 }
 
 export type Faction = "attacker" | "defender";

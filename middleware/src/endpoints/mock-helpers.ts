@@ -134,17 +134,17 @@ function isBase(tile: Tile) {
 export function getFirstRound(): RoundExecutor {
   const seed = 'td';
   const rng = new Prando(seed);
-  const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2'; // we would get this from the db in production
+  const configString = 'r|1|gr;d;105|st1;p50;h150;c10;d5;r2'; // we would get this from the db in production
   const matchConfig: MatchConfig = parseConfig(configString);
   const am = annotateMap(testmap, 22);
   const withPath = setPath(am);
-  const matchState = {
+  const matchState: MatchState = {
     width: 22,
     height: 13,
     defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
     attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
-    defenderGold: 100,
-    attackerGold: 100,
+    defenderGold: 500,
+    attackerGold: 500,
     defenderBase: { health: 100, level: 1 },
     attackerBase: { level: 1 },
     actors: {
@@ -152,7 +152,6 @@ export function getFirstRound(): RoundExecutor {
       crypts: {},
       units: {},
     },
-    contents: withPath,
     mapState: withPath.flat(),
     name: 'jungle',
     currentRound: 1,
@@ -165,7 +164,7 @@ export function getFirstRound(): RoundExecutor {
 export function getNewRound(roundNumber: number): RoundExecutor {
   const seed = 'td';
   const rng = new Prando(seed);
-  const configString = 'r|1|gr;d;105|st;h150;c10;d5;r2'; // we would get this from the db in production
+  const configString = 'r|1|gr;d;105|st1;p50;h150;c10;d5;r2'; // we would get this from the db in production
   const matchConfig: MatchConfig = parseConfig(configString);
   const am = annotateMap(testmap, 22);
   const withPath = setPath(am);
@@ -251,14 +250,17 @@ export function subsequentStructureEvents(
         value: 25, // this should be in config
       };
     });
-  const toDestroy: AttackerStructure | DefenderStructure =
-    structures[Math.floor(Math.random() * structures.length)]; // a single random one
-  const toDestroyEvent: DestroyStructureAction = {
-    round: roundNumber,
-    action: 'destroy',
-    id: toDestroy.id,
-  };
-  return [...toBuild, ...toUpgrade, ...toRepair, toDestroyEvent];
+  const toDestroy: Array<AttackerStructure | DefenderStructure> =
+    [structures[Math.floor(Math.random() * (structures.length - 1))]] || []; // a single random one
+
+  const toDestroyEvents: DestroyStructureAction[] = toDestroy.map(d => {
+    return {
+      round: roundNumber,
+      action: 'destroy',
+      id: d.id,
+    };
+  });
+  return [...toBuild, ...toUpgrade, ...toRepair, ...toDestroyEvents];
 }
 function randomFromArray<T>(array: T[]): T {
   const index = Math.floor(Math.random() * array.length);
