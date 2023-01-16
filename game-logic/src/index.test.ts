@@ -156,8 +156,7 @@ function getMatchState(): MatchState {
       crypts: {},
       units: {},
     },
-    contents: withPath,
-    // mapState: withPath.flat(),
+    mapState: withPath.flat(),
     name: 'jungle',
     currentRound: 1,
     actorCount: 2, // the two bases
@@ -182,6 +181,37 @@ describe('Game Logic', () => {
     // TODO
     expect(3).toBe(3);
   });
+  // test('mapState and contents point to the same thing', () => {
+  //   const m = getMatchState();
+  //   const coords = { x: 10, y: 10 };
+  //   const range = 1;
+  //   const up = m.contents[coords.y - range]?.[coords.x];
+  //   const coordsToIndex = (coords: Coordinates, width: number): number => {
+  //     return width * coords.y + coords.x;
+  //   };
+  //   const up2 = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x }, m.width)];
+  //   const upright = m.contents[coords.y - range]?.[coords.x + range];
+  //   const upright2 =
+  //     m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x + range }, m.width)];
+  //   const right = m.contents[coords.y]?.[coords.x + range]; //
+  //   const right2 = m.mapState[coordsToIndex({ y: coords.y, x: coords.x + range }, m.width)];
+  //   const downright = m.contents[coords.y + range]?.[coords.x + range]; //
+  //   const downright2 =
+  //     m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x + range }, m.width)];
+  //   const down = m.contents[coords.y + range]?.[coords.x];
+  //   const down2 = m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x }, m.width)];
+  //   const downleft = m.contents[coords.y + range]?.[coords.x - range];
+  //   const downleft2 =
+  //     m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x - range }, m.width)];
+  //   const left = m.contents[coords.y]?.[coords.x - range];
+  //   const left2 = m.mapState[coordsToIndex({ y: coords.y, x: coords.x - range }, m.width)];
+  //   const upleft = m.contents[coords.y - range]?.[coords.x - range];
+  //   const upleft2 =
+  //     m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x - range }, m.width)];
+  //   const one = [up, upright, right, downright, down, downleft, left, upleft];
+  //   const two = [up2, upright2, right2, downright2, down2, downleft2, left2, upleft2];
+  //   expect(one).toStrictEqual(two);
+  // });
   // structure tests
   test('built structures show up in the match state', () => {
     const matchConfig = getMatchConfig();
@@ -205,15 +235,15 @@ describe('Game Logic', () => {
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
-    const idGraph: any = {crypts: [], towers: []};
+    const idGraph: any = { crypts: [], towers: [] };
     const uEvents = events || [];
     const ids = uEvents.reduce((acc, item) => {
-      if (item.eventType === "build" && item.structure.includes("Tower"))
-      return {...acc, towers: [...acc.towers, `${item.id}`]}
-      if (item.eventType === "build" && item.structure.includes("Crypt"))
-      return {...acc, crypts: [...acc.crypts, `${item.id}`]} 
-      else return acc
-    }, idGraph)
+      if (item.eventType === 'build' && item.structure.includes('Tower'))
+        return { ...acc, towers: [...acc.towers, `${item.id}`] };
+      if (item.eventType === 'build' && item.structure.includes('Crypt'))
+        return { ...acc, crypts: [...acc.crypts, `${item.id}`] };
+      else return acc;
+    }, idGraph);
     const cryptsOK = Object.keys(matchState.actors.crypts).every(e => ids.crypts.includes(e));
     const towersOK = Object.keys(matchState.actors.towers).every(e => ids.towers.includes(e));
     expect([cryptsOK, towersOK]).toStrictEqual([true, true]);
@@ -304,8 +334,8 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     const moves = build(50, 50);
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-    const result = [matchState.attackerGold >= 0, matchState.defenderGold >= 0]
-    expect(result).toStrictEqual([true, true])
+    const result = [matchState.attackerGold >= 0, matchState.defenderGold >= 0];
+    expect(result).toStrictEqual([true, true]);
   });
   test("built crypts drain user's gold", () => {
     const matchConfig = baseConfig;
@@ -339,7 +369,7 @@ describe('Game Logic', () => {
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     expect(matchState.defenderGold).toBe(initialGold - moneySpent);
   });
-  test("repairs spend gold", () => {
+  test('repairs spend gold', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
@@ -352,13 +382,12 @@ describe('Game Logic', () => {
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const uEvents = events2 || [];
     const moneySpent = uEvents.reduce((acc, item) => {
-      if (item.eventType === "repair")
-      return acc + matchConfig.repairCost;
-      else return acc
-    }, 0)
-    expect(matchState.defenderGold).toBe(initialGold - moneySpent)
+      if (item.eventType === 'repair') return acc + matchConfig.repairCost;
+      else return acc;
+    }, 0);
+    expect(matchState.defenderGold).toBe(initialGold - moneySpent);
   });
-  test("upgrades spend gold", () => {
+  test('upgrades spend gold', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
@@ -371,12 +400,12 @@ describe('Game Logic', () => {
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const moneySpent = moves2.reduce((acc, item) => {
       const structure: AttackerStructure = matchState.actors.crypts[item.id];
-      const cost = matchConfig[structure.structure][structure.upgrades].price
+      const cost = matchConfig[structure.structure][structure.upgrades].price;
       return acc + cost;
-    }, 0)
-    expect(matchState.attackerGold).toBe(initialGold - moneySpent)
-  })
-  test("destroying structures recoups money", () => {
+    }, 0);
+    expect(matchState.attackerGold).toBe(initialGold - moneySpent);
+  });
+  test('destroying structures recoups money', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
@@ -387,9 +416,9 @@ describe('Game Logic', () => {
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const moneyGained = moves2.reduce((acc, item) => {
       return acc + matchConfig.recoupAmount;
-    }, 0)
-    expect(matchState.attackerGold).toBe(initialGold + moneyGained)
-  })
+    }, 0);
+    expect(matchState.attackerGold).toBe(initialGold + moneyGained);
+  });
   // movement
   test('spawned units show up in the actors graph', () => {
     const matchConfig = baseConfig;
@@ -402,9 +431,10 @@ describe('Game Logic', () => {
     for (let tick of ticks) {
       events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
     }
-    const ids = events.flat()
-    .filter((e: TickEvent | null ): e is UnitSpawnedEvent => e?.eventType === "spawn")
-    .map(e => `${e.actorID}`);
+    const ids = events
+      .flat()
+      .filter((e: TickEvent | null): e is UnitSpawnedEvent => e?.eventType === 'spawn')
+      .map(e => `${e.actorID}`);
     const ok = Object.keys(matchState.actors.units).every(u => ids.includes(u));
     expect(ok).toBeTruthy();
   });

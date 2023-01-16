@@ -31,6 +31,7 @@ import type {
   DestroyStructureEvent,
   UpgradeTier,
 } from '@tower-defense/utils';
+import { coordsToIndex } from '.';
 
 function gotTheMoney(m: MatchState, faction: Faction | null, amount: number): boolean {
   if (faction === 'attacker' && m.attackerGold - amount >= 0) {
@@ -61,7 +62,8 @@ export default function applyEvents(
           // create new tile object
           const tile = buildTileFromEvent(event, faction as Faction, event.id);
           // replace old tile with new tile
-          m.contents[event.y][event.x] = tile;
+          m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)] = tile;
+          // m.contents[event.y][event.x] = tile;
           m.actorCount++;
           // // drain gold
         }
@@ -85,19 +87,22 @@ export default function applyEvents(
       case 'destroy':
         const coords = findActorCoords(m, event);
         if (faction === 'attacker') {
-          m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
-          m.attackerGold += config.recoupAmount; // TODO get amount right
+          m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'attacker' };
+          // m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
+          m.attackerGold += config.recoupAmount;
           if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id];
-          else if (m.actors.units[event.id]) delete m.actors.units[event.id];
+          // else if (m.actors.units[event.id]) delete m.actors.units[event.id];
         } else if (faction === 'defender') {
-          m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
+          m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'defender' };
+          // m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
           m.defenderGold += config.recoupAmount; // TODO get amount right
           delete m.actors.towers[event.id];
         }
         break;
       case 'spawn':
         // place the unit in a path
-        const spawnPath: PathTile = m.contents[event.unitY][event.unitX] as PathTile;
+        const spawnPath: PathTile = m.mapState[coordsToIndex({x: event.unitX, y: event.unitY},m.width)] as PathTile;
+        // const spawnPath: PathTile = m.contents[event.unitY][event.unitX] as PathTile;
         spawnPath.units = [...spawnPath.units, event.actorID];
         const spawnedUnit: AttackerUnit = {
           type: 'unit',
@@ -135,10 +140,12 @@ export default function applyEvents(
           unitMoving.movementCompletion = 0;
           unitMoving.moving = true;
           // clear the unit from the current path
-          const movementPath = m.contents[event.unitY][event.unitX] as PathTile;
+        const movementPath: PathTile = m.mapState[coordsToIndex({x: event.unitX, y: event.unitY},m.width)] as PathTile;
+          // const movementPath = m.contents[event.unitY][event.unitX] as PathTile;
           movementPath.units = movementPath.units.filter(u => u !== unitMoving.id);
           // add unit to next path if path
-          const newpath = m.contents[event.nextY][event.nextX];
+          const newpath = m.mapState[coordsToIndex({x: event.nextX, y: event.nextY}, m.width)]
+          // const newpath = m.contents[event.nextY][event.nextX];
           if (newpath.type === 'path') {
             newpath.units = [...newpath.units, event.actorID];
           }
@@ -173,11 +180,12 @@ export default function applyEvents(
           break;
         else {
           // remove from map
-          const tileToWipe = m.contents[unitToDelete.coordinates.y][unitToDelete.coordinates.x];
+          const tileToWipe = m.mapState[coordsToIndex(unitToDelete.coordinates, m.width)]
+          // const tileToWipe = m.contents[unitToDelete.coordinates.y][unitToDelete.coordinates.x];
           if (tileToWipe.type === 'path')
             tileToWipe.units = tileToWipe.units.filter(u => u !== deleteEvent.id);
           else if (tileToWipe.type === 'structure' && tileToWipe.faction === 'defender')
-            m.contents[unitToDelete.coordinates.y][unitToDelete.coordinates.x] = {
+            m.mapState[(coordsToIndex(unitToDelete.coordinates, m.width))] = {
               type: 'open',
               faction: 'defender',
             };
@@ -207,7 +215,7 @@ function findDestination(
   a: AttackerUnit,
   randomnessGenerator: Prando
 ): Coordinates | null {
-  const tile = m.contents[a.coordinates.y][a.coordinates.x];
+  const tile = m.mapState[(coordsToIndex(a.coordinates, m.width))]
   // if the unit is at the defender base, they don't move anymore, time to die
   if (tile.type === 'base' && tile.faction === 'defender') return null;
   else {

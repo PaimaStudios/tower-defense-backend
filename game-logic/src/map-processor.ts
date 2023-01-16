@@ -5,7 +5,7 @@ export default function (m: RawMap): AnnotatedMap {
     name: m.name,
     width: m.width,
     height: m.height,
-    contents: annotateMap(m.contents, m.height)
+    mapState: annotateMap(m.contents, m.height).flat()
   }
 }
 
