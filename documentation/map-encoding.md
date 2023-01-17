@@ -17,14 +17,14 @@ The contents of the map is a one dimensional array which defines all of the squa
 
 In raw encoding each element in contents can be one of the following values:
 
-
-- `0`: An unbuildable tile (no one can build here, may have a statue/other graphics displayed on this tile for example)
 - `1`: An open defender square (defender can place structures here)
 - `2`: An open attacker square (attacker can place structures here)
 - `3`: The defender base
 - `4`: The attacker base
 - `5`: A defender path/road square (neither player can place structures here, but units can walk on these squares)
 - `6`: An attacker path/road square (neither player can place structures here, but units can walk on these squares)
+- `7`: An unbuildable defender tile (no one can build here may have a statue/other graphics displayed on this tile for example)
+- `8`: An unbuildable attacker tile
 
 An example map in raw encoding is constructed below:
 
@@ -34,17 +34,17 @@ An example map in raw encoding is constructed below:
   "width": 22,
   "height": 13,
   "contents": [
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1,
-    1, 5, 5, 5, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 3, 5, 5, 5, 1,
-    5, 5, 5, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1, 1, 5, 1, 1, 1, 5,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+    1, 5, 5, 5, 1, 1, 1, 1, 2, 2, 2, 8, 2, 2, 2, 2, 2, 2, 2, 2, 3, 5, 5, 5, 1,
+    5, 5, 5, 1, 1, 2, 2, 2, 2, 2, 2, 8, 2, 2, 2, 2, 2, 2, 1, 1, 5, 1, 1, 1, 5,
     1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 5, 5, 5, 5, 5, 1, 1, 2,
     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 6, 6, 6, 6,
     6, 6, 6, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 6, 2, 2, 6,
     2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 6, 2, 2, 6, 2, 2, 2,
     2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 6, 6, 2, 6, 2, 2, 2, 2, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 6, 2, 6, 2, 2, 0, 0, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 6, 6, 6, 6, 6, 4, 0, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 6, 2, 6, 2, 2, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 6, 6, 6, 6, 6, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1,
     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
   ]
 }
@@ -154,10 +154,18 @@ A tile which specifies an attacker structure (crypt). Of note, all crypts will h
 }
 ```
 
-#### Immovable Object Tile
+#### Unbuildable Attacker Tile
 
 ```json
 {
-  "type": "immovable-object"
+  "type": "unbuildable-attacker"
+}
+```
+
+#### Unbuildable Defender Tile
+
+```json
+{
+  "type": "unbuildable-defender"
 }
 ```
