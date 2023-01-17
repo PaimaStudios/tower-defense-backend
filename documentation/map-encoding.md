@@ -17,6 +17,8 @@ The contents of the map is a one dimensional array which defines all of the squa
 
 In raw encoding each element in contents can be one of the following values:
 
+
+- `0`: An unbuildable tile (no one can build here, may have a statue/other graphics displayed on this tile for example)
 - `1`: An open defender square (defender can place structures here)
 - `2`: An open attacker square (attacker can place structures here)
 - `3`: The defender base
