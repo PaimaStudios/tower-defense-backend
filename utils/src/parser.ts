@@ -220,10 +220,10 @@ const macawCrypt = P.seqMap(
   }
 )
 
-interface InvalidInput{
+export interface InvalidInput{
   error: 'invalidString'
 }
-type ParsedSubmittedInput = AnacondaTower
+export type ParsedSubmittedInput = AnacondaTower
 | PiranhaTower
 | SlothTower
 | GorillaCrypt
