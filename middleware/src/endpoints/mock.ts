@@ -51,6 +51,7 @@ const myOpenLobby = {
   round_ends_in_blocks: 100,
   round_ends_in_secs: 400,
   initial_gold: 1000,
+  hidden: false
 };
 const myActiveLobby = {
   lobby_id: 'defdefabcabc',
@@ -72,6 +73,7 @@ const myActiveLobby = {
   round_ends_in_secs: 400,
   player_turn: '0xdDA309096477b89D7066948b31aB05924981DF2B',
   initial_gold: 2000,
+  hidden: false
 };
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   // const errorFxn = buildEndpointErrorFxn("getLobbyState");
@@ -92,54 +94,18 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
 async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
   return {
     success: true,
-    lobby: {
-      lobby_id: 'abcdefabcdef',
-      created_at: new Date(),
-      lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-      creator_faction: 'attacker',
-      player_two: null,
-      player_two_faction: null,
-      current_round: 1,
-      num_of_rounds: 100,
-      map: 'jungle',
-      health: 100,
-      spawnLimit: 10,
-      creation_block_height: 1,
-      round_start_height: 2,
-      lobby_state: 'open',
-      round_length: 500,
-      round_ends_in_blocks: 100,
-      round_ends_in_secs: 400,
-      initial_gold: 1000,
-    },
+    lobby: myOpenLobby
   };
 }
 
 async function getOpenLobbies(page: number, count?: number): Promise<LobbyStates | FailedResult> {
+  if (page !== 0) return {
+    success: true, lobbies: []
+  }
+  else 
   return {
     success: true,
-    lobbies: [
-      {
-        lobby_id: 'abcdefabcdef',
-        created_at: new Date(),
-        lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-        creator_faction: 'attacker',
-        player_two: null,
-        player_two_faction: null,
-        current_round: 1,
-        num_of_rounds: 100,
-        map: 'jungle',
-        health: 100,
-        spawnLimit: 10,
-        creation_block_height: 1,
-        round_start_height: 2,
-        lobby_state: 'open',
-        round_length: 500,
-        round_ends_in_blocks: 100,
-        round_ends_in_secs: 400,
-        initial_gold: 1000,
-      },
-    ],
+    lobbies: [myOpenLobby],
   };
 }
 async function getUserLobbiesMatches(
@@ -147,51 +113,13 @@ async function getUserLobbiesMatches(
   page: number,
   count?: number
 ): Promise<LobbyStates | FailedResult> {
+  if (page !== 0) return {
+    success: true, lobbies: []
+  } 
+  else
   return {
     success: true,
-    lobbies: [
-      {
-        lobby_id: 'abcdefabcdef',
-        created_at: new Date(),
-        lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-        creator_faction: 'attacker',
-        player_two: null,
-        player_two_faction: null,
-        current_round: 1,
-        num_of_rounds: 100,
-        map: 'jungle',
-        health: 100,
-        spawnLimit: 10,
-        creation_block_height: 1,
-        round_start_height: 2,
-        lobby_state: 'open',
-        round_length: 500,
-        round_ends_in_blocks: 100,
-        round_ends_in_secs: 400,
-        initial_gold: 1000,
-      },
-      {
-        lobby_id: 'defdefabcabc',
-        created_at: new Date(),
-        lobby_creator: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-        creator_faction: 'defender',
-        player_two: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
-        player_two_faction: 'attacker',
-        current_round: 3,
-        num_of_rounds: 10,
-        map: 'jungle',
-        health: 100,
-        spawnLimit: 10,
-        creation_block_height: 1,
-        round_start_height: 2,
-        lobby_state: 'active',
-        round_length: 500,
-        round_ends_in_blocks: 100,
-        round_ends_in_secs: 400,
-        player_turn: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-        initial_gold: 2000,
-      },
-    ],
+    lobbies: [myOpenLobby,myActiveLobby],
   };
 }
 async function getNewLobbies(
@@ -257,7 +185,8 @@ async function getRoundExecutor(
   lobbyId: string,
   roundNumber: number
 ): Promise<SuccessfulResult<RoundExecutor> | FailedResult> {
-  const executor = roundNumber === 1 ? getFirstRound() : getNewRound(roundNumber);
+  // const executor = roundNumber === 1 ? getFirstRound() : getNewRound(roundNumber);
+  const executor = getFirstRound();
   return {
     success: true,
     result: executor,
