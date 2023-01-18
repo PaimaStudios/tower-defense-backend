@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "DB_HOST=localhost DB_USER=postgres DB_PW=postgres DB_NAME=postgres node --experimental-specifier-resolution=node build/index.js"
+    "dev": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config --experimental-specifier-resolution=node build/index.js"
   },
   "author": "",
   "license": "ISC",
