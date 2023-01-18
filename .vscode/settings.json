@@ -9,5 +9,8 @@
   },
   "[sql]": {
     "editor.formatOnSave": false
+  },
+  "[json][jsonc][json5]": {
+    "editor.formatOnSave": true
   }
 }
