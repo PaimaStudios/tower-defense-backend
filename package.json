@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prettier": "prettier --config .prettierrc --ignore-path .prettierignore --check .",
-    "prettier:fix": "prettier --write --config .prettierrc --ignore-path .prettierignore --check .",
+    "build": "npx tsc --build tsconfig.build.json",
+    "docker:cp": "cp ./docker/* ../ && cd ..",
+    "docker": "npm run docker:cp && docker compose up",
+    "docker:build": "npm run docker:cp && docker compose build && docker compose up",
     "lint": "eslint --ext ts,tsx,js,jsx --ignore-path .gitignore .",
     "lint:fix": "eslint --ext ts,tsx,js,jsx --ignore-path .gitignore --fix .",
-    "build": "npx tsc --build tsconfig.build.json",
+    "prettier": "prettier --config .prettierrc --ignore-path .prettierignore --check .",
+    "prettier:fix": "prettier --write --config .prettierrc --ignore-path .prettierignore --check .",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "npm test -- --watch"
   },
