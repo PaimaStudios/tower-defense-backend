@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "lint": "eslint",
+    "prettier": "prettier --config .prettierrc --ignore-path .prettierignore --check .",
+    "prettier:fix": "prettier --write --config .prettierrc --ignore-path .prettierignore --check .",
+    "lint": "eslint --ext ts,tsx,js,jsx --ignore-path .gitignore .",
+    "lint:fix": "eslint --ext ts,tsx,js,jsx --ignore-path .gitignore --fix .",
     "build": "npx tsc --build tsconfig.build.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "npm test -- --watch"
@@ -27,7 +30,6 @@
     "@typescript-eslint/parser": "^5.40.1",
     "dotenv": "^16.0.3",
     "eslint": "^8.25.0",
-    "eslint-config-airbnb-typescript": "^15.0.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
