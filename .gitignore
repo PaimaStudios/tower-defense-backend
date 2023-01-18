@@ -3,7 +3,9 @@ node_modules
 **/src/**.js
 **/src/**.d.ts
 **/build
-.vscode
-**/build
+
+.env.development
+
+# Frontend
 build.zip
 WebGL

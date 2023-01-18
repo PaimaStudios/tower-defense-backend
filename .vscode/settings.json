@@ -1,0 +1,12 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "files.associations": {
+    ".env.*": "properties"
+  },
+  "[sql]": {
+    "editor.formatOnSave": false
+  }
+}
