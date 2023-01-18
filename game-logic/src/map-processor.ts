@@ -58,10 +58,7 @@ export function setPath(map: Tile[][]): Tile[][] {
 }
 
 function findTile(c: number): Tile {
-  if (c === 0) return {
-    type: "immovableObject"
-  }
-  else if (c === 1) return {
+  if (c === 1) return {
     "type": "open", faction: "defender"
   }
   else if (c === 2) return {
@@ -87,7 +84,12 @@ function findTile(c: number): Tile {
     "leadsTo": [],
     units: []
   }
+  else if (c === 7) return{
+    type: "unbuildable",
+    faction: "defender"
+  }
   else return {
-    type: "immovableObject"
+    type: "unbuildable",
+    faction: "attacker"
   }
 }

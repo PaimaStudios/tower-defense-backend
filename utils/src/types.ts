@@ -15,7 +15,7 @@ export interface RawMap {
   height: number;
   contents: TileNumber[];
 }
-type TileNumber = 1 | 2 | 3 | 4 | 5 | 6;
+type TileNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 export interface AnnotatedMap {
   name: string;
   width: number;
@@ -157,9 +157,10 @@ export type Tile = PathTile
   | AttackerBaseTile
   | DefenderOpenTile
   | AttackerOpenTile
-  | AttackerStructureTile
   | DefenderStructureTile
-  | ImmovableObjectTile
+  | AttackerStructureTile
+  | DefenderUnbuildableTile
+  | AttackerUnbuildableTile
 
 export interface PathTile {
   type: "path";
@@ -208,8 +209,13 @@ export interface AttackerOpenTile {
   type: "open";
   faction: "attacker";
 }
-export interface ImmovableObjectTile {
-  type: "immovableObject"
+export interface DefenderUnbuildableTile {
+  type: "unbuildable";
+  faction: "defender";
+}
+export interface AttackerUnbuildableTile {
+  type: "unbuildable";
+  faction: "attacker";
 }
 export type Wallet = string;
 
