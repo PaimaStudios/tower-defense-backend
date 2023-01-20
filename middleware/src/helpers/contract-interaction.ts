@@ -17,7 +17,7 @@ const TX_VERIFICATION_DELAY = 5000;
 
 export async function updateFee() {
   try {
-    let web3 = await getWeb3();
+    const web3 = await getWeb3();
     const newFee = await retrieveFee(getStorageAddress(), web3);
     setFee(newFee);
     console.log(`[updateFee] retrieved fee ${newFee}, ${newFee.length} symbols`);

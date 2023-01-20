@@ -6,93 +6,96 @@ import P from 'parsimmon';
 // Or we let them only configure the first iteration and then buff the specs by some agreed ratio on every upgrade
 
 // Parser for Match Config Definitions
-const semicolon = P.string(";");
-interface BaseSpeed{
-  name: "baseGoldRate"
+const semicolon = P.string(';');
+interface BaseSpeed {
+  name: 'baseGoldRate';
   value: number;
 }
-export const baseSpeed = P.seqObj<BaseSpeed>(
-  P.string("bs"),
-  semicolon,
-  ['value', P.digits.map(Number)]
-).map(r => {
-  return {...r, name: "baseGoldRate"}
-})
-interface BaseGoldRate{
-  name: "baseGoldRate"
-  faction: "defender" | "attacker",
+export const baseSpeed = P.seqObj<BaseSpeed>(P.string('bs'), semicolon, [
+  'value',
+  P.digits.map(Number),
+]).map(r => {
+  return { ...r, name: 'baseGoldRate' };
+});
+interface BaseGoldRate {
+  name: 'baseGoldRate';
+  faction: 'defender' | 'attacker';
   value: number;
 }
 export const baseGoldRate = P.seqObj<BaseGoldRate>(
-  P.string("gr"),
+  P.string('gr'),
   semicolon,
-  ['faction', P.alt(P.string("a"), P.string("d")).map(value => {
-    return value === "a" ? 'attacker': 'defender' 
-  })],
+  [
+    'faction',
+    P.alt(P.string('a'), P.string('d')).map(value => {
+      return value === 'a' ? 'attacker' : 'defender';
+    }),
+  ],
   semicolon,
   ['value', P.digits.map(Number)]
 ).map(r => {
-  return {...r, name: "baseGoldRate"}
-})
+  return { ...r, name: 'baseGoldRate' };
+});
 
 // Tower Config Definitions
-interface Price {price: number;}
-export const price = P.seqObj<Price>(
-  P.string("p"),
-  ["price", P.digits.map(Number)],
-  semicolon
-)
-interface Health {health: number;};
-export const health = P.seqObj<Health>(
-  P.string("h"),
-  ["health", P.digits.map(Number)],
-  semicolon
-)
-interface Cooldown {cooldown: number;}
+interface Price {
+  price: number;
+}
+export const price = P.seqObj<Price>(P.string('p'), ['price', P.digits.map(Number)], semicolon);
+interface Health {
+  health: number;
+}
+export const health = P.seqObj<Health>(P.string('h'), ['health', P.digits.map(Number)], semicolon);
+interface Cooldown {
+  cooldown: number;
+}
 export const cooldown = P.seqObj<Cooldown>(
-  P.string("c"),
-  ["cooldown", P.digits.map(Number)],
+  P.string('c'),
+  ['cooldown', P.digits.map(Number)],
   semicolon
 );
 
-interface Damage {damage: number;}
-export const damage = P.seqObj<Damage>(
-  P.string("d"),
-  ["damage", P.digits.map(Number)],
-  semicolon
-);
-interface Range {range: number;}
+interface Damage {
+  damage: number;
+}
+export const damage = P.seqObj<Damage>(P.string('d'), ['damage', P.digits.map(Number)], semicolon);
+interface Range {
+  range: number;
+}
 export const range = P.seqObj<Range>(
-  P.string("r"),
-  ["range", P.digits.map(Number)],
+  P.string('r'),
+  ['range', P.digits.map(Number)]
   // no semicolon, it ends here
 );
-interface UpgradeTier {tier: 1 | 2 | 3};
-export const tier = P.seqObj<UpgradeTier>(
-  ["tier", P.regexp(/[1-3]/).map(n => {
-    if (n === "2") return 2
-    else if (n === "3") return 3
-    else return 1
-  })]
-)
-interface Tower{
+interface UpgradeTier {
+  tier: 1 | 2 | 3;
+}
+export const tier = P.seqObj<UpgradeTier>([
+  'tier',
+  P.regexp(/[1-3]/).map(n => {
+    if (n === '2') return 2;
+    else if (n === '3') return 3;
+    else return 1;
+  }),
+]);
+interface Tower {
   price: number;
   health: number;
   cooldown: number;
   damage: number;
   range: number;
 }
-interface VersionedTower extends Tower{
+interface VersionedTower extends Tower {
   tier: 1 | 2 | 3;
 }
-interface AnacondaTower extends VersionedTower{
-  name: "anacondaTower"
+interface AnacondaTower extends VersionedTower {
+  name: 'anacondaTower';
 }
-interface SlothTower extends VersionedTower{
-  name: "slothTower"
+interface SlothTower extends VersionedTower {
+  name: 'slothTower';
 }
-interface PiranhaTower extends VersionedTower{
-  name: "piranhaTower"
+interface PiranhaTower extends VersionedTower {
+  name: 'piranhaTower';
 }
 
 export const tower: P.Parser<Tower> = P.seqMap(
@@ -101,38 +104,34 @@ export const tower: P.Parser<Tower> = P.seqMap(
   cooldown,
   damage,
   range,
-  function(p, h, c, d, r){ return {...p, ...h, ...c, ...d, ...r}}
-)
+  function (p, h, c, d, r) {
+    return { ...p, ...h, ...c, ...d, ...r };
+  }
+);
 const anacondaTower: P.Parser<AnacondaTower> = P.seqMap(
-  P.string("at"),
+  P.string('at'),
   tier,
   semicolon,
   tower,
-  function(at, v, _, t){
-    return {name: "anacondaTower", ...v, ...t}
+  function (at, v, _, t) {
+    return { name: 'anacondaTower', ...v, ...t };
   }
-)
+);
 const slothTower: P.Parser<SlothTower> = P.seqMap(
-  P.string("st"),
+  P.string('st'),
   tier,
   semicolon,
   tower,
-  function(at, v, _, t){
-    return {name: "slothTower",...v, ...t}
+  function (at, v, _, t) {
+    return { name: 'slothTower', ...v, ...t };
   }
-)
-const piranhaTower = P.seqMap(
-  P.string("pt"),
-  tier,
-  semicolon,
-  tower,
-  function(at, v, _, t){
-    return {name: "piranhaTower", ...v, ...t}
-  }
-)
+);
+const piranhaTower = P.seqMap(P.string('pt'), tier, semicolon, tower, function (at, v, _, t) {
+  return { name: 'piranhaTower', ...v, ...t };
+});
 
 // crypts
-interface Crypt{
+interface Crypt {
   price: number;
   // TODO some stats seem pretty inconsequential. Revise later.
   // buffRange: number;
@@ -145,41 +144,49 @@ interface Crypt{
   unitSpeed: number;
   unitHealth: number;
 }
-interface VersionedCrypt extends Crypt{
+interface VersionedCrypt extends Crypt {
   tier: 1 | 2 | 3;
 }
-interface GorillaCrypt extends VersionedCrypt{
-  name: "gorillaCrypt"
+interface GorillaCrypt extends VersionedCrypt {
+  name: 'gorillaCrypt';
 }
-interface JaguarCrypt extends VersionedCrypt{
-  name: "jaguarCrypt"
+interface JaguarCrypt extends VersionedCrypt {
+  name: 'jaguarCrypt';
 }
-interface MacawCrypt extends VersionedCrypt{
-  name: "macawCrypt"
+interface MacawCrypt extends VersionedCrypt {
+  name: 'macawCrypt';
 }
-interface UnitHealth {unitHealth: number;}
-interface SpawnCapacity {spawnCapacity: number;}
-interface SpawnRate {spawnRate: number;}
-interface UnitSpeed {unitSpeed: number;}
+interface UnitHealth {
+  unitHealth: number;
+}
+interface SpawnCapacity {
+  spawnCapacity: number;
+}
+interface SpawnRate {
+  spawnRate: number;
+}
+interface UnitSpeed {
+  unitSpeed: number;
+}
 
 export const unitHealth = P.seqObj<UnitHealth>(
-  P.string("h"),
-  ["unitHealth", P.digits.map(Number)],
+  P.string('h'),
+  ['unitHealth', P.digits.map(Number)],
   semicolon
-)
+);
 export const spawnRate = P.seqObj<SpawnRate>(
-  P.string("r"),
-  ["spawnRate", P.digits.map(Number)],
+  P.string('r'),
+  ['spawnRate', P.digits.map(Number)],
   semicolon
 );
 export const spawnCapacity = P.seqObj<SpawnCapacity>(
-  P.string("c"),
-  ["spawnCapacity", P.digits.map(Number)],
+  P.string('c'),
+  ['spawnCapacity', P.digits.map(Number)],
   semicolon
 );
 export const unitSpeed = P.seqObj<UnitSpeed>(
-  P.string("s"),
-  ["unitSpeed", P.digits.map(Number)]
+  P.string('s'),
+  ['unitSpeed', P.digits.map(Number)]
   // no semicolon, this is the last piece
 );
 
@@ -189,49 +196,42 @@ export const crypt = P.seqMap(
   spawnCapacity,
   damage,
   unitSpeed,
-  function(h, c, d, r){ return {...h, ...c, ...d, ...r}}
-)
+  function (h, c, d, r) {
+    return { ...h, ...c, ...d, ...r };
+  }
+);
 
-const gorillaCrypt = P.seqMap(
-  P.string("gc"),
-  tier,
-  semicolon,
-  crypt,
-  function(at, v, _, t){
-    return {name: "gorillaCrypt", ...v, ...t}
-  }
-)
-const jaguarCrypt = P.seqMap(
-  P.string("jc"),
-  tier,
-  semicolon,
-  crypt,
-  function(at, v, _, t){
-    return {name: "jaguarCrypt", ...v, ...t}
-  }
-)
-const macawCrypt = P.seqMap(
-  P.string("mc"),
-  tier,
-  semicolon,
-  crypt,
-  function(at, v, _, t){
-    return {name: "macawCrypt",...v,  ...t}
-  }
-)
+const gorillaCrypt = P.seqMap(P.string('gc'), tier, semicolon, crypt, function (at, v, _, t) {
+  return { name: 'gorillaCrypt', ...v, ...t };
+});
+const jaguarCrypt = P.seqMap(P.string('jc'), tier, semicolon, crypt, function (at, v, _, t) {
+  return { name: 'jaguarCrypt', ...v, ...t };
+});
+const macawCrypt = P.seqMap(P.string('mc'), tier, semicolon, crypt, function (at, v, _, t) {
+  return { name: 'macawCrypt', ...v, ...t };
+});
 
-export interface InvalidInput{
-  error: 'invalidString'
+export interface InvalidInput {
+  error: 'invalidString';
 }
-export type ParsedSubmittedInput = AnacondaTower
-| PiranhaTower
-| SlothTower
-| GorillaCrypt
-| JaguarCrypt
-| MacawCrypt
-| BaseGoldRate
-| InvalidInput;
-const parser: P.Parser<ParsedSubmittedInput> = P.alt(baseGoldRate, anacondaTower, slothTower, piranhaTower, gorillaCrypt, jaguarCrypt, macawCrypt);
+export type ParsedSubmittedInput =
+  | AnacondaTower
+  | PiranhaTower
+  | SlothTower
+  | GorillaCrypt
+  | JaguarCrypt
+  | MacawCrypt
+  | BaseGoldRate
+  | InvalidInput;
+const parser: P.Parser<ParsedSubmittedInput> = P.alt(
+  baseGoldRate,
+  anacondaTower,
+  slothTower,
+  piranhaTower,
+  gorillaCrypt,
+  jaguarCrypt,
+  macawCrypt
+);
 
 export function parse(s: string): ParsedSubmittedInput {
   try {
@@ -244,4 +244,3 @@ export function parse(s: string): ParsedSubmittedInput {
     };
   }
 }
-

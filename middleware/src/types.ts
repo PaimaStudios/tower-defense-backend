@@ -1,4 +1,4 @@
-import { MatchState, TurnAction } from "@tower-defense/utils";
+import { MatchState, TurnAction } from '@tower-defense/utils';
 
 export type Hash = string;
 export type URI = string;
@@ -43,24 +43,19 @@ export interface PostingInfo {
   postingModeString: PostingModeString;
 }
 
-export type PostingModeString = "unbatched" | "batched-eth" | "batched-cardano";
+export type PostingModeString = 'unbatched' | 'batched-eth' | 'batched-cardano';
 
-export type PostingModeSwitchResult =
-  | PostingModeSwitchSuccessfulResult
-  | FailedResult;
+export type PostingModeSwitchResult = PostingModeSwitchSuccessfulResult | FailedResult;
 
 interface PostingModeSwitchSuccessfulResult extends PostingInfo {
   success: true;
 }
 
-export type SignFunction = (
-  userAddress: UserAddress,
-  message: string
-) => Promise<string>;
+export type SignFunction = (userAddress: UserAddress, message: string) => Promise<string>;
 
 export type CardanoApi = any;
 
-export type Deployment = "C1" | "A1";
+export type Deployment = 'C1' | 'A1';
 
 export interface SuccessfulResultMessage {
   success: true;
@@ -88,22 +83,16 @@ export type QueryOptions = { [key: string]: QueryValue };
 export type Result<T> = SuccessfulResult<T> | FailedResult;
 export type OldResult = SuccessfulResultMessage | FailedResult;
 
-export type MapName = "jungle" | "ocean";
+export type MapName = 'jungle' | 'ocean';
 
-export type UserAnimal =
-  | "piranha"
-  | "gorilla"
-  | "anaconda"
-  | "jaguar"
-  | "macaw"
-  | "sloth";
+export type UserAnimal = 'piranha' | 'gorilla' | 'anaconda' | 'jaguar' | 'macaw' | 'sloth';
 
 export interface Wallet {
   success: true;
   walletAddress: UserAddress;
 }
 
-type LobbyStatus = "active" | "open" | "finished" | "unknown";
+type LobbyStatus = 'active' | 'open' | 'finished' | 'unknown';
 
 interface CreateLobbySuccessfulResponse {
   success: true;
@@ -154,28 +143,28 @@ export interface BasicLobbyInfo {
   round_ends_in_secs: number;
   round_start_height: number;
   lobby_creator: UserAddress;
-  creator_faction: Faction
+  creator_faction: Faction;
   initial_gold: number;
   hidden: boolean;
 }
 
-export type Faction = "attacker" | "defender";
+export type Faction = 'attacker' | 'defender';
 
 export interface OpenLobbyState extends BasicLobbyInfo {
-  lobby_state: "open";
+  lobby_state: 'open';
   player_two: null;
-  player_two_faction:  null;
+  player_two_faction: null;
 }
 
 export interface ActiveLobbyState extends BasicLobbyInfo {
-  lobby_state: "active";
+  lobby_state: 'active';
   player_turn: UserAddress;
   player_two: UserAddress;
   player_two_faction: Faction;
 }
 
 export interface FinishedLobbyState extends BasicLobbyInfo {
-  lobby_state: "finished";
+  lobby_state: 'finished';
   player_two: UserAddress;
   player_two_faction: Faction;
 }
@@ -216,17 +205,17 @@ export interface UserState {
 export type MatchMove = Reposition | Fire | Taunt;
 
 export interface Reposition {
-  moveType: "reposition";
+  moveType: 'reposition';
   position: number;
 }
 
 export interface Fire {
-  moveType: "fire";
+  moveType: 'fire';
   position: number;
 }
 
 export interface Taunt {
-  moveType: "taunt";
+  moveType: 'taunt';
 }
 
 export interface UserStats {
@@ -242,8 +231,8 @@ export interface PackedUserStats {
 
 interface AccountNftsResult {
   metadata: {
-      name: string;
-      image: URI;
+    name: string;
+    image: URI;
   };
   contract: ContractAddress;
   tokenId: number;
@@ -257,10 +246,10 @@ export interface AccountNftsData {
 
 export interface RoundStatusData {
   round: {
-      roundStarted: number;
-      roundLength: number;
-      executed: boolean;
-      usersWhoSubmittedMoves: UserAddress[];
+    roundStarted: number;
+    roundLength: number;
+    executed: boolean;
+    usersWhoSubmittedMoves: UserAddress[];
   };
 }
 
@@ -274,9 +263,7 @@ interface BatcherPostResponseUnsuccessful {
   message: string;
 }
 
-export type BatcherPostResponse =
-  | BatcherPostResponseSuccessful
-  | BatcherPostResponseUnsuccessful;
+export type BatcherPostResponse = BatcherPostResponseSuccessful | BatcherPostResponseUnsuccessful;
 
 type BatcherTrackingStatus = string;
 
@@ -291,18 +278,18 @@ interface BatcherTrackResponseCore {
 }
 
 interface BatcherTrackResponsePosted extends BatcherTrackResponseCore {
-  status: "posted";
+  status: 'posted';
   block_height: number;
   transaction_hash: Hash;
 }
 
 interface BatcherTrackResponseRejected extends BatcherTrackResponseCore {
-  status: "rejected";
+  status: 'rejected';
   message: string;
 }
 
 interface BatcherTrackResponseOther extends BatcherTrackResponseCore {
-  status: "accepted" | "validating";
+  status: 'accepted' | 'validating';
 }
 
 export type BatcherTrackResponse =
