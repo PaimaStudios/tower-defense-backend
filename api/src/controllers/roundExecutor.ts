@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Path,
-  Post,
-  Query,
-  Route,
-  SuccessResponse,
-  ValidateError,
-} from 'tsoa';
+import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import {
   requirePool,
   getBlockHeight,
@@ -21,7 +11,7 @@ import {
   IGetLobbyByIdResult,
   IGetMovesByLobbyResult,
   IGetRoundDataResult,
-} from '@catapult/db';
+} from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
 
