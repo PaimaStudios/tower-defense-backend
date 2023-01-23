@@ -47,10 +47,11 @@ export default function applyEvents(
         if (gotTheMoney(m, faction, cost)) {
           // mutate map with new actor
           setStructureFromEvent(config, m, event, faction as Faction, event.id);
+          // NEW Catastrophe doesn't do it this way. Could've told me earlier but let's try
           // create new tile object
-          const tile = buildTileFromEvent(event, faction as Faction, event.id);
+          // const tile = buildTileFromEvent(event, faction as Faction, event.id);
           // replace old tile with new tile
-          m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)] = tile;
+          // m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)] = tile;
           // m.contents[event.y][event.x] = tile;
           m.actorCount++;
           // // drain gold
@@ -75,13 +76,14 @@ export default function applyEvents(
       case 'salvage':
         const coords = findActorCoords(m, event);
         if (faction === 'attacker') {
-          m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'attacker' };
+          // NEW made redundant by catastrophe's thing
+          // m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'attacker' };
           // m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
           m.attackerGold += event.gold;
           if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id];
           // else if (m.actors.units[event.id]) delete m.actors.units[event.id];
         } else if (faction === 'defender') {
-          m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'defender' };
+          // m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'defender' };
           // m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
           m.defenderGold += event.gold; // TODO get amount right
           delete m.actors.towers[event.id];
