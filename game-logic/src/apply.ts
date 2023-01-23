@@ -2,15 +2,7 @@ import Prando from 'paima-engine/paima-prando';
 import type {
   MatchConfig,
   MatchState,
-  TurnAction,
   TickEvent,
-  StructureEvent,
-  GoldRewardEvent,
-  Tile,
-  AttackerBaseTile,
-  DefenderBaseTile,
-  UnitSpawnedEvent,
-  AttackerUnitType,
   AttackerStructureTile,
   BuildStructureEvent,
   DefenderStructureTile,
@@ -23,12 +15,8 @@ import type {
   ActorDeletedEvent,
   AttackerStructure,
   DefenderStructure,
-  StatusEffectAppliedEvent,
-  UnitMovementEvent,
   Coordinates,
-  TowerAttack,
-  ActorID,
-  DestroyStructureEvent,
+  SalvageStructureEvent,
   UpgradeTier,
 } from '@tower-defense/utils';
 import { coordsToIndex } from '.';
@@ -84,18 +72,18 @@ export default function applyEvents(
           if (gotTheMoney(m, faction, cost)) applyUpgrade(structure);
         }
         break;
-      case 'destroy':
+      case 'salvage':
         const coords = findActorCoords(m, event);
         if (faction === 'attacker') {
           m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'attacker' };
           // m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
-          m.attackerGold += config.recoupAmount;
+          m.attackerGold += event.gold;
           if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id];
           // else if (m.actors.units[event.id]) delete m.actors.units[event.id];
         } else if (faction === 'defender') {
           m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'defender' };
           // m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
-          m.defenderGold += config.recoupAmount; // TODO get amount right
+          m.defenderGold += event.gold; // TODO get amount right
           delete m.actors.towers[event.id];
         }
         break;
@@ -250,7 +238,9 @@ function determineFactionFromEvent(m: MatchState, eventType: TickEvent): Faction
     else return null;
   } else return null;
 }
-function findActorCoords(m: MatchState, eventType: DestroyStructureEvent): Coordinates {
+function findActorCoords(m: MatchState, eventType: SalvageStructureEvent): Coordinates {
+  console.log(eventType, "event")
+  console.log(m.actors, "actors")
   const crypt = m.actors.crypts[eventType.id];
   const tower = m.actors.towers[eventType.id];
   const unit = m.actors.units[eventType.id];
