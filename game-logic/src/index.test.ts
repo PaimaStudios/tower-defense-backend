@@ -13,11 +13,12 @@ import type {
   RepairStructureAction,
   ActorGraph,
   UpgradeStructureAction,
-  DestroyStructureAction,
+  SalvageStructureAction,
   AttackerUnit,
   TickEvent,
   DamageEvent,
   UnitSpawnedEvent,
+  UnitMovementEvent,
 } from '@tower-defense/utils';
 import { crypt } from '@tower-defense/utils/src/parser';
 import applyEvents from './apply';
@@ -91,19 +92,20 @@ function upgrade(m: MatchState) {
   });
   return toUpgrade;
 }
-function destroy(m: MatchState) {
+function salvage(c: MatchConfig, m: MatchState) {
   const structures: Array<DefenderStructure | AttackerStructure> = [
     ...Object.values(m.actors.towers),
     ...Object.values(m.actors.crypts),
   ];
-  const toDestroy: DestroyStructureAction[] = structures.map(a => {
+  const toSalvage: SalvageStructureAction[] = structures.map(a => {
     return {
       round: 2,
-      action: 'destroy',
+      action: 'salvage',
       id: a.id,
+      gold: c.recoupAmount
     };
   });
-  return toDestroy;
+  return toSalvage;
 }
 function damageTowers(m: MatchState): void {
   const towers: DefenderStructure[] = Object.values(m.actors.towers);
@@ -314,13 +316,13 @@ describe('Game Logic', () => {
     });
     expect([...cryptUpgradeDiff, ...towerUpgradeDiff]).toStrictEqual([1, 1]);
   });
-  test('destroyed structures are destroyed', () => {
+  test('salvaged structures are destroyed', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
     const moves = build(3, 3);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-    const moves2 = destroy(matchState);
+    const moves2 = salvage(matchConfig, matchState);
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const extantTowers = Object.values(matchState.actors.towers);
     const extantCrypts = Object.values(matchState.actors.crypts);
@@ -405,14 +407,14 @@ describe('Game Logic', () => {
     }, 0);
     expect(matchState.attackerGold).toBe(initialGold - moneySpent);
   });
-  test('destroying structures recoups money', () => {
+  test('salvaged structures recoups money', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
     const moves = build(0, 3);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const initialGold = structuredClone(matchState.attackerGold);
-    const moves2 = destroy(matchState);
+    const moves2 = salvage(matchConfig, matchState);
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const moneyGained = moves2.reduce((acc, item) => {
       return acc + matchConfig.recoupAmount;
@@ -431,13 +433,29 @@ describe('Game Logic', () => {
     for (let tick of ticks) {
       events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
     }
-    const ids = events
+    const spawnEvents = events
       .flat()
-      .filter((e: TickEvent | null): e is UnitSpawnedEvent => e?.eventType === 'spawn')
-      .map(e => `${e.actorID}`);
+      .filter((e: TickEvent | null): e is UnitSpawnedEvent => e?.eventType === 'spawn');
+    const ids = spawnEvents.map(e => `${e.actorID}`);
     const ok = Object.keys(matchState.actors.units).every(u => ids.includes(u));
     expect(ok).toBeTruthy();
   });
+  test("units move forward", () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const moves = build(1, 3);
+    const randomnessGenerator = new Prando(1);
+    const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
+    // do a bunch of ticks so the crypts do some spawning
+    let events = [];
+    for (let tick of ticks) {
+      events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
+    }
+    const movementEvents = events
+      .flat()
+      .filter((e: TickEvent | null): e is UnitMovementEvent => e?.eventType === "movement");
+     expect(3).toStrictEqual(5);
+  })
 
   // damage
   test('macaws attacks to towers are registered', () => {
