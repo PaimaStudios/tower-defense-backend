@@ -35,9 +35,9 @@ function isBase(tile: Tile) {
 }
 // mutating logic
 export function setPath(map: Tile[][]): Tile[][] {
-  for (let [rowidx, row] of map.entries()) {
+  for (const [rowidx, row] of map.entries()) {
     // console.log(row, "Row")
-    for (let [tileidx, tile] of row.entries()) {
+    for (const [tileidx, tile] of row.entries()) {
       // console.log(tile, "tile")
       if (isPath(tile)) {
         const t = tile as PathTile;

@@ -96,9 +96,9 @@ function findTile(c: number): Tile {
     };
 }
 export function setPath(map: Tile[][]): Tile[][] {
-  for (let [rowidx, row] of map.entries()) {
+  for (const [rowidx, row] of map.entries()) {
     // console.log(row, "Row")
-    for (let [tileidx, tile] of row.entries()) {
+    for (const [tileidx, tile] of row.entries()) {
       // console.log(tile, "tile")
       if (isPath(tile)) {
         const t = tile as PathTile;
@@ -267,9 +267,9 @@ function randomFromArray<T>(array: T[]): T {
   return array[index];
 }
 function availableForBuilding(map: number[]): { towers: Coordinates[]; crypts: Coordinates[] } {
-  let towers = [];
-  let crypts = [];
-  for (let [i, cell] of map.entries()) {
+  const towers = [];
+  const crypts = [];
+  for (const [i, cell] of map.entries()) {
     const row = Math.floor(i / 22);
     const col = i - row * 22;
     if (cell === 1) towers.push({ x: col, y: row });
