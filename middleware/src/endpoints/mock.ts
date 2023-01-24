@@ -51,7 +51,7 @@ const myOpenLobby = {
   round_ends_in_blocks: 100,
   round_ends_in_secs: 400,
   initial_gold: 1000,
-  hidden: false
+  hidden: false,
 };
 const myActiveLobby = {
   lobby_id: 'defdefabcabc',
@@ -73,7 +73,7 @@ const myActiveLobby = {
   round_ends_in_secs: 400,
   player_turn: '0xdDA309096477b89D7066948b31aB05924981DF2B',
   initial_gold: 2000,
-  hidden: false
+  hidden: false,
 };
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   // const errorFxn = buildEndpointErrorFxn("getLobbyState");
@@ -94,33 +94,37 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
 async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
   return {
     success: true,
-    lobby: myOpenLobby
+    lobby: myOpenLobby,
   };
 }
 
 async function getOpenLobbies(page: number, count?: number): Promise<LobbyStates | FailedResult> {
-  if (page !== 0) return {
-    success: true, lobbies: []
-  }
-  else 
-  return {
-    success: true,
-    lobbies: [myOpenLobby],
-  };
+  if (page !== 0)
+    return {
+      success: true,
+      lobbies: [],
+    };
+  else
+    return {
+      success: true,
+      lobbies: [myOpenLobby],
+    };
 }
 async function getUserLobbiesMatches(
   walletAddress: string,
   page: number,
   count?: number
 ): Promise<LobbyStates | FailedResult> {
-  if (page !== 0) return {
-    success: true, lobbies: []
-  } 
+  if (page !== 0)
+    return {
+      success: true,
+      lobbies: [],
+    };
   else
-  return {
-    success: true,
-    lobbies: [myOpenLobby,myActiveLobby],
-  };
+    return {
+      success: true,
+      lobbies: [myOpenLobby, myActiveLobby],
+    };
 }
 async function getNewLobbies(
   wallet: string,

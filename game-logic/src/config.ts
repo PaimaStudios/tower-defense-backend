@@ -152,8 +152,8 @@ function jaguarUpgrade2(c: CryptConfig): CryptConfig {
     spawnCapacity: Math.floor(c.price * 1.25),
     unitSpeed: Math.floor(c.unitSpeed * 1.32),
     unitHealth: Math.floor(c.unitHealth * 3),
-    attackRange: Math.floor(c.attackRange * 3)
-     // TODO wtf do Jaguars and Gorilla have an attack range over 1? 
+    attackRange: Math.floor(c.attackRange * 3),
+    // TODO wtf do Jaguars and Gorilla have an attack range over 1?
   };
 }
 function jaguarUpgrade3(c: CryptConfig): CryptConfig {
@@ -163,7 +163,7 @@ function jaguarUpgrade3(c: CryptConfig): CryptConfig {
     spawnCapacity: Math.floor(c.spawnCapacity * 1.625),
     unitSpeed: Math.floor(c.unitSpeed * 1.32),
     unitHealth: Math.floor(c.unitHealth * 3),
-    attackRange: Math.floor(c.attackRange * 3)
+    attackRange: Math.floor(c.attackRange * 3),
   };
 }
 const baseJaguarCryptConfig2: CryptConfig = {
@@ -216,7 +216,7 @@ function macawUpgrade2(c: CryptConfig): CryptConfig {
     spawnCapacity: Math.floor(c.price * 1.5),
     unitSpeed: Math.floor(c.unitSpeed * 1.18),
     unitHealth: Math.floor(c.unitHealth * 2),
-    attackCooldown: Math.floor(c.attackCooldown * 0.75)
+    attackCooldown: Math.floor(c.attackCooldown * 0.75),
   };
 }
 function macawUpgrade3(c: CryptConfig): CryptConfig {
@@ -226,7 +226,7 @@ function macawUpgrade3(c: CryptConfig): CryptConfig {
     spawnCapacity: Math.floor(c.spawnCapacity * 1.7),
     unitSpeed: Math.floor(c.unitSpeed * 1.18),
     unitHealth: Math.floor(c.unitHealth * 2),
-    attackCooldown: Math.floor(c.attackCooldown * 0.75)
+    attackCooldown: Math.floor(c.attackCooldown * 0.75),
   };
 }
 const baseMacawCryptConfig2: CryptConfig = {
@@ -309,7 +309,7 @@ export function parseConfig(s: string): MatchConfig {
   const version = c.nextValue();
   const definitions = c.remainingValues();
   const parsed = definitions.map(d => parse(d.value));
-  for (let p of parsed) {
+  for (const p of parsed) {
     if (!('error' in p))
       switch (p.name) {
         case 'baseGoldRate':
