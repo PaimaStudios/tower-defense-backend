@@ -109,7 +109,7 @@ function salvage(c: MatchConfig, m: MatchState) {
 }
 function damageTowers(m: MatchState): void {
   const towers: DefenderStructure[] = Object.values(m.actors.towers);
-  for (let tower of towers) {
+  for (const tower of towers) {
     tower.health -= 50;
   }
   // const damagedTowers = Object.entries(m.actors.towers).reduce((acc, item) => {
@@ -124,9 +124,9 @@ function randomFromArray<T>(array: T[]): T {
   return array[index];
 }
 function availableForBuilding(map: number[]): { towers: Coordinates[]; crypts: Coordinates[] } {
-  let towers = [];
-  let crypts = [];
-  for (let [i, cell] of map.entries()) {
+  const towers = [];
+  const crypts = [];
+  for (const [i, cell] of map.entries()) {
     const row = Math.floor(i / 22);
     const col = i - row * 22;
     if (cell === 1) towers.push({ x: col, y: row });
@@ -279,7 +279,7 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(10).keys()].map(i => i + 1); // [1..11]
     // do a bunch of ticks so the crypts do some spawning
-    for (let tick of ticks) {
+    for (const tick of ticks) {
       processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
     }
     const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
@@ -429,8 +429,8 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
-    let events = [];
-    for (let tick of ticks) {
+    const events = [];
+    for (const tick of ticks) {
       events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
     }
     const spawnEvents = events
@@ -465,7 +465,7 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
-    for (let tick of ticks) {
+    for (const tick of ticks) {
       processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
     }
     const snapshot = structuredClone(matchState.actors.towers);

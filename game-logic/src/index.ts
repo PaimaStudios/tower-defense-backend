@@ -40,7 +40,7 @@ function processTick(
 ): TickEvent[] | null {
   let randomness = 0;
   // We generate new randomness for every tick. Seeds vary every round.
-  for (let tick of Array(currentTick)) randomness = randomnessGenerator.next();
+  for (const tick of Array(currentTick)) randomness = randomnessGenerator.next();
   // First tick is reserved to processing the user actions, i.e. events related to structures.
   if (currentTick === 1) {
     const events = [

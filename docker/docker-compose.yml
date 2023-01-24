@@ -1,0 +1,52 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14
+    container_name: td-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - tower-defense-db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      # Use pg_isready to check postgres is running. Substitute different
+      # user `postgres` if you've setup differently to config/pgpass-mainnet
+      test: [ "CMD-SHELL", "pg_isready -U postgres -p 5432" ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks:
+      tower-defense-dev:
+        ipv4_address: 172.16.240.34
+
+  tower-defense:
+    build:
+      context: .
+    container_name: td-backend
+    env_file:
+      - ./tower-defense/.env.${NODE_ENV:-development}
+    environment:
+      DB_HOST: 172.16.240.34
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3333:3333"
+    networks:
+      tower-defense-dev:
+        ipv4_address: 172.16.240.33
+
+volumes:
+  tower-defense-db:
+
+
+networks:
+  tower-defense-dev:
+    name: tower-defense-localnet
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.240.0/24

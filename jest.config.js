@@ -1,6 +1,6 @@
 const ignorePaths = ['/node_modules/', '/build/', '/integration-testing/'];
 /** @type {import('jest').Config} */
-module.exports =  {
+module.exports = {
   verbose: true,
   preset: 'ts-jest/presets/default-esm-legacy',
   moduleFileExtensions: ['js', 'json', 'ts'],
@@ -9,10 +9,7 @@ module.exports =  {
   rootDir: '.',
   transformIgnorePatterns: ['node_modules'],
   transform: {
-    '.+\\.(j|t)sx?$': [
-      'ts-jest',
-      {useESM: true}
-    ],
+    '.+\\.(j|t)sx?$': ['ts-jest', { useESM: true }],
   },
   coveragePathIgnorePatterns: [...ignorePaths],
   testPathIgnorePatterns: [...ignorePaths],
