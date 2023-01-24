@@ -57,6 +57,8 @@ export default function applyEvents(
       case 'build':
         const cost = config[event.structure][1].price;
         if (gotTheMoney(m, faction, cost)) {
+          // Validate that tile to build on is open
+          if (m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)].type === "open"){
           // mutate map with new actor
           setStructureFromEvent(config, m, event, faction as Faction, event.id);
           // create new tile object
@@ -66,6 +68,7 @@ export default function applyEvents(
           // m.contents[event.y][event.x] = tile;
           m.actorCount++;
           // // drain gold
+        }
         }
         break;
       case 'repair':
