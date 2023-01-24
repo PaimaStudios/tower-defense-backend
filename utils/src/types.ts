@@ -15,7 +15,7 @@ export interface RawMap {
   height: number;
   contents: TileNumber[];
 }
-type TileNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type TileNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 export interface AnnotatedMap {
   name: string;
   width: number;
