@@ -29,11 +29,12 @@ const basePiranhaTowerConfig1: TowerConfig = {
   health: 20,
   cooldown: 4,
   damage: 1,
-  range: 5,
+  range: 4,
 };
 function piranhaUpgrade2(t: TowerConfig): TowerConfig {
   return {
     ...t,
+    range: 5,
     price: Math.floor(t.price * 0.54), //  upgrade price
     health: Math.floor(t.health * 1.12),
   };
@@ -42,9 +43,9 @@ function piranhaUpgrade3(t: TowerConfig): TowerConfig {
   return {
     price: Math.floor(t.price * 0.63),
     health: Math.floor(t.health * 1.25),
-    cooldown: Math.floor(t.cooldown * 1.25),
     damage: Math.floor(t.damage * 2),
-    range: t.range,
+    range: Math.floor(t.range * 1.25),
+    cooldown: t.cooldown
   };
 }
 const baseSlothTowerConfig1: TowerConfig = {
@@ -66,7 +67,7 @@ function slothUpgrade3(t: TowerConfig): TowerConfig {
     ...t,
     price: Math.floor(t.price * 0.67), //  upgrade price
     health: Math.floor(t.health * 1.6),
-    damage: Math.floor(t.damage * 1.5),
+    damage: Math.floor(t.damage * 1.3),
     range: Math.floor(t.range * 1.5),
   };
 }
@@ -290,8 +291,8 @@ const baseMacawCryptConfig = {
   3: baseMacawCryptConfig3,
 };
 export const baseConfig: MatchConfig = {
-  baseAttackerGoldRate: 45,
-  baseDefenderGoldRate: 55,
+  baseAttackerGoldRate: 100,
+  baseDefenderGoldRate: 2255,
   towerRepairValue: 25,
   repairCost: 10,
   recoupAmount: 20,
