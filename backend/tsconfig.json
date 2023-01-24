@@ -3,7 +3,12 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "build"
-  },  
+  },
   "include": ["src/**/*"],
-  "references": [{ "path": "../utils" },{ "path": "../game-logic" }]
+  "references": [
+    { "path": "../utils" },
+    { "path": "../game-logic" },
+    { "path": "../api" },
+    { "path": "../db" }
+  ]
 }

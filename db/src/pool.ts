@@ -4,16 +4,22 @@ import pg from 'pg';
  */
 
 export const creds = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PW,
-    database: process.env.DB_NAME,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PW,
+  database: process.env.DB_NAME,
+  port: parseInt(process.env.DB_PORT || '5432', 10),
+};
+
+let pool: pg.Pool | null;
+
+export function setPool(newPool: pg.Pool) {
+  pool = newPool;
+}
+
+export function requirePool(): pg.Pool {
+  if (pool === null) {
+    throw new Error('Database connection not yet initialized!');
   }
-
-const pool: pg.Pool = new pg.Pool(creds);
-
-
-// Don't let a pg restart kill the app
-pool.on('error', (err) => console.log(err, 'postgres pool error'));
-
-export default pool;
+  return pool;
+}

@@ -46,7 +46,7 @@ function processTick(
 ): TickEvent[] | null {
   let randomness = 0;
   // We generate new randomness for every tick. Seeds vary every round.
-  for (let tick of Array(currentTick)) randomness = randomnessGenerator.next();
+  for (const tick of Array(currentTick)) randomness = randomnessGenerator.next();
   // First tick is reserved to processing the user actions, i.e. events related to structures.
   if (currentTick === 1) {
     const events = [
@@ -187,7 +187,11 @@ function spawn(
 function findClosebyPath(m: MatchState, coords: Coordinates, rng: Prando, range = 1): Coordinates {
   const c: Coordinates[] = [];
   // Find all 8 adjacent cells to the crypt.
-  const [up, upright, right, downright, down, downleft, left, upleft] = findCloseByTiles(m, coords, range);
+  const [up, upright, right, downright, down, downleft, left, upleft] = findCloseByTiles(
+    m,
+    coords,
+    range
+  );
   // Of these, push to the array if they are a path.
   if (up?.type === 'path') c.push({ y: coords.y - range, x: coords.x });
   if (upleft?.type === 'path') c.push({ y: coords.y - range, x: coords.x - range });
@@ -613,7 +617,7 @@ function scanForUnits(m: MatchState, coords: Coordinates, range: number): Attack
 export function coordsToIndex(coords: Coordinates, width: number): number {
   return width * coords.y + coords.x;
 }
-function findCloseByTiles(m: MatchState, coords: Coordinates, range: number): Tile[]{
+function findCloseByTiles(m: MatchState, coords: Coordinates, range: number): Tile[] {
   const up = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x }, m.width)];
   const upright = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x + range }, m.width)];
   const right = m.mapState[coordsToIndex({ y: coords.y, x: coords.x + range }, m.width)];
@@ -623,7 +627,7 @@ function findCloseByTiles(m: MatchState, coords: Coordinates, range: number): Ti
   const downleft = m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x - range }, m.width)];
   const left = m.mapState[coordsToIndex({ y: coords.y, x: coords.x - range }, m.width)];
   const upleft = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x - range }, m.width)];
-  return [up, upright, right, downright, down, downleft, left, upleft]
+  return [up, upright, right, downright, down, downleft, left, upleft];
 }
 function findClosebyAttackers(m: MatchState, coords: Coordinates, range: number): ActorID[] {
   const tiles = findCloseByTiles(m, coords, range).filter(

@@ -1,12 +1,14 @@
 {
-  "name": "@tower-defense/server",
+  "name": "@tower-defense/api",
   "version": "1.0.0",
   "description": "REST API for Tower Defense game middleware",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "npx tsc && node --experimental-specifier-resolution=node build/testServer.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "npx tsoa routes"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +18,10 @@
     "express": "^4.18.1",
     "fp-ts": "^2.12.3",
     "io-ts": "^2.2.18",
+    "morgan": "^1.10.0",
     "tsoa": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/morgan": "^1.9.4"
   }
 }
