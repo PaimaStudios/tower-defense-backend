@@ -7,14 +7,14 @@ import type {
   ActorsObject,
   UpgradeStructureAction,
   RepairStructureAction,
-  DestroyStructureAction,
+  SalvageStructureAction,
   MatchState,
   DefenderStructure,
   AttackerStructure,
+  TickEvent,
 } from '@tower-defense/utils';
 import { consumer } from 'paima-engine/paima-concise';
 import { parse } from '@tower-defense/utils';
-import { RoundExecutor } from '../types';
 import {
   MatchExecutor,
   MatchExecutor as MatchExecutorConstructor,
@@ -130,7 +130,10 @@ function isPath(tile: Tile) {
 function isBase(tile: Tile) {
   return tile?.type === 'base' && tile?.faction === 'defender';
 }
-
+interface RoundExecutor{
+  currentState: MatchState
+  tick: () => TickEvent[] | null;
+}
 export function getFirstRound(): RoundExecutor {
   const seed = 'td';
   const rng = new Prando(seed);
@@ -166,30 +169,24 @@ export function getNewRound(roundNumber: number): RoundExecutor {
   const rng = new Prando(seed);
   const configString = 'r|1|gr;d;105|st1;p50;h150;c10;d5;r2'; // we would get this from the db in production
   const matchConfig: MatchConfig = parseConfig(configString);
-  const am = annotateMap(testmap, 22);
-  const withPath = setPath(am);
-  const matchState = {
-    width: 22,
-    height: 13,
-    defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-    attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
-    defenderGold: 100,
-    attackerGold: 100,
-    defenderBase: { health: 100, level: 1 },
-    attackerBase: { level: 1 },
-    actors: {
-      towers: {},
-      crypts: {},
-      units: {},
-    },
-    contents: withPath,
-    mapState: withPath.flat(),
-    name: 'jungle',
-    currentRound: 1,
-    actorCount: 2,
-  };
-  const moves = subsequentStructureEvents(matchState, 5, 5, roundNumber);
-  return RoundExecutorConstructor.initialize(matchConfig, matchState, moves, rng, processTick);
+  const initialRound = getFirstRound();
+  let state = initialRound.currentState;
+  tickRound(initialRound, state);
+  for (let round of [...Array(roundNumber).keys()].map(n => n + 1).filter(n => n > 1 && n < roundNumber)){
+    const moves = subsequentStructureEvents(matchConfig, state, 1, 1, round);
+    const exec = RoundExecutorConstructor.initialize(matchConfig, state, moves, rng, processTick)
+    tickRound(exec, state)
+  }
+  const newMoves = subsequentStructureEvents(matchConfig, state, 1, 1, roundNumber);
+  return RoundExecutorConstructor.initialize(matchConfig, state, newMoves, rng, processTick)
+}
+function tickRound(a: RoundExecutor, m: MatchState): void{
+  let ticking = true;
+  while (ticking){
+    const evs = a.tick();
+    if (!evs) ticking = false;
+  }
+  m = a.currentState;
 }
 
 export function build(towerCount: number, cryptCount: number, round = 1): TurnAction[] {
@@ -221,6 +218,7 @@ export function build(towerCount: number, cryptCount: number, round = 1): TurnAc
   return [...towers, ...crypts];
 }
 export function subsequentStructureEvents(
+  c: MatchConfig,
   m: MatchState,
   newTowerCount: number,
   newCryptCount: number,
@@ -250,17 +248,18 @@ export function subsequentStructureEvents(
         value: 25, // this should be in config
       };
     });
-  const toDestroy: Array<AttackerStructure | DefenderStructure> =
+  const toSalvage: Array<AttackerStructure | DefenderStructure> =
     [structures[Math.floor(Math.random() * (structures.length - 1))]] || []; // a single random one
 
-  const toDestroyEvents: DestroyStructureAction[] = toDestroy.map(d => {
+  const toSalvageEvents: SalvageStructureAction[] = toSalvage.map(d => {
     return {
       round: roundNumber,
-      action: 'destroy',
+      action: 'salvage',
       id: d.id,
+      gold: c.recoupAmount
     };
   });
-  return [...toBuild, ...toUpgrade, ...toRepair, ...toDestroyEvents];
+  return [...toBuild, ...toUpgrade, ...toRepair, ...toSalvageEvents];
 }
 function randomFromArray<T>(array: T[]): T {
   const index = Math.floor(Math.random() * array.length);

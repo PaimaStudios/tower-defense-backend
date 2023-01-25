@@ -35,7 +35,7 @@ export interface MatchConfig {
   baseSpeed: number;
   towerRepairValue: number;
   repairCost: number;
-  recoupAmount: number; // cash we get on destroying towers
+  recoupAmount: number; // cash we get on salvaging towers
 }
 export interface TowerConfig {
   price: number;
@@ -219,8 +219,8 @@ export type Wallet = string;
 export type TurnAction =
   | BuildStructureAction
   | RepairStructureAction
-  | DestroyStructureAction
-  | UpgradeStructureAction;
+  | SalvageStructureAction
+  | UpgradeStructureAction
 
 export type Structure = Tower | Crypt;
 export type Tower = 'piranhaTower' | 'slothTower' | 'anacondaTower';
@@ -238,9 +238,9 @@ export interface RepairStructureAction {
   action: 'repair';
   id: number;
 }
-export interface DestroyStructureAction {
+export interface SalvageStructureAction {
   round: number;
-  action: 'destroy';
+  action: "salvage";
   id: number;
 }
 export interface UpgradeStructureAction {
@@ -252,32 +252,33 @@ export type StructureEvent =
   | BuildStructureEvent
   | RepairStructureEvent
   | UpgradeStructureEvent
-  | DestroyStructureEvent;
-export interface BuildStructureEvent {
-  eventType: 'build';
-  x: number;
-  y: number;
-  id: number;
-  structure: Structure;
-}
-export interface RepairStructureEvent {
-  eventType: 'repair';
-  id: number;
-}
-export interface DestroyStructureEvent {
-  eventType: 'destroy';
-  id: number;
-}
-export interface UpgradeStructureEvent {
-  eventType: 'upgrade';
-  id: number;
-}
+  | SalvageStructureEvent
+  export interface BuildStructureEvent {
+    eventType: "build";
+    x: number;
+    y: number;
+    id: number;
+    structure: Structure;
+  }
+  export interface RepairStructureEvent {
+    eventType: "repair";
+    id: number;
+  }
+  export interface SalvageStructureEvent {
+    eventType: "salvage";
+    id: number;
+    gold: number;
+  }
+  export interface UpgradeStructureEvent {
+    eventType: "upgrade",
+    id: number;
+  }
 
 export type TickEvent =
   | GoldRewardEvent
   | BuildStructureEvent
   | RepairStructureEvent
-  | DestroyStructureEvent
+  | SalvageStructureEvent
   | UpgradeStructureEvent
   | UnitSpawnedEvent
   | UnitMovementEvent

@@ -7,16 +7,10 @@ import type {
   StructureEvent,
   GoldRewardEvent,
   Tile,
-  AttackerBaseTile,
-  DefenderBaseTile,
   UnitSpawnedEvent,
-  AttackerUnitType,
   AttackerStructureTile,
   BuildStructureEvent,
   DefenderStructureTile,
-  Faction,
-  AttackerStructureType,
-  DefenderStructureType,
   PathTile,
   DamageEvent,
   DefenderBaseUpdateEvent,
@@ -30,8 +24,8 @@ import type {
   TowerAttack,
   UnitAttack,
   ActorID,
-  Actor,
   UnitType,
+  BuildStructureAction,
 } from '@tower-defense/utils';
 import applyEvents from './apply';
 
@@ -51,7 +45,7 @@ function processTick(
   if (currentTick === 1) {
     const events = [
       ...computeGoldRewards(matchConfig, matchState, currentTick, randomnessGenerator),
-      ...structureEvents(matchState, moves),
+      ...structureEvents(matchConfig, matchState, moves),
     ];
     // Structure events are processed in a batch as they don't affect each other
     applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
@@ -66,50 +60,52 @@ function processTick(
   }
 }
 
-function structureEvents(m: MatchState, moves: TurnAction[]): TickEvent[] {
+function structureEvents(c: MatchConfig, m: MatchState, moves: TurnAction[]): TickEvent[] {
   // We need to keep a global account of all actors in the match.
   // We iterate over user actions and reduce to a tuple of events produced and actor count,
   // then return the event array.
-  const accumulator: [StructureEvent[], number] = [[], m.actorCount + 1];
-  const structuralTick: [StructureEvent[], number] = moves.reduce((acc, item) => {
-    const newEvent = structureEvent(item, acc[1]);
-    const newList = [...acc[0], newEvent];
-    const newCount = acc[1] + 1;
-    return [newList, newCount];
+  const accumulator:  [StructureEvent[], number] = [[], m.actorCount + 1];
+  const structuralTick: typeof accumulator = moves.reduce((acc, item) => {
+    if (item.action === 'build') {
+      const events = [...acc[0], buildEvent(item, acc[1])]
+      const newCount = acc[1] + 1;
+      return [events, newCount]
+    }
+    else{ 
+      const events = [...acc[0], structureEvent(c, item)];
+      return [events, acc[1]]
+    }
   }, accumulator);
   return structuralTick[0];
 }
+function buildEvent(m: BuildStructureAction, count: number): BuildStructureEvent {
+  return {
+    eventType: 'build',
+    x: m.x,
+    y: m.y,
+    structure: m.structure,
+    id: count,
+  };
+}
 
-function structureEvent(m: TurnAction, count: number): StructureEvent {
-  if (m.action === 'build')
-    return {
-      eventType: 'build',
-      x: m.x,
-      y: m.y,
-      structure: m.structure,
-      id: count,
-    };
-  else if (m.action === 'repair')
+function structureEvent(c: MatchConfig, a: TurnAction): StructureEvent {
+  if (a.action === 'repair')
     return {
       eventType: 'repair',
-      id: m.id,
+      id: a.id,
     };
-  else if (m.action === 'upgrade')
+  else if (a.action === 'upgrade')
     return {
       eventType: 'upgrade',
-      id: m.id,
+      id: a.id,
     };
-  else if (m.action === 'destroy')
-    return {
-      eventType: 'destroy',
-      id: m.id,
-    };
-  else console.log("this shouldn't happen");
-  return {
-    // so typescript shuts up
-    eventType: 'destroy',
-    id: 2,
-  };
+  else if (a.action === "salvage")
+    return{
+      eventType: "salvage",
+      id: a.id,
+      gold: c.recoupAmount
+    }
+  else return { eventType: 'repair', id: 0 };
 }
 // Events produced from Tick 2 forward, follow deterministically from match state.
 function eventsFromMatchState(
@@ -276,7 +272,8 @@ function move(config: MatchConfig, a: AttackerUnit, newcoords: Coordinates): Uni
   const unitSpeed = getCurrentSpeed(config, a);
   // unitSpeed as specced is a fraction, need to convert that to percentage for the completion key of the event.
   const speedPercentage = Math.ceil((1 / unitSpeed) * 100);
-  const completion = (a.movementCompletion += speedPercentage);
+  const completion = (a.movementCompletion += unitSpeed);
+  // const completion = (a.movementCompletion += speedPercentage);
   return {
     eventType: 'movement',
     actorID: a.id,

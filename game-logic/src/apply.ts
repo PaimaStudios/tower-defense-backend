@@ -2,15 +2,7 @@ import Prando from 'paima-engine/paima-prando';
 import type {
   MatchConfig,
   MatchState,
-  TurnAction,
   TickEvent,
-  StructureEvent,
-  GoldRewardEvent,
-  Tile,
-  AttackerBaseTile,
-  DefenderBaseTile,
-  UnitSpawnedEvent,
-  AttackerUnitType,
   AttackerStructureTile,
   BuildStructureEvent,
   DefenderStructureTile,
@@ -23,17 +15,13 @@ import type {
   ActorDeletedEvent,
   AttackerStructure,
   DefenderStructure,
-  StatusEffectAppliedEvent,
-  UnitMovementEvent,
   Coordinates,
-  TowerAttack,
-  ActorID,
-  DestroyStructureEvent,
+  SalvageStructureEvent,
   UpgradeTier,
 } from '@tower-defense/utils';
 import { coordsToIndex } from '.';
-
-function gotTheMoney(m: MatchState, faction: Faction | null, amount: number): boolean {
+// Function to check if the user has enough money to spend in structures. Mutates state if true, returns the boolean result of the check.
+function spendMoney(m: MatchState, faction: Faction | null, amount: number): boolean {
   if (faction === 'attacker' && m.attackerGold - amount >= 0) {
     m.attackerGold -= amount;
     return true;
@@ -56,15 +44,14 @@ export default function applyEvents(
     switch (event.eventType) {
       case 'build':
         const cost = config[event.structure][1].price;
-        if (gotTheMoney(m, faction, cost)) {
-          // Validate that tile to build on is open
-          if (m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)].type === "open"){
+        if (spendMoney(m, faction, cost)) {
           // mutate map with new actor
           setStructureFromEvent(config, m, event, faction as Faction, event.id);
+          // NEW Catastrophe doesn't do it this way. Could've told me earlier but let's try
           // create new tile object
-          const tile = buildTileFromEvent(event, faction as Faction, event.id);
+          // const tile = buildTileFromEvent(event, faction as Faction, event.id);
           // replace old tile with new tile
-          m.mapState[coordsToIndex({ x: event.x, y: event.y }, m.width)] = tile;
+          // m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)] = tile;
           // m.contents[event.y][event.x] = tile;
           m.actorCount++;
           // // drain gold
@@ -72,7 +59,7 @@ export default function applyEvents(
         }
         break;
       case 'repair':
-        if (gotTheMoney(m, faction, config.repairCost)) {
+        if (spendMoney(m, faction, config.repairCost)) {
           if (faction === 'attacker') applyCryptRepair(m.actors.crypts[event.id]);
           if (faction === 'defender') applyTowerRepair(config, m.actors.towers[event.id]);
         }
@@ -84,21 +71,22 @@ export default function applyEvents(
         if (currentTier < 3) {
           const newTier = (currentTier + 1) as UpgradeTier;
           const cost = config[structure.structure][newTier].price;
-          if (gotTheMoney(m, faction, cost)) applyUpgrade(structure);
+          if (spendMoney(m, faction, cost)) applyUpgrade(structure);
         }
         break;
-      case 'destroy':
+      case 'salvage':
         const coords = findActorCoords(m, event);
         if (faction === 'attacker') {
-          m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'attacker' };
+          // NEW made redundant by catastrophe's thing
+          // m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'attacker' };
           // m.contents[coords.y][coords.x] = { type: 'open', faction: 'attacker' };
-          m.attackerGold += config.recoupAmount;
+          m.attackerGold += event.gold;
           if (m.actors.crypts[event.id]) delete m.actors.crypts[event.id];
           // else if (m.actors.units[event.id]) delete m.actors.units[event.id];
         } else if (faction === 'defender') {
-          m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'defender' };
+          // m.mapState[coordsToIndex(coords, m.width)] = { type: 'open', faction: 'defender' };
           // m.contents[coords.y][coords.x] = { type: 'open', faction: 'defender' };
-          m.defenderGold += config.recoupAmount; // TODO get amount right
+          m.defenderGold += event.gold; // TODO get amount right
           delete m.actors.towers[event.id];
         }
         break;
@@ -257,7 +245,9 @@ function determineFactionFromEvent(m: MatchState, eventType: TickEvent): Faction
     else return null;
   } else return null;
 }
-function findActorCoords(m: MatchState, eventType: DestroyStructureEvent): Coordinates {
+function findActorCoords(m: MatchState, eventType: SalvageStructureEvent): Coordinates {
+  console.log(eventType, "event")
+  console.log(m.actors, "actors")
   const crypt = m.actors.crypts[eventType.id];
   const tower = m.actors.towers[eventType.id];
   const unit = m.actors.units[eventType.id];
