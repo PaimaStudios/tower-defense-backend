@@ -20,8 +20,8 @@ import type {
   UpgradeTier,
 } from '@tower-defense/utils';
 import { coordsToIndex } from '.';
-
-function gotTheMoney(m: MatchState, faction: Faction | null, amount: number): boolean {
+// Function to check if the user has enough money to spend in structures. Mutates state if true, returns the boolean result of the check.
+function spendMoney(m: MatchState, faction: Faction | null, amount: number): boolean {
   if (faction === 'attacker' && m.attackerGold - amount >= 0) {
     m.attackerGold -= amount;
     return true;
@@ -44,7 +44,7 @@ export default function applyEvents(
     switch (event.eventType) {
       case 'build':
         const cost = config[event.structure][1].price;
-        if (gotTheMoney(m, faction, cost)) {
+        if (spendMoney(m, faction, cost)) {
           // mutate map with new actor
           setStructureFromEvent(config, m, event, faction as Faction, event.id);
           // NEW Catastrophe doesn't do it this way. Could've told me earlier but let's try
@@ -58,7 +58,7 @@ export default function applyEvents(
         }
         break;
       case 'repair':
-        if (gotTheMoney(m, faction, config.repairCost)) {
+        if (spendMoney(m, faction, config.repairCost)) {
           if (faction === 'attacker') applyCryptRepair(m.actors.crypts[event.id]);
           if (faction === 'defender') applyTowerRepair(config, m.actors.towers[event.id]);
         }
@@ -70,7 +70,7 @@ export default function applyEvents(
         if (currentTier < 3) {
           const newTier = (currentTier + 1) as UpgradeTier;
           const cost = config[structure.structure][newTier].price;
-          if (gotTheMoney(m, faction, cost)) applyUpgrade(structure);
+          if (spendMoney(m, faction, cost)) applyUpgrade(structure);
         }
         break;
       case 'salvage':
