@@ -1,4 +1,11 @@
-import type { AnnotatedMap, MatchState, PathTile, RawMap, Tile } from '@tower-defense/utils';
+import type {
+  AnnotatedMap,
+  MatchState,
+  PathTile,
+  RawMap,
+  Tile,
+  TileNumber,
+} from '@tower-defense/utils';
 
 export default function (m: RawMap): AnnotatedMap {
   return {
@@ -9,7 +16,7 @@ export default function (m: RawMap): AnnotatedMap {
   };
 }
 
-export function annotateMap(contents: number[], width: number): Tile[][] {
+export function annotateMap(contents: TileNumber[], width: number): Tile[][] {
   const tiles = contents.map(c => findTile(c));
   const accBunt: Tile[][] = [];
   const reduced = tiles.reduce((acc, tile, index) => {
@@ -56,50 +63,17 @@ export function setPath(map: Tile[][]): Tile[][] {
   }
   return map;
 }
-
-function findTile(c: number): Tile {
-  if (c === 0)
-    return {
-      type: 'immovableObject',
-    };
-  else if (c === 1)
-    return {
-      type: 'open',
-      faction: 'defender',
-    };
-  else if (c === 2)
-    return {
-      type: 'open',
-      faction: 'attacker',
-    };
-  else if (c === 3)
-    return {
-      type: 'base',
-      faction: 'defender',
-      // id: 1 by default
-    };
-  else if (c === 4)
-    return {
-      type: 'base',
-      faction: 'attacker',
-      // id: 2 by default
-    };
-  else if (c === 5)
-    return {
-      type: 'path',
-      faction: 'defender',
-      leadsTo: [],
-      units: [],
-    };
-  else if (c === 6)
-    return {
-      type: 'path',
-      faction: 'attacker',
-      leadsTo: [],
-      units: [],
-    };
-  else
-    return {
-      type: 'immovableObject',
-    };
+const tileMap: Record<TileNumber, Tile> = {
+  1: { type: 'open', faction: 'defender' },
+  2: { type: 'open', faction: 'attacker' },
+  3: { type: 'base', faction: 'defender' },
+  4: { type: 'base', faction: 'attacker' },
+  5: { type: 'path', faction: 'defender', leadsTo: [], units: [] },
+  6: { type: 'path', faction: 'attacker', leadsTo: [], units: [] },
+  7: { type: 'unbuildable', faction: 'defender' },
+  8: { type: 'unbuildable', faction: 'attacker' },
+  // ...
+};
+function findTile(c: TileNumber): Tile {
+  return tileMap[c];
 }

@@ -56,6 +56,7 @@ export default function applyEvents(
           m.actorCount++;
           // // drain gold
         }
+        }
         break;
       case 'repair':
         if (spendMoney(m, faction, config.repairCost)) {
