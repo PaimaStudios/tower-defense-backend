@@ -20,7 +20,7 @@ export interface AnnotatedMap {
   name: string;
   width: number;
   height: number;
-  mapState: Tile[]
+  mapState: Tile[];
 }
 
 export interface MatchConfig {
@@ -45,17 +45,17 @@ export interface TowerConfig {
   range: number;
 }
 export type StructureUpgradetier = 1 | 2 | 3;
-export interface TowerConfigGraph{
+export interface TowerConfigGraph {
   1: TowerConfig;
   2: TowerConfig;
   3: TowerConfig;
-};
-export interface CryptConfigGraph{
-  1: CryptConfig,
-  2: CryptConfig,
-  3: CryptConfig
 }
-export interface CryptConfig{
+export interface CryptConfigGraph {
+  1: CryptConfig;
+  2: CryptConfig;
+  3: CryptConfig;
+}
+export interface CryptConfig {
   // crypt stats
   price: number;
   cryptHealth: number;
@@ -65,10 +65,10 @@ export interface CryptConfig{
   spawnCapacity: number; // 50
   // unit stats
   attackDamage: number; // 1
-  attackWarmup: number,
+  attackWarmup: number;
   attackRange: number;
   attackCooldown: number;
-  unitSpeed: number; // 
+  unitSpeed: number; //
   unitHealth: number; // 2
 }
 export interface MatchState extends AnnotatedMap {
@@ -84,25 +84,26 @@ export interface MatchState extends AnnotatedMap {
 }
 // ordered maps for stateful units
 export interface ActorsObject {
-  towers: ActorGraph<DefenderStructure>
-  crypts: ActorGraph<AttackerStructure>
-  units: ActorGraph<AttackerUnit>
+  towers: ActorGraph<DefenderStructure>;
+  crypts: ActorGraph<AttackerStructure>;
+  units: ActorGraph<AttackerUnit>;
 }
 export type ActorID = number;
 export interface ActorGraph<ActorType> {
-  [actorID: ActorID]: ActorType
+  [actorID: ActorID]: ActorType;
 }
 
-export type Actor = DefenderBase
+export type Actor =
+  | DefenderBase
   | AttackerBase
   | AttackerUnit
   | AttackerStructure
-  | DefenderStructure
+  | DefenderStructure;
 
-export type AttackerUnitType = "macaw" | "jaguar" | "gorilla"
+export type AttackerUnitType = 'macaw' | 'jaguar' | 'gorilla';
 export interface AttackerUnit {
-  type: "unit";
-  faction: "attacker";
+  type: 'unit';
+  faction: 'attacker';
   subType: AttackerUnitType;
   id: ActorID;
   previousCoordinates: Coordinates | null;
@@ -117,25 +118,24 @@ export interface AttackerUnit {
   status: StatusType[];
 }
 
-
 export interface Coordinates {
   x: number;
   y: number;
 }
 export type UpgradeTier = 1 | 2 | 3;
 export interface AttackerStructure {
-  type: "structure";
+  type: 'structure';
   id: number;
-  faction: "attacker";
-  structure: AttackerStructureType
+  faction: 'attacker';
+  structure: AttackerStructureType;
   upgrades: UpgradeTier;
   coordinates: Coordinates;
   builtOnRound: number; // + 3 it stops spawning, reset this on upgrade
-  spawned: ActorID[]
+  spawned: ActorID[];
 }
 export interface DefenderStructure {
-  type: "structure";
-  faction: "defender";
+  type: 'structure';
+  faction: 'defender';
   id: number;
   structure: DefenderStructureType;
   health: number;
@@ -151,20 +151,20 @@ interface AttackerBase {
   level: number;
 }
 
-
-export type Tile = PathTile
+export type Tile =
+  | PathTile
   | DefenderBaseTile
   | AttackerBaseTile
   | DefenderOpenTile
   | AttackerOpenTile
   | AttackerStructureTile
   | DefenderStructureTile
-  | ImmovableObjectTile
+  | ImmovableObjectTile;
 
 export interface PathTile {
-  type: "path";
+  type: 'path';
   faction: Faction;
-  "leadsTo": Coordinates[]
+  leadsTo: Coordinates[];
   units: ActorID[];
 }
 export interface Coordinates {
@@ -172,66 +172,63 @@ export interface Coordinates {
   y: number;
 }
 
-export type AttackerStructureType = "macawCrypt"
-  | "gorillaCrypt"
-  | "jaguarCrypt"
+export type AttackerStructureType = 'macawCrypt' | 'gorillaCrypt' | 'jaguarCrypt';
 
 export interface AttackerStructureTile {
-  "type": "structure",
-  "id": number;
-  faction: "attacker";
+  type: 'structure';
+  id: number;
+  faction: 'attacker';
 }
-export type DefenderStructureType = "anacondaTower"
-  | "slothTower"
-  | "piranhaTower"
+export type DefenderStructureType = 'anacondaTower' | 'slothTower' | 'piranhaTower';
 
 export interface DefenderStructureTile {
-  "type": "structure",
-  "id": number;
-  faction: "defender"
+  type: 'structure';
+  id: number;
+  faction: 'defender';
   // "structure": DefenderStructureType
 }
-export type Level = 0 | 1 | 2
+export type Level = 0 | 1 | 2;
 export interface DefenderBaseTile {
-  type: "base";
-  faction: "defender"
+  type: 'base';
+  faction: 'defender';
 }
 export interface AttackerBaseTile {
-  type: "base";
-  faction: "attacker";
+  type: 'base';
+  faction: 'attacker';
 }
 export interface DefenderOpenTile {
-  type: "open";
-  faction: "defender";
+  type: 'open';
+  faction: 'defender';
 }
 export interface AttackerOpenTile {
-  type: "open";
-  faction: "attacker";
+  type: 'open';
+  faction: 'attacker';
 }
 export interface ImmovableObjectTile {
-  type: "immovableObject"
+  type: 'immovableObject';
 }
 export type Wallet = string;
 
-export type TurnAction = BuildStructureAction
+export type TurnAction =
+  | BuildStructureAction
   | RepairStructureAction
   | SalvageStructureAction
   | UpgradeStructureAction
 
 export type Structure = Tower | Crypt;
-export type Tower = "piranhaTower" | "slothTower" | "anacondaTower";
-export type Crypt = "macawCrypt" | "jaguarCrypt" | "gorillaCrypt";
+export type Tower = 'piranhaTower' | 'slothTower' | 'anacondaTower';
+export type Crypt = 'macawCrypt' | 'jaguarCrypt' | 'gorillaCrypt';
 
 export interface BuildStructureAction {
   round: number;
-  action: "build";
+  action: 'build';
   x: number;
   y: number;
   structure: Structure;
 }
 export interface RepairStructureAction {
   round: number;
-  action: "repair";
+  action: 'repair';
   id: number;
 }
 export interface SalvageStructureAction {
@@ -241,10 +238,11 @@ export interface SalvageStructureAction {
 }
 export interface UpgradeStructureAction {
   round: number;
-  action: "upgrade",
+  action: 'upgrade';
   id: number;
 }
-export type StructureEvent = BuildStructureEvent
+export type StructureEvent =
+  | BuildStructureEvent
   | RepairStructureEvent
   | UpgradeStructureEvent
   | SalvageStructureEvent
@@ -269,8 +267,8 @@ export type StructureEvent = BuildStructureEvent
     id: number;
   }
 
-
-export type TickEvent = GoldRewardEvent
+export type TickEvent =
+  | GoldRewardEvent
   | BuildStructureEvent
   | RepairStructureEvent
   | SalvageStructureEvent
@@ -280,9 +278,9 @@ export type TickEvent = GoldRewardEvent
   | DamageEvent
   | DefenderBaseUpdateEvent
   | ActorDeletedEvent
-  | StatusEffectAppliedEvent
+  | StatusEffectAppliedEvent;
 
-export type Faction = "attacker" | "defender";
+export type Faction = 'attacker' | 'defender';
 // export interface GoldRewardEvent {
 //   eventType: "goldReward";
 //   faction: Faction;
@@ -290,14 +288,14 @@ export type Faction = "attacker" | "defender";
 // }
 // cat-astrophe complained about not wanting diffs, they want absolute numbers of gold
 export interface GoldRewardEvent {
-  eventType: "goldUpdate";
+  eventType: 'goldUpdate';
   faction: Faction;
   amount: number;
 }
 
-export type UnitType = "jaguar" | "macaw" | "gorilla";
+export type UnitType = 'jaguar' | 'macaw' | 'gorilla';
 export interface UnitSpawnedEvent {
-  eventType: "spawn"
+  eventType: 'spawn';
   cryptID: number;
   actorID: number;
   unitX: number;
@@ -309,7 +307,7 @@ export interface UnitSpawnedEvent {
   tier: UpgradeTier;
 }
 export interface UnitMovementEvent {
-  eventType: "movement";
+  eventType: 'movement';
   actorID: number;
   unitX: number;
   unitY: number;
@@ -318,9 +316,9 @@ export interface UnitMovementEvent {
   completion: number;
   movementSpeed: number;
 }
-export type DamageType = "neutral" | string;
+export type DamageType = 'neutral' | string;
 export interface DamageEvent {
-  eventType: "damage";
+  eventType: 'damage';
   faction: Faction; // the one doing the damage
   sourceID: number;
   targetID: number;
@@ -328,29 +326,25 @@ export interface DamageEvent {
   damageAmount: number;
 }
 export interface DefenderBaseUpdateEvent {
-  eventType: "defenderBaseUpdate";
+  eventType: 'defenderBaseUpdate';
   health: number;
 }
 export interface ActorDeletedEvent {
-  eventType: "actorDeleted";
+  eventType: 'actorDeleted';
   faction: Faction; // which faction the unit to delete belongs to
   id: number;
 }
-export type StatusType = "speedDebuff" | "speedBuff" | "healthBuff"
+export type StatusType = 'speedDebuff' | 'speedBuff' | 'healthBuff';
 export interface StatusEffectAppliedEvent {
-  eventType: "statusApply";
+  eventType: 'statusApply';
   sourceID: number;
   targetID: number;
-  statusType: StatusType
+  statusType: StatusType;
 }
-export type TowerAttack = DamageEvent
-| ActorDeletedEvent
-| StatusEffectAppliedEvent 
-export type UnitAttack = DamageEvent 
-| DefenderBaseUpdateEvent
-| ActorDeletedEvent;
+export type TowerAttack = DamageEvent | ActorDeletedEvent | StatusEffectAppliedEvent;
+export type UnitAttack = DamageEvent | DefenderBaseUpdateEvent | ActorDeletedEvent;
 
-interface PlayersState {
+export interface PlayersState {
   user1: PlayerState;
   user2: PlayerState;
 }
@@ -359,3 +353,9 @@ interface PlayerState {
   health: number;
   position: number;
 }
+
+export interface InvalidInput {
+  error: 'invalidString';
+}
+
+export type LobbyStatus = 'open' | 'active' | 'finished' | 'closed';

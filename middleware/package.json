@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "sh scripts/build.sh",
+    "build": "cross-env NODE_ENV=devnet sh scripts/build.sh",
+    "build:prod": "cross-env NODE_ENV=mainnet sh scripts/build.sh",
     "lint": "prettier --write '**/*.ts'"
   },
   "keywords": [],
