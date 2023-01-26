@@ -99,6 +99,7 @@ const joinLobby = P.seqMap(P.string('j'), bar, asteriskLobbyID, (j, _, lobbyID) 
     input: 'joinedLobby',
     lobbyID,
   };
+  return obj;
 });
 
 // Close Lobby Input Definition
@@ -147,30 +148,38 @@ const buildAction = P.seqObj<BuildStructureAction>(
   comma,
   ['y', yCoord],
   comma,
-  ['structure', structureType]
+  ['structure', structureType],
+  bar
 ).map(o => {
   return { ...o, action: 'build', round: 0 }; // still don't get why we need the rounds here.
 });
-const repairAction = P.seqObj<RepairStructureAction>(P.string('r'), comma, ['id', structureID]).map(
-  o => {
-    return { ...o, action: 'repair', round: 0 };
-  }
-);
+const repairAction = P.seqObj<RepairStructureAction>(
+  P.string('r'),
+  comma,
+  ['id', structureID],
+  bar
+).map(o => {
+  return { ...o, action: 'repair', round: 0 };
+});
 
-const upgradeAction = P.seqObj<UpgradeStructureAction>(P.string('u'), comma, [
-  'id',
-  structureID,
-]).map(o => {
+const upgradeAction = P.seqObj<UpgradeStructureAction>(
+  P.string('u'),
+  comma,
+  ['id', structureID],
+  bar
+).map(o => {
   return { ...o, action: 'upgrade', round: 0 };
 });
-const salvageAction = P.seqObj<SalvageStructureAction>(P.string('s'), comma, [
-  'id',
-  structureID,
-]).map(o => {
+const salvageAction = P.seqObj<SalvageStructureAction>(
+  P.string('s'),
+  comma,
+  ['id', structureID],
+  bar
+).map(o => {
   return { ...o, action: 'salvage', round: 0 };
 });
 const turnAction = P.alt(buildAction, repairAction, upgradeAction, salvageAction);
-const turnActions = turnAction.many().tie();
+const turnActions = turnAction.many();
 
 // Submitted Turn Input Definition
 const submitTurn = P.seqObj<SubmittedTurnInput>(
@@ -181,7 +190,9 @@ const submitTurn = P.seqObj<SubmittedTurnInput>(
   ['roundNumber', roundNumber],
   bar,
   ['actions', turnActions]
-);
+).map(o => {
+  return { ...o, input: 'submittedTurn' };
+});
 
 // export function isInvalid(input: ParsedSubmittedInput): input is InvalidInput {
 //   return (input as InvalidInput).error !== undefined;
