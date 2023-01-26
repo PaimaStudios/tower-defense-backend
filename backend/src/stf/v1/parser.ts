@@ -1,7 +1,238 @@
-import { InvalidInput, parse, ParsedSubmittedInput } from '@tower-defense/utils';
+import {
+  BuildStructureAction,
+  RepairStructureAction,
+  SalvageStructureAction,
+  Structure,
+  TurnAction,
+  UpgradeStructureAction,
+} from '@tower-defense/utils';
+import P from 'parsimmon';
 
-export function isInvalid(input: ParsedSubmittedInput): input is InvalidInput {
-  return (input as InvalidInput).error !== undefined;
+import {
+  ClosedLobbyInput,
+  CreatedLobbyInput,
+  JoinedLobbyInput,
+  ParsedSubmittedInput,
+  ScheduledDataInput,
+  SetNFTInput,
+  SubmittedTurnInput,
+  UserStatsEffect,
+  ZombieRoundEffect,
+  InvalidInput,
+} from './types';
+
+// Core Definitions
+const base62 = P.alt(P.letter, P.digit);
+const bar = P.string('|');
+const comma = P.string(',');
+const bool = P.alt(P.string('T'), P.string('F'), P.string('')).map(value => {
+  if (value === 'T') return true;
+  return false;
+});
+
+// Wallet Definitions
+const wallet = base62.many().tie();
+
+// ID definitions
+
+const lobbyID = base62.times(12).map((list: string[]) => list.join(''));
+const asteriskLobbyID = P.seqMap(P.string('*'), lobbyID, (al1, al2) => al2);
+const asteriskWallet = P.seqMap(P.string('*'), wallet, (aw1, aw2) => aw2);
+const matchConfigID = lobbyID;
+
+// Lobby Definitions
+
+const roundLength = P.digits.map(Number).chain(n => {
+  if (validateRoundLength(n)) return P.succeed(n);
+  else return P.fail(`Round Length must be between 1 minute and 1 day`);
+});
+
+function validateRoundLength(n: number): boolean {
+  // NOTE: This currently returns the wrong blocks per second for A1
+  const BLOCKS_PER_SECOND = 4; // TODO: pull from some config? see getBlockTime
+  const BLOCKS_PER_MINUTE = 60 / BLOCKS_PER_SECOND;
+  const BLOCKS_PER_DAY = BLOCKS_PER_MINUTE * 60 * 24;
+  return n >= BLOCKS_PER_MINUTE && n <= BLOCKS_PER_DAY;
+}
+const maps = P.alt(
+  P.string('jungle'),
+  P.string('backwards'),
+  P.string('crossing'),
+  P.string('narrow'),
+  P.string('snake'),
+  P.string('straight'),
+  P.string('wavy'),
+  P.string('fork'),
+  P.string('islands')
+);
+
+// Lobby Validation Checks
+const numOfRounds = P.digits.map(Number).chain(n => {
+  if (n >= 3 && n <= 100) return P.succeed(n);
+  else return P.fail(`Round Number must be between 3 and 100`);
+});
+
+// Create Lobby Definition
+// TODO need to confirm the scope of MatchConfig vs other Config
+// methinks numOfRounds, map type etc. is out of scope of MatchConfig
+const createLobby = P.seqObj<CreatedLobbyInput>(
+  P.string('c'),
+  bar,
+  ['matchConfigID', matchConfigID],
+  bar,
+  ['numOfRounds', numOfRounds],
+  bar,
+  ['roundLength', roundLength],
+  bar,
+  ['isHidden', bool],
+  bar,
+  ['map', maps],
+  bar,
+  ['isPractice', bool]
+).map(o => {
+  return { ...o, input: 'createdLobby' };
+});
+
+// Join Lobby Input Definition
+const joinLobby = P.seqMap(P.string('j'), bar, asteriskLobbyID, (j, _, lobbyID) => {
+  const obj: JoinedLobbyInput = {
+    input: 'joinedLobby',
+    lobbyID,
+  };
+});
+
+// Close Lobby Input Definition
+const closeLobby = P.seqMap(P.string('cs'), bar, asteriskLobbyID, (j, b, lobbyID) => {
+  const obj: ClosedLobbyInput = {
+    input: 'closedLobby',
+    lobbyID,
+  };
+  return obj;
+});
+
+// Turn Action Helpers
+// TODO max rounds??
+const roundNumber = P.digits.map(Number).chain(n => {
+  if (n >= 1 && n <= 1000) return P.succeed(n);
+  else return P.fail(`Round Number must be less than 100`);
+});
+const xCoord = P.digits.map(Number).chain(n => {
+  if (n >= 1 && n <= 22) return P.succeed(n);
+  else return P.fail(`Round Number must be less than 100`);
+});
+const yCoord = P.digits.map(Number).chain(n => {
+  if (n >= 1 && n <= 13) return P.succeed(n);
+  else return P.fail(`Round Number must be less than 100`);
+});
+const structureID = P.digits.map(Number);
+const anacondaTower = P.string('at').map(o => 'anacondaTower' as Structure);
+const piranhaTower = P.string('at').map(o => 'piranhaTower' as Structure);
+const slothTower = P.string('at').map(o => 'slothTower' as Structure);
+const gorillaCrypt = P.string('at').map(o => 'gorillaCrypt' as Structure);
+const jaguarCrypt = P.string('at').map(o => 'jaguarCrypt' as Structure);
+const macawCrypt = P.string('at').map(o => 'macawCrypt' as Structure);
+
+const structureType = P.alt<Structure>(
+  anacondaTower,
+  piranhaTower,
+  slothTower,
+  gorillaCrypt,
+  jaguarCrypt,
+  macawCrypt
+);
+const buildAction = P.seqObj<BuildStructureAction>(
+  P.string('b'),
+  comma,
+  ['x', xCoord],
+  comma,
+  ['y', yCoord],
+  comma,
+  ['structure', structureType]
+).map(o => {
+  return { ...o, action: 'build', round: 0 }; // still don't get why we need the rounds here.
+});
+const repairAction = P.seqObj<RepairStructureAction>(P.string('r'), comma, ['id', structureID]).map(
+  o => {
+    return { ...o, action: 'repair', round: 0 };
+  }
+);
+
+const upgradeAction = P.seqObj<UpgradeStructureAction>(P.string('u'), comma, [
+  'id',
+  structureID,
+]).map(o => {
+  return { ...o, action: 'upgrade', round: 0 };
+});
+const salvageAction = P.seqObj<SalvageStructureAction>(P.string('s'), comma, [
+  'id',
+  structureID,
+]).map(o => {
+  return { ...o, action: 'salvage', round: 0 };
+});
+const turnAction = P.alt(buildAction, repairAction, upgradeAction, salvageAction);
+const turnActions = turnAction.many().tie();
+
+// Submitted Turn Input Definition
+const submitTurn = P.seqObj<SubmittedTurnInput>(
+  P.string('s'),
+  bar,
+  ['lobbyID', asteriskLobbyID],
+  bar,
+  ['roundNumber', roundNumber],
+  bar,
+  ['actions', turnActions]
+);
+
+// export function isInvalid(input: ParsedSubmittedInput): input is InvalidInput {
+//   return (input as InvalidInput).error !== undefined;
+// }
+// NFT Helpers
+
+const nftAddress = wallet;
+const nftID = P.digits;
+// Set NFT Input Definition
+const setNFT = P.seqObj<SetNFTInput>(P.string('n'), bar, ['address', nftAddress], bar, [
+  'tokenID',
+  nftID,
+]).map(o => {
+  return { ...o, input: 'setNFT' };
+});
+
+// Zombie Round Input Definition
+const zombieEffect = P.seqObj<ZombieRoundEffect>(P.string('z'), bar, [
+  'lobbyID',
+  asteriskLobbyID,
+]).map<ScheduledDataInput>(o => {
+  return { input: 'scheduledData', effect: { ...o, type: 'zombie' } };
+});
+
+// Update User Stats Input Definition
+const statsEffect = P.seqObj<UserStatsEffect>(P.string('u'), bar, ['user', asteriskWallet], bar, [
+  'result',
+  P.oneOf('wtl'),
+]).map<ScheduledDataInput>(o => {
+  return { input: 'scheduledData', effect: { ...o, type: 'stats' } };
+});
+
+const parser: P.Parser<ParsedSubmittedInput> = P.alt(
+  createLobby,
+  joinLobby,
+  closeLobby,
+  submitTurn,
+  setNFT,
+  zombieEffect,
+  statsEffect
+);
+function parse(s: string): ParsedSubmittedInput {
+  try {
+    const res = parser.tryParse(s);
+    return res;
+  } catch (e) {
+    console.log(e, 'parsing failure');
+    return {
+      input: 'invalidString',
+    };
+  }
 }
 //utils/src/parser
 export default parse;
