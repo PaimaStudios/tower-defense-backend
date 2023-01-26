@@ -101,7 +101,6 @@ export function persistMoveSubmission(
 function execute(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
-  states: IGetUserStatesByRoundResult[],
   moves: IGetRoundMovesResult[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
@@ -152,7 +151,6 @@ function persistMove(matchId: string, round: number, user: WalletAddress, move: 
 export function executeZombieRound(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
-  states: IGetUserStatesByRoundResult[],
   moves: IGetRoundMovesResult[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
@@ -160,7 +158,7 @@ export function executeZombieRound(
   console.log(
     `Executing zombie round (#${lobbyState.current_round}) for lobby ${lobbyState.lobby_id}`
   );
-  return execute(blockHeight, lobbyState, states, moves, roundData, randomnessGenerator);
+  return execute(blockHeight, lobbyState, moves, roundData, randomnessGenerator);
 }
 
 // Persists the submitted data from a `Set NFT` game input
