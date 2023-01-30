@@ -5,6 +5,8 @@ export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
 export type move_type = 'build' | 'destroy' | 'repair' | 'upgrade';
 
+export type role_setting = 'attacker' | 'defender' | 'random';
+
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
 /** 'GetBlockHeight' parameters type */
@@ -324,9 +326,10 @@ export interface IGetMatchUserStatsParams {
 
 /** 'GetMatchUserStats' return type */
 export interface IGetMatchUserStatsResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -532,9 +535,10 @@ export interface IGetPaginatedOpenLobbiesParams {
 
 /** 'GetPaginatedOpenLobbies' return type */
 export interface IGetPaginatedOpenLobbiesResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -579,9 +583,10 @@ export interface ISearchPaginatedOpenLobbiesParams {
 
 /** 'SearchPaginatedOpenLobbies' return type */
 export interface ISearchPaginatedOpenLobbiesResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -624,9 +629,10 @@ export interface IGetOpenLobbyByIdParams {
 
 /** 'GetOpenLobbyById' return type */
 export interface IGetOpenLobbyByIdResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -690,9 +696,10 @@ export type IGetRandomActiveLobbyParams = void;
 
 /** 'GetRandomActiveLobby' return type */
 export interface IGetRandomActiveLobbyResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -733,9 +740,10 @@ export interface IGetUserLobbiesParams {
 
 /** 'GetUserLobbies' return type */
 export interface IGetUserLobbiesResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -780,9 +788,10 @@ export interface IGetPaginatedUserLobbiesParams {
 
 /** 'GetPaginatedUserLobbies' return type */
 export interface IGetPaginatedUserLobbiesResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -825,9 +834,10 @@ export type IGetActiveLobbiesParams = void;
 
 /** 'GetActiveLobbies' return type */
 export interface IGetActiveLobbiesResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -866,9 +876,10 @@ export interface IGetLobbyByIdParams {
 
 /** 'GetLobbyById' return type */
 export interface IGetLobbyByIdResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -1000,16 +1011,11 @@ export interface IGetCachedMovesParams {
 
 /** 'GetCachedMoves' return type */
 export interface IGetCachedMovesResult {
-  execution_block_height: number | null;
   id: number;
-  id: number;
-  lobby_id: string;
   lobby_id: string;
   move_target: string;
   move_type: move_type;
   round: number;
-  round_within_match: number;
-  starting_block_height: number;
   wallet: string;
 }
 
@@ -1019,12 +1025,19 @@ export interface IGetCachedMovesQuery {
   result: IGetCachedMovesResult;
 }
 
-const getCachedMovesIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":207,"b":215}]}],"statement":"SELECT * FROM match_moves\nINNER JOIN rounds\nON match_moves.lobby_id = rounds.lobby_id\nAND match_moves.round = rounds.round_within_match\nWHERE rounds.execution_block_height IS NULL\nAND match_moves.lobby_id = :lobby_id"};
+const getCachedMovesIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":295,"b":303}]}],"statement":"SELECT \n  match_moves.id,\n  match_moves.lobby_id,\n  move_type,\n  move_target,\n  round,\n  wallet \nFROM match_moves\nINNER JOIN rounds\nON match_moves.lobby_id = rounds.lobby_id\nAND match_moves.round = rounds.round_within_match\nWHERE rounds.execution_block_height IS NULL\nAND match_moves.lobby_id = :lobby_id"};
 
 /**
  * Query generated from SQL:
  * ```
- * SELECT * FROM match_moves
+ * SELECT 
+ *   match_moves.id,
+ *   match_moves.lobby_id,
+ *   move_type,
+ *   move_target,
+ *   round,
+ *   wallet 
+ * FROM match_moves
  * INNER JOIN rounds
  * ON match_moves.lobby_id = rounds.lobby_id
  * AND match_moves.round = rounds.round_within_match

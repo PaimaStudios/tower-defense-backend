@@ -186,7 +186,14 @@ WHERE lobby_id = :lobby_id!
 AND   round = :round!;
 
 /* @name getCachedMoves */
-SELECT * FROM match_moves
+SELECT 
+  match_moves.id,
+  match_moves.lobby_id,
+  move_type,
+  move_target,
+  round,
+  wallet 
+FROM match_moves
 INNER JOIN rounds
 ON match_moves.lobby_id = rounds.lobby_id
 AND match_moves.round = rounds.round_within_match

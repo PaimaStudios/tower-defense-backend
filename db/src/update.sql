@@ -40,7 +40,8 @@ AND rounds.round_within_match = :round!;
 UPDATE lobbies
 SET  
 lobby_state = 'active',
-player_two = :player_two!
+player_two = :player_two!,
+current_match_state = :current_match_state!
 WHERE lobby_id = :lobby_id!
 AND player_two IS NULL
 RETURNING *;

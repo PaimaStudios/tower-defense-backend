@@ -1,7 +1,11 @@
 /** Types generated for queries found in "src/insert.sql" */
 import { PreparedQuery } from '@pgtyped/query';
 
+export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
+
 export type move_type = 'build' | 'destroy' | 'repair' | 'upgrade';
+
+export type role_setting = 'attacker' | 'defender' | 'random';
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
@@ -201,17 +205,21 @@ export const createConfig = new PreparedQuery<ICreateConfigParams,ICreateConfigR
 
 /** 'CreateLobby' parameters type */
 export interface ICreateLobbyParams {
+  config_id: string;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
   lobby_creator: string;
   lobby_id: string;
+  lobby_state: lobby_status;
   map: string;
   num_of_rounds: number;
   player_two: string | null | void;
   practice: boolean;
+  round_length: number;
 }
 
 /** 'CreateLobby' return type */
@@ -223,7 +231,7 @@ export interface ICreateLobbyQuery {
   result: ICreateLobbyResult;
 }
 
-const createLobbyIR: any = {"usedParamSet":{"lobby_id":true,"lobby_creator":true,"num_of_rounds":true,"current_round":true,"creation_block_height":true,"map":true,"created_at":true,"hidden":true,"practice":true,"current_match_state":true,"player_two":true},"params":[{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":199,"b":208}]},{"name":"lobby_creator","required":true,"transform":{"type":"scalar"},"locs":[{"a":213,"b":227}]},{"name":"num_of_rounds","required":true,"transform":{"type":"scalar"},"locs":[{"a":232,"b":246}]},{"name":"current_round","required":true,"transform":{"type":"scalar"},"locs":[{"a":251,"b":265}]},{"name":"creation_block_height","required":true,"transform":{"type":"scalar"},"locs":[{"a":270,"b":292}]},{"name":"map","required":true,"transform":{"type":"scalar"},"locs":[{"a":297,"b":301}]},{"name":"created_at","required":true,"transform":{"type":"scalar"},"locs":[{"a":306,"b":317}]},{"name":"hidden","required":true,"transform":{"type":"scalar"},"locs":[{"a":322,"b":329}]},{"name":"practice","required":true,"transform":{"type":"scalar"},"locs":[{"a":334,"b":343}]},{"name":"current_match_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":348,"b":368}]},{"name":"player_two","required":false,"transform":{"type":"scalar"},"locs":[{"a":373,"b":383}]}],"statement":"INSERT INTO lobbies(\n  lobby_id,\n  lobby_creator,\n  num_of_rounds,\n  current_round,\n  creation_block_height,\n  map,\n  created_at,\n  hidden,\n  practice,\n  current_match_state,\n  player_two)\nVALUES(\n  :lobby_id!,\n  :lobby_creator!,\n  :num_of_rounds!,\n  :current_round!,\n  :creation_block_height!,\n  :map!,\n  :created_at!,\n  :hidden!,\n  :practice!,\n  :current_match_state!,\n  :player_two)             "};
+const createLobbyIR: any = {"usedParamSet":{"lobby_id":true,"lobby_creator":true,"creator_faction":true,"num_of_rounds":true,"round_length":true,"current_round":true,"lobby_state":true,"creation_block_height":true,"map":true,"config_id":true,"created_at":true,"hidden":true,"practice":true,"current_match_state":true,"player_two":true},"params":[{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":262,"b":271}]},{"name":"lobby_creator","required":true,"transform":{"type":"scalar"},"locs":[{"a":276,"b":290}]},{"name":"creator_faction","required":true,"transform":{"type":"scalar"},"locs":[{"a":295,"b":311}]},{"name":"num_of_rounds","required":true,"transform":{"type":"scalar"},"locs":[{"a":316,"b":330}]},{"name":"round_length","required":true,"transform":{"type":"scalar"},"locs":[{"a":335,"b":348}]},{"name":"current_round","required":true,"transform":{"type":"scalar"},"locs":[{"a":353,"b":367}]},{"name":"lobby_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":372,"b":384}]},{"name":"creation_block_height","required":true,"transform":{"type":"scalar"},"locs":[{"a":389,"b":411}]},{"name":"map","required":true,"transform":{"type":"scalar"},"locs":[{"a":416,"b":420}]},{"name":"config_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":425,"b":435}]},{"name":"created_at","required":true,"transform":{"type":"scalar"},"locs":[{"a":440,"b":451}]},{"name":"hidden","required":true,"transform":{"type":"scalar"},"locs":[{"a":456,"b":463}]},{"name":"practice","required":true,"transform":{"type":"scalar"},"locs":[{"a":468,"b":477}]},{"name":"current_match_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":482,"b":502}]},{"name":"player_two","required":false,"transform":{"type":"scalar"},"locs":[{"a":507,"b":517}]}],"statement":"INSERT INTO lobbies(\n  lobby_id,\n  lobby_creator,\n  creator_faction,\n  num_of_rounds,\n  round_length,\n  current_round,\n  lobby_state,\n  creation_block_height,\n  map,\n  config_id,\n  created_at,\n  hidden,\n  practice,\n  current_match_state,\n  player_two)\nVALUES(\n  :lobby_id!,\n  :lobby_creator!,\n  :creator_faction!,\n  :num_of_rounds!,\n  :round_length!,\n  :current_round!,\n  :lobby_state!,\n  :creation_block_height!,\n  :map!,\n  :config_id!,\n  :created_at!,\n  :hidden!,\n  :practice!,\n  :current_match_state!,\n  :player_two)             "};
 
 /**
  * Query generated from SQL:
@@ -231,10 +239,14 @@ const createLobbyIR: any = {"usedParamSet":{"lobby_id":true,"lobby_creator":true
  * INSERT INTO lobbies(
  *   lobby_id,
  *   lobby_creator,
+ *   creator_faction,
  *   num_of_rounds,
+ *   round_length,
  *   current_round,
+ *   lobby_state,
  *   creation_block_height,
  *   map,
+ *   config_id,
  *   created_at,
  *   hidden,
  *   practice,
@@ -243,10 +255,14 @@ const createLobbyIR: any = {"usedParamSet":{"lobby_id":true,"lobby_creator":true
  * VALUES(
  *   :lobby_id!,
  *   :lobby_creator!,
+ *   :creator_faction!,
  *   :num_of_rounds!,
+ *   :round_length!,
  *   :current_round!,
+ *   :lobby_state!,
  *   :creation_block_height!,
  *   :map!,
+ *   :config_id!,
  *   :created_at!,
  *   :hidden!,
  *   :practice!,

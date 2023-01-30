@@ -3,6 +3,8 @@ import { PreparedQuery } from '@pgtyped/query';
 
 export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
+export type role_setting = 'attacker' | 'defender' | 'random';
+
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
 /** 'RemoveScheduledData' parameters type */
@@ -149,15 +151,17 @@ export const executeRound = new PreparedQuery<IExecuteRoundParams,IExecuteRoundR
 
 /** 'StartMatch' parameters type */
 export interface IStartMatchParams {
+  current_match_state: Json;
   lobby_id: string;
   player_two: string;
 }
 
 /** 'StartMatch' return type */
 export interface IStartMatchResult {
-  config: string | null;
+  config_id: string | null;
   created_at: Date;
   creation_block_height: number;
+  creator_faction: role_setting;
   current_match_state: Json;
   current_round: number;
   hidden: boolean;
@@ -177,7 +181,7 @@ export interface IStartMatchQuery {
   result: IStartMatchResult;
 }
 
-const startMatchIR: any = {"usedParamSet":{"player_two":true,"lobby_id":true},"params":[{"name":"player_two","required":true,"transform":{"type":"scalar"},"locs":[{"a":58,"b":69}]},{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":88,"b":97}]}],"statement":"UPDATE lobbies\nSET  \nlobby_state = 'active',\nplayer_two = :player_two!\nWHERE lobby_id = :lobby_id!\nAND player_two IS NULL\nRETURNING *"};
+const startMatchIR: any = {"usedParamSet":{"player_two":true,"current_match_state":true,"lobby_id":true},"params":[{"name":"player_two","required":true,"transform":{"type":"scalar"},"locs":[{"a":58,"b":69}]},{"name":"current_match_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":94,"b":114}]},{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":133,"b":142}]}],"statement":"UPDATE lobbies\nSET  \nlobby_state = 'active',\nplayer_two = :player_two!,\ncurrent_match_state = :current_match_state!\nWHERE lobby_id = :lobby_id!\nAND player_two IS NULL\nRETURNING *"};
 
 /**
  * Query generated from SQL:
@@ -185,7 +189,8 @@ const startMatchIR: any = {"usedParamSet":{"player_two":true,"lobby_id":true},"p
  * UPDATE lobbies
  * SET  
  * lobby_state = 'active',
- * player_two = :player_two!
+ * player_two = :player_two!,
+ * current_match_state = :current_match_state!
  * WHERE lobby_id = :lobby_id!
  * AND player_two IS NULL
  * RETURNING *
