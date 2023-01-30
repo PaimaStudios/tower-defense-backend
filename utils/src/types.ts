@@ -24,6 +24,7 @@ export interface AnnotatedMap {
 }
 
 export interface MatchConfig {
+  defenderBaseHealth: number;
   baseAttackerGoldRate: number;
   baseDefenderGoldRate: number;
   anacondaTower: TowerConfigGraph;
@@ -81,6 +82,7 @@ export interface MatchState extends AnnotatedMap {
   actors: ActorsObject;
   actorCount: number;
   currentRound: number;
+  playerTurn: Faction;
 }
 // ordered maps for stateful units
 export interface ActorsObject {
