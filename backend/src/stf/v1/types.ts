@@ -12,9 +12,10 @@ export type ParsedSubmittedInput =
 export interface InvalidInput {
   input: 'invalidString';
 }
-
+export type RoleSetting = "attacker" | "defender" | "random";
 export interface CreatedLobbyInput {
   input: 'createdLobby';
+  creatorFaction: RoleSetting;
   numOfRounds: number;
   roundLength: number;
   map: Map;

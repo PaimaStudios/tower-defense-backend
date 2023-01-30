@@ -3,7 +3,7 @@ import parse from "./parser";
 
 describe('Input parsing', () => {
   test('parses createLobby', () => {
-    const normalLobby = parse('c|abcabcdefdef|3|20|F|jungle|T');
+    const normalLobby = parse('c|abcabcdefdef|d|3|20|F|jungle|T');
     expect(normalLobby.input).toBe('createdLobby');
 
     // const hiddenLobby = parse('c|3|3|20|100|T|backwards|piranha|');

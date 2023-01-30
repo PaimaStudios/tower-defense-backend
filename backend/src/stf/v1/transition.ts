@@ -3,7 +3,8 @@ import {
   getLobbyById,
   getRoundData,
   getCachedMoves,
-  getUserStats
+  getUserStats,
+  getMapLayout
 } from "@tower-defense/db";
 import parse from './parser';
 import Prando from 'paima-engine/paima-prando';
@@ -38,8 +39,9 @@ export default async function (
     case 'createdLobby':
       return persistLobbyCreation(user, blockHeight, expanded, randomnessGenerator)
     case 'joinedLobby':
-      const [lobbyState] = getLobbyById({lobby_id: expanded.lobbyID});
-      return persistLobbyJoin(blockHeight, user, expanded, lobbyState);
+      const [lobbyState] = await getLobbyById.run({lobby_id: expanded.lobbyID}, dbConn);
+      const [map] = await getMapLayout.run({name: lobbyState.map}, dbConn)
+      return persistLobbyJoin(blockHeight, user, lobbyState, map, randomnessGenerator);
     case 'closedLobby':
       return processCloseLobby(expanded, user, dbConn);
     case 'submittedTurn':
@@ -88,7 +90,7 @@ async function processSubmittedTurn(expanded: SubmittedTurnInput, user: string, 
     // <validation
     // TODO we're throwing out all the inputs if a single action is wrong;
     // must discuss this
-      if(!validateMoves(expanded.actions, lobby.current_match_state)) return []
+      if(!validateMoves(expanded.actions, lobby.current_match_state as unknown as MatchState)) return []
     // validation>
 
     const cachedMoves = await getCachedMoves.run({ lobby_id: expanded.lobbyID }, dbConn);
@@ -134,7 +136,7 @@ async function processZombieEffect(expanded: ScheduledDataInput, blockHeight: nu
         {lobby_id: lobby.lobby_id, round_number: lobby.current_round},
         dbConn
       )
-      const cachedMoves = await getCachedMoves({lobby_id: lobby.lobby_id}, dbConn);
+      const cachedMoves = await getCachedMoves.run({lobby_id: lobby.lobby_id}, dbConn);
       return executeZombieRound(
         blockHeight,
         lobby,

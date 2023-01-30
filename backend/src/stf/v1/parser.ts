@@ -41,7 +41,10 @@ const asteriskWallet = P.seqMap(P.string('*'), wallet, (aw1, aw2) => aw2);
 const matchConfigID = lobbyID;
 
 // Lobby Definitions
-
+const attackerRole = P.string("a").map(a => "attacker");
+const defenderRole = P.string("d").map(a => "defender");
+const randomRole = P.string("r").map(a => "random");
+const roleSetting = P.alt(attackerRole, defenderRole, randomRole);
 const roundLength = P.digits.map(Number).chain(n => {
   if (validateRoundLength(n)) return P.succeed(n);
   else return P.fail(`Round Length must be between 1 minute and 1 day`);
@@ -79,6 +82,8 @@ const createLobby = P.seqObj<CreatedLobbyInput>(
   P.string('c'),
   bar,
   ['matchConfigID', matchConfigID],
+  bar,
+  ['creatorFaction', roleSetting],
   bar,
   ['numOfRounds', numOfRounds],
   bar,
