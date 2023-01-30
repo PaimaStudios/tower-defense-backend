@@ -7,7 +7,7 @@ import type {
   TileNumber,
 } from '@tower-defense/utils';
 
-export default function (m: RawMap): AnnotatedMap {
+export function getMap(m: RawMap): AnnotatedMap {
   return {
     name: m.name,
     width: m.width,

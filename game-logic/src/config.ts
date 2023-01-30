@@ -290,6 +290,7 @@ const baseMacawCryptConfig = {
   3: baseMacawCryptConfig3,
 };
 export const baseConfig: MatchConfig = {
+  defenderBaseHealth: 100,
   baseAttackerGoldRate: 45,
   baseDefenderGoldRate: 55,
   towerRepairValue: 25,
@@ -303,51 +304,54 @@ export const baseConfig: MatchConfig = {
   gorillaCrypt: baseGorillaCryptConfig,
   jaguarCrypt: baseJaguarCryptConfig,
 };
-export function parseConfig(s: string): MatchConfig {
+export function parseConfig(s: string | null): MatchConfig {
   // "r|1|gr;d;105|st;h150;c6;d5;r2
-  const c = consumer.initialize(s);
-  const version = c.nextValue();
-  const definitions = c.remainingValues();
-  const parsed = definitions.map(d => parse(d.value));
-  for (const p of parsed) {
-    if (!('error' in p))
-      switch (p.name) {
-        case 'baseGoldRate':
-          p.faction === 'defender'
-            ? (baseConfig.baseDefenderGoldRate = p.value)
-            : (baseConfig.baseAttackerGoldRate = p.value);
-          break;
-        case 'anacondaTower':
-          baseConfig.anacondaTower[1] = { ...baseConfig.anacondaTower[1], ...p };
-          baseConfig.anacondaTower[2] = anacondaUpgrade2(baseConfig.anacondaTower[1]);
-          baseConfig.anacondaTower[3] = anacondaUpgrade3(baseConfig.anacondaTower[1]);
-          break;
-        case 'piranhaTower':
-          baseConfig.piranhaTower[1] = { ...baseConfig.piranhaTower[1], ...p };
-          baseConfig.piranhaTower[2] = piranhaUpgrade2(baseConfig.piranhaTower[1]);
-          baseConfig.piranhaTower[3] = piranhaUpgrade3(baseConfig.piranhaTower[1]);
-          break;
-        case 'slothTower':
-          baseConfig.slothTower[1] = { ...baseConfig.slothTower[1], ...p };
-          baseConfig.slothTower[2] = slothUpgrade2(baseConfig.slothTower[1]);
-          baseConfig.slothTower[3] = slothUpgrade3(baseConfig.slothTower[1]);
-          break;
-        case 'gorillaCrypt':
-          baseConfig.gorillaCrypt[1] = { ...baseConfig.gorillaCrypt[1], ...p };
-          baseConfig.gorillaCrypt[2] = gorillaUpgrade2(baseConfig.gorillaCrypt[1]);
-          baseConfig.gorillaCrypt[3] = gorillaUpgrade3(baseConfig.gorillaCrypt[1]);
-          break;
-        case 'jaguarCrypt':
-          baseConfig.jaguarCrypt[1] = { ...baseConfig.jaguarCrypt[1], ...p };
-          baseConfig.jaguarCrypt[2] = jaguarUpgrade2(baseConfig.jaguarCrypt[1]);
-          baseConfig.jaguarCrypt[3] = jaguarUpgrade3(baseConfig.jaguarCrypt[1]);
-          break;
-        case 'gorillaCrypt':
-          baseConfig.macawCrypt[1] = { ...baseConfig.macawCrypt[1], ...p };
-          baseConfig.macawCrypt[2] = macawUpgrade2(baseConfig.macawCrypt[1]);
-          baseConfig.macawCrypt[3] = macawUpgrade3(baseConfig.macawCrypt[1]);
-          break;
-      }
+  if (!s) return baseConfig;
+  else {
+    const c = consumer.initialize(s);
+    const version = c.nextValue();
+    const definitions = c.remainingValues();
+    const parsed = definitions.map(d => parse(d.value));
+    for (const p of parsed) {
+      if (!('error' in p))
+        switch (p.name) {
+          case 'baseGoldRate':
+            p.faction === 'defender'
+              ? (baseConfig.baseDefenderGoldRate = p.value)
+              : (baseConfig.baseAttackerGoldRate = p.value);
+            break;
+          case 'anacondaTower':
+            baseConfig.anacondaTower[1] = { ...baseConfig.anacondaTower[1], ...p };
+            baseConfig.anacondaTower[2] = anacondaUpgrade2(baseConfig.anacondaTower[1]);
+            baseConfig.anacondaTower[3] = anacondaUpgrade3(baseConfig.anacondaTower[1]);
+            break;
+          case 'piranhaTower':
+            baseConfig.piranhaTower[1] = { ...baseConfig.piranhaTower[1], ...p };
+            baseConfig.piranhaTower[2] = piranhaUpgrade2(baseConfig.piranhaTower[1]);
+            baseConfig.piranhaTower[3] = piranhaUpgrade3(baseConfig.piranhaTower[1]);
+            break;
+          case 'slothTower':
+            baseConfig.slothTower[1] = { ...baseConfig.slothTower[1], ...p };
+            baseConfig.slothTower[2] = slothUpgrade2(baseConfig.slothTower[1]);
+            baseConfig.slothTower[3] = slothUpgrade3(baseConfig.slothTower[1]);
+            break;
+          case 'gorillaCrypt':
+            baseConfig.gorillaCrypt[1] = { ...baseConfig.gorillaCrypt[1], ...p };
+            baseConfig.gorillaCrypt[2] = gorillaUpgrade2(baseConfig.gorillaCrypt[1]);
+            baseConfig.gorillaCrypt[3] = gorillaUpgrade3(baseConfig.gorillaCrypt[1]);
+            break;
+          case 'jaguarCrypt':
+            baseConfig.jaguarCrypt[1] = { ...baseConfig.jaguarCrypt[1], ...p };
+            baseConfig.jaguarCrypt[2] = jaguarUpgrade2(baseConfig.jaguarCrypt[1]);
+            baseConfig.jaguarCrypt[3] = jaguarUpgrade3(baseConfig.jaguarCrypt[1]);
+            break;
+          case 'gorillaCrypt':
+            baseConfig.macawCrypt[1] = { ...baseConfig.macawCrypt[1], ...p };
+            baseConfig.macawCrypt[2] = macawUpgrade2(baseConfig.macawCrypt[1]);
+            baseConfig.macawCrypt[3] = macawUpgrade3(baseConfig.macawCrypt[1]);
+            break;
+        }
+    }
   }
   return { ...baseConfig };
 }

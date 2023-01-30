@@ -678,4 +678,5 @@ function computeGoldRewards(
 }
 
 export default processTick;
+export { getMap } from "./map-processor"
 export { parseConfig } from './config';
