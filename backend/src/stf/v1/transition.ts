@@ -13,6 +13,7 @@ import {
   executeZombieRound,
   persistCloseLobby,
   persistLobbyCreation,
+  persistPracticeLobbyCreation,
   persistLobbyJoin,
   persistMoveSubmission,
   persistNFT,
@@ -20,7 +21,8 @@ import {
 } from './persist.js';
 import { ClosedLobbyInput, ScheduledDataInput, SetNFTInput, SubmittedTurnInput, UserStatsEffect, ZombieRoundEffect } from './types.js';
 import { MatchState, Structure, TurnAction } from '@tower-defense/utils';
-import { StructuredType } from 'typescript';
+import { getMatchConfig } from '@tower-defense/db/src/select.queries';
+import { parseConfig } from '@tower-defense/game-logic';
 
 export default async function (
   inputData: SubmittedChainData,
@@ -37,15 +39,20 @@ export default async function (
 
   switch (expanded.input) {
     case 'createdLobby':
-      return persistLobbyCreation(user, blockHeight, expanded, randomnessGenerator)
+      if (expanded.isPractice){
+        const [map] = await getMapLayout.run({name: expanded.map}, dbConn)
+        return persistPracticeLobbyCreation(blockHeight, user, expanded, map, randomnessGenerator)
+      }
+      else
+      return persistLobbyCreation(blockHeight, user, expanded, randomnessGenerator)
     case 'joinedLobby':
       const [lobbyState] = await getLobbyById.run({lobby_id: expanded.lobbyID}, dbConn);
       const [map] = await getMapLayout.run({name: lobbyState.map}, dbConn)
       return persistLobbyJoin(blockHeight, user, lobbyState, map, randomnessGenerator);
     case 'closedLobby':
-      return processCloseLobby(expanded, user, dbConn);
+      return processCloseLobby(user, expanded, dbConn);
     case 'submittedTurn':
-      return processSubmittedTurn(expanded, user, blockHeight, dbConn, randomnessGenerator)
+      return processSubmittedTurn(blockHeight, user, expanded, randomnessGenerator, dbConn)
     case 'setNFT':
       const query = persistNFT(user, blockHeight, expanded as SetNFTInput);
       return [query];
@@ -58,7 +65,7 @@ export default async function (
   }
 }
 
-async function processCloseLobby(expanded: ClosedLobbyInput, user: string, dbConn: Pool): Promise<SQLUpdate[]>{
+async function processCloseLobby(user: string, expanded: ClosedLobbyInput, dbConn: Pool): Promise<SQLUpdate[]>{
     const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
     if (!lobbyState) return [];
     const query = persistCloseLobby(user, lobbyState);
@@ -67,7 +74,7 @@ async function processCloseLobby(expanded: ClosedLobbyInput, user: string, dbCon
     console.log(query, 'closing lobby');
     return [query];
   }
-async function processSubmittedTurn(expanded: SubmittedTurnInput, user: string, blockHeight: number, dbConn: Pool, randomnessGenerator: Prando): Promise<SQLUpdate[]>{
+async function processSubmittedTurn(blockHeight: number, user: string, expanded: SubmittedTurnInput, randomnessGenerator: Prando, dbConn: Pool): Promise<SQLUpdate[]>{
     let time = Date.now();
     const [lobby] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
     // if lobby not active or existing, bail
@@ -76,7 +83,9 @@ async function processSubmittedTurn(expanded: SubmittedTurnInput, user: string, 
 
     // if user does not belong to lobby, bail
     if (!users.includes(user)) return [];
-
+    // if match config is not in the database, bail
+    const [configString] = await getMatchConfig.run({id: lobby.config_id}, dbConn)
+    if (!configString) return [];
     // if moves sent don't belong to the current round, bail
     if (expanded.roundNumber !== lobby.current_round) return [];
 
@@ -94,11 +103,13 @@ async function processSubmittedTurn(expanded: SubmittedTurnInput, user: string, 
     // validation>
 
     const cachedMoves = await getCachedMoves.run({ lobby_id: expanded.lobbyID }, dbConn);
+    const matchConfig = parseConfig(configString.content);
     return persistMoveSubmission(
       blockHeight,
       user,
       expanded,
       lobby,
+      matchConfig,
       cachedMoves,
       round,
       randomnessGenerator
@@ -136,12 +147,16 @@ async function processZombieEffect(expanded: ScheduledDataInput, blockHeight: nu
         {lobby_id: lobby.lobby_id, round_number: lobby.current_round},
         dbConn
       )
+      const [configString] = await getMatchConfig.run({id: lobby.config_id}, dbConn)
+      if (!configString) return [];
+      const matchConfig = parseConfig(configString.content);
       const cachedMoves = await getCachedMoves.run({lobby_id: lobby.lobby_id}, dbConn);
       return executeZombieRound(
         blockHeight,
         lobby,
-        round,
+        matchConfig,
         cachedMoves,
+        round,
         randomnessGenerator
       )
 }
