@@ -676,6 +676,9 @@ function computeGoldRewards(
   applyEvents(config, m, events, currentTick, rng);
   return events;
 }
+export function generateRandomMoves(randomnessGenerator: Prando): TurnAction[]{
+  return []
+}
 
 export default processTick;
 export { getMap } from "./map-processor"
