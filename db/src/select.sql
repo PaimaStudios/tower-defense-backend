@@ -81,7 +81,7 @@ OR lobbies.player_two = global_user_state.wallet
 WHERE global_user_state.wallet = :wallet1;
 
 /* @name getBothUserStats */
-SELECT global_user_state.wallet, wins, losses, ties
+SELECT global_user_state.wallet, wins, losses
 FROM global_user_state
 WHERE global_user_state.wallet = :wallet
 OR global_user_state.wallet = :wallet2;

@@ -3,7 +3,7 @@ import { PreparedQuery } from '@pgtyped/query';
 
 export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
-export type move_type = 'build' | 'destroy' | 'repair' | 'upgrade';
+export type move_type = 'build' | 'repair' | 'salvage' | 'upgrade';
 
 export type role_setting = 'attacker' | 'defender' | 'random';
 
@@ -296,7 +296,6 @@ export interface IGetUserStatsParams {
 /** 'GetUserStats' return type */
 export interface IGetUserStatsResult {
   losses: number;
-  ties: number;
   wallet: string;
   wins: number;
 }
@@ -342,7 +341,6 @@ export interface IGetMatchUserStatsResult {
   player_two: string | null;
   practice: boolean;
   round_length: number;
-  ties: number;
   wallet: string;
   wins: number;
 }
@@ -377,7 +375,6 @@ export interface IGetBothUserStatsParams {
 /** 'GetBothUserStats' return type */
 export interface IGetBothUserStatsResult {
   losses: number;
-  ties: number;
   wallet: string;
   wins: number;
 }
@@ -388,12 +385,12 @@ export interface IGetBothUserStatsQuery {
   result: IGetBothUserStatsResult;
 }
 
-const getBothUserStatsIR: any = {"usedParamSet":{"wallet":true,"wallet2":true},"params":[{"name":"wallet","required":false,"transform":{"type":"scalar"},"locs":[{"a":108,"b":114}]},{"name":"wallet2","required":false,"transform":{"type":"scalar"},"locs":[{"a":146,"b":153}]}],"statement":"SELECT global_user_state.wallet, wins, losses, ties\nFROM global_user_state\nWHERE global_user_state.wallet = :wallet\nOR global_user_state.wallet = :wallet2            "};
+const getBothUserStatsIR: any = {"usedParamSet":{"wallet":true,"wallet2":true},"params":[{"name":"wallet","required":false,"transform":{"type":"scalar"},"locs":[{"a":102,"b":108}]},{"name":"wallet2","required":false,"transform":{"type":"scalar"},"locs":[{"a":140,"b":147}]}],"statement":"SELECT global_user_state.wallet, wins, losses\nFROM global_user_state\nWHERE global_user_state.wallet = :wallet\nOR global_user_state.wallet = :wallet2            "};
 
 /**
  * Query generated from SQL:
  * ```
- * SELECT global_user_state.wallet, wins, losses, ties
+ * SELECT global_user_state.wallet, wins, losses
  * FROM global_user_state
  * WHERE global_user_state.wallet = :wallet
  * OR global_user_state.wallet = :wallet2            

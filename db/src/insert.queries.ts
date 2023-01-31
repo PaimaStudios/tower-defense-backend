@@ -3,7 +3,9 @@ import { PreparedQuery } from '@pgtyped/query';
 
 export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
-export type move_type = 'build' | 'destroy' | 'repair' | 'upgrade';
+export type match_result = 'loss' | 'win';
+
+export type move_type = 'build' | 'repair' | 'salvage' | 'upgrade';
 
 export type role_setting = 'attacker' | 'defender' | 'random';
 
@@ -77,8 +79,7 @@ export interface INewStatsParams {
   stats: {
     wallet: string,
     wins: number,
-    losses: number,
-    ties: number
+    losses: number
   };
 }
 
@@ -91,7 +92,7 @@ export interface INewStatsQuery {
   result: INewStatsResult;
 }
 
-const newStatsIR: any = {"usedParamSet":{"stats":true},"params":[{"name":"stats","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"wallet","required":true},{"name":"wins","required":true},{"name":"losses","required":true},{"name":"ties","required":true}]},"locs":[{"a":37,"b":42}]}],"statement":"INSERT INTO global_user_state\nVALUES :stats\nON CONFLICT (wallet)\nDO NOTHING"};
+const newStatsIR: any = {"usedParamSet":{"stats":true},"params":[{"name":"stats","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"wallet","required":true},{"name":"wins","required":true},{"name":"losses","required":true}]},"locs":[{"a":37,"b":42}]}],"statement":"INSERT INTO global_user_state\nVALUES :stats\nON CONFLICT (wallet)\nDO NOTHING"};
 
 /**
  * Query generated from SQL:
@@ -110,8 +111,7 @@ export interface IUpdateStatsParams {
   stats: {
     wallet: string,
     wins: number,
-    losses: number,
-    ties: number
+    losses: number
   };
 }
 
@@ -124,7 +124,7 @@ export interface IUpdateStatsQuery {
   result: IUpdateStatsResult;
 }
 
-const updateStatsIR: any = {"usedParamSet":{"stats":true},"params":[{"name":"stats","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"wallet","required":true},{"name":"wins","required":true},{"name":"losses","required":true},{"name":"ties","required":true}]},"locs":[{"a":37,"b":42}]}],"statement":"INSERT INTO global_user_state\nVALUES :stats\nON CONFLICT (wallet)\nDO UPDATE SET\nwins = EXCLUDED.wins,\nlosses = EXCLUDED.losses,\nties = EXCLUDED.ties            "};
+const updateStatsIR: any = {"usedParamSet":{"stats":true},"params":[{"name":"stats","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"wallet","required":true},{"name":"wins","required":true},{"name":"losses","required":true}]},"locs":[{"a":37,"b":42}]}],"statement":"INSERT INTO global_user_state\nVALUES :stats\nON CONFLICT (wallet)\nDO UPDATE SET\nwins = EXCLUDED.wins,\nlosses = EXCLUDED.losses            "};
 
 /**
  * Query generated from SQL:
@@ -134,8 +134,7 @@ const updateStatsIR: any = {"usedParamSet":{"stats":true},"params":[{"name":"sta
  * ON CONFLICT (wallet)
  * DO UPDATE SET
  * wins = EXCLUDED.wins,
- * losses = EXCLUDED.losses,
- * ties = EXCLUDED.ties            
+ * losses = EXCLUDED.losses            
  * ```
  */
 export const updateStats = new PreparedQuery<IUpdateStatsParams,IUpdateStatsResult>(updateStatsIR);
@@ -293,15 +292,50 @@ export interface INewMatchMoveQuery {
   result: INewMatchMoveResult;
 }
 
-const newMatchMoveIR: any = {"usedParamSet":{"new_move":true},"params":[{"name":"new_move","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"lobby_id","required":true},{"name":"wallet","required":true},{"name":"round","required":true},{"name":"move_type","required":true},{"name":"move_target","required":true}]},"locs":[{"a":80,"b":88}]}],"statement":"INSERT INTO match_moves(lobby_id, wallet, round, move_type, move_target)\nVALUES :new_move"};
+const newMatchMoveIR: any = {"usedParamSet":{"new_move":true},"params":[{"name":"new_move","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"lobby_id","required":true},{"name":"wallet","required":true},{"name":"round","required":true},{"name":"move_type","required":true},{"name":"move_target","required":true}]},"locs":[{"a":80,"b":88}]}],"statement":"INSERT INTO match_moves(lobby_id, wallet, round, move_type, move_target)\nVALUES :new_move                       "};
 
 /**
  * Query generated from SQL:
  * ```
  * INSERT INTO match_moves(lobby_id, wallet, round, move_type, move_target)
- * VALUES :new_move
+ * VALUES :new_move                       
  * ```
  */
 export const newMatchMove = new PreparedQuery<INewMatchMoveParams,INewMatchMoveResult>(newMatchMoveIR);
+
+
+/** 'NewFinalState' parameters type */
+export interface INewFinalStateParams {
+  final_state: {
+    lobby_id: string,
+    player_one_wallet: string,
+    player_one_result: match_result,
+    player_one_gold: number,
+    player_two_wallet: string,
+    player_two_result: match_result,
+    player_two_gold: number,
+    final_health: number
+  };
+}
+
+/** 'NewFinalState' return type */
+export type INewFinalStateResult = void;
+
+/** 'NewFinalState' query type */
+export interface INewFinalStateQuery {
+  params: INewFinalStateParams;
+  result: INewFinalStateResult;
+}
+
+const newFinalStateIR: any = {"usedParamSet":{"final_state":true},"params":[{"name":"final_state","required":false,"transform":{"type":"pick_tuple","keys":[{"name":"lobby_id","required":true},{"name":"player_one_wallet","required":true},{"name":"player_one_result","required":true},{"name":"player_one_gold","required":true},{"name":"player_two_wallet","required":true},{"name":"player_two_result","required":true},{"name":"player_two_gold","required":true},{"name":"final_health","required":true}]},"locs":[{"a":171,"b":182}]}],"statement":"INSERT INTO final_match_state(lobby_id, player_one_wallet, player_one_result, player_one_gold, player_two_wallet, player_two_result, player_two_gold, final_health)\nVALUES :final_state"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * INSERT INTO final_match_state(lobby_id, player_one_wallet, player_one_result, player_one_gold, player_two_wallet, player_two_result, player_two_gold, final_health)
+ * VALUES :final_state
+ * ```
+ */
+export const newFinalState = new PreparedQuery<INewFinalStateParams,INewFinalStateResult>(newFinalStateIR);
 
 

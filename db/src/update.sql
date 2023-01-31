@@ -18,17 +18,12 @@ SET
 losses = losses + 1
 WHERE wallet = :wallet;
 
-/* @name addTie */
-UPDATE global_user_state
-SET
-ties = ties + 1
-WHERE wallet = :wallet;
-
 /*  Rounds  */
 
 /* @name executeRound */
 UPDATE rounds
 SET execution_block_height = :execution_block_height!
+
 WHERE rounds.lobby_id = :lobby_id!
 AND rounds.round_within_match = :round!;
 
@@ -64,5 +59,6 @@ AND player_two IS NULL;
 
 /* @name endMatch */
 UPDATE lobbies
-SET  lobby_state = 'finished'
+SET  lobby_state = 'finished',
+current_match_state = :current_match_state!
 WHERE lobby_id = :lobby_id!;

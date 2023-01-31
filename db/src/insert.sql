@@ -16,7 +16,7 @@ RETURNING *;
 /*  Stats  */
 
 /* @name newStats
-  @param stats -> (wallet!, wins!, losses!, ties!)
+  @param stats -> (wallet!, wins!, losses!)
 */
 INSERT INTO global_user_state
 VALUES :stats
@@ -25,15 +25,14 @@ DO NOTHING;
 
 /* 
   @name updateStats
-  @param stats -> (wallet!, wins!, losses!, ties!)
+  @param stats -> (wallet!, wins!, losses!)
 */
 INSERT INTO global_user_state
 VALUES :stats
 ON CONFLICT (wallet)
 DO UPDATE SET
 wins = EXCLUDED.wins,
-losses = EXCLUDED.losses,
-ties = EXCLUDED.ties;
+losses = EXCLUDED.losses;
 
 /*  NFTs  */
 
@@ -99,3 +98,11 @@ VALUES(
 */
 INSERT INTO match_moves(lobby_id, wallet, round, move_type, move_target)
 VALUES :new_move;
+
+/* Final Match State */
+
+/* @name newFinalState
+  @param final_state -> (lobby_id!, player_one_wallet!, player_one_result!, player_one_gold!, player_two_wallet!, player_two_result!, player_two_gold!, final_health!)
+*/
+INSERT INTO final_match_state(lobby_id, player_one_wallet, player_one_result, player_one_gold, player_two_wallet, player_two_result, player_two_gold, final_health)
+VALUES :final_state;
