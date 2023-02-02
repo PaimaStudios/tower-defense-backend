@@ -19,11 +19,12 @@ import type {
   DamageEvent,
   UnitSpawnedEvent,
   UnitMovementEvent,
+  TileNumber,
 } from '@tower-defense/utils';
 import { crypt } from '@tower-defense/utils/src/parser';
 import applyEvents from './apply';
 
-export const testmap = [
+export const testmap: TileNumber[] = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
   5, 1, 2, 6, 6, 6, 2, 6, 6, 6, 2, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 2, 6, 2, 6, 2, 6, 2, 6, 2,
   1, 5, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5, 6, 6, 2, 6, 6, 6, 2, 6, 2, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -161,7 +162,8 @@ function getMatchState(): MatchState {
     mapState: withPath.flat(),
     name: 'jungle',
     currentRound: 1,
-    actorCount: 2, // the two bases
+    actorCount: 2, // the two bases,
+    playerTurn: "defender"
   };
 }
 
