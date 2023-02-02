@@ -307,6 +307,8 @@ export const baseConfig: MatchConfig = {
 export function parseConfig(s: string | null): MatchConfig {
   // "r|1|gr;d;105|st;h150;c6;d5;r2
   if (!s) return baseConfig;
+  // TODO revisit this
+  if (s === "default") return baseConfig
   else {
     const c = consumer.initialize(s);
     const version = c.nextValue();
