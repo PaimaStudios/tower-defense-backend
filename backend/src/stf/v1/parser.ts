@@ -38,7 +38,7 @@ const wallet = base62.many().tie();
 const lobbyID = base62.times(12).map((list: string[]) => list.join(''));
 const asteriskLobbyID = P.seqMap(P.string('*'), lobbyID, (al1, al2) => al2);
 const asteriskWallet = P.seqMap(P.string('*'), wallet, (aw1, aw2) => aw2);
-const matchConfigID = lobbyID;
+const matchConfigID = base62.times(9).map((list: string[]) => list.join(''));
 
 // Lobby Definitions
 const attackerRole = P.string("a").map(a => "attacker");
@@ -70,6 +70,7 @@ const maps = P.alt(
 );
 
 // Lobby Validation Checks
+// TODO how many rounds indeed?
 const numOfRounds = P.digits.map(Number).chain(n => {
   if (n >= 3 && n <= 100) return P.succeed(n);
   else return P.fail(`Round Number must be between 3 and 100`);
@@ -132,11 +133,11 @@ const yCoord = P.digits.map(Number).chain(n => {
 });
 const structureID = P.digits.map(Number);
 const anacondaTower = P.string('at').map(o => 'anacondaTower' as Structure);
-const piranhaTower = P.string('at').map(o => 'piranhaTower' as Structure);
-const slothTower = P.string('at').map(o => 'slothTower' as Structure);
-const gorillaCrypt = P.string('at').map(o => 'gorillaCrypt' as Structure);
-const jaguarCrypt = P.string('at').map(o => 'jaguarCrypt' as Structure);
-const macawCrypt = P.string('at').map(o => 'macawCrypt' as Structure);
+const piranhaTower = P.string('pt').map(o => 'piranhaTower' as Structure);
+const slothTower = P.string('st').map(o => 'slothTower' as Structure);
+const gorillaCrypt = P.string('gc').map(o => 'gorillaCrypt' as Structure);
+const jaguarCrypt = P.string('jc').map(o => 'jaguarCrypt' as Structure);
+const macawCrypt = P.string('mc').map(o => 'macawCrypt' as Structure);
 
 const structureType = P.alt<Structure>(
   anacondaTower,

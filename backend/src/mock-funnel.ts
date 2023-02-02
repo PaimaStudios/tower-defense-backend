@@ -1,6 +1,8 @@
-import { ChainData } from "paima-engine/paima-utils";
-import * as c from "crypto";
-interface FakeFunnel{
+import { ChainData } from 'paima-engine/paima-utils';
+import * as c from 'crypto';
+import { creds, getActiveLobbies, getPaginatedOpenLobbies, getRandomLobby, p } from '@tower-defense/db';
+import { Coordinates, MatchState } from '@tower-defense/utils';
+interface MockFunnel {
   readData: (blockHeight: number) => Promise<ChainData[] | undefined>;
 }
 // export interface SubmittedChainData {
@@ -16,13 +18,14 @@ interface FakeFunnel{
 //   submittedData: SubmittedChainData[];
 //   extensionDatums?: ChainDataExtensionDatum[];
 // }
-
+// pool
 // randomizing helpers
+const pool = p;
 export function randomString(size = 21) {
-  return c.randomBytes(size).toString("base64url").slice(0, size);
+  return c.randomBytes(size).toString('base64url').slice(0, size);
 }
 function randomHex() {
-  return "0x" + c.randomBytes(32).toString("hex");
+  return '0x' + c.randomBytes(32).toString('hex');
 }
 
 function randomNum(n: number) {
@@ -38,36 +41,112 @@ function isDefined<Value>(value: Value | undefined | null): value is Value {
 }
 
 // random input generators
-
+export function randomCreate() {
+  const data = [
+    'c',
+    "default00", // match config
+    randomFromArray(['d', 'a', 'r']),// role
+    '50', // num of rounds
+    randomFromArray(['20', '30', '40']), // round length
+    'F',
+    'jungle',
+    'F'
+  ].join('|');
+  return {
+    userAddress: `${randomHex()}`,
+    inputData: data,
+    inputNonce: randomString(),
+    suppliedValue: ""
+  };
+}
+export async function randomJoin() {
+  const [lobby] = await getRandomLobby.run(undefined, pool)
+  const data = ['j', "*"+ lobby.lobby_id].join('|');
+  return {
+    userAddress: `${randomHex()}`,
+    inputData: data,
+    inputNonce: randomString(),
+    suppliedValue: ""
+  };
+}
+export async function randomMoves(){
+  const lobbies = await getActiveLobbies.run(undefined, pool);
+  console.log(lobbies[0])
+  const defenderMoves = randomDefenderMoves(randomFromArray(lobbies).current_match_state.defender)
+  const attackerMoves = randomAttackerMoves(randomFromArray(lobbies).current_match_state.attacker)
+  const defenderData = 
+  return {
+    userAddress: `${randomHex()}`,
+    inputData: data,
+    inputNonce: randomString(),
+    suppliedValue: ""
+  };
+}
+function randomDefenderMoves(){
+  const build1 = `b,${x},${y},${tower}`;
+  const repair = `r,${id}`;
+  const upgrade = `u,${id}`;
+  const salvage = `s,${id}`;
+}
+function randomBuildTowers(m: MatchState): [string, string]{
+  const indexes = m.mapState.reduce((acc: Coordinates[], tile, index) => {
+    if (tile.type === "open" && tile.faction === "defender")
+    return [...acc, indexToCoords(index, m.width)]
+    else return acc
+  }, [])
+  const towers = ["at", "pt", "st"];
+  const random1 = randomFromArray(indexes);
+  const random2 = randomFromArray(indexes);
+  const build1 = `b,${random1.x},${random1.y},${randomFromArray(towers)}`;
+  const build2 = `b,${random2.x},${random2.y},${randomFromArray(towers)}`;
+  return [build1, build2]
+}
+function randomBuildCrypts(m: MatchState): [string, string]{
+  const indexes = m.mapState.reduce((acc: Coordinates[], tile, index) => {
+    // TODO check if path is next to tile
+    if (tile.type === "open" && tile.faction === "attacker")
+    return [...acc, indexToCoords(index, m.width)]
+    else return acc
+  }, [])
+  const towers = ["gc", "jc", "mc"];
+  const random1 = randomFromArray(indexes);
+  const random2 = randomFromArray(indexes);
+  const build1 = `b,${random1.x},${random1.y},${randomFromArray(towers)}`;
+  const build2 = `b,${random2.x},${random2.y},${randomFromArray(towers)}`;
+  return [build1, build2]
+}
+function indexToCoords(i: number, width: number): Coordinates{
+  const y = Math.floor(i / width);
+  const x = i - (y * width)
+  return {x, y}
+}
 async function randomInput() {
   // const matches = await getActiveLobbies.run(undefined, pool);
   // const moves = Array.from(Array(100)).map(i => randomMove(matches))
   return randomFromArray([
     // randomCreate()
-    randomJoin(),
-    // randomMoves(),
+    // randomJoin(),
+    randomMoves(),
   ]);
 }
 
-
-
-async function readData(blockHeight: number, blockCount = 1){
-  const data = await Promise.all(
-    [...Array(10)].map(async (a) => await randomInput())
-  );
+async function readData(blockHeight: number, blockCount = 1) {
+  const data = await Promise.all([...Array(10)].map(async a => await randomInput()));
   const cleanData = data.filter(isDefined);
-  return [{
-    timestamp: Date.now(),
-    blockHash: randomString(),
-    blockNumber: blockHeight,
-    submittedData: cleanData
-  }]
+  return [
+    {
+      timestamp: Date.now(),
+      blockHash: randomString(),
+      blockNumber: blockHeight,
+      submittedData: cleanData
+    },
+  ];
 }
 
 export default {
-  initialize(nodeUrl: string, storageAddress: string): FakeFunnel{
+  initialize(nodeUrl: string, storageAddress: string): MockFunnel {
     return {
-      readData
-    }
-  }
-}
+      readData,
+    };
+  },
+};

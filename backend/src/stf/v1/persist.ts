@@ -42,7 +42,7 @@ import {
   newRound,
   newScheduledData,
   startMatch,
-  IUpdateCurrentMatchStateParams, 
+  IUpdateCurrentMatchStateParams,
   executeRound,
   updateCurrentMatchState,
   removeScheduledData,
@@ -52,7 +52,9 @@ import {
   updateStats,
   INewNftParams,
   newNft,
-  newFinalState
+  newFinalState,
+  INewStatsParams,
+  newStats
 } from '@tower-defense/db';
 import parse from './parser.js';
 
@@ -65,7 +67,14 @@ import parse from './parser.js';
 
 // Generate blank/empty user stats
 function blankStats(wallet: string): SQLUpdate {
-  return null as any as SQLUpdate;
+  const params: INewStatsParams = {
+    stats: {
+      wallet: wallet,
+      wins: 0,
+      losses: 0,
+    },
+  };
+  return [newStats, params];
 }
 
 // Persist creation of a lobby
@@ -76,7 +85,7 @@ export function persistLobbyCreation(
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
-  const params = {
+  const params: ICreateLobbyParams = {
     lobby_id: lobby_id,
     lobby_creator: user,
     creator_faction: inputData.creatorFaction,
@@ -92,7 +101,7 @@ export function persistLobbyCreation(
     lobby_state: 'open' as LobbyStatus,
     player_two: null,
     current_match_state: {},
-  } satisfies ICreateLobbyParams;
+  };
   // create the lobby according to the input data.
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
@@ -105,10 +114,10 @@ export function persistPracticeLobbyCreation(
   user: WalletAddress,
   inputData: CreatedLobbyInput,
   map: IGetMapLayoutResult,
-  randomnessGenerator: Prando,
-): SQLUpdate[]{
+  randomnessGenerator: Prando
+): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
-  const params = {
+  const params: IGetLobbyByIdResult = {
     lobby_id: lobby_id,
     lobby_creator: user,
     creator_faction: inputData.creatorFaction,
@@ -124,26 +133,28 @@ export function persistPracticeLobbyCreation(
     lobby_state: 'open' as LobbyStatus,
     player_two: null,
     current_match_state: {},
-  } satisfies ICreateLobbyParams;
+  };
   // create the lobby according to the input data.
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
   // In case of a practice lobby join with a predetermined opponent right away and use the same animal as user
-  const practiceLobbyTuples = persistLobbyJoin(
-    blockHeight,
-    PRACTICE_BOT_ADDRESS,
-    params,
-    map,
-    randomnessGenerator
-  );
-  return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
+  // const practiceLobbyTuples = persistLobbyJoin(
+  //   blockHeight,
+  //   PRACTICE_BOT_ADDRESS,
+  //   params,
+  //   map,
+  //   randomnessGenerator
+  // );
+  // return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
+  return []
 }
 // TODO PLAYER TURNS / ROUNDS ???
 function generateMatchState(
   lobbyState: IGetLobbyByIdResult,
   playerTwo: WalletAddress,
   mapLayout: string,
+  configString: string,
   randomnessGenerator: Prando
 ): MatchState {
   const [attacker, defender] =
@@ -152,7 +163,7 @@ function generateMatchState(
       : lobbyState.creator_faction === 'defender'
       ? [playerTwo, lobbyState.creator_faction]
       : randomizeRoles(lobbyState.lobby_creator, playerTwo, randomnessGenerator);
-  const matchConfig = parseConfig(lobbyState.config_id);
+  const matchConfig = parseConfig(configString);
   // TODO are all maps going to be the same width?
   const rawMap = processMapLayout(lobbyState.map, mapLayout);
   const annotatedMap = getMap(rawMap);
@@ -197,6 +208,7 @@ export function persistLobbyJoin(
   user: WalletAddress,
   lobbyState: IGetLobbyByIdResult,
   map: IGetMapLayoutResult,
+  configString: string,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   if (
@@ -205,7 +217,7 @@ export function persistLobbyJoin(
     lobbyState.lobby_creator !== user
   ) {
     // We initialize the match state on lobby joining
-    const matchState = generateMatchState(lobbyState, user, map.layout, randomnessGenerator);
+    const matchState = generateMatchState(lobbyState, user, map.layout, configString, randomnessGenerator);
     const updateLobbyTuple = activateLobby(user, lobbyState, matchState, blockHeight);
     const blankStatsTuple: SQLUpdate = blankStats(user);
     return [...updateLobbyTuple, blankStatsTuple];
@@ -358,7 +370,7 @@ function execute(
     processTick
   );
   // We get the new matchState from the round executor
-  const newState = executor.endState(); 
+  const newState = executor.endState();
   // We close the round by updating it with the execution blockHeight
   const exParams: IExecuteRoundParams = {
     lobby_id: lobbyState.lobby_id,
@@ -377,28 +389,24 @@ function execute(
   // We update the lobby row with the new json state
   const stateParams: IUpdateCurrentMatchStateParams = {
     current_match_state: newState as any,
-    lobby_id: lobbyState.lobby_id
-  }
+    lobby_id: lobbyState.lobby_id,
+  };
   const updateStateTuple: SQLUpdate = [updateCurrentMatchState, stateParams];
   // Finalize match if defender dies or we've reached the final round
   if (newState.defenderBase.health <= 0 || lobbyState.current_round === lobbyState.num_of_rounds) {
     console.log('match ended by player victory, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(
-      blockHeight,
-      lobbyState,
-      newState
-    );
+    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobbyState, newState);
     return [executeRoundTuple, removeScheduledDataTuple, updateStateTuple, ...finalizeMatchTuples];
   }
   // Increment round and update match state if not at final round
-  else{
+  else {
     const incrementRoundTuple = incrementRound(
       lobbyState.lobby_id,
       lobbyState.current_round,
       lobbyState.round_length,
       blockHeight
     );
-    return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuple, updateStateTuple]
+    return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuple, updateStateTuple];
   }
 }
 // Database stores a "move_target", which is the structure ID as a string
@@ -431,15 +439,21 @@ function finalizeMatch(
   lobbyState: IGetLobbyByIdResult,
   matchState: MatchState
 ): SQLUpdate[] {
-  const endMatchTuple: SQLUpdate = [endMatch, { lobby_id: lobbyState.lobby_id, current_match_state: matchState }];
+  const endMatchTuple: SQLUpdate = [
+    endMatch,
+    { lobby_id: lobbyState.lobby_id, current_match_state: matchState },
+  ];
   if (lobbyState.practice) {
     console.log(`Practice match ended, ignoring results`);
     return [endMatchTuple];
   }
   // Save the final user states in the final state table
-  const [p1Gold, p2Gold] = matchState.attacker === lobbyState.creator_faction
-  ? [matchState.attackerGold, matchState.defenderGold] : [matchState.defenderGold, matchState.attackerGold];
-  const [p1Result, p2Result] = matchState.defenderBase.health > 0 ? ["loss", "win"] : ["win",  "loss"]
+  const [p1Gold, p2Gold] =
+    matchState.attacker === lobbyState.creator_faction
+      ? [matchState.attackerGold, matchState.defenderGold]
+      : [matchState.defenderGold, matchState.attackerGold];
+  const [p1Result, p2Result] =
+    matchState.defenderBase.health > 0 ? ['loss', 'win'] : ['win', 'loss'];
   const finalMatchTuple: SQLUpdate = [
     newFinalState,
     {
@@ -451,7 +465,7 @@ function finalizeMatch(
         player_two_wallet: lobbyState.player_two,
         player_two_result: p2Result,
         player_two_gold: p2Gold,
-        final_health: matchState.defenderBase.health
+        final_health: matchState.defenderBase.health,
       },
     },
   ];
