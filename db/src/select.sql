@@ -131,7 +131,7 @@ SELECT * FROM lobbies
 WHERE lobbies.lobby_state = 'open' AND lobbies.lobby_id = :searchQuery AND lobbies.lobby_creator != :wallet;
 
 /* @name getRandomLobby */
-SELECT
+SELECT *
 FROM lobbies
 WHERE random() < 0.1
 AND lobbies.lobby_state = 'open' AND lobbies.hidden is FALSE

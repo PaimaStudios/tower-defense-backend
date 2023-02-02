@@ -23,3 +23,4 @@ export function requirePool(): pg.Pool {
   }
   return pool;
 }
+export const p = new pg.Pool(creds);

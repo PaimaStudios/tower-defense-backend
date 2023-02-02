@@ -665,7 +665,23 @@ export const getOpenLobbyById = new PreparedQuery<IGetOpenLobbyByIdParams,IGetOp
 export type IGetRandomLobbyParams = void;
 
 /** 'GetRandomLobby' return type */
-export type IGetRandomLobbyResult = void;
+export interface IGetRandomLobbyResult {
+  config_id: string | null;
+  created_at: Date;
+  creation_block_height: number;
+  creator_faction: role_setting;
+  current_match_state: Json;
+  current_round: number;
+  hidden: boolean;
+  lobby_creator: string;
+  lobby_id: string;
+  lobby_state: lobby_status;
+  map: string;
+  num_of_rounds: number;
+  player_two: string | null;
+  practice: boolean;
+  round_length: number;
+}
 
 /** 'GetRandomLobby' query type */
 export interface IGetRandomLobbyQuery {
@@ -673,12 +689,12 @@ export interface IGetRandomLobbyQuery {
   result: IGetRandomLobbyResult;
 }
 
-const getRandomLobbyIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\nFROM lobbies\nWHERE random() < 0.1\nAND lobbies.lobby_state = 'open' AND lobbies.hidden is FALSE\nLIMIT 1"};
+const getRandomLobbyIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT *\nFROM lobbies\nWHERE random() < 0.1\nAND lobbies.lobby_state = 'open' AND lobbies.hidden is FALSE\nLIMIT 1"};
 
 /**
  * Query generated from SQL:
  * ```
- * SELECT
+ * SELECT *
  * FROM lobbies
  * WHERE random() < 0.1
  * AND lobbies.lobby_state = 'open' AND lobbies.hidden is FALSE
