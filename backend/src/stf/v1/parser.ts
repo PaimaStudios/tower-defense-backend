@@ -121,15 +121,15 @@ const closeLobby = P.seqMap(P.string('cs'), bar, asteriskLobbyID, (j, b, lobbyID
 // TODO max rounds??
 const roundNumber = P.digits.map(Number).chain(n => {
   if (n >= 1 && n <= 1000) return P.succeed(n);
-  else return P.fail(`Round Number must be less than 100`);
+  else return P.fail(`Round Number must be above 0`);
 });
 const xCoord = P.digits.map(Number).chain(n => {
-  if (n >= 1 && n <= 22) return P.succeed(n);
-  else return P.fail(`Round Number must be less than 100`);
+  if (n >= 0 && n <= 22) return P.succeed(n);
+  else return P.fail(`x coordinate must be within bounds`);
 });
 const yCoord = P.digits.map(Number).chain(n => {
-  if (n >= 1 && n <= 13) return P.succeed(n);
-  else return P.fail(`Round Number must be less than 100`);
+  if (n >= 0 && n <= 13) return P.succeed(n);
+  else return P.fail(`y coordinate must be within bounds`);
 });
 const structureID = P.digits.map(Number);
 const anacondaTower = P.string('at').map(o => 'anacondaTower' as Structure);

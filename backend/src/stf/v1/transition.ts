@@ -94,7 +94,6 @@ async function processSubmittedTurn(
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  let time = Date.now();
   const [lobby] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
   // if lobby not active or existing, bail
   if (!lobby || lobby.lobby_state !== 'active') return [];

@@ -176,7 +176,7 @@ function generateMatchState(
     attackerBase: { level: 1 },
     defenderBase: { level: 1, health: matchConfig.defenderBaseHealth }, // TODO
     actorCount: 2,
-    actors: { crypts: [], towers: [], units: [] },
+    actors: { crypts: {}, towers: {}, units: {} },
     currentRound: 1,
     playerTurn: 'defender', // TODO
   };
@@ -193,7 +193,7 @@ function randomizeRoles(
 // Layouts as given by catastrophe are a long string, with rows of numbers
 // separated by \r\n .
 function processMapLayout(mapName: string, mapString: string): RawMap {
-  const rows = mapString.split('\r\n');
+  const rows = mapString.split('\\r\\n');
   return {
     name: mapName,
     width: rows[0].length,
@@ -249,14 +249,14 @@ function activateLobby(
     current_match_state: matchState as any, // TODO mmm
   };
   const newMatchTuple: SQLUpdate = [startMatch, smParams];
-  const newRoundTuple = incrementRound(
+  const newRoundTuples = incrementRound(
     lobbyState.lobby_id,
     0,
     lobbyState.round_length,
     blockHeight
   );
   // We insert the round and first two empty user states in their tables at this stage, so the round executor has empty states to iterate from.
-  return [newMatchTuple];
+  return [newMatchTuple, ...newRoundTuples];
 }
 
 // This function inserts a new empty round in the database.
