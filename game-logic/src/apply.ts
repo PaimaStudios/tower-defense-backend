@@ -58,19 +58,25 @@ export default function applyEvents(
         }
         break;
       case 'repair':
+        const toRepair =
+          faction === 'attacker' ? m.actors.crypts[event.id] : m.actors.towers[event.id];
+        // Frontend should disallow this but we don't want the backend to break either
+        if (!toRepair) break;
         if (spendMoney(m, faction, config.repairCost)) {
           if (faction === 'attacker') applyCryptRepair(m.actors.crypts[event.id]);
           if (faction === 'defender') applyTowerRepair(config, m.actors.towers[event.id]);
         }
         break;
       case 'upgrade':
-        const structure =
+        const toUpgrade =
           faction === 'attacker' ? m.actors.crypts[event.id] : m.actors.towers[event.id];
-        const currentTier = structure.upgrades;
+        // Frontend should disallow this but we don't want the backend to break either
+        if (!toUpgrade) break;
+        const currentTier = toUpgrade.upgrades;
         if (currentTier < 3) {
           const newTier = (currentTier + 1) as UpgradeTier;
-          const cost = config[structure.structure][newTier].price;
-          if (spendMoney(m, faction, cost)) applyUpgrade(structure);
+          const cost = config[toUpgrade.structure][newTier].price;
+          if (spendMoney(m, faction, cost)) applyUpgrade(toUpgrade);
         }
         break;
       case 'salvage':
