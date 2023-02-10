@@ -114,10 +114,13 @@ WHERE id = :id;
 
 /* @name getPaginatedOpenLobbies */
 SELECT * FROM lobbies
+INNER JOIN global_user_state
+ON lobbies.lobby_creator = global_user_state.wallet
 WHERE lobbies.lobby_state = 'open' AND lobbies.hidden IS FALSE AND lobbies.lobby_creator != :wallet
 ORDER BY created_at DESC
 LIMIT :count
 OFFSET :page;
+
 
 /* @name searchPaginatedOpenLobbies */
 SELECT * FROM lobbies
@@ -204,3 +207,9 @@ AND match_moves.lobby_id = :lobby_id;
 SELECT *
 FROM match_moves
 WHERE match_moves.lobby_id = :lobby_id;
+
+/* Final Match State */
+
+/* @name getFinalState */
+SELECT * FROM final_match_state
+WHERE lobby_id = :lobby_id;

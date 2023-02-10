@@ -3,6 +3,8 @@ import { PreparedQuery } from '@pgtyped/query';
 
 export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
+export type match_result = 'loss' | 'win';
+
 export type move_type = 'build' | 'repair' | 'salvage' | 'upgrade';
 
 export type role_setting = 'attacker' | 'defender' | 'random';
@@ -542,11 +544,14 @@ export interface IGetPaginatedOpenLobbiesResult {
   lobby_creator: string;
   lobby_id: string;
   lobby_state: lobby_status;
+  losses: number;
   map: string;
   num_of_rounds: number;
   player_two: string | null;
   practice: boolean;
   round_length: number;
+  wallet: string;
+  wins: number;
 }
 
 /** 'GetPaginatedOpenLobbies' query type */
@@ -555,12 +560,14 @@ export interface IGetPaginatedOpenLobbiesQuery {
   result: IGetPaginatedOpenLobbiesResult;
 }
 
-const getPaginatedOpenLobbiesIR: any = {"usedParamSet":{"wallet":true,"count":true,"page":true},"params":[{"name":"wallet","required":false,"transform":{"type":"scalar"},"locs":[{"a":114,"b":120}]},{"name":"count","required":false,"transform":{"type":"scalar"},"locs":[{"a":153,"b":158}]},{"name":"page","required":false,"transform":{"type":"scalar"},"locs":[{"a":167,"b":171}]}],"statement":"SELECT * FROM lobbies\nWHERE lobbies.lobby_state = 'open' AND lobbies.hidden IS FALSE AND lobbies.lobby_creator != :wallet\nORDER BY created_at DESC\nLIMIT :count\nOFFSET :page"};
+const getPaginatedOpenLobbiesIR: any = {"usedParamSet":{"wallet":true,"count":true,"page":true},"params":[{"name":"wallet","required":false,"transform":{"type":"scalar"},"locs":[{"a":195,"b":201}]},{"name":"count","required":false,"transform":{"type":"scalar"},"locs":[{"a":234,"b":239}]},{"name":"page","required":false,"transform":{"type":"scalar"},"locs":[{"a":248,"b":252}]}],"statement":"SELECT * FROM lobbies\nINNER JOIN global_user_state\nON lobbies.lobby_creator = global_user_state.wallet\nWHERE lobbies.lobby_state = 'open' AND lobbies.hidden IS FALSE AND lobbies.lobby_creator != :wallet\nORDER BY created_at DESC\nLIMIT :count\nOFFSET :page"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT * FROM lobbies
+ * INNER JOIN global_user_state
+ * ON lobbies.lobby_creator = global_user_state.wallet
  * WHERE lobbies.lobby_state = 'open' AND lobbies.hidden IS FALSE AND lobbies.lobby_creator != :wallet
  * ORDER BY created_at DESC
  * LIMIT :count
@@ -1082,16 +1089,51 @@ export interface IGetMovesByLobbyQuery {
   result: IGetMovesByLobbyResult;
 }
 
-const getMovesByLobbyIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":55,"b":63}]}],"statement":"SELECT *\nFROM match_moves\nWHERE match_moves.lobby_id = :lobby_id"};
+const getMovesByLobbyIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":55,"b":63}]}],"statement":"SELECT *\nFROM match_moves\nWHERE match_moves.lobby_id = :lobby_id                       "};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT *
  * FROM match_moves
- * WHERE match_moves.lobby_id = :lobby_id
+ * WHERE match_moves.lobby_id = :lobby_id                       
  * ```
  */
 export const getMovesByLobby = new PreparedQuery<IGetMovesByLobbyParams,IGetMovesByLobbyResult>(getMovesByLobbyIR);
+
+
+/** 'GetFinalState' parameters type */
+export interface IGetFinalStateParams {
+  lobby_id: string | null | void;
+}
+
+/** 'GetFinalState' return type */
+export interface IGetFinalStateResult {
+  final_health: number;
+  lobby_id: string;
+  player_one_gold: number;
+  player_one_result: match_result;
+  player_one_wallet: string;
+  player_two_gold: number;
+  player_two_result: match_result;
+  player_two_wallet: string;
+}
+
+/** 'GetFinalState' query type */
+export interface IGetFinalStateQuery {
+  params: IGetFinalStateParams;
+  result: IGetFinalStateResult;
+}
+
+const getFinalStateIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":49,"b":57}]}],"statement":"SELECT * FROM final_match_state\nWHERE lobby_id = :lobby_id"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM final_match_state
+ * WHERE lobby_id = :lobby_id
+ * ```
+ */
+export const getFinalState = new PreparedQuery<IGetFinalStateParams,IGetFinalStateResult>(getFinalStateIR);
 
 
