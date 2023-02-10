@@ -14,7 +14,6 @@ interface Response {
   lobbyStatus: LobbyStatus | null;
 }
 
-
 @Route('lobby_status')
 export class lobbyStatecontroller extends Controller {
   @Get()
@@ -23,7 +22,5 @@ export class lobbyStatecontroller extends Controller {
     const [lobbyStatus] = await getLobbyStatus.run({ lobby_id: lobbyID }, pool);
     if (!lobbyStatus) return { lobbyStatus: null };
     else return { lobbyStatus: lobbyStatus.lobby_state };
-      
-    }
   }
 }
