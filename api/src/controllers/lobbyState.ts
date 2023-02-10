@@ -18,7 +18,7 @@ interface Lobby extends IGetLobbyByIdResult {
   round_start_height: number;
 }
 
-@Route('lobby')
+@Route('lobby_state')
 export class lobbyStatecontroller extends Controller {
   @Get()
   public async get(@Query() lobbyID: string): Promise<Response> {
