@@ -92,7 +92,7 @@ export interface Wallet {
   walletAddress: UserAddress;
 }
 
-type LobbyStatus = 'active' | 'open' | 'finished' | 'unknown';
+type LobbyStatus = 'active' | 'open' | 'closed' | 'finished' | 'unknown';
 
 interface CreateLobbySuccessfulResponse {
   success: true;
@@ -175,17 +175,9 @@ export interface PackedLobbyState {
   success: true;
   lobby: LobbyState;
 }
-
-export interface RoundExecutionState {
-  executed: boolean;
-  usersWhoSubmittedMoves: UserAddress[];
-  roundEndsInBlocks: number;
-  roundEndsInSeconds: number;
-}
-
-export interface PackedRoundExecutionState {
+export interface PackedLobbyStatus{
   success: true;
-  round: RoundExecutionState;
+  lobbyStatus: LobbyStatus;
 }
 
 export interface LobbyStates {

@@ -81,6 +81,14 @@ export function backendQueryLobbyState(lobbyID: string): string {
   return buildServerQuery(endpoint, options);
 }
 
+export function backendQueryLobbyStatus(lobbyID: string): string {
+  const endpoint = 'lobby_status';
+  const options = {
+    lobbyID,
+  };
+  return buildServerQuery(endpoint, options);
+}
+
 export function backendQueryLatestProcessedBlockHeight(): string {
   const endpoint = 'latest_processed_blockheight';
   const options = {};

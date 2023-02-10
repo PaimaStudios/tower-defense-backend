@@ -13,12 +13,10 @@ import {
 import { getRemoteBackendVersion } from './helpers/auxiliary-queries';
 import { postString } from './helpers/contract-interaction';
 
-import { mockEndpoints } from './endpoints/mock';
 const endpoints = {
-  // ...accountsEndpoints,
-  ...mockEndpoints,
-  // ...queryEndpoints,
-  // ...writeEndpoints,
+  ...accountsEndpoints,
+  ...queryEndpoints,
+  ...writeEndpoints,
 };
 
 export * from './types';

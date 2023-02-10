@@ -1,4 +1,4 @@
-import { URI, UserAddress } from '@tower-defense/utils';
+import { LobbyStatus, URI, UserAddress } from '@tower-defense/utils';
 import { retryPromise } from 'paima-engine/paima-utils';
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
@@ -12,6 +12,7 @@ import { calculateRoundEnd } from '../helpers/data-processing';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
 import { getBlockNumber } from '../helpers/general';
 import {
+  backendQueryLobbyStatus,
   backendQueryMatchExecutor,
   backendQueryOpenLobbies,
   backendQueryRoundExecutor,
@@ -34,7 +35,7 @@ import {
   NewLobbies,
   NFT,
   PackedLobbyState,
-  PackedRoundExecutionState,
+  PackedLobbyStatus,
   PackedUserStats,
   RoundEnd,
   RoundExecutor,
@@ -98,68 +99,24 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 }
-async function getRoundExecutionState(
-  lobbyID: string,
-  round: number
-): Promise<PackedRoundExecutionState | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('getRoundExecutionState');
+async function getLobbyStatus(lobbyID: string): Promise<PackedLobbyStatus | FailedResult>{
+  const errorFxn = buildEndpointErrorFxn('getLobbyStatus');
   try {
-    const query = backendQueryRoundStatus(lobbyID, round);
-    const [result, latestBlockHeight] = await Promise.all([
-      backendEndpointCall(query),
-      getBlockNumber(),
-    ]);
-
+    const query = backendQueryLobbyStatus(lobbyID);
+    const result = await backendEndpointCall(query);
     if (!result.success) {
       return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
     }
-
-    let [start, length] = [0, 0];
-    if (
-      typeof result.result !== 'object' ||
-      result.result === null ||
-      !result.result.hasOwnProperty('round')
-    ) {
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
+    const lobbyStatus = result.result as { lobbyStatus: LobbyStatus };
+    if (typeof lobbyStatus !== 'object' || lobbyStatus === null || !lobbyStatus.hasOwnProperty('lobbyStatus')) {
+      return errorFxn(
+        CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND,
+        'Missing property: stats'
+      );
     }
-    const roundStatusData = result.result as RoundStatusData;
-    const r = roundStatusData.round;
-    for (const prop of ['roundStarted', 'roundLength', 'executed', 'usersWhoSubmittedMoves']) {
-      if (!r.hasOwnProperty(prop)) {
-        return errorFxn(
-          CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND,
-          `Missing property: stats.${prop}`
-        );
-      }
-    }
-
-    if (!r.hasOwnProperty('roundStarted') || !r.hasOwnProperty('roundLength')) {
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
-    } else {
-      start = r.roundStarted;
-      length = r.roundLength;
-    }
-
-    let endVar: RoundEnd;
-    try {
-      endVar = calculateRoundEnd(start, length, latestBlockHeight);
-    } catch (err) {
-      errorFxn(CatapultMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
-      endVar = {
-        blocks: 0,
-        seconds: 0,
-      };
-    }
-    const end = endVar;
-
     return {
       success: true,
-      round: {
-        executed: r.executed,
-        usersWhoSubmittedMoves: r.usersWhoSubmittedMoves,
-        roundEndsInBlocks: end.blocks,
-        roundEndsInSeconds: end.seconds,
-      },
+      ...lobbyStatus,
     };
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
@@ -401,32 +358,6 @@ async function getOpenLobbies(page: number, count?: number): Promise<LobbyStates
   }
 }
 
-async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('getRandomOpenLobby');
-  try {
-    return retryPromise(() => getNonemptyRandomOpenLobby(), RETRY_PERIOD_RANDOM_LOBBY, 1).catch(
-      async err => {
-        errorFxn(CatapultMiddlewareErrorCode.RANDOM_OPEN_LOBBY_FALLBACK, err);
-        const openLobbies = await getOpenLobbies(1);
-        if (openLobbies.success) {
-          const count = openLobbies.lobbies.length;
-          if (count === 0) {
-            return errorFxn(CatapultMiddlewareErrorCode.NO_OPEN_LOBBIES);
-          }
-          const index = Math.floor(Math.random() * count);
-          return {
-            success: true,
-            lobby: openLobbies.lobbies[index],
-          };
-        } else {
-          return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-        }
-      }
-    );
-  } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
-  }
-}
 
 async function getRoundExecutor(
   lobbyId: string,
@@ -492,8 +423,7 @@ async function getMatchExecutor(
 export const queryEndpoints = {
   getUserStats,
   getLobbyState,
-  getRoundExecutionState,
-  getRandomOpenLobby,
+  getLobbyStatus,
   getOpenLobbies,
   getUserLobbiesMatches,
   getUserWalletNfts,
