@@ -178,7 +178,11 @@ WHERE lobby_creator = :wallet
 AND creation_block_height = :block_height;
 
 /* @name getCurrentMatchState */
-SELECT current_match_state FROM Lobbies
+SELECT current_match_state FROM lobbies
+WHERE lobby_id = :lobby_id;
+
+/* @name getLobbyStatus */
+SELECT lobby_state FROM lobbies
 WHERE lobby_id = :lobby_id;
 
 /*  Moves  */

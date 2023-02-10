@@ -977,16 +977,44 @@ export interface IGetCurrentMatchStateQuery {
   result: IGetCurrentMatchStateResult;
 }
 
-const getCurrentMatchStateIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":65}]}],"statement":"SELECT current_match_state FROM Lobbies\nWHERE lobby_id = :lobby_id             "};
+const getCurrentMatchStateIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":57,"b":65}]}],"statement":"SELECT current_match_state FROM lobbies\nWHERE lobby_id = :lobby_id"};
 
 /**
  * Query generated from SQL:
  * ```
- * SELECT current_match_state FROM Lobbies
- * WHERE lobby_id = :lobby_id             
+ * SELECT current_match_state FROM lobbies
+ * WHERE lobby_id = :lobby_id
  * ```
  */
 export const getCurrentMatchState = new PreparedQuery<IGetCurrentMatchStateParams,IGetCurrentMatchStateResult>(getCurrentMatchStateIR);
+
+
+/** 'GetLobbyStatus' parameters type */
+export interface IGetLobbyStatusParams {
+  lobby_id: string | null | void;
+}
+
+/** 'GetLobbyStatus' return type */
+export interface IGetLobbyStatusResult {
+  lobby_state: lobby_status;
+}
+
+/** 'GetLobbyStatus' query type */
+export interface IGetLobbyStatusQuery {
+  params: IGetLobbyStatusParams;
+  result: IGetLobbyStatusResult;
+}
+
+const getLobbyStatusIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name":"lobby_id","required":false,"transform":{"type":"scalar"},"locs":[{"a":49,"b":57}]}],"statement":"SELECT lobby_state FROM lobbies\nWHERE lobby_id = :lobby_id             "};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT lobby_state FROM lobbies
+ * WHERE lobby_id = :lobby_id             
+ * ```
+ */
+export const getLobbyStatus = new PreparedQuery<IGetLobbyStatusParams,IGetLobbyStatusResult>(getLobbyStatusIR);
 
 
 /** 'GetRoundMoves' parameters type */
