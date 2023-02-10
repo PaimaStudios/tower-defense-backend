@@ -1,5 +1,5 @@
 import { Controller, Get, Route } from 'tsoa';
-import { requirePool } from '@tower-defense/db';
+import { getLatestProcessedBlockHeight, requirePool } from '@tower-defense/db';
 
 interface Response {
   block_height?: number;
@@ -10,8 +10,7 @@ export class latestProcessedBlockheightController extends Controller {
   @Get()
   public async get(): Promise<Response> {
     const pool = requirePool();
-    // const [b] = await getLatestProcessedBlockHeight.run(undefined, pool);
-    const [b] = [{ block_height: 9999 }];
+    const [b] = await getLatestProcessedBlockHeight.run(undefined, pool);
     if (!b) {
       return {};
     }

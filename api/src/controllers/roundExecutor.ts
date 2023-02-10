@@ -15,13 +15,11 @@ import {
   getLobbyById,
   getRoundData,
   getRoundMoves,
-  getUserStatesByRound,
-  IGetAllMatchStatesResult,
   IGetBlockHeightResult,
   IGetLobbyByIdResult,
   IGetMovesByLobbyResult,
   IGetRoundDataResult,
-} from '@catapult/db';
+} from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
 
@@ -33,7 +31,6 @@ interface Error {
 
 interface RoundData {
   lobby: IGetLobbyByIdResult;
-  states: IGetAllMatchStatesResult[];
   moves: IGetMovesByLobbyResult[];
   round_data: IGetRoundDataResult;
   block_height: IGetBlockHeightResult;
@@ -60,7 +57,6 @@ export class roundExecutorController extends Controller {
       else {
         if (!(round > 0)) return { error: 'bad round number' };
         else {
-          const states = await getUserStatesByRound.run({ lobby_id: lobbyID, round: round }, pool);
           const [round_data] = await getRoundData.run(
             { lobby_id: lobbyID, round_number: round },
             pool
@@ -72,7 +68,7 @@ export class roundExecutorController extends Controller {
               pool
             );
             const moves = await getRoundMoves.run({ lobby_id: lobbyID, round: round }, pool);
-            return { lobby, states, round_data, moves, block_height };
+            return { lobby, round_data, moves, block_height };
           }
         }
       }
