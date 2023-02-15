@@ -1,4 +1,6 @@
 import P from 'parsimmon';
+import { consumer } from 'paima-engine/paima-concise';
+import { ConciseConsumer } from 'paima-engine/paima-concise/build/types';
 
 // TODO
 // There's 3 versions for every tower/crypt.
@@ -243,4 +245,46 @@ export function parse(s: string): ParsedSubmittedInput {
       error: 'invalidString',
     };
   }
+}
+
+export function concise(s: string){
+  const c = consumer.initialize(s);
+  if (c.concisePrefix === "c") parseCreate(c)
+  else if (c.concisePrefix === "j") parseJoin(c)
+  else if (c.concisePrefix === "cs") parseClose(c)
+  else if (c.concisePrefix === "s") parseSubmitTurn(c)
+  else if (c.concisePrefix === "n") parseNFT(c)
+  else if (c.concisePrefix === "z") parseZombie(c)
+  else if (c.concisePrefix === "u") parseUserStats(c)
+}
+export function parseCreate(c: ConciseConsumer){
+  const config = c.nextValue();
+  const role = c.nextValue()
+  const numOfRounds = c.nextValue();
+  const roundLength = c.nextValue();
+  const isHidden = c.nextValue();
+  const mapName = c.nextValue();
+  const isPractice = c.nextValue();
+}
+export function parseJoin(c: ConciseConsumer){
+  const lobbyID = c.nextValue();
+}
+export function parseClose(c: ConciseConsumer){
+  const lobbyID = c.nextValue();
+}
+export function parseSubmitTurn(c: ConciseConsumer){
+  const lobbyID = c.nextValue();
+  const roundNumber = c.nextValue();
+  const actions = c.remainingValues();c
+}
+export function parseNFT(c: ConciseConsumer){
+  const NFTAddress = c.nextValue();
+  const tokenID = c.nextValue();
+};
+export function parseZombie(c: ConciseConsumer){
+  const lobbyID = c.nextValue();
+}
+export function parseUserStats(c: ConciseConsumer){
+  const wallet = c.nextValue();
+  const result = c.nextValue();
 }
