@@ -41,49 +41,84 @@ function processTick(
   let randomness = 0;
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomness = randomnessGenerator.next();
+  // Return null, i.e. end the round if the matchState shows the round has ended
+  if (matchState.roundEnded) {
+    matchState.currentRound ++
+    matchState.roundEnded = false;
+    return null
+  }
   // First tick is reserved to processing the user actions, i.e. events related to structures.
+  // Gold is also rewarded at the first tick of the round
   if (currentTick === 1) {
-    const events = [
-      ...computeGoldRewards(matchConfig, matchState, currentTick, randomnessGenerator),
-      ...structureEvents(matchConfig, matchState, moves),
-    ];
+    const events = structureEvents(matchConfig, matchState, moves)
     // Structure events are processed in a batch as they don't affect each other
     applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
     return events;
   } else {
+    // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
+    if (matchState.currentRound === 1 || matchState.currentRound === 2) 
+      return endRound(matchConfig, matchState)
+    // Else we do start a battle phase
     // subsequent ticks follow deterministically from a given match state after the structure updates have been processed.
     const events =
       eventsFromMatchState(matchConfig, matchState, currentTick, randomnessGenerator) || [];
     // Other events are processed one by one, as they affect global match state
-    if (events.length === 0) return null;
+    // End the round when no events and all crypts stopped spawning
+    const allSpawned = Object.keys(matchState.actors.crypts).every(c => matchState.finishedSpawning.includes(parseInt(c)));
+    if (events.length === 0 && allSpawned) 
+    return endRound(matchConfig, matchState)
     else return events;
   }
 }
+function endRound(matchConfig: MatchConfig, matchState: MatchState): [GoldRewardEvent, GoldRewardEvent]{
+  matchState.roundEnded = true;
+  return computeGoldRewards(matchConfig, matchState)
+}
 
+function computeGoldRewards(
+  matchConfig: MatchConfig,
+  matchState: MatchState,
+): [GoldRewardEvent, GoldRewardEvent] {
+  const baseGoldProduction = (level: number) =>
+    level === 1 ? 100 : level === 2 ? 200 : level === 3 ? 400 : 0; // ...
+  const defenderBaseGold = baseGoldProduction(matchState.defenderBase.level);
+  const attackerBaseGold = baseGoldProduction(matchState.attackerBase.level);
+  const attackerReward = attackerBaseGold + matchConfig.baseAttackerGoldRate;
+  const defenderReward = defenderBaseGold + matchConfig.baseDefenderGoldRate;
+  // const events: [GoldRewardEvent, GoldRewardEvent] = [
+  //   { eventType: 'goldReward', faction: 'attacker', amount: attackerReward },
+  //   { eventType: 'goldReward', faction: 'defender', amount: defenderReward },
+  // ];
+  // cat-astrophe doesn't want diffs for some reason
+  const events: [GoldRewardEvent, GoldRewardEvent] = [
+    { eventType: 'goldUpdate', faction: 'attacker', amount: attackerReward + matchState.attackerGold },
+    { eventType: 'goldUpdate', faction: 'defender', amount: defenderReward + matchState.defenderGold },
+  ];
+  return events;
+}
 function structureEvents(c: MatchConfig, m: MatchState, moves: TurnAction[]): TickEvent[] {
   // We need to keep a global account of all actors in the match.
   // We iterate over user actions and reduce to a tuple of events produced and actor count,
   // then return the event array.
-  const accumulator:  [StructureEvent[], number] = [[], m.actorCount + 1];
+  const accumulator: [StructureEvent[], number] = [[], m.actorCount + 1];
   const structuralTick: typeof accumulator = moves.reduce((acc, item) => {
     if (item.action === 'build') {
-      const events = [...acc[0], buildEvent(item, acc[1])]
+      const events = [...acc[0], buildEvent(item, acc[1])];
       const newCount = acc[1] + 1;
-      return [events, newCount]
-    }
-    else{ 
+      return [events, newCount];
+    } else {
       const events = [...acc[0], structureEvent(c, item)];
-      return [events, acc[1]]
+      return [events, acc[1]];
     }
   }, accumulator);
   return structuralTick[0];
 }
-function buildEvent(m: BuildStructureAction, count: number): BuildStructureEvent {
+function buildEvent(a: BuildStructureAction, count: number): BuildStructureEvent {
   return {
     eventType: 'build',
-    x: m.x,
-    y: m.y,
-    structure: m.structure,
+    coordinates: a.coordinates,
+    faction: a.faction,
+    structure: a.structure,
     id: count,
   };
 }
@@ -92,36 +127,39 @@ function structureEvent(c: MatchConfig, a: TurnAction): StructureEvent {
   if (a.action === 'repair')
     return {
       eventType: 'repair',
+      faction: a.faction,
       id: a.id,
     };
   else if (a.action === 'upgrade')
     return {
       eventType: 'upgrade',
+      faction: a.faction,
       id: a.id,
     };
-  else if (a.action === "salvage")
-    return{
-      eventType: "salvage",
+  else if (a.action === 'salvage')
+    return {
+      eventType: 'salvage',
+      faction: a.faction,
       id: a.id,
-      gold: c.recoupAmount
-    }
-  else return { eventType: 'repair', id: 0 };
+      gold: c.recoupAmount,
+    };
+  else return { eventType: 'repair', faction: a.faction, id: 0 };
 }
 // Events produced from Tick 2 forward, follow deterministically from match state.
 function eventsFromMatchState(
-  config: MatchConfig,
-  m: MatchState,
+  matchConfig: MatchConfig,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): TickEvent[] | null {
   // compute all spawn, movement, damage, statusDamage events for a tick given a certain map state
   // check if base is alive
-  if (m.defenderBase.health <= 0) return null;
+  if (matchState.defenderBase.health <= 0) return null;
   else {
-    const spawn = spawnEvents(config, m, currentTick, rng);
-    const movement = movementEvents(config, m, currentTick, rng);
-    const towerAttacks = towerAttackEvents(config, m, currentTick, rng);
-    const unitAttacks = unitAttackEvents(config, m, currentTick, rng);
+    const spawn = spawnEvents(matchConfig, matchState, currentTick, rng);
+    const movement = movementEvents(matchConfig, matchState, currentTick, rng);
+    const towerAttacks = towerAttackEvents(matchConfig, matchState, currentTick, rng);
+    const unitAttacks = unitAttackEvents(matchConfig, matchState, currentTick, rng);
     return [...spawn, ...movement, ...towerAttacks, ...unitAttacks];
   }
 }
@@ -167,10 +205,10 @@ function spawn(
   const path = findClosebyPath(m, crypt.coordinates, rng);
   return {
     eventType: 'spawn',
+    faction: 'attacker',
     cryptID: crypt.id,
     actorID: m.actorCount + 1, // increment
-    unitX: path.x,
-    unitY: path.y,
+    coordinates: path,
     unitType: crypt.structure.replace('Crypt', '') as UnitType,
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
@@ -180,24 +218,24 @@ function spawn(
 }
 // Function to find an available path next to a crypt to place a newly spawned unit.
 // If there is more than one candidate then randomness is used to select one.
-function findClosebyPath(m: MatchState, coords: Coordinates, rng: Prando, range = 1): Coordinates {
-  const c: Coordinates[] = [];
+function findClosebyPath(m: MatchState, coords: number, rng: Prando, range = 1): number {
+  const c: number[] = [];
   // Find all 8 adjacent cells to the crypt.
-  const [up, upright, right, downright, down, downleft, left, upleft] = findCloseByTiles(
-    m,
+  const [up, upRight, right, downRight, down, downLeft, left, upLeft] = closeByIndexes(
     coords,
+    m.width,
     range
   );
   // Of these, push to the array if they are a path.
-  if (up?.type === 'path') c.push({ y: coords.y - range, x: coords.x });
-  if (upleft?.type === 'path') c.push({ y: coords.y - range, x: coords.x - range });
-  if (upright?.type === 'path') c.push({ y: coords.y - range, x: coords.x + range });
-  if (down?.type === 'path') c.push({ y: coords.y + range, x: coords.x });
-  if (downleft?.type === 'path') c.push({ y: coords.y + range, x: coords.x - range });
-  if (downright?.type === 'path') c.push({ y: coords.y + range, x: coords.x + range });
-  if (left?.type === 'path') c.push({ y: coords.y, x: coords.x - range });
-  if (right?.type === 'path') c.push({ y: coords.y, x: coords.x + range });
-  // If no cell is a path, i.e. the array is empty, call this function again with an incremented range, so cells further away are searched
+  if (m.mapState[up]?.type === 'path') c.push(up);
+  if (m.mapState[upRight]?.type === 'path') c.push(upRight);
+  if (m.mapState[right]?.type === 'path') c.push(right);
+  if (m.mapState[downRight]?.type === 'path') c.push(downRight);
+  if (m.mapState[down]?.type === 'path') c.push(down);
+  if (m.mapState[downLeft]?.type === 'path') c.push(downLeft);
+  if (m.mapState[left]?.type === 'path') c.push(left);
+  if (m.mapState[upLeft]?.type === 'path') c.push(upLeft);
+  // If no cell is a path, i.e. the array is empty, recurse this function with an incremented range, so cells further away are searched
   if (c.length === 0) return findClosebyPath(m, coords, rng, range + 1);
   else if (c.length > 1) {
     // if more than one candidate, get any random one using the randomness generator.
@@ -219,18 +257,16 @@ function movementEvents(
     const busyAttacking =
       a.subType === 'macaw' && findClosebyTowers(m, a.coordinates, 1).length > 0;
     if (!busyAttacking) {
-      //  Find coordinates to move towards.
-      const nextCoords = findDestination(m, a, randomnessGenerator);
-      // There will always be a place to move at unless the unit is already at the defender base. See next function.
-      if (!nextCoords) return null;
-      else {
-        const event = move(config, a, nextCoords);
-        // See if unit moved next to a friendly crypt and got a status buff from it
-        const buffStatusEvents: StatusEffectAppliedEvent[] = buff(m, event);
-        applyEvents(config, m, [event, ...buffStatusEvents], currentTick, randomnessGenerator);
-        return [event, ...buffStatusEvents];
-      }
-    } else return null;
+      return null;
+    }
+    //  Find coordinates to move towards.
+    else {
+      const event = move(config, a);
+      // See if unit moved next to a friendly crypt and got a status buff from it
+      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(m, event);
+      applyEvents(config, m, [event, ...buffStatusEvents], currentTick, randomnessGenerator);
+      return [event, ...buffStatusEvents];
+    }
   });
   const eventTypeGuard = (
     e: UnitMovementEvent | StatusEffectAppliedEvent | null
@@ -238,49 +274,17 @@ function movementEvents(
   return events.flat().filter(eventTypeGuard);
 }
 
-// Function to find the path which a unit will move towards.
-function findDestination(
-  m: MatchState,
-  a: AttackerUnit,
-  randomnessGenerator: Prando
-): Coordinates | null {
-  const tile = m.mapState[coordsToIndex(a.coordinates, m.width)];
-  // if the unit is at the defender base, they don't move anymore, time to die
-  if (tile.type === 'base' && tile.faction === 'defender') return null;
-  else {
-    // Cast the tile as a Path tile, which it will always be.
-    const t = tile as PathTile;
-    // Check available paths and delete the previous one, i.e. don't go backwards
-    const leadsTo = t['leadsTo'].filter(
-      p => !(p.x === a.previousCoordinates?.x && p.y === a.previousCoordinates?.y)
-    );
-    // if there is more than one available path (i.e. go left or go up/down) determine according to randomness.
-    const nextCoords =
-      leadsTo.length > 1 ? leadsTo[randomizePath(leadsTo.length, randomnessGenerator)] : leadsTo[0];
-    return nextCoords;
-  }
-}
-// Simple helper function to select a random path with the randomness generator.
-function randomizePath(paths: number, randomnessGenerator: Prando): number {
-  const randomness = randomnessGenerator.next();
-  return Math.floor(randomness * paths);
-}
-
 // Function to generate individual movement events
-function move(config: MatchConfig, a: AttackerUnit, newcoords: Coordinates): UnitMovementEvent {
+function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
   // First we lookup the unit speed given the match config and possible status debuffs.
   const unitSpeed = getCurrentSpeed(config, a);
-  // unitSpeed as specced is a fraction, need to convert that to percentage for the completion key of the event.
-  const speedPercentage = Math.ceil((1 / unitSpeed) * 100);
   const completion = (a.movementCompletion += unitSpeed);
-  // const completion = (a.movementCompletion += speedPercentage);
   return {
     eventType: 'movement',
+    faction: 'attacker',
     actorID: a.id,
-    unitX: a.coordinates.x,
-    unitY: a.coordinates.y,
-    nextX: newcoords.x,
-    nextY: newcoords.y,
+    coordinates: a.coordinates,
+    nextCoordinates: a.nextCoordinates,
     // if movement reaches 100% then movement is finalized
     completion: completion > 100 ? 100 : completion,
     movementSpeed: unitSpeed,
@@ -298,7 +302,7 @@ function getCurrentSpeed(config: MatchConfig, a: AttackerUnit): number {
 // Buff events, status events which happen as units pass next to friendly crypts.
 function buff(m: MatchState, e: UnitMovementEvent): StatusEffectAppliedEvent[] {
   if (e.completion === 100) {
-    const crypts = findClosebyCrypts(m, { x: e.nextX, y: e.unitY }, 1);
+    const crypts = findClosebyCrypts(m, e.nextCoordinates, 1);
     const events = crypts.map(c => buffEvent(c, e.actorID));
     const eventTypeGuard = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent =>
       !!e;
@@ -311,6 +315,7 @@ function buffEvent(crypt: AttackerStructure, unitId: number): StatusEffectApplie
   if (crypt.structure === 'gorillaCrypt' && crypt.upgrades === 2)
     return {
       eventType: 'statusApply',
+      faction: 'attacker',
       sourceID: crypt.id,
       targetID: unitId,
       statusType: 'healthBuff',
@@ -318,6 +323,7 @@ function buffEvent(crypt: AttackerStructure, unitId: number): StatusEffectApplie
   else if (crypt.structure === 'jaguarCrypt' && crypt.upgrades === 2)
     return {
       eventType: 'statusApply',
+      faction: 'attacker',
       sourceID: crypt.id,
       targetID: unitId,
       statusType: 'speedBuff',
@@ -372,7 +378,6 @@ function pickOne(acc: DefenderStructure, item: DefenderStructure): DefenderStruc
 function pickOne(acc: AttackerUnit, item: AttackerUnit): AttackerUnit;
 
 function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure | AttackerUnit) {
-  console.log(item);
   if (item.health < acc.health) return item;
   else if (item.id < acc.id) return item;
   else return acc;
@@ -467,6 +472,7 @@ function slothDamage(
   const damageEvents: TowerAttack[][] = a.map(unit => {
     const statusEvent: StatusEffectAppliedEvent = {
       eventType: 'statusApply',
+      faction: 'attacker',
       sourceID: tower.id,
       targetID: unit.id,
       statusType: 'speedDebuff',
@@ -567,9 +573,10 @@ function computeDamageToBase(
   currentTick: number,
   rng: Prando
 ): [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] {
-  const t: Tile = m.mapState[coordsToIndex(a.coordinates, m.width)];
+  const t: Tile = m.mapState[a.coordinates];
   const baseEvent: DefenderBaseUpdateEvent = {
     eventType: 'defenderBaseUpdate',
+    faction: 'defender',
     health: m.defenderBase.health - a.damage, // TODO: Do Macaws do the same damage to the base as they do to towers?
   };
   const killEvent: ActorDeletedEvent = {
@@ -602,49 +609,84 @@ function canReach(
     nearX && nearY // diagonals count
   );
 }
-
-function scanForUnits(m: MatchState, coords: Coordinates, range: number): AttackerUnit[] {
-  // recurses and looks for units at range 1, then range 2, etc. depending on argument passed
-  const ids: ActorID[] = Array.from(Array(range)).reduce((acc: ActorID[], r: any, i: number) => {
-    return [...acc, ...findClosebyAttackers(m, coords, i + 1)];
-  }, []);
-  return ids.map(id => m.actors.units[id]);
+//  Locate nearby structures, units etc.
+//
+function scanForUnits(m: MatchState, coords: number, range: number): AttackerUnit[] {
+  // Get all surrounding tile indexes;
+  const surrounding = closeByIndexes(coords, m.width, range);
+  // Get all units present on the map
+  const units: AttackerUnit[] = Object.values(m.actors.units);
+  // Filter units which are on closeby indexes
+  return units.filter(u => surrounding.includes(u.coordinates));
 }
 
 export function coordsToIndex(coords: Coordinates, width: number): number {
   return width * coords.y + coords.x;
 }
-function findCloseByTiles(m: MatchState, coords: Coordinates, range: number): Tile[] {
-  const up = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x }, m.width)];
-  const upright = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x + range }, m.width)];
-  const right = m.mapState[coordsToIndex({ y: coords.y, x: coords.x + range }, m.width)];
-  const downright =
-    m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x + range }, m.width)];
-  const down = m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x }, m.width)];
-  const downleft = m.mapState[coordsToIndex({ y: coords.y + range, x: coords.x - range }, m.width)];
-  const left = m.mapState[coordsToIndex({ y: coords.y, x: coords.x - range }, m.width)];
-  const upleft = m.mapState[coordsToIndex({ y: coords.y - range, x: coords.x - range }, m.width)];
+export function indexToCoords(i: number, width: number): Coordinates {
+  const y = Math.floor(i / width);
+  const x = i - y * width;
+  return { x, y };
+}
+function closeByIndexes(coords: number, mapWidth: number, range: number) {
+  const upIndex = coords - mapWidth;
+  const upRightIndex = coords - mapWidth + range;
+  const rightIndex = coords + range;
+  const downRightIndex = coords + mapWidth + range;
+  const downIndex = coords + mapWidth;
+  const downLeftIndex = coords + mapWidth - range;
+  const leftIndex = (coords = range);
+  const upLeftIndex = coords - mapWidth - range;
+  return [
+    upIndex,
+    upRightIndex,
+    rightIndex,
+    downRightIndex,
+    downIndex,
+    downLeftIndex,
+    leftIndex,
+    upLeftIndex,
+  ];
+}
+function findCloseByTiles(m: MatchState, coords: number, range: number): Tile[] {
+  const upIndex = coords - m.width;
+  const upRightIndex = coords - m.width + 1;
+  const rightIndex = coords + 1;
+  const downRightIndex = coords + m.width + 1;
+  const downIndex = coords + m.width;
+  const downLeftIndex = coords + m.width - 1;
+  const leftIndex = (coords = 1);
+  const upLeftIndex = coords - m.width - 1;
+  const up = m.mapState[upIndex];
+  const upright = m.mapState[upRightIndex];
+  const right = m.mapState[rightIndex];
+  const downright = m.mapState[downRightIndex];
+  const down = m.mapState[downIndex];
+  const downleft = m.mapState[downLeftIndex];
+  const left = m.mapState[leftIndex];
+  const upleft = m.mapState[upLeftIndex];
   return [up, upright, right, downright, down, downleft, left, upleft];
 }
-function findClosebyAttackers(m: MatchState, coords: Coordinates, range: number): ActorID[] {
-  const tiles = findCloseByTiles(m, coords, range).filter(
-    s => s && s.type === 'path' && s.units.length
-  );
-  const units = tiles.map(t => {
-    const tt = t as PathTile;
-    return tt.units;
-  });
-  return units.flat();
-}
+// function findClosebyAttackers(m: MatchState, coords: number, range: number): ActorID[] {
+//   const tiles = findCloseByTiles(m, coords, range).filter(
+//     s => s && s.type === 'path' && s.units.length
+//   );
+//   const units = tiles.map(t => {
+//     const tt = t as PathTile;
+//     return tt.units;
+//   });
+//   return units.flat();
+// }
 
-function findClosebyTowers(m: MatchState, coords: Coordinates, range: number): DefenderStructure[] {
+function findClosebyTowers(m: MatchState, coords: number, range: number): DefenderStructure[] {
   const tiles = findCloseByTiles(m, coords, range).filter(
     s => s && s.type === 'structure' && s.faction === 'defender'
   );
   const structures = tiles.map(t => m.actors.towers[(t as DefenderStructureTile).id]);
   return structures as DefenderStructure[];
 }
-function findClosebyCrypts(m: MatchState, coords: Coordinates, range: number): AttackerStructure[] {
+function findClosebyCrypts(m: MatchState, coords: number | null, range: number): AttackerStructure[] {
+  if (!coords) return []
   const tiles = findCloseByTiles(m, coords, range).filter(
     s => s && s.type === 'structure' && s.faction === 'attacker'
   );
@@ -652,34 +694,12 @@ function findClosebyCrypts(m: MatchState, coords: Coordinates, range: number): A
   return structures as AttackerStructure[];
 }
 
-function computeGoldRewards(
-  config: MatchConfig,
-  m: MatchState,
-  currentTick: number,
-  rng: Prando
-): [GoldRewardEvent, GoldRewardEvent] {
-  const baseGoldProduction = (level: number) =>
-    level === 1 ? 100 : level === 2 ? 200 : level === 3 ? 400 : 0; // ...
-  const defenderBaseGold = baseGoldProduction(m.defenderBase.level);
-  const attackerBaseGold = baseGoldProduction(m.attackerBase.level);
-  const attackerReward = attackerBaseGold + config.baseAttackerGoldRate;
-  const defenderReward = defenderBaseGold + config.baseDefenderGoldRate;
-  // const events: [GoldRewardEvent, GoldRewardEvent] = [
-  //   { eventType: 'goldReward', faction: 'attacker', amount: attackerReward },
-  //   { eventType: 'goldReward', faction: 'defender', amount: defenderReward },
-  // ];
-  // cat-astrophe doesn't want diffs for some reason
-  const events: [GoldRewardEvent, GoldRewardEvent] = [
-    { eventType: 'goldUpdate', faction: 'attacker', amount: attackerReward + m.attackerGold },
-    { eventType: 'goldUpdate', faction: 'defender', amount: defenderReward + m.defenderGold },
-  ];
-  applyEvents(config, m, events, currentTick, rng);
-  return events;
-}
-export function generateRandomMoves(randomnessGenerator: Prando): TurnAction[]{
-  return []
+//
+
+export function generateRandomMoves(randomnessGenerator: Prando): TurnAction[] {
+  return [];
 }
 
 export default processTick;
-export { getMap } from "./map-processor"
+export { getMap } from './map-processor';
 export { parseConfig } from './config';

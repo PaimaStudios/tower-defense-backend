@@ -291,8 +291,8 @@ const baseMacawCryptConfig = {
 };
 export const baseConfig: MatchConfig = {
   defenderBaseHealth: 100,
-  baseAttackerGoldRate: 45,
-  baseDefenderGoldRate: 55,
+  baseAttackerGoldRate: 100,
+  baseDefenderGoldRate: 225,
   towerRepairValue: 25,
   repairCost: 10,
   recoupAmount: 20,
