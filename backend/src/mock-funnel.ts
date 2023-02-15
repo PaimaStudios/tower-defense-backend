@@ -77,6 +77,7 @@ export async function randomClose() {
 }
 export async function randomJoin() {
   const [lobby] = await getRandomLobby.run(undefined, pool);
+  console.log(lobby, "lobby")
   const data = ['j', '*' + lobby.lobby_id].join('|');
   return {
     userAddress: `${randomHex()}`,
@@ -120,30 +121,30 @@ function randomAttackerMoves(m: MatchState): string {
   } else return [...build, ''].join('|');
 }
 function randomBuildTowers(m: MatchState): [string, string] {
-  const indexes = m.mapState.reduce((acc: Coordinates[], tile, index) => {
+  const indexes = m.mapState.reduce((acc: number[], tile, index) => {
     if (tile.type === 'open' && tile.faction === 'defender')
-      return [...acc, indexToCoords(index, m.width)];
+      return [...acc, index];
     else return acc;
   }, []);
   const towers = ['at', 'pt', 'st'];
   const random1 = randomFromArray(indexes);
   const random2 = randomFromArray(indexes);
-  const build1 = `b,${random1.x},${random1.y},${randomFromArray(towers)}`;
-  const build2 = `b,${random2.x},${random2.y},${randomFromArray(towers)}`;
+  const build1 = `b,${random1},${randomFromArray(towers)}`;
+  const build2 = `b,${random2},${randomFromArray(towers)}`;
   return [build1, build2];
 }
 function randomBuildCrypts(m: MatchState): [string, string] {
-  const indexes = m.mapState.reduce((acc: Coordinates[], tile, index) => {
+  const indexes = m.mapState.reduce((acc: number[], tile, index) => {
     // TODO check if path is next to tile
     if (tile.type === 'open' && tile.faction === 'attacker')
-      return [...acc, indexToCoords(index, m.width)];
+      return [...acc, index];
     else return acc;
   }, []);
   const towers = ['gc', 'jc', 'mc'];
   const random1 = randomFromArray(indexes);
   const random2 = randomFromArray(indexes);
-  const build1 = `b,${random1.x},${random1.y},${randomFromArray(towers)}`;
-  const build2 = `b,${random2.x},${random2.y},${randomFromArray(towers)}`;
+  const build1 = `b,${random1},${randomFromArray(towers)}`;
+  const build2 = `b,${random2},${randomFromArray(towers)}`;
   return [build1, build2];
 }
 function indexToCoords(i: number, width: number): Coordinates {
@@ -163,7 +164,7 @@ async function randomInput() {
 }
 
 async function readData(blockHeight: number, blockCount = 1) {
-  const data = await Promise.all([...Array(10)].map(async a => await randomInput()));
+  const data = await Promise.all([...Array(2)].map(async a => await randomInput()));
   const cleanData = data.filter(isDefined);
   return [
     {

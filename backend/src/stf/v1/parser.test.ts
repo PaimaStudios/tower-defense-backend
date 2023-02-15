@@ -3,7 +3,7 @@ import parse from "./parser";
 
 describe('Input parsing', () => {
   test('parses createLobby', () => {
-    const normalLobby = parse('c|abcabcdefdef|d|3|20|F|jungle|T');
+    const normalLobby = parse('c|abcabcdef|d|3|20|F|jungle|T');
     expect(normalLobby.input).toBe('createdLobby');
 
     // const hiddenLobby = parse('c|3|3|20|100|T|backwards|piranha|');
@@ -24,7 +24,7 @@ describe('Input parsing', () => {
   });
 
   test('parses submittedTurn', () => {
-    const parsed = parse('s|*Xs6Q9GAqZVwe|5|u,3|r,6|s,2|b,1,2,at|');
+    const parsed = parse('s|*Xs6Q9GAqZVwe|5|u,3|r,6|s,2|b,1,at|');
     // const parsed = parse('s|*Xs6Q9GAqZVwe|5|u,3|');
     expect(parsed.input).toBe('submittedTurn');
   });

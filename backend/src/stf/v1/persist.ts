@@ -10,15 +10,12 @@ import { RoundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
 import { SQLUpdate } from 'paima-engine/paima-utils';
 import {
-  Faction,
   LobbyStatus,
   MatchConfig,
   MatchState,
-  PlayersState,
   PRACTICE_BOT_ADDRESS,
   RawMap,
   Structure,
-  Tile,
   TileNumber,
   TurnAction,
 } from '@tower-defense/utils';
@@ -54,7 +51,7 @@ import {
   newNft,
   newFinalState,
   INewStatsParams,
-  newStats
+  newStats,
 } from '@tower-defense/db';
 import parse from './parser.js';
 
@@ -147,7 +144,7 @@ export function persistPracticeLobbyCreation(
   //   randomnessGenerator
   // );
   // return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
-  return []
+  return [];
 }
 // TODO PLAYER TURNS / ROUNDS ???
 function generateMatchState(
@@ -178,7 +175,8 @@ function generateMatchState(
     actorCount: 2,
     actors: { crypts: {}, towers: {}, units: {} },
     currentRound: 1,
-    playerTurn: 'defender', // TODO
+    finishedSpawning: [],
+    roundEnded: false
   };
 }
 function randomizeRoles(
@@ -217,7 +215,13 @@ export function persistLobbyJoin(
     lobbyState.lobby_creator !== user
   ) {
     // We initialize the match state on lobby joining
-    const matchState = generateMatchState(lobbyState, user, map.layout, configString, randomnessGenerator);
+    const matchState = generateMatchState(
+      lobbyState,
+      user,
+      map.layout,
+      configString,
+      randomnessGenerator
+    );
     const updateLobbyTuple = activateLobby(user, lobbyState, matchState, blockHeight);
     const blankStatsTuple: SQLUpdate = blankStats(user);
     return [...updateLobbyTuple, blankStatsTuple];
@@ -293,58 +297,35 @@ export function persistMoveSubmission(
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
-  let movesToCache: SQLUpdate[] = [];
-  const users = new Set(cachedMoves.map(m => m.wallet));
-  if (!users.has(user)) {
-    movesToCache = inputData.actions.map(m => {
-      return persistMove(inputData.lobbyID, lobbyState.current_round, user, m);
-    });
-  }
-  // practice lobbies...
-  if (lobbyState.practice) {
-    const bot = lobbyState.player_two || PRACTICE_BOT_ADDRESS;
-    users.add(bot);
-    const practiceOpponentMoves = generateRandomMoves(randomnessGenerator).map(m =>
-      persistMove(inputData.lobbyID, lobbyState.current_round, user, m)
-    );
-    movesToCache = [...movesToCache, ...practiceOpponentMoves];
-  }
+  // Rounds in Tower Defense work differently. Only one player submits moves per round.
+  // First turn for each player is just for building.
+  // After that, each round triggers a battle phase.
+  // i.e. Defender submits moves -> Battle phase
+  // then Attacker submits moves -> Annother battle phase.
   // Now we check if both users have sent their moves, if so, we execute the round.
   // We'll assume the moves are valid at this stage, invalid moves shouldn't have got this far.
-  if (users.add(user).size === 2) {
-    const newMoves: IGetRoundMovesResult[] = movesToCache.map(m => m[1].new_move);
-    // We combine the presently sent user moves with the previously cached moves we retrieved from the database and pass them all to the round executor
-    const moves = [...cachedMoves, ...newMoves];
-    // Collect full SQL updates from round executor
-    const roundExecutionTuples = execute(
-      blockHeight,
-      lobbyState,
-      matchConfig,
-      moves,
-      roundData,
-      randomnessGenerator
-    );
-    return [...movesToCache, ...roundExecutionTuples];
-  }
-  // If moves by both users haven't been sent yet, we just cache the moves sent and wait for further submitted moves later
-  else {
-    return movesToCache;
-  }
+  // Save the moves to the database;
+  const movesTuple = inputData.actions.map(a => persistMove(lobbyState.lobby_id, user, a));
+  // Execute the round after moves come in. Pass the moves in database params format to the round executor.
+  const roundExecutionTuples = execute(
+    blockHeight,
+    lobbyState,
+    matchConfig,
+    movesTuple[0],
+    roundData,
+    randomnessGenerator
+  );
+  return [...movesTuple, ...roundExecutionTuples];
 }
 
 // Persist submitted move to database
-function persistMove(
-  matchId: string,
-  round: number,
-  user: WalletAddress,
-  a: TurnAction
-): SQLUpdate {
-  const move_target = a.action === 'build' ? conciseBuild(a.structure, a.x, a.y) : `${a.id}`;
+function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUpdate {
+  const move_target = a.action === 'build' ? `${a.structure}--${a.coordinates}` : `${a.id}`;
   const mmParams: INewMatchMoveParams = {
     new_move: {
       lobby_id: matchId,
       wallet: user,
-      round: round,
+      round: a.round,
       move_type: a.action as move_type,
       move_target,
     },
@@ -361,7 +342,7 @@ function execute(
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const matchState = lobbyState.current_match_state as unknown as MatchState;
-  const moves = cachedMoves.map(m => expandMove(m));
+  const moves = cachedMoves.map(m => expandMove(m, matchState));
   const executor = RoundExecutor.initialize(
     matchConfig,
     matchState,
@@ -369,6 +350,7 @@ function execute(
     randomnessGenerator,
     processTick
   );
+  console.log('calling round executor from backend');
   // We get the new matchState from the round executor
   const newState = executor.endState();
   // We close the round by updating it with the execution blockHeight
@@ -409,27 +391,24 @@ function execute(
     return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuple, updateStateTuple];
   }
 }
-// Database stores a "move_target", which is the structure ID as a string
-// unless it's a "build" action, in which we encode is as `${structureType}--${x coordinate}-${y cordinate}`
-// TODO Typing is weird here so might need to revisit
-function conciseBuild(structure: Structure, x: number, y: number): string {
-  return `${structure}--${x}-${y}`;
-}
-function expandMove(databaseMove: IGetRoundMovesResult): TurnAction {
+function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
+  const faction = databaseMove.wallet === matchState.attacker ? 'attacker' : 'defender';
+  console.log(databaseMove, 'dbm');
   if (databaseMove.move_type === 'build') {
     const [structure, coords] = databaseMove.move_target.split('--');
-    const [x, y] = coords.split('-');
     return {
       round: databaseMove.round,
       action: databaseMove.move_type,
       structure: structure as Structure,
-      x: parseInt(x),
-      y: parseInt(y),
+      // TODO validation here...?
+      faction,
+      coordinates: parseInt(coords),
     };
   } else
     return {
       round: databaseMove.round,
       action: databaseMove.move_type,
+      faction,
       id: parseInt(databaseMove.move_target),
     };
 }

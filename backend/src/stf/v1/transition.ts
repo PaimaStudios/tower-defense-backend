@@ -41,9 +41,7 @@ export default async function (
   const user = inputData.userAddress.toLowerCase();
   console.log(`Processing input string: ${inputData.inputData}`);
   const expanded = parse(inputData.inputData);
-
   console.log(`Input string parsed as: ${expanded.input}`);
-
   switch (expanded.input) {
     case 'createdLobby':
       if (expanded.isPractice) {
@@ -98,15 +96,22 @@ async function processSubmittedTurn(
   // if lobby not active or existing, bail
   if (!lobby || lobby.lobby_state !== 'active') return [];
   const users = [lobby.lobby_creator, lobby.player_two];
-
   // if user does not belong to lobby, bail
   if (!users.includes(user)) return [];
   // if match config is not in the database, bail
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   // if moves sent don't belong to the current round, bail
+  console.log(lobby.current_round, "current round")
+  console.log(expanded.roundNumber, "round sent")
   if (expanded.roundNumber !== lobby.current_round) return [];
-
+  // if not the user's turn, bail
+  // NOTE: defenders are odd turns, attackers are even turns
+  const role = user === ( lobby.current_match_state as unknown as MatchState).attacker 
+  ? "attacker" : "defender";
+  if (role === "attacker" && (lobby.current_round % 2 !== 0)) return []
+  if (role === "defender" && (lobby.current_round % 2 !== 1)) return []
+  console.log(role, "role")
   // If no such round, bail
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: expanded.roundNumber },
@@ -137,16 +142,15 @@ async function processSubmittedTurn(
 function validateMoves(actions: TurnAction[], matchState: MatchState): boolean {
   const res = actions.reduce((acc, item) => {
     if (item.action === 'build')
-      return canBuild(item.x, item.y, item.structure, matchState) ? acc : false;
+      return canBuild(item.coordinates, item.structure, matchState) ? acc : false;
     else return hasStructure(item.id, matchState) ? acc : false;
   }, true);
   return res;
 }
 // Helper function to see if a structure is being built in an available tile
-function canBuild(x: number, y: number, structure: Structure, matchState: MatchState): boolean {
+function canBuild(coords: number, structure: Structure, matchState: MatchState): boolean {
   const faction = structure.includes('rypt') ? 'attacker' : 'defender';
-  const tileIndex = matchState.width * y + x;
-  const tile = matchState.mapState[tileIndex];
+  const tile = matchState.mapState[coords];
   return tile.type === 'open' && tile.faction === faction;
 }
 // Helper function to see if structure ID is on the matchState actor map

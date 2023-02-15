@@ -39,11 +39,13 @@ const lobbyID = base62.times(12).map((list: string[]) => list.join(''));
 const asteriskLobbyID = P.seqMap(P.string('*'), lobbyID, (al1, al2) => al2);
 const asteriskWallet = P.seqMap(P.string('*'), wallet, (aw1, aw2) => aw2);
 const matchConfigID = base62.times(9).map((list: string[]) => list.join(''));
+// TODO rob wants more characters here 14
+// TODO add blockchain input for match configs
 
 // Lobby Definitions
-const attackerRole = P.string("a").map(a => "attacker");
-const defenderRole = P.string("d").map(a => "defender");
-const randomRole = P.string("r").map(a => "random");
+const attackerRole = P.string('a').map(a => 'attacker');
+const defenderRole = P.string('d').map(a => 'defender');
+const randomRole = P.string('r').map(a => 'random');
 const roleSetting = P.alt(attackerRole, defenderRole, randomRole);
 const roundLength = P.digits.map(Number).chain(n => {
   if (validateRoundLength(n)) return P.succeed(n);
@@ -131,6 +133,7 @@ const yCoord = P.digits.map(Number).chain(n => {
   if (n >= 0 && n <= 13) return P.succeed(n);
   else return P.fail(`y coordinate must be within bounds`);
 });
+const mapCoord = P.digits.map(Number);
 const structureID = P.digits.map(Number);
 const anacondaTower = P.string('at').map(o => 'anacondaTower' as Structure);
 const piranhaTower = P.string('pt').map(o => 'piranhaTower' as Structure);
@@ -150,14 +153,12 @@ const structureType = P.alt<Structure>(
 const buildAction = P.seqObj<BuildStructureAction>(
   P.string('b'),
   comma,
-  ['x', xCoord],
-  comma,
-  ['y', yCoord],
+  ['coordinates', mapCoord],
   comma,
   ['structure', structureType],
   bar
 ).map(o => {
-  return { ...o, action: 'build', round: 0 }; // still don't get why we need the rounds here.
+  return { ...o, action: 'build', round: 0 };
 });
 const repairAction = P.seqObj<RepairStructureAction>(
   P.string('r'),
@@ -197,7 +198,12 @@ const submitTurn = P.seqObj<SubmittedTurnInput>(
   bar,
   ['actions', turnActions]
 ).map(o => {
-  return { ...o, input: 'submittedTurn' };
+  // all actions have a round attribute, but passing it to each one in the concise encoding would be redundant.
+  // so we map it from the round number at the head of the input
+  const actions = o.actions.map(a => {
+    return {...a, round: o.roundNumber}
+  })
+  return { ...o, actions, input: 'submittedTurn' };
 });
 
 // export function isInvalid(input: ParsedSubmittedInput): input is InvalidInput {
