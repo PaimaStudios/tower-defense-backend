@@ -10,7 +10,6 @@ import type {
   DefenderStructure,
   AttackerStructure,
   RepairStructureAction,
-  ActorGraph,
   UpgradeStructureAction,
   SalvageStructureAction,
   AttackerUnit,
@@ -20,6 +19,7 @@ import type {
   UnitMovementEvent,
   TileNumber,
   PathTile,
+  Tile,
 } from '@tower-defense/utils';
 import { crypt } from '@tower-defense/utils/src/parser';
 import applyEvents from './apply';
@@ -46,7 +46,7 @@ export function build(towerCount: number, cryptCount: number): TurnAction[] {
       return {
         round: 1,
         action: 'build',
-        faction: "defender",
+        faction: 'defender',
         coordinates,
         structure: randomFromArray(['piranhaTower', 'anacondaTower', 'slothTower']),
       };
@@ -58,7 +58,7 @@ export function build(towerCount: number, cryptCount: number): TurnAction[] {
       return {
         round: 1,
         action: 'build',
-        faction: "attacker",
+        faction: 'attacker',
         coordinates,
         structure: randomFromArray(['macawCrypt', 'gorillaCrypt', 'jaguarCrypt']),
       };
@@ -72,18 +72,18 @@ function repair(m: MatchState): RepairStructureAction[] {
       round: 2,
       action: 'repair',
       faction: 'defender',
-      id: a.id
-    }
-  })
+      id: a.id,
+    };
+  });
   const crypts: RepairStructureAction[] = Object.values(m.actors.crypts).map(a => {
     return {
       round: 2,
       action: 'repair',
       faction: 'attacker',
-      id: a.id
-    }
-  })
-  return [...towers, ...crypts]
+      id: a.id,
+    };
+  });
+  return [...towers, ...crypts];
 }
 function upgrade(m: MatchState) {
   const towers: UpgradeStructureAction[] = Object.values(m.actors.towers).map(a => {
@@ -91,18 +91,18 @@ function upgrade(m: MatchState) {
       round: 2,
       action: 'upgrade',
       faction: 'defender',
-      id: a.id
-    }
-  })
-  const crypts : UpgradeStructureAction[]= Object.values(m.actors.crypts).map(a => {
+      id: a.id,
+    };
+  });
+  const crypts: UpgradeStructureAction[] = Object.values(m.actors.crypts).map(a => {
     return {
       round: 2,
       action: 'upgrade',
       faction: 'attacker',
-      id: a.id
-    }
-  })
-  return [...towers, ...crypts]
+      id: a.id,
+    };
+  });
+  return [...towers, ...crypts];
 }
 function salvage(c: MatchConfig, m: MatchState) {
   const towers: SalvageStructureAction[] = Object.values(m.actors.towers).map(a => {
@@ -111,19 +111,19 @@ function salvage(c: MatchConfig, m: MatchState) {
       action: 'salvage',
       faction: 'defender',
       gold: c.recoupAmount,
-      id: a.id
-    }
-  })
+      id: a.id,
+    };
+  });
   const crypts: SalvageStructureAction[] = Object.values(m.actors.crypts).map(a => {
     return {
       round: 2,
       action: 'salvage',
       faction: 'attacker',
       gold: c.recoupAmount,
-      id: a.id
-    }
-  })
-  return [...towers, ...crypts]
+      id: a.id,
+    };
+  });
+  return [...towers, ...crypts];
 }
 function damageTowers(m: MatchState): void {
   const towers: DefenderStructure[] = Object.values(m.actors.towers);
@@ -142,16 +142,14 @@ function randomFromArray<T>(array: T[]): T {
   return array[index];
 }
 function availableForBuilding(map: TileNumber[]): { towers: number[]; crypts: number[] } {
-  const towers: number[]= [];
+  const towers: number[] = [];
   const crypts: number[] = [];
-  const accumulator = {towers, crypts}
+  const accumulator = { towers, crypts };
   return map.reduce((acc, item, index) => {
-    if (item === 1)
-    return {...acc, towers: [...acc.towers, index]}
-    else if (item === 2)
-    return {...acc, crypts: [...acc.crypts, index]}
-    else return acc
-  }, accumulator)
+    if (item === 1) return { ...acc, towers: [...acc.towers, index] };
+    else if (item === 2) return { ...acc, crypts: [...acc.crypts, index] };
+    else return acc;
+  }, accumulator);
 }
 
 function getMatchConfig() {
@@ -161,7 +159,7 @@ function getMatchConfig() {
 }
 
 function getMatchState(): MatchState {
-  const map = fillMap(testmap, 22)
+  const map = fillMap(testmap, 22);
   return {
     width: 22,
     height: 13,
@@ -181,13 +179,12 @@ function getMatchState(): MatchState {
     currentRound: 1,
     actorCount: 2, // the two bases,
     finishedSpawning: [],
-    roundEnded: false
+    roundEnded: false,
   };
 }
-function getAttackerMatchState(){
+function getAttackerMatchState() {
   const base = getMatchState();
-  return {...base,
-  currentRound: 4}
+  return { ...base, currentRound: 4 };
 }
 
 describe('Game Logic', () => {
@@ -201,12 +198,12 @@ describe('Game Logic', () => {
   };
   // parser tests
   // test('config parser works', () => {
-    // const goodDefinitions = ['st1;p40;h150;c10;d5;r2'];
-    // const badDefinitions = ['mc0;p40;h150;c10;d5;r2'];
-    // const configString = 'r|1|gr;d;105|st1;p40;h150;c10;d5;r2';
-    // const matchConfig: MatchConfig = parseConfig(configString);
-    // TODO
-    // expect(3).toBe(3);
+  // const goodDefinitions = ['st1;p40;h150;c10;d5;r2'];
+  // const badDefinitions = ['mc0;p40;h150;c10;d5;r2'];
+  // const configString = 'r|1|gr;d;105|st1;p40;h150;c10;d5;r2';
+  // const matchConfig: MatchConfig = parseConfig(configString);
+  // TODO
+  // expect(3).toBe(3);
   // });
   // structure tests
   test('built structures show up in the match state', () => {
@@ -246,27 +243,29 @@ describe('Game Logic', () => {
   });
   test('all paths lead to other paths', () => {
     const map = fillMap(testmap, 22);
-    const paths: number[][] = [];
-    for (let tile of map){
-      if (tile.type === "path") paths.push(tile.leadsTo)
-    }
-    const allArePaths = paths.flat().reduce((acc, item) => {
-      const tile = map[item];
-      if (tile.type === "path") return acc
-      else if (tile.type === "base" && tile.faction === "defender" ) return acc
-      else return false
-    }, true)
-    expect(allArePaths).toBeTruthy()
-  })
+    const paths: PathTile[] = map.filter((t: Tile): t is PathTile => t.type === 'path');
+    const allArePaths = paths.reduce((acc, item) => {
+      if (item.leadsTo.length < 1) return false;
+      else {
+        const ok = item.leadsTo.reduce((acc, i) => {
+          if (map[i].type === 'path') return acc;
+          else if (map[i].type === 'base' && map[i].faction === 'defender') return acc;
+          else return false;
+        }, true);
+        return ok ? acc : false;
+      }
+    }, true);
+    expect(allArePaths).toBeTruthy();
+  });
   test('all paths lead somewhere', () => {
     const map = fillMap(testmap, 22);
-    const paths = map.filter(t => t.type === "path");
+    const paths = map.filter(t => t.type === 'path');
     const allLeadSomewhere = paths.reduce((acc, item) => {
-      if (item.type === "path" && item.leadsTo.length > 0) return acc
-      else return false
-    }, true)
-    expect(allLeadSomewhere).toBeTruthy()
-  })
+      if (item.type === 'path' && item.leadsTo.length > 0) return acc;
+      else return false;
+    }, true);
+    expect(allLeadSomewhere).toBeTruthy();
+  });
   test('repaired towers are repaired', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
@@ -276,7 +275,7 @@ describe('Game Logic', () => {
     const events = processTick(matchConfig, matchState, moves, currentTick, randomnessGenerator);
     damageTowers(matchState); // mutating
     // make copy of match state after damaging
-    const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
+    const towerState1 = structuredClone(matchState.actors.towers);
     const moves2 = repair(matchState);
     const events2 = processTick(matchConfig, matchState, moves2, currentTick, randomnessGenerator);
     // match state here should be repaired
@@ -298,7 +297,7 @@ describe('Game Logic', () => {
     for (const tick of ticks) {
       processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
     }
-    const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
+    const cryptState1 = structuredClone(matchState.actors.crypts);
     const moves2 = repair(matchState);
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     // match state here should be repaired
@@ -316,8 +315,8 @@ describe('Game Logic', () => {
     const moves = build(1, 1);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-    const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
-    const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
+    const cryptState1 = structuredClone(matchState.actors.crypts);
+    const towerState1 = structuredClone(matchState.actors.towers);
     const moves2 = upgrade(matchState);
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const cryptUpgradeDiff = Object.keys(cryptState1).map(crypt => {
@@ -360,7 +359,7 @@ describe('Game Logic', () => {
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
     const initialGold = structuredClone(matchState.attackerGold);
-    console.log(initialGold, "initial gold")
+    console.log(initialGold, 'initial gold');
     const moves = build(0, 3);
     const moneySpent = moves.reduce((price, buildEvent) => {
       if (buildEvent.action !== 'build') return price;
@@ -369,7 +368,7 @@ describe('Game Logic', () => {
         return price + cost;
       }
     }, 0);
-    console.log(moneySpent, "money spent")
+    console.log(moneySpent, 'money spent');
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     expect(matchState.attackerGold).toBe(initialGold - moneySpent);
   });
@@ -469,31 +468,39 @@ describe('Game Logic', () => {
     for (const tick of ticks) {
       events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
     }
-    const cs: AttackerStructure[] = Object.values(matchState.actors.crypts)
+    const cs: AttackerStructure[] = Object.values(matchState.actors.crypts);
     const ok = cs.reduce((acc, item) => {
       const spawnLimit = matchConfig[item.structure][item.upgrades].spawnCapacity;
-      if (item.spawned.length === spawnLimit) return acc
-      else return false
-    }, true)
+      if (item.spawned.length === spawnLimit) return acc;
+      else return false;
+    }, true);
     expect(ok).toBeTruthy();
-  })
-  test("units move forward", () => {
+  });
+  test('units move forward', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
     const moves = build(1, 3);
     const randomnessGenerator = new Prando(1);
-    const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
+    const ticks = [...Array(3000).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
-    let events = [];
+    let ok = true;
     for (let tick of ticks) {
-      events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
+      const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
+      if (!events) console.log(tick, "tick")
+      if (events) {
+        const movementEvents = events.filter(
+          (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
+        );
+        const units = Object.values(matchState.actors.units);
+        console.log(units.length, "units")
+        for (let u of units) {
+          const me = movementEvents.find(m => m.actorID === u.id);
+          if (!me) ok = false;
+        }
+      }
     }
-    const movementEvents = events
-      .flat()
-      .filter((e: TickEvent | null): e is UnitMovementEvent => e?.eventType === "movement");
-    console.log(movementEvents, "movement")
-     expect(3).toStrictEqual(5);
-  })
+    expect(ok).toBeTruthy();
+  });
 
   // // // damage
   test('macaws attacks to towers are registered', () => {
