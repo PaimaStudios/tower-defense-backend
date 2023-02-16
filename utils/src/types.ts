@@ -90,14 +90,11 @@ export interface MatchState extends AnnotatedMap {
 }
 // ordered maps for stateful units
 export interface ActorsObject {
-  towers: ActorGraph<DefenderStructure>;
-  crypts: ActorGraph<AttackerStructure>;
-  units: ActorGraph<AttackerUnit>;
+  towers: Record<ActorID, DefenderStructure>;
+  crypts: Record<ActorID, AttackerStructure>;
+  units: Record<ActorID, AttackerUnit>;
 }
 export type ActorID = number;
-export interface ActorGraph<ActorType> {
-  [actorID: ActorID]: ActorType;
-}
 
 export type Actor =
   | DefenderBase

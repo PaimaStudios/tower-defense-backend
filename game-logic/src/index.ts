@@ -28,6 +28,7 @@ import type {
   BuildStructureAction,
 } from '@tower-defense/utils';
 import applyEvents from './apply';
+import { kill } from 'process';
 
 // Main function, exported as default.
 
@@ -38,46 +39,76 @@ function processTick(
   currentTick: number,
   randomnessGenerator: Prando
 ): TickEvent[] | null {
+  // Return null, i.e. move to next round iff the matchState shows the round has ended
+  if (matchState.roundEnded) return incrementRound(matchState)
+  // End round if the base health is 0
+  if (matchState.defenderBase.health === 0) return endRound(matchConfig, matchState, currentTick, randomnessGenerator)
+  // Else let's play
   let randomness = 0;
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomness = randomnessGenerator.next();
-  // Return null, i.e. end the round if the matchState shows the round has ended
-  if (matchState.roundEnded) {
-    matchState.currentRound ++
-    matchState.roundEnded = false;
-    return null
-  }
   // First tick is reserved to processing the user actions, i.e. events related to structures.
   // Gold is also rewarded at the first tick of the round
   if (currentTick === 1) {
-    const events = structureEvents(matchConfig, matchState, moves)
+    const events = structureEvents(matchConfig, matchState, moves);
     // Structure events are processed in a batch as they don't affect each other
     applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
     return events;
-  } else {
+  } else { // ticks 2+
     // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
-    if (matchState.currentRound === 1 || matchState.currentRound === 2) 
-      return endRound(matchConfig, matchState)
+    if (matchState.currentRound === 1 || matchState.currentRound === 2)
+      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
     // Else we do start a battle phase
     // subsequent ticks follow deterministically from a given match state after the structure updates have been processed.
     const events =
       eventsFromMatchState(matchConfig, matchState, currentTick, randomnessGenerator) || [];
     // Other events are processed one by one, as they affect global match state
+    // End round if defender base health is 0
+    if (matchState.defenderBase.health === 0) return endRound(matchConfig, matchState, currentTick, randomnessGenerator)
+    const allSpawned = Object.keys(matchState.actors.crypts).every(c =>
+      matchState.finishedSpawning.includes(parseInt(c))
+    );
+    const remainingUnits = Object.values(matchState.actors.units);
     // End the round when no events and all crypts stopped spawning
-    const allSpawned = Object.keys(matchState.actors.crypts).every(c => matchState.finishedSpawning.includes(parseInt(c)));
-    if (events.length === 0 && allSpawned) 
-    return endRound(matchConfig, matchState)
-    else return events;
+    if (events.length === 0 && allSpawned && remainingUnits.length === 0)
+      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
+    else {
+      return events;
+    }
   }
 }
-function endRound(matchConfig: MatchConfig, matchState: MatchState): [GoldRewardEvent, GoldRewardEvent]{
+function incrementRound(matchState: MatchState): null{
+    console.log(matchState.currentRound, 'incrementing round');
+    // reset the list of spawned units of every crypt
+    for (let crypt of Object.keys(matchState.actors.crypts)){
+      // annoying that Object.values stripes the types
+      const c = matchState.actors.crypts[parseInt(crypt)];
+      c.spawned = [];
+    }
+    // increment round
+    matchState.currentRound++;
+    // reset matchState so it starts processing on next tick
+    matchState.roundEnded = false;
+    return null;
+
+}
+function endRound(
+  matchConfig: MatchConfig,
+  matchState: MatchState,
+  currentTick: number,
+  randomnessGenerator: Prando
+): [GoldRewardEvent, GoldRewardEvent] {
+  console.log(matchState.currentRound, 'ending round');
+  console.log(matchState.defenderBase.health, "base health")
   matchState.roundEnded = true;
-  return computeGoldRewards(matchConfig, matchState)
+  const gold = computeGoldRewards(matchConfig, matchState);
+  applyEvents(matchConfig, matchState, gold, currentTick, randomnessGenerator);
+  return gold;
 }
 
 function computeGoldRewards(
   matchConfig: MatchConfig,
-  matchState: MatchState,
+  matchState: MatchState
 ): [GoldRewardEvent, GoldRewardEvent] {
   const baseGoldProduction = (level: number) =>
     level === 1 ? 100 : level === 2 ? 200 : level === 3 ? 400 : 0; // ...
@@ -91,8 +122,16 @@ function computeGoldRewards(
   // ];
   // cat-astrophe doesn't want diffs for some reason
   const events: [GoldRewardEvent, GoldRewardEvent] = [
-    { eventType: 'goldUpdate', faction: 'attacker', amount: attackerReward + matchState.attackerGold },
-    { eventType: 'goldUpdate', faction: 'defender', amount: defenderReward + matchState.defenderGold },
+    {
+      eventType: 'goldUpdate',
+      faction: 'attacker',
+      amount: attackerReward + matchState.attackerGold,
+    },
+    {
+      eventType: 'goldUpdate',
+      faction: 'defender',
+      amount: defenderReward + matchState.defenderGold,
+    },
   ];
   return events;
 }
@@ -251,16 +290,14 @@ function movementEvents(
   currentTick: number,
   randomnessGenerator: Prando
 ): Array<StatusEffectAppliedEvent | UnitMovementEvent | StatusEffectAppliedEvent> {
-  const attackers: AttackerUnit[] = Object.values(m.actors.units);
+  const attackers = Object.values(m.actors.units);
   const events = attackers.map(a => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
     const busyAttacking =
       a.subType === 'macaw' && findClosebyTowers(m, a.coordinates, 1).length > 0;
-    if (!busyAttacking) {
-      return null;
-    }
-    //  Find coordinates to move towards.
+    if (busyAttacking) return null;
     else {
+      // Generate movement events
       const event = move(config, a);
       // See if unit moved next to a friendly crypt and got a status buff from it
       const buffStatusEvents: StatusEffectAppliedEvent[] = buff(m, event);
@@ -567,27 +604,32 @@ function computeDamageToTower(
 }
 // Damage of units to defender base
 function computeDamageToBase(
-  config: MatchConfig,
-  m: MatchState,
-  a: AttackerUnit,
+  matchConfig: MatchConfig,
+  matchState: MatchState,
+  attackerUnit: AttackerUnit,
   currentTick: number,
-  rng: Prando
+  randomnessGenerator: Prando
 ): [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] {
-  const t: Tile = m.mapState[a.coordinates];
-  const baseEvent: DefenderBaseUpdateEvent = {
-    eventType: 'defenderBaseUpdate',
-    faction: 'defender',
-    health: m.defenderBase.health - a.damage, // TODO: Do Macaws do the same damage to the base as they do to towers?
-  };
-  const killEvent: ActorDeletedEvent = {
-    eventType: 'actorDeleted',
-    faction: 'attacker',
-    id: a.id,
-  };
-  const events: [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] =
-    t.type === 'base' && t.faction === 'defender' ? [baseEvent, killEvent] : [];
-  applyEvents(config, m, events, currentTick, rng);
-  return events;
+  // Check the tile the unit is at;
+  const t: Tile = matchState.mapState[attackerUnit.coordinates];
+  // If unit is not at the defender's base, return empty event list
+  if (!(t.type === 'base' && t.faction === 'defender')) return [];
+  // If unit is at the defender's base, emit events for base damage and death of unit
+  else {
+    const baseEvent: DefenderBaseUpdateEvent = {
+      eventType: 'defenderBaseUpdate',
+      faction: 'defender',
+      health: matchState.defenderBase.health - attackerUnit.damage, // TODO: Do Macaws do the same damage to the base as they do to towers?
+    };
+    const deathEvent: ActorDeletedEvent = {
+      eventType: 'actorDeleted',
+      faction: 'attacker',
+      id: attackerUnit.id,
+    };
+    const events: [DefenderBaseUpdateEvent, ActorDeletedEvent] = [baseEvent, deathEvent];
+    applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
+    return events;
+  }
 }
 // Determines whether a macaw attacker unit should start attacking a tower.
 // Macaws have a range of 1. Diagonals count as 1.
@@ -685,8 +727,12 @@ function findClosebyTowers(m: MatchState, coords: number, range: number): Defend
   const structures = tiles.map(t => m.actors.towers[(t as DefenderStructureTile).id]);
   return structures as DefenderStructure[];
 }
-function findClosebyCrypts(m: MatchState, coords: number | null, range: number): AttackerStructure[] {
-  if (!coords) return []
+function findClosebyCrypts(
+  m: MatchState,
+  coords: number | null,
+  range: number
+): AttackerStructure[] {
+  if (!coords) return [];
   const tiles = findCloseByTiles(m, coords, range).filter(
     s => s && s.type === 'structure' && s.faction === 'attacker'
   );

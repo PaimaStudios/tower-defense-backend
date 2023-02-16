@@ -3,9 +3,7 @@ import type {
   MatchConfig,
   MatchState,
   TickEvent,
-  AttackerStructureTile,
   BuildStructureEvent,
-  DefenderStructureTile,
   Faction,
   AttackerStructureType,
   DefenderStructureType,
@@ -15,11 +13,8 @@ import type {
   ActorDeletedEvent,
   AttackerStructure,
   DefenderStructure,
-  Coordinates,
-  SalvageStructureEvent,
   UpgradeTier,
 } from '@tower-defense/utils';
-import { coordsToIndex } from '.';
 // Function to check if the user has enough money to spend in structures. Mutates state if true, returns the boolean result of the check.
 function spendMoney(matchState: MatchState, faction: Faction | null, amount: number): boolean {
   if (faction === 'attacker' && matchState.attackerGold - amount >= 0) {
@@ -43,7 +38,6 @@ export default function applyEvents(
     const faction = event.faction;
     switch (event.eventType) {
       case 'goldUpdate':
-        console.log(event, 'gold update');
         if (faction === 'attacker') matchState.attackerGold = event.amount;
         else if (faction === 'defender') matchState.defenderGold === event.amount;
         break;
@@ -64,7 +58,6 @@ export default function applyEvents(
         }
         break;
       case 'repair':
-        console.log(event, "repairing")
         const toRepair =
           faction === 'attacker'
             ? matchState.actors.crypts[event.id]
@@ -134,8 +127,8 @@ export default function applyEvents(
         crypt.spawned = [...crypt.spawned, event.actorID];
         // add crypt to Finished Spawned List if it reached its spawn limit
         const spawned = crypt.spawned.length;
-        const canSpawn = config[crypt.structure][crypt.upgrades].spawnCapacity;
-        if (spawned === canSpawn)
+        const spawnLimit = config[crypt.structure][crypt.upgrades].spawnCapacity;
+        if (spawned === spawnLimit)
           matchState.finishedSpawning = [...matchState.finishedSpawning, event.cryptID];
         // Increment actor count
         matchState.actorCount++;
@@ -215,7 +208,7 @@ function findDestination(
     // if there is more than one available path (i.e. go left or go up/down) determine according to randomness.
     const nextCoords =
       leadsTo.length > 1
-        ? leadsTo[randomizePath(leadsTo, randomnessGenerator, coordinates, !!previousCoordinates)]
+        ? randomizePath(leadsTo, randomnessGenerator, coordinates, !!previousCoordinates)
         : leadsTo[0];
     return nextCoords;
   }
