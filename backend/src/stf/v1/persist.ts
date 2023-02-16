@@ -8,7 +8,8 @@ import {
 import Prando from 'paima-engine/paima-prando';
 import { RoundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
-import { SQLUpdate } from 'paima-engine/paima-utils';
+// import { SQLUpdate } from 'paima-engine/paima-utils';
+type SQLUpdate = [any, any]
 import {
   LobbyStatus,
   MatchConfig,
@@ -29,6 +30,7 @@ import {
   IGetRoundMovesResult,
   IGetUserStatsResult,
   INewMatchMoveParams,
+  INewMatchMoveResult,
   INewRoundParams,
   INewScheduledDataParams,
   IStartMatchParams,
@@ -54,6 +56,7 @@ import {
   newStats,
 } from '@tower-defense/db';
 import parse from './parser.js';
+import { PreparedQuery } from '@pgtyped/query';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -158,7 +161,7 @@ function generateMatchState(
     lobbyState.creator_faction === 'attacker'
       ? [lobbyState.lobby_creator, playerTwo]
       : lobbyState.creator_faction === 'defender'
-      ? [playerTwo, lobbyState.creator_faction]
+      ? [playerTwo, lobbyState.lobby_creator]
       : randomizeRoles(lobbyState.lobby_creator, playerTwo, randomnessGenerator);
   const matchConfig = parseConfig(configString);
   // TODO are all maps going to be the same width?
@@ -196,7 +199,7 @@ function processMapLayout(mapName: string, mapString: string): RawMap {
     name: mapName,
     width: rows[0].length,
     height: rows.length,
-    contents: rows.join('').split('') as unknown as TileNumber[],
+    contents: rows.join('').split('').map(s => parseInt(s) as TileNumber),
   };
 }
 
@@ -293,7 +296,6 @@ export function persistMoveSubmission(
   inputData: SubmittedTurnInput,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
-  cachedMoves: IGetCachedMovesResult[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
@@ -305,21 +307,21 @@ export function persistMoveSubmission(
   // Now we check if both users have sent their moves, if so, we execute the round.
   // We'll assume the moves are valid at this stage, invalid moves shouldn't have got this far.
   // Save the moves to the database;
-  const movesTuple = inputData.actions.map(a => persistMove(lobbyState.lobby_id, user, a));
+  const movesTuples = inputData.actions.map(a => persistMove(lobbyState.lobby_id, user, a));
   // Execute the round after moves come in. Pass the moves in database params format to the round executor.
   const roundExecutionTuples = execute(
     blockHeight,
     lobbyState,
     matchConfig,
-    movesTuple[0],
+    inputData.actions,
     roundData,
     randomnessGenerator
   );
-  return [...movesTuple, ...roundExecutionTuples];
+  return [...movesTuples, ...roundExecutionTuples];
 }
 
 // Persist submitted move to database
-function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUpdate {
+function persistMove(matchId: string, user: WalletAddress, a: TurnAction): [PreparedQuery<INewMatchMoveParams, INewMatchMoveResult>, INewMatchMoveParams] {
   const move_target = a.action === 'build' ? `${a.structure}--${a.coordinates}` : `${a.id}`;
   const mmParams: INewMatchMoveParams = {
     new_move: {
@@ -337,12 +339,11 @@ function execute(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
-  cachedMoves: IGetRoundMovesResult[],
+  moves: TurnAction[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const matchState = lobbyState.current_match_state as unknown as MatchState;
-  const moves = cachedMoves.map(m => expandMove(m, matchState));
   const executor = RoundExecutor.initialize(
     matchConfig,
     matchState,
@@ -393,7 +394,7 @@ function execute(
 }
 function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
   const faction = databaseMove.wallet === matchState.attacker ? 'attacker' : 'defender';
-  console.log(databaseMove, 'dbm');
+  console.log(databaseMove, "dbm")
   if (databaseMove.move_type === 'build') {
     const [structure, coords] = databaseMove.move_target.split('--');
     return {
@@ -487,13 +488,15 @@ export function executeZombieRound(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
-  moves: IGetRoundMovesResult[],
+  cachedMoves: IGetRoundMovesResult[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ) {
   console.log(
     `Executing zombie round (#${lobbyState.current_round}) for lobby ${lobbyState.lobby_id}`
   );
+  const matchState = lobbyState.current_match_state as unknown as MatchState;
+  const moves = cachedMoves.map(m => expandMove(m, matchState));
   return execute(blockHeight, lobbyState, matchConfig, moves, roundData, randomnessGenerator);
 }
 

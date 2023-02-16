@@ -158,7 +158,7 @@ const buildAction = P.seqObj<BuildStructureAction>(
   ['structure', structureType],
   bar
 ).map(o => {
-  return { ...o, action: 'build', round: 0 };
+  return { ...o, action: 'build'};
 });
 const repairAction = P.seqObj<RepairStructureAction>(
   P.string('r'),
@@ -166,7 +166,7 @@ const repairAction = P.seqObj<RepairStructureAction>(
   ['id', structureID],
   bar
 ).map(o => {
-  return { ...o, action: 'repair', round: 0 };
+  return { ...o, action: 'repair'};
 });
 
 const upgradeAction = P.seqObj<UpgradeStructureAction>(
@@ -175,7 +175,7 @@ const upgradeAction = P.seqObj<UpgradeStructureAction>(
   ['id', structureID],
   bar
 ).map(o => {
-  return { ...o, action: 'upgrade', round: 0 };
+  return { ...o, action: 'upgrade'};
 });
 const salvageAction = P.seqObj<SalvageStructureAction>(
   P.string('s'),
@@ -183,7 +183,7 @@ const salvageAction = P.seqObj<SalvageStructureAction>(
   ['id', structureID],
   bar
 ).map(o => {
-  return { ...o, action: 'salvage', round: 0 };
+  return { ...o, action: 'salvage'};
 });
 const turnAction = P.alt(buildAction, repairAction, upgradeAction, salvageAction);
 const turnActions = turnAction.many();

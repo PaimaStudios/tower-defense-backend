@@ -89,12 +89,16 @@ export async function randomJoin() {
 export async function randomMoves() {
   const lobbies = await getActiveLobbies.run(undefined, pool);
   const lobby = randomFromArray(lobbies);
-  const defenders = randomDefenderMoves(lobby.current_match_state as unknown as MatchState);
-  const attackers = randomAttackerMoves(lobby.current_match_state as unknown as MatchState);
-  const inputs = randomFromArray([defenders, attackers]);
+  const matchState = lobby.current_match_state as unknown as MatchState;
+  const defenders = randomDefenderMoves(matchState);
+  const attackers = randomAttackerMoves(matchState);
+  const [user, inputs] = lobby.current_round % 2 === 1 
+  ?  [matchState.defender, defenders]
+  :  [matchState.attacker, attackers]
+  console.log(matchState)
   const data = ['s', '*' + lobby.lobby_id, lobby.current_round, inputs].join('|');
   return {
-    userAddress: randomFromArray([lobby.lobby_creator, lobby.player_two]) as string,
+    userAddress: user,
     inputData: data,
     inputNonce: randomString(),
     suppliedValue: '',
@@ -107,7 +111,7 @@ function randomDefenderMoves(m: MatchState): string {
     const repair = `r,${randomFromArray(existingTowers)}`;
     const upgrade = `u,${randomFromArray(existingTowers)}`;
     const salvage = `s,${randomFromArray(existingTowers)}`;
-    return [...build, repair, upgrade, salvage, ''].join('|');
+    return [...build, repair, upgrade, ''].join('|');
   } else return [...build, ''].join('|');
 }
 function randomAttackerMoves(m: MatchState): string {
@@ -117,7 +121,7 @@ function randomAttackerMoves(m: MatchState): string {
     const repair = `r,${randomFromArray(existingCrypts)}`;
     const upgrade = `u,${randomFromArray(existingCrypts)}`;
     const salvage = `s,${randomFromArray(existingCrypts)}`;
-    return [...build, repair, upgrade, salvage, ''].join('|');
+    return [...build, repair, upgrade, ''].join('|');
   } else return [...build, ''].join('|');
 }
 function randomBuildTowers(m: MatchState): [string, string] {
@@ -164,7 +168,7 @@ async function randomInput() {
 }
 
 async function readData(blockHeight: number, blockCount = 1) {
-  const data = await Promise.all([...Array(2)].map(async a => await randomInput()));
+  const data = await Promise.all([...Array(1)].map(async a => await randomInput()));
   const cleanData = data.filter(isDefined);
   return [
     {

@@ -28,7 +28,7 @@ import {
   UserStatsEffect,
   ZombieRoundEffect,
 } from './types.js';
-import { MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import { Faction, MatchState, Structure, TurnAction } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
 
 export default async function (
@@ -54,7 +54,14 @@ export default async function (
       // if match config is not in the database, bail
       const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
       if (!configString) return [];
-      return persistLobbyJoin(blockHeight, user, lobbyState, map, configString.content, randomnessGenerator);
+      return persistLobbyJoin(
+        blockHeight,
+        user,
+        lobbyState,
+        map,
+        configString.content,
+        randomnessGenerator
+      );
     case 'closedLobby':
       return processCloseLobby(user, expanded, dbConn);
     case 'submittedTurn':
@@ -102,16 +109,30 @@ async function processSubmittedTurn(
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   // if moves sent don't belong to the current round, bail
-  console.log(lobby.current_round, "current round")
-  console.log(expanded.roundNumber, "round sent")
+  console.log(lobby.current_round, 'current round');
+  console.log(expanded.roundNumber, 'round sent');
   if (expanded.roundNumber !== lobby.current_round) return [];
-  // if not the user's turn, bail
+  // <validation
+  // role is valid
   // NOTE: defenders are odd turns, attackers are even turns
-  const role = user === ( lobby.current_match_state as unknown as MatchState).attacker 
-  ? "attacker" : "defender";
-  if (role === "attacker" && (lobby.current_round % 2 !== 0)) return []
-  if (role === "defender" && (lobby.current_round % 2 !== 1)) return []
-  console.log(role, "role")
+  const role =
+    user === (lobby.current_match_state as unknown as MatchState).attacker
+      ? 'attacker'
+      : 'defender';
+  console.log(role, 'role');
+  // add the faction to the actions in the input
+  expanded.actions = expanded.actions.map(a => {
+    return {...a, faction: role}
+  })
+  if (role === 'attacker' && lobby.current_round % 2 !== 0) return [];
+  if (role === 'defender' && lobby.current_round % 2 !== 1) return [];
+  // moves are valid
+  if (!validateMoves(expanded.actions, role, lobby.current_match_state as unknown as MatchState)) {
+    console.log('invalid moves');
+    return [];
+  }
+  // validation>
+
   // If no such round, bail
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: expanded.roundNumber },
@@ -119,14 +140,6 @@ async function processSubmittedTurn(
   );
   if (!round) return [];
 
-  // <validation
-  // TODO we're throwing out all the inputs if a single action is wrong;
-  // must discuss this
-  if (!validateMoves(expanded.actions, lobby.current_match_state as unknown as MatchState))
-    return [];
-  // validation>
-
-  const cachedMoves = await getCachedMoves.run({ lobby_id: expanded.lobbyID }, dbConn);
   const matchConfig = parseConfig(configString.content);
   return persistMoveSubmission(
     blockHeight,
@@ -134,30 +147,33 @@ async function processSubmittedTurn(
     expanded,
     lobby,
     matchConfig,
-    cachedMoves,
     round,
     randomnessGenerator
   );
 }
-function validateMoves(actions: TurnAction[], matchState: MatchState): boolean {
+function validateMoves(actions: TurnAction[], faction: Faction, matchState: MatchState): boolean {
   const res = actions.reduce((acc, item) => {
     if (item.action === 'build')
-      return canBuild(item.coordinates, item.structure, matchState) ? acc : false;
-    else return hasStructure(item.id, matchState) ? acc : false;
+      return canBuild(faction, item.coordinates, item.structure, matchState) ? acc : false;
+    else return hasStructure(faction, item.id, matchState) ? acc : false;
   }, true);
   return res;
 }
 // Helper function to see if a structure is being built in an available tile
-function canBuild(coords: number, structure: Structure, matchState: MatchState): boolean {
-  const faction = structure.includes('rypt') ? 'attacker' : 'defender';
+function canBuild(
+  faction: Faction,
+  coords: number,
+  structure: Structure,
+  matchState: MatchState
+): boolean {
+  const structureFaction = structure.includes('rypt') ? 'attacker' : 'defender';
   const tile = matchState.mapState[coords];
-  return tile.type === 'open' && tile.faction === faction;
+  return tile.type === 'open' && tile.faction === faction && faction === structureFaction;
 }
 // Helper function to see if structure ID is on the matchState actor map
-function hasStructure(id: number, matchState: MatchState): boolean {
-  const hasCrypt = matchState.actors.crypts[id];
-  const hasTower = matchState.actors.towers[id];
-  return !!hasCrypt || !!hasTower;
+function hasStructure(faction: Faction, id: number, matchState: MatchState): boolean {
+  if (faction === 'attacker') return !!matchState.actors.crypts[id];
+  else return !!matchState.actors.towers[id];
 }
 
 async function processScheduledData(
