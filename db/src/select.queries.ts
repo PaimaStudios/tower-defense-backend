@@ -484,16 +484,42 @@ export interface IGetMapLayoutQuery {
   result: IGetMapLayoutResult;
 }
 
-const getMapLayoutIR: any = {"usedParamSet":{"name":true},"params":[{"name":"name","required":true,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]}],"statement":"SELECT * FROM maps\nWHERE name = :name!               "};
+const getMapLayoutIR: any = {"usedParamSet":{"name":true},"params":[{"name":"name","required":true,"transform":{"type":"scalar"},"locs":[{"a":32,"b":37}]}],"statement":"SELECT * FROM maps\nWHERE name = :name!                 "};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT * FROM maps
- * WHERE name = :name!               
+ * WHERE name = :name!                 
  * ```
  */
 export const getMapLayout = new PreparedQuery<IGetMapLayoutParams,IGetMapLayoutResult>(getMapLayoutIR);
+
+
+/** 'GetAllMaps' parameters type */
+export type IGetAllMapsParams = void;
+
+/** 'GetAllMaps' return type */
+export interface IGetAllMapsResult {
+  layout: string;
+  name: string;
+}
+
+/** 'GetAllMaps' query type */
+export interface IGetAllMapsQuery {
+  params: IGetAllMapsParams;
+  result: IGetAllMapsResult;
+}
+
+const getAllMapsIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT * FROM maps               "};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM maps               
+ * ```
+ */
+export const getAllMaps = new PreparedQuery<IGetAllMapsParams,IGetAllMapsResult>(getAllMapsIR);
 
 
 /** 'GetMatchConfig' parameters type */

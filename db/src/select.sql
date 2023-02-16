@@ -104,6 +104,11 @@ LIMIT 1;
 SELECT * FROM maps
 WHERE name = :name!;
 
+/* for testing */
+
+/* @name getAllMaps */
+SELECT * FROM maps;
+
 /*  Configs  */
 
 /* @name getMatchConfig */
