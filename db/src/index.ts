@@ -2,9 +2,54 @@ import { creds, setPool, requirePool } from './pool';
 export { creds, setPool, requirePool };
 import type Pool from 'pg';
 export type { Pool };
-export * from './insert.queries.js';
-export * from './select.queries.js';
-export * from './update.queries.js';
+export {
+  createLobby,
+  ICreateLobbyParams,
+  INewMatchMoveParams,
+  INewMatchMoveResult,
+  INewRoundParams,
+  INewScheduledDataParams,
+  move_type,
+  newMatchMove,
+  newRound,
+  newScheduledData,
+  IUpdateStatsParams,
+  updateStats,
+  INewNftParams,
+  newNft,
+  newFinalState,
+  INewStatsParams,
+  newStats,
+  createConfig,
+  ICreateConfigParams,
 
-import { p } from './pool';
-export { p };
+} from './insert.queries.js';
+export {
+  IGetCachedMovesResult,
+  IGetLobbyByIdResult,
+  IGetMapLayoutResult,
+  IGetRoundDataResult,
+  IGetRoundMovesResult,
+  IGetUserStatsResult,
+  getLobbyById,
+  getRoundData,
+  getCachedMoves,
+  getUserStats,
+  getMapLayout,
+  getMatchConfig,
+} from './select.queries.js';
+export {
+  IStartMatchParams,
+  ICloseLobbyParams,
+  closeLobby,
+  startMatch,
+  IUpdateCurrentMatchStateParams,
+  executeRound,
+  updateCurrentMatchState,
+  removeScheduledData,
+  IExecuteRoundParams,
+  endMatch,
+} from './update.queries.js';
+
+import { testPool } from './pool';
+export { testPool };

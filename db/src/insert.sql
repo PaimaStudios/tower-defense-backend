@@ -49,7 +49,9 @@ timestamp = EXCLUDED.timestamp;
 
 /* @name createConfig */
 INSERT INTO configs(id, content)
-VALUES(:id!, :content!);
+VALUES(:id!, :content!)
+ON CONFLICT(id)
+DO NOTHING;
 
 /*  Lobbies  */
 
