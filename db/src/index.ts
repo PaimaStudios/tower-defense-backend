@@ -47,7 +47,6 @@ export {
   IGetFinalStateResult,
   getRandomActiveLobby,
   IGetRandomActiveLobbyResult,
-
   getMatchSeeds,
   getMovesByLobby,
   getLatestProcessedBlockHeight,
@@ -63,6 +62,8 @@ export {
   getUserStats,
   getMapLayout,
   getMatchConfig,
+  getAllMaps,
+  getActiveLobbies
 } from './select.queries.js';
 export {
   IStartMatchParams,
