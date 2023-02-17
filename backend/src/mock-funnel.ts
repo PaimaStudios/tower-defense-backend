@@ -5,7 +5,7 @@ import {
   getActiveLobbies,
   getPaginatedOpenLobbies,
   getRandomLobby,
-  p,
+  testPool,
 } from '@tower-defense/db';
 import { Coordinates, MatchState } from '@tower-defense/utils';
 interface MockFunnel {
@@ -26,7 +26,7 @@ interface MockFunnel {
 // }
 // pool
 // randomizing helpers
-const pool = p;
+const pool = testPool;
 export function randomString(size = 21) {
   return c.randomBytes(size).toString('base64url').slice(0, size);
 }
@@ -156,6 +156,9 @@ function indexToCoords(i: number, width: number): Coordinates {
   const x = i - y * width;
   return { x, y };
 }
+function randomConfig(){
+
+}
 async function randomInput() {
   // const matches = await getActiveLobbies.run(undefined, pool);
   // const moves = Array.from(Array(100)).map(i => randomMove(matches))
@@ -164,6 +167,7 @@ async function randomInput() {
     // randomJoin(),
     // randomClose(),
     randomMoves(),
+    // randomConfig()
   ]);
 }
 
