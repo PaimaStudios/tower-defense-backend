@@ -1,3 +1,4 @@
+import { Structure, TurnAction } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import { getDeployment } from '../state';
 import type {
@@ -24,17 +25,29 @@ export function batchedToString(b: BatchedSubunit): string {
   return [b.userAddress, b.userSignature, b.gameInput, b.millisecondTimestamp].join('/');
 }
 
-export function moveToString(move: MatchMove): string {
-  switch (move.moveType) {
-    case 'fire':
-      return 'f' + move.position.toString(10);
-    case 'reposition':
-      return 'r' + move.position.toString(10);
-    case 'taunt':
-      return 't';
+export function moveToString(action: TurnAction): string {
+  switch (action.action) {
+    case 'build':
+      return `b,${action.coordinates.toString(10)}--${structureToConcise(action.structure)}`;
+    case 'repair':
+      return `r,${action.id.toString(10)}`;
+    case 'upgrade':
+      return `u,${action.id.toString(10)}`
+    case 'salvage':
+      return `s,${action.id.toString(10)}`
     default:
-      console.log('[moveToString] found move with invalid type:', move);
-      throw new Error(`Invalid move submitted: ${move}`);
+      console.log('[moveToString] found move with invalid type:', action);
+      throw new Error(`Invalid move submitted: ${action}`);
+  }
+}
+export function structureToConcise(s: Structure): string{
+  switch(s){
+    case 'anacondaTower': return "at";
+    case 'piranhaTower': return "pt";
+    case 'slothTower': return "st";
+    case 'gorillaCrypt': return "gc";
+    case 'jaguarCrypt': return "jc";
+    case 'macawCrypt': return "mc";
   }
 }
 

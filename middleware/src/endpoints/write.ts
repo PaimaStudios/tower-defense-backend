@@ -1,3 +1,4 @@
+import { Faction, TurnAction } from '@tower-defense/utils';
 import { retryPromise } from 'paima-engine/paima-utils';
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
@@ -14,12 +15,13 @@ const RETRY_PERIOD = 3000;
 const RETRIES_COUNT = 3;
 
 async function createLobby(
-  numberOfLives: number,
+  configName: string,
+  role: Faction | "random",
   numberOfRounds: number,
   roundLength: number,
-  map: string,
-  gridSize: number,
-  selectedAnimal: string
+  isHidden: boolean,
+  mapName: string,
+  isPractice: boolean
 ): Promise<CreateLobbyResponse> {
   const errorFxn = buildEndpointErrorFxn('createLobby');
 
@@ -35,17 +37,24 @@ async function createLobby(
   }
   const userWalletAddress = wallet;
 
-  const allowedWallets: string[] = [];
+  const roleEncoding = role === "attacker" 
+  ? "a"
+  : role === "defender"
+  ? "d"
+  : role === "random"
+  ? "r"
+  : "r"
 
+  // TODO use paima concise
   const dataStrings = [
     'c',
-    numberOfLives.toString(10),
-    gridSize.toString(10),
+    configName,
+    roleEncoding,
     numberOfRounds.toString(10),
     roundLength.toString(10),
-    allowedWallets.join(','),
-    map,
-    selectedAnimal,
+    isHidden ? "T" : "F",
+    mapName,
+    isPractice ? "T" : "F"
   ];
 
   let currentBlockVar: number;
@@ -92,7 +101,7 @@ async function createLobby(
   }
 }
 
-async function joinLobby(lobbyID: string, selectedAnimal: string): Promise<OldResult> {
+async function joinLobby(lobbyID: string): Promise<OldResult> {
   const errorFxn = buildEndpointErrorFxn('joinLobby');
 
   let wallet: string;
@@ -107,7 +116,7 @@ async function joinLobby(lobbyID: string, selectedAnimal: string): Promise<OldRe
   }
   const userWalletAddress = wallet;
 
-  const dataStrings = ['j', '*' + lobbyID, selectedAnimal];
+  const dataStrings = ['j', '*' + lobbyID];
 
   let currentBlockVar: number;
   try {
@@ -153,7 +162,7 @@ async function joinLobby(lobbyID: string, selectedAnimal: string): Promise<OldRe
 async function submitMoves(
   lobbyID: string,
   roundNumber: number,
-  moves: MatchMove[]
+  moves: TurnAction[]
 ): Promise<OldResult> {
   const errorFxn = buildEndpointErrorFxn('submitMoves');
 
