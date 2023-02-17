@@ -41,10 +41,10 @@ export async function buildMatchExecutor(data: MatchExecutorData): Promise<Match
   return MatchExecutorConstructor.initialize(
     matchEnvironment,
     config.num_of_rounds,
-    states,
+    states as any,
     seeds,
     moves,
-    stateMutator,
+    stateMutator as any,
     processTick
   );
 }

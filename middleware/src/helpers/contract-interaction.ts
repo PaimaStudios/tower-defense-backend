@@ -58,7 +58,8 @@ export async function postString(
 ): Promise<Result<number>> {
   const errorFxn = buildEndpointErrorFxn('postString');
   const hexData = utf8ToHex(dataUtf8);
-  const txTemplate = getTxTemplate(getStorageAddress(), methodName, hexData);
+  // TODO fix type error
+  const txTemplate = getTxTemplate(getStorageAddress(), methodName as any, hexData);
   const tx = {
     ...txTemplate,
     from: userAddress,
