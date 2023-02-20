@@ -1,5 +1,5 @@
 {
-  "name": "@catapult/middleware",
+  "name": "@tower-defense/middleware",
   "version": "1.0.0",
   "description": "Middleware for the Catapult game, to be imported into any frontend",
   "main": "build/index.js",
