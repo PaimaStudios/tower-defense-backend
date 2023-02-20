@@ -14,13 +14,15 @@
   "keywords": [],
   "author": "PaimaStudios",
   "dependencies": {
-    "@catapult/game-logic": "1.0.0",
-    "@catapult/utils": "1.0.0",
+    "@tower-defense/game-logic": "1.0.0",
+    "@tower-defense/utils": "1.0.0",
     "@dcspark/cardano-multiplatform-lib-browser": "^3.0.0-beta.0",
     "@metamask/providers": "^9.0.0",
     "web3-utils": "^1.7.3"
   },
   "devDependencies": {
+    "web3": "^1.7.5",
+    "@truffle/hdwallet-provider": "^2.0.14",
     "dotenv": "^16.0.3",
     "esbuild": "^0.15.15",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
