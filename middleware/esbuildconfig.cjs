@@ -21,6 +21,7 @@ const config = {
   define,
   outfile: "packaged/middleware.js",
   plugins: [global, modules],
+  external: ['pg-native']
 };
 
 esbuild.build(config);
