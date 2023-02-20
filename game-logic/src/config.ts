@@ -348,7 +348,7 @@ export function parseConfig(s: string | null): MatchConfig {
             baseConfig.jaguarCrypt[2] = jaguarUpgrade2(baseConfig.jaguarCrypt[1]);
             baseConfig.jaguarCrypt[3] = jaguarUpgrade3(baseConfig.jaguarCrypt[1]);
             break;
-          case 'gorillaCrypt':
+          case 'macawCrypt':
             baseConfig.macawCrypt[1] = { ...baseConfig.macawCrypt[1], ...p };
             baseConfig.macawCrypt[2] = macawUpgrade2(baseConfig.macawCrypt[1]);
             baseConfig.macawCrypt[3] = macawUpgrade3(baseConfig.macawCrypt[1]);
