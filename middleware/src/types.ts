@@ -1,24 +1,15 @@
-import { MatchState, TurnAction } from '@tower-defense/utils';
-
-export type Hash = string;
-export type URI = string;
-export type ISO8601Date = string;
-export type CardanoAddress = Hash;
-export type EthAddress = Hash;
-export type Address = CardanoAddress | EthAddress;
-export type UserAddress = Address;
-export type ContractAddress = EthAddress;
-export type UserSignature = Hash;
-export type GameInput = string;
-
-// import type {
-//   ContractAddress,
-//   GameInput,
-//   Hash,
-//   URI,
-//   UserAddress,
-//   UserSignature,
-// } from "catapult-utils";
+import type {
+  ContractAddress,
+  GameInput,
+  Hash,
+  LobbyStatus,
+  MatchConfig,
+  MatchState,
+  TurnAction,
+  URI,
+  UserAddress,
+  UserSignature,
+} from '@tower-defense/utils';
 
 export interface BatchedSubunit {
   userAddress: UserAddress;
@@ -31,6 +22,7 @@ export interface MiddlewareConnectionDetails {
   storageAddress: ContractAddress;
   backendUri: URI;
   indexerUri: URI;
+  statefulUri: URI;
   batcherUri: URI;
 }
 
@@ -43,7 +35,7 @@ export interface PostingInfo {
   postingModeString: PostingModeString;
 }
 
-export type PostingModeString = 'unbatched' | 'batched-eth' | 'batched-cardano';
+export type PostingModeString = 'unbatched' | 'batched-eth' | 'batched-cardano' | 'automatic';
 
 export type PostingModeSwitchResult = PostingModeSwitchSuccessfulResult | FailedResult;
 
@@ -69,7 +61,8 @@ export interface SuccessfulResult<T> {
 
 export interface FailedResult {
   success: false;
-  message: string;
+  errorMessage: string;
+  errorCode: number;
 }
 
 export interface RoundEnd {
@@ -78,7 +71,7 @@ export interface RoundEnd {
 }
 
 export type QueryValue = string | number | boolean;
-export type QueryOptions = { [key: string]: QueryValue };
+export type QueryOptions = Record<string, QueryValue>;
 
 export type Result<T> = SuccessfulResult<T> | FailedResult;
 export type OldResult = SuccessfulResultMessage | FailedResult;
@@ -88,11 +81,8 @@ export type MapName = 'jungle' | 'ocean';
 export type UserAnimal = 'piranha' | 'gorilla' | 'anaconda' | 'jaguar' | 'macaw' | 'sloth';
 
 export interface Wallet {
-  success: true;
   walletAddress: UserAddress;
 }
-
-type LobbyStatus = 'active' | 'open' | 'closed' | 'finished' | 'unknown';
 
 interface CreateLobbySuccessfulResponse {
   success: true;
@@ -109,6 +99,11 @@ export interface NewLobby {
 export interface NewLobbies {
   success: true;
   lobbies: NewLobby[];
+}
+
+export interface NftId {
+  nftAddress: ContractAddress;
+  tokenId: number;
 }
 
 export interface NFT {
@@ -132,52 +127,46 @@ export interface User {
 export interface BasicLobbyInfo {
   lobby_id: Hash;
   health: number;
-  spawnLimit: number;
-  current_round: number;
+  grid_size: number;
   num_of_rounds: number;
-  map: MapName;
-  created_at: Date;
-  creation_block_height: number;
+  current_round: number;
   round_length: number;
+  round_start_height: number;
+  map: MapName;
+  created_at: string;
+  creation_block_height: number;
+  lobby_creator: UserAddress;
+  lobby_creator_animal: UserAnimal;
+  player_two: UserAddress;
+  player_two_animal: UserAnimal;
   round_ends_in_blocks: number;
   round_ends_in_secs: number;
-  round_start_height: number;
-  lobby_creator: UserAddress;
-  creator_faction: Faction;
-  initial_gold: number;
-  hidden: boolean;
 }
 
-export type Faction = 'attacker' | 'defender';
-
-export interface OpenLobbyState extends BasicLobbyInfo {
-  lobby_state: 'open';
-  player_two: null;
-  player_two_faction: null;
+export interface LobbyState extends BasicLobbyInfo {
+  lobby_state: LobbyStatus;
 }
-
-export interface ActiveLobbyState extends BasicLobbyInfo {
-  lobby_state: 'active';
-  player_turn: UserAddress;
-  player_two: UserAddress;
-  player_two_faction: Faction;
-}
-
-export interface FinishedLobbyState extends BasicLobbyInfo {
-  lobby_state: 'finished';
-  player_two: UserAddress;
-  player_two_faction: Faction;
-}
-
-export type LobbyState = OpenLobbyState | ActiveLobbyState | FinishedLobbyState;
 
 export interface PackedLobbyState {
   success: true;
   lobby: LobbyState;
 }
-export interface PackedLobbyStatus{
+
+export interface RoundExecutionState {
+  executed: boolean;
+  usersWhoSubmittedMoves: UserAddress[];
+  roundEndsInBlocks: number;
+  roundEndsInSeconds: number;
+}
+
+export interface PackedRoundExecutionState {
   success: true;
-  lobbyStatus: LobbyStatus;
+  round: RoundExecutionState;
+}
+
+export interface RichOpenLobbyStates {
+  success: true;
+  lobbies: RichOpenLobbyState[];
 }
 
 export interface LobbyStates {
@@ -214,6 +203,7 @@ export interface UserStats {
   wallet: UserAddress;
   wins: number;
   losses: number;
+  ties: number;
 }
 
 export interface PackedUserStats {
@@ -221,7 +211,7 @@ export interface PackedUserStats {
   stats: UserStats;
 }
 
-interface AccountNftsResult {
+export interface AccountNftsResult {
   metadata: {
     name: string;
     image: URI;
@@ -323,47 +313,104 @@ interface ExecutorDataBlockHeight {
   done: boolean;
 }
 
-interface ExecutorDataSeed {
+export interface ExecutorDataSeed {
   block_height: number;
   seed: string;
   round: number;
 }
 
-export interface ExecutorMove {
-  id: number;
-  lobby_id: string;
-  move_type: string;
-  position: number | null;
-  round: number;
-  wallet: string;
-}
-
 export interface RoundExecutorData {
   block_height: ExecutorDataBlockHeight;
-  config: ActiveLobbyState | FinishedLobbyState;
+  config: string; // config concise encoding
   state: MatchState;
   moves: TurnAction[];
 }
 
 export interface MatchExecutorData {
-  config: ActiveLobbyState | FinishedLobbyState;
-  states: MatchState[];
+  lobby: LobbyState;
+  states: ExecutorDataPlayerState[];
   seeds: ExecutorDataSeed[];
   moves: TurnAction[];
 }
 
+export type NftScore = {
+  nftContract: string;
+  tokenId: number;
+  totalGames: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  score: number;
+};
+
+export type NftScoreSnake = {
+  nft_contract: string;
+  token_id: number;
+  total_games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  score: number;
+};
+
+export interface StatefulNftId {
+  nft_contract: string;
+  token_id: number;
+}
+
+export interface IndexerNftOwnership {
+  tokenId: number;
+  contract: string;
+  owner: string;
+}
+
 /*
 export interface Opponent{
-  opponentAddress: Hash,
-  NFT: NFT
+    opponentAddress: Hash,
+    NFT: NFT
 }
 
 export interface MockData {
-wallet: Wallet;
-lobbies: OpenLobby[];
-inLobbies: Lobby[];
-lobby: LobbyState;
-stats: UserStats;
-opponents: [Opponent, Opponent, Opponent];
+  wallet: Wallet;
+  lobbies: OpenLobby[];
+  inLobbies: Lobby[];
+  lobby: LobbyState;
+  stats: UserStats;
+  opponents: [Opponent, Opponent, Opponent];
 }
 */
+
+export interface MatchWinnerResponse {
+  match_status: LobbyStatus;
+  winner_address: string;
+}
+export interface LobbyDbQuery {
+  created_at: Date;
+  creation_block_height: number;
+  current_round: number;
+  grid_size: number;
+  health: number;
+  hidden: boolean;
+  lobby_creator: string;
+  lobby_creator_animal: string | null;
+  lobby_id: string;
+  lobby_state: LobbyStatus;
+  map: string;
+  num_of_rounds: number;
+  round_length: number;
+}
+export interface UserNft {
+  wallet: UserAddress;
+  nftContract: ContractAddress | null;
+  tokenId: number | null;
+}
+
+export interface LobbyWebserverQuery {
+  lobby: LobbyDbQuery;
+  nft: UserNft;
+}
+
+export interface RichOpenLobbyState extends LobbyDbQuery {
+  wins: number;
+  losses: number;
+}

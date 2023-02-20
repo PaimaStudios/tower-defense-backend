@@ -1,20 +1,32 @@
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
+import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode, FE_ERR_METAMASK_NOT_INSTALLED } from '../errors';
 import { localRemoteVersionsCompatible } from '../helpers/auxiliary-queries';
-import { updateFee } from '../helpers/contract-interaction';
+import { updateFee } from '../helpers/posting';
 import {
+  checkEthWalletStatus,
   rawWalletLogin,
   switchChain,
-  verifyWalletChain as verifyWalletChainInternal,
+  verifyWalletChain,
 } from '../helpers/wallet-metamask';
-import { setEthAddress } from '../state';
-import { FailedResult, Wallet } from '../types';
+import {
+  setEthAddress,
+} from '../state';
+import { Result, OldResult, Wallet } from '../types';
 
-async function verifyWalletChain(): Promise<boolean> {
-  return verifyWalletChainInternal();
+// Wrapper function for all wallet status checking functions
+async function checkWalletStatus(): Promise<OldResult> {
+  // TODO: Add checkCardanoWalletStatus() and branching logic
+  return checkEthWalletStatus();
 }
 
-async function userWalletLogin(): Promise<Wallet | FailedResult> {
+// Core "login" function which tells the frontend whether the user has a wallet in a valid state
+// thus allowing the game to get past the login screen
+async function userWalletLogin(): Promise<Result<Wallet>> {
   const errorFxn = buildEndpointErrorFxn('userWalletLogin');
+
+  if (typeof window.ethereum === 'undefined') {
+    return errorFxn(CatapultMiddlewareErrorCode.METAMASK_NOT_INSTALLED, undefined, FE_ERR_METAMASK_NOT_INSTALLED);
+  }
+
   let account: string;
   try {
     account = await rawWalletLogin();
@@ -32,24 +44,32 @@ async function userWalletLogin(): Promise<Wallet | FailedResult> {
   }
   try {
     if (!(await verifyWalletChain())) {
-      await switchChain();
+      if (!(await switchChain())) {
+        return errorFxn(CatapultMiddlewareErrorCode.METAMASK_CHAIN_SWITCH);
+      }
     }
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.METAMASK_CHAIN_SWITCH, err);
   }
 
-  if (!(await localRemoteVersionsCompatible())) {
-    return errorFxn(CatapultMiddlewareErrorCode.BACKEND_VERSION_INCOMPATIBLE);
+  try {
+    if (!(await localRemoteVersionsCompatible())) {
+      return errorFxn(CatapultMiddlewareErrorCode.BACKEND_VERSION_INCOMPATIBLE);
+    }
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   setEthAddress(userWalletAddress);
   return {
     success: true,
-    walletAddress: userWalletAddress,
+    result: {
+      walletAddress: userWalletAddress,
+    }
   };
 }
 
 export const accountsEndpoints = {
   userWalletLogin,
-  verifyWalletChain,
+  checkWalletStatus
 };

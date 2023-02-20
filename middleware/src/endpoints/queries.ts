@@ -1,32 +1,34 @@
-import { LobbyStatus, URI, UserAddress } from '@tower-defense/utils';
-import { retryPromise } from 'paima-engine/paima-utils';
+import { MatchWinnerResponse } from '../types';
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
-  getNonemptyRandomOpenLobby,
+  fetchNftTitleImage,
+  fetchUserSetNft,
   getRawLatestProcessedBlockHeight,
   getRawLobbyState,
   getRawNewLobbies,
+  verifyNft,
+  getNftStats as getNftStatsInternal,
+  addLobbyCreatorNftStats,
 } from '../helpers/auxiliary-queries';
 import { calculateRoundEnd } from '../helpers/data-processing';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
 import { getBlockNumber } from '../helpers/general';
 import {
-  backendQueryLobbyStatus,
   backendQueryMatchExecutor,
+  backendQueryMatchWinner,
   backendQueryOpenLobbies,
+  backendQueryRandomLobby,
   backendQueryRoundExecutor,
   backendQueryRoundStatus,
+  backendQuerySearchLobby,
   backendQueryUserLobbies,
-  backendQueryUserNft,
   backendQueryUserStats,
   indexerQueryAccountNfts,
-  indexerQueryHistoricalOwner,
-  indexerQueryTitleImage,
 } from '../helpers/query-constructors';
-import { backendEndpointCall, indexerEndpointCall } from '../helpers/server-interaction';
 import {
   AccountNftsData,
+  AccountNftsResult,
   FailedResult,
   LobbyState,
   LobbyStates,
@@ -34,10 +36,12 @@ import {
   MatchExecutorData,
   NewLobbies,
   NFT,
+  NftId,
+  NftScore,
   PackedLobbyState,
-  PackedLobbyStatus,
+  PackedRoundExecutionState,
   PackedUserStats,
-  RoundEnd,
+  RichOpenLobbyStates,
   RoundExecutor,
   RoundExecutorData,
   RoundStatusData,
@@ -48,232 +52,220 @@ import {
 const RETRY_PERIOD_RANDOM_LOBBY = 1000;
 
 async function getLatestProcessedBlockHeight(): Promise<SuccessfulResult<number> | FailedResult> {
-  return getRawLatestProcessedBlockHeight();
+  const errorFxn = buildEndpointErrorFxn('getLatestProcessedBlockHeight');
+  try {
+    return getRawLatestProcessedBlockHeight();
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.UNKNOWN, err);
+  }
 }
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');
+
+  let packedLobbyState: PackedLobbyState | FailedResult;
+  let latestBlockHeight: number;
+
   try {
-    const [packedLobbyState, latestBlockHeight] = await Promise.all([
+    [packedLobbyState, latestBlockHeight] = await Promise.all([
       getRawLobbyState(lobbyID),
       getBlockNumber(),
     ]);
 
     if (!packedLobbyState.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.UNKNOWN);
+      return errorFxn(packedLobbyState.errorMessage);
     }
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
 
-    let [start, length] = [0, 0];
+  try {
     const l: LobbyState = packedLobbyState.lobby;
+    // TODO: properly typecheck? Or should have happened in getRawLobbyState?
+    let [start, length] = [0, 0];
 
     if (l.lobby_state === 'active') {
-      if (!l.hasOwnProperty('round_start_height') || !l.hasOwnProperty('round_length')) {
-        errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
-      } else {
-        start = l.round_start_height;
-        // length = l.round_length;
-      }
+      start = l.round_start_height;
+      length = l.round_length;
     }
 
-    let endVar: RoundEnd;
-    try {
-      endVar = calculateRoundEnd(start, length, latestBlockHeight);
-    } catch (err) {
-      errorFxn(CatapultMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
-      endVar = {
-        blocks: 0,
-        seconds: 0,
-      };
-    }
-    const end = endVar;
+    const end = calculateRoundEnd(start, length, latestBlockHeight);
 
     return {
       success: true,
       lobby: {
         ...l,
-        // round_ends_in_blocks: end.blocks,
-        // round_ends_in_secs: end.seconds,
+        round_ends_in_blocks: end.blocks,
+        round_ends_in_secs: end.seconds,
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
-async function getLobbyStatus(lobbyID: string): Promise<PackedLobbyStatus | FailedResult>{
-  const errorFxn = buildEndpointErrorFxn('getLobbyStatus');
+
+async function getLobbySearch(
+  wallet: string,
+  searchQuery: string,
+  page: number,
+  count?: number
+): Promise<RichOpenLobbyStates | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getLobbySearch');
+
+  let response: Response;
+  let latestBlockHeight: number;
   try {
-    const query = backendQueryLobbyStatus(lobbyID);
-    const result = await backendEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-    }
-    const lobbyStatus = result.result as { lobbyStatus: LobbyStatus };
-    if (typeof lobbyStatus !== 'object' || lobbyStatus === null || !lobbyStatus.hasOwnProperty('lobbyStatus')) {
-      return errorFxn(
-        CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND,
-        'Missing property: stats'
-      );
-    }
-    return {
-      success: true,
-      ...lobbyStatus,
-    };
+    const query = backendQuerySearchLobby(wallet, searchQuery, page, count);
+    [response, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = await response.json();
+    const richLobbies = await addLobbyCreatorNftStats(j.lobbies, latestBlockHeight);
+    // TODO: properly typecheck
+    return {
+      success: true,
+      lobbies: richLobbies,
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
+
+async function getRoundExecutionState(
+  lobbyID: string,
+  round: number
+): Promise<PackedRoundExecutionState | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getRoundExecutionState');
+
+  let res: Response;
+  let latestBlockHeight: number;
+
+  try {
+    const query = backendQueryRoundStatus(lobbyID, round);
+    [res, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const roundStatusData = (await res.json()) as RoundStatusData;
+    const r = roundStatusData.round;
+    // TODO: properly typecheck
+
+    let [start, length] = [r.roundStarted, r.roundLength];
+    const end = calculateRoundEnd(start, length, latestBlockHeight);
+    return {
+      success: true,
+      round: {
+        executed: r.executed,
+        usersWhoSubmittedMoves: r.usersWhoSubmittedMoves,
+        roundEndsInBlocks: end.blocks,
+        roundEndsInSeconds: end.seconds,
+      },
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
 async function getUserStats(walletAddress: string): Promise<PackedUserStats | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserStats');
+
+  let res: Response;
   try {
     const query = backendQueryUserStats(walletAddress);
-    const result = await backendEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-    }
-    const userStats = result.result as { stats: UserStats };
-    if (typeof userStats !== 'object' || userStats === null || !userStats.hasOwnProperty('stats')) {
-      return errorFxn(
-        CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND,
-        'Missing property: stats'
-      );
-    }
-    for (const prop of ['wallet', 'wins', 'losses', 'ties']) {
-      if (!userStats.hasOwnProperty(prop)) {
-        return errorFxn(
-          CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND,
-          `Missing property: stats.${prop}`
-        );
-      }
-    }
-    return {
-      success: true,
-      ...userStats,
-    };
+    res = await fetch(query);
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = (await res.json()) as { stats: UserStats };
+    // TODO: properly typecheck
+    return {
+      success: true,
+      stats: {
+        wallet: j.stats.wallet,
+        wins: j.stats.wins,
+        losses: j.stats.losses,
+        ties: j.stats.ties,
+      },
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
 async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[]> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserWalletNfts');
+
   const initSize = 100;
-  try {
-    const query = indexerQueryAccountNfts(address, initSize);
-    const result = await indexerEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT);
-    }
-    if (
-      typeof result.result !== 'object' ||
-      result.result === null ||
-      !result.result.hasOwnProperty('response')
-    ) {
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
-    }
-    const j = result.result as { response: AccountNftsData };
-    const response = j.response;
-    const { pages, totalItems } = response;
-    const resultList = response.result;
-    if (totalItems > initSize) {
-      for (let i = 1; i < pages; i++) {
-        const query = indexerQueryAccountNfts(address, initSize, i);
-        const result = await indexerEndpointCall(query);
-        if (!result.success) {
-          return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT);
-        }
-        if (
-          typeof result.result !== 'object' ||
-          result.result === null ||
-          !result.result.hasOwnProperty('response')
-        ) {
-          return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
-        }
-        const j = result.result as { response: AccountNftsData };
-        resultList.push(...j.response.result);
-      }
+  const resultList: AccountNftsResult[] = [];
+  let pages: number = 1;
+
+  for (let page = 0; page < pages; page++) {
+    let res: Response;
+
+    try {
+      const query = indexerQueryAccountNfts(address, initSize, page);
+      res = await fetch(query);
+    } catch (err) {
+      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
     }
 
+    try {
+      const j = (await res.json()) as { response: AccountNftsData };
+      // TODO: properly type check
+      if (page === 0) {
+        pages = j.response.pages;
+      }
+      resultList.push(...j.response.result);
+    } catch (err) {
+      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
+    }
+  }
+
+  try {
     return {
       success: true,
-      result: resultList.map((res: any) => ({
-        title: res.metadata.name,
-        imageUrl: res.metadata.image,
-        nftAddress: res.contract,
-        tokenId: res.tokenId,
+      result: resultList.map((r: AccountNftsResult) => ({
+        title: r.metadata.name,
+        imageUrl: r.metadata.image,
+        nftAddress: r.contract,
+        tokenId: r.tokenId,
       })),
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
   }
 }
 
 async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserSetNFT');
 
-  let nftAddressVar: string;
-  let nftTokenIdVar: number;
-  let ownershipQueryVar: string;
+  let nftId: NftId;
+  let latestBlockHeight: number;
 
   // Get registered NFT from the backend:
   try {
-    const query = backendQueryUserNft(wallet);
-    const [result, latestBlockHeight] = await Promise.all([
-      backendEndpointCall(query),
-      getBlockNumber(),
-    ]);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
+    const [res, blockNumber] = await Promise.all([fetchUserSetNft(wallet), getBlockNumber()]);
+    if (!res.success) {
+      return res;
     }
-    if (
-      typeof result.result !== 'object' ||
-      result.result === null ||
-      !result.result.hasOwnProperty('nft')
-    ) {
-      return errorFxn(CatapultMiddlewareErrorCode.NO_REGISTERED_NFT);
-    }
-    const j = result.result as {
-      nft: {
-        address: string;
-        token_id: string;
-      };
-    };
-
-    const nft = j.nft;
-    nftAddressVar = nft.address;
-    nftTokenIdVar = parseInt(nft.token_id, 10);
-    if (isNaN(nftTokenIdVar)) {
-      // TODO: can the backend store a NaN somehow? Is it enforced to be an integer?
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
-    }
-    ownershipQueryVar = indexerQueryHistoricalOwner(
-      nftAddressVar,
-      nftTokenIdVar,
-      latestBlockHeight
-    );
+    latestBlockHeight = blockNumber;
+    nftId = res.result;
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
-  const nftAddress = nftAddressVar;
-  const nftTokenId = nftTokenIdVar;
-  const ownershipQuery = ownershipQueryVar;
-
   // Verify NFT ownership with the indexer:
   try {
-    const result = await indexerEndpointCall(ownershipQuery);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT);
-    }
-    const verify = result.result as {
-      success: boolean;
-      result: UserAddress;
-    };
-    if (!verify.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_VERIFY_NFT_OWNERSHIP);
-    }
-    if (verify.result.toLowerCase() !== wallet.toLowerCase()) {
-      return errorFxn(CatapultMiddlewareErrorCode.NFT_OWNED_BY_DIFFERENT_ADDRESS);
+    const res = await verifyNft(nftId, wallet, latestBlockHeight);
+    if (!res.success) {
+      return res;
     }
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
@@ -281,31 +273,7 @@ async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | Fa
 
   // Fetch title and image of NFT and return result:
   try {
-    const titleImageQuery = indexerQueryTitleImage(nftAddress, nftTokenId);
-    const result = await indexerEndpointCall(titleImageQuery);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT);
-    }
-    const j = result.result as {
-      success: boolean;
-      result: {
-        title: string;
-        image: URI;
-      };
-    };
-    if (!j.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.NFT_TITLE_IMAGE_UNKNOWN);
-    }
-    const titleAndImage = j.result;
-    return {
-      success: true,
-      result: {
-        title: titleAndImage.title,
-        imageUrl: titleAndImage.image,
-        nftAddress: nftAddress,
-        tokenId: nftTokenId,
-      },
-    };
+    return fetchNftTitleImage(nftId);
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
@@ -315,7 +283,12 @@ async function getNewLobbies(
   wallet: string,
   blockHeight: number
 ): Promise<NewLobbies | FailedResult> {
-  return getRawNewLobbies(wallet, blockHeight);
+  const errorFxn = buildEndpointErrorFxn('getNewLobbies');
+  try {
+    return getRawNewLobbies(wallet, blockHeight);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.UNKNOWN, err);
+  }
 }
 
 async function getUserLobbiesMatches(
@@ -324,40 +297,114 @@ async function getUserLobbiesMatches(
   count?: number
 ): Promise<LobbyStates | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserLobbiesMatches');
+
+  let res: Response;
   try {
     const query = backendQueryUserLobbies(walletAddress, count, page);
-    const result = await backendEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-    }
-    const lobbies = result.result as { lobbies: LobbyState[] };
-    return {
-      success: true,
-      ...lobbies,
-    };
+    res = await fetch(query);
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
-}
 
-async function getOpenLobbies(page: number, count?: number): Promise<LobbyStates | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('getOpenLobbies');
   try {
-    const query = backendQueryOpenLobbies(count, page);
-    const result = await backendEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-    }
-    const lobbies = result.result as { lobbies: LobbyState[] };
+    const j = (await res.json()) as { lobbies: LobbyState[] };
+    // TODO: properly type check
     return {
       success: true,
-      ...lobbies,
+      lobbies: j.lobbies,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
+async function getOpenLobbies(
+  wallet: string,
+  page: number,
+  count?: number
+): Promise<RichOpenLobbyStates | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getOpenLobbies');
+
+  let res: Response;
+  let latestBlockHeight: number;
+
+  try {
+    const query = backendQueryOpenLobbies(wallet, count, page);
+    [res, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = await res.json();
+    const richLobbies = await addLobbyCreatorNftStats(j.lobbies, latestBlockHeight);
+    return {
+      success: true,
+      lobbies: richLobbies,
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
+
+async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getRandomOpenLobby');
+
+  let res: Response;
+  try {
+    const query = backendQueryRandomLobby();
+    res = await fetch(query);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = (await res.json()) as { lobby: LobbyState };
+    if (j.lobby === null) {
+      return errorFxn(CatapultMiddlewareErrorCode.NO_OPEN_LOBBIES);
+    }
+    return {
+      success: true,
+      lobby: j.lobby,
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
+
+async function getMatchWinner(
+  lobbyId: string
+): Promise<SuccessfulResult<MatchWinnerResponse> | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getMatchWinner');
+
+  let res: Response;
+  try {
+    const query = backendQueryMatchWinner(lobbyId);
+    res = await fetch(query);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = await res.json();
+    return {
+      success: true,
+      result: {
+        match_status: j.match_status,
+        winner_address: j.winner_address,
+      },
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
+
+async function getNftStats(
+  nftContract: string,
+  tokenId: number
+): Promise<SuccessfulResult<NftScore> | FailedResult> {
+  return getNftStatsInternal(nftContract, tokenId);
+}
 
 async function getRoundExecutor(
   lobbyId: string,
@@ -366,16 +413,20 @@ async function getRoundExecutor(
   const errorFxn = buildEndpointErrorFxn('getRoundExecutor');
 
   // Retrieve data:
-  let data: RoundExecutorData;
+  let res: Response;
   try {
     const query = backendQueryRoundExecutor(lobbyId, roundNumber);
-    const result = await backendEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-    }
-    data = result.result as RoundExecutorData;
+    res = await fetch(query);
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  let data: RoundExecutorData;
+  try {
+    data = (await res.json()) as RoundExecutorData;
+    // TODO: more proper type checking
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 
   // Process data:
@@ -396,16 +447,22 @@ async function getMatchExecutor(
   const errorFxn = buildEndpointErrorFxn('getMatchExecutor');
 
   // Retrieve data:
-  let data: MatchExecutorData;
+  let res: Response;
+
   try {
     const query = backendQueryMatchExecutor(lobbyId);
-    const result = await backendEndpointCall(query);
-    if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
-    }
-    data = result.result as MatchExecutorData;
+    res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT);
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  let data: MatchExecutorData;
+
+  try {
+    data = (await res.json()) as MatchExecutorData;
+    // TODO: more proper error checking
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 
   // Process data:
@@ -416,20 +473,24 @@ async function getMatchExecutor(
       result: executor,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR);
+    return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR, err);
   }
 }
 
 export const queryEndpoints = {
   getUserStats,
   getLobbyState,
-  getLobbyStatus,
+  getLobbySearch,
+  getRoundExecutionState,
+  getRandomOpenLobby,
   getOpenLobbies,
   getUserLobbiesMatches,
   getUserWalletNfts,
   getLatestProcessedBlockHeight,
   getNewLobbies,
   getUserSetNFT,
+  getMatchWinner,
+  getNftStats,
   getRoundExecutor,
   getMatchExecutor,
 };

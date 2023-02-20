@@ -10,3 +10,14 @@ export function getBlockTime(deployment: Deployment): number {
 export async function getBlockNumber(): Promise<number> {
   return getWeb3().then(web3 => web3.eth.getBlockNumber());
 }
+
+export async function postDataToEndpoint(uri: string, data: string): Promise<Response> {
+  return fetch(uri, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: data,
+  });
+}
