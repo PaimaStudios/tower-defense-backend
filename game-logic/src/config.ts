@@ -1,5 +1,5 @@
 import { consumer } from 'paima-engine/paima-concise';
-import { MatchConfig, TowerConfig, CryptConfig, parse, Crypt } from '@tower-defense/utils';
+import { MatchConfig, TowerConfig, CryptConfig, tryParseConfig, Crypt } from '@tower-defense/utils';
 
 const baseAnacondaTowerConfig1: TowerConfig = {
   price: 50,
@@ -314,7 +314,7 @@ export function parseConfig(s: string | null): MatchConfig {
     const c = consumer.initialize(s);
     const version = c.nextValue();
     const definitions = c.remainingValues();
-    const parsed = definitions.map(d => parse(d.value));
+    const parsed = definitions.map(d => tryParseConfig(d.value));
     for (const p of parsed) {
       if (!('error' in p))
         switch (p.name) {

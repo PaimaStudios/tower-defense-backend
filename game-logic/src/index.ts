@@ -40,9 +40,10 @@ function processTick(
   randomnessGenerator: Prando
 ): TickEvent[] | null {
   // Return null, i.e. move to next round iff the matchState shows the round has ended
-  if (matchState.roundEnded) return incrementRound(matchState)
+  if (matchState.roundEnded) return incrementRound(matchState);
   // End round if the base health is 0
-  if (matchState.defenderBase.health === 0) return endRound(matchConfig, matchState, currentTick, randomnessGenerator)
+  if (matchState.defenderBase.health === 0)
+    return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
   // Else let's play
   let randomness = 0;
   // We generate new randomness for every tick. Seeds vary every round.
@@ -54,7 +55,8 @@ function processTick(
     // Structure events are processed in a batch as they don't affect each other
     applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
     return events;
-  } else { // ticks 2+
+  } else {
+    // ticks 2+
     // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
     if (matchState.currentRound === 1 || matchState.currentRound === 2)
       return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
@@ -64,7 +66,8 @@ function processTick(
       eventsFromMatchState(matchConfig, matchState, currentTick, randomnessGenerator) || [];
     // Other events are processed one by one, as they affect global match state
     // End round if defender base health is 0
-    if (matchState.defenderBase.health === 0) return endRound(matchConfig, matchState, currentTick, randomnessGenerator)
+    if (matchState.defenderBase.health === 0)
+      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
     const allSpawned = Object.keys(matchState.actors.crypts).every(c =>
       matchState.finishedSpawning.includes(parseInt(c))
     );
@@ -77,20 +80,19 @@ function processTick(
     }
   }
 }
-function incrementRound(matchState: MatchState): null{
-    console.log(matchState.currentRound, 'incrementing round');
-    // reset the list of spawned units of every crypt
-    for (let crypt of Object.keys(matchState.actors.crypts)){
-      // annoying that Object.values stripes the types
-      const c = matchState.actors.crypts[parseInt(crypt)];
-      c.spawned = [];
-    }
-    // increment round
-    matchState.currentRound++;
-    // reset matchState so it starts processing on next tick
-    matchState.roundEnded = false;
-    return null;
-
+function incrementRound(matchState: MatchState): null {
+  console.log(matchState.currentRound, 'incrementing round');
+  // reset the list of spawned units of every crypt
+  for (let crypt of Object.keys(matchState.actors.crypts)) {
+    // annoying that Object.values stripes the types
+    const c = matchState.actors.crypts[parseInt(crypt)];
+    c.spawned = [];
+  }
+  // increment round
+  matchState.currentRound++;
+  // reset matchState so it starts processing on next tick
+  matchState.roundEnded = false;
+  return null;
 }
 function endRound(
   matchConfig: MatchConfig,
@@ -99,7 +101,7 @@ function endRound(
   randomnessGenerator: Prando
 ): [GoldRewardEvent, GoldRewardEvent] {
   console.log(matchState.currentRound, 'ending round');
-  console.log(matchState.defenderBase.health, "base health")
+  console.log(matchState.defenderBase.health, 'base health');
   matchState.roundEnded = true;
   const gold = computeGoldRewards(matchConfig, matchState);
   applyEvents(matchConfig, matchState, gold, currentTick, randomnessGenerator);
