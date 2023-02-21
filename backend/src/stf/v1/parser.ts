@@ -38,7 +38,7 @@ const wallet = base62.many().tie();
 const lobbyID = base62.times(12).map((list: string[]) => list.join(''));
 const asteriskLobbyID = P.seqMap(P.string('*'), lobbyID, (al1, al2) => al2);
 const asteriskWallet = P.seqMap(P.string('*'), wallet, (aw1, aw2) => aw2);
-const matchConfigID = base62.times(9).map((list: string[]) => list.join(''));
+const matchConfigID = base62.times(14).map((list: string[]) => list.join(''));
 // TODO rob wants more characters here 14
 // TODO add blockchain input for match configs
 
@@ -152,36 +152,28 @@ const structureType = P.alt<Structure>(
 );
 const buildAction = P.seqObj<BuildStructureAction>(
   P.string('b'),
-  comma,
   ['coordinates', mapCoord],
   comma,
   ['structure', structureType],
-  bar
 ).map(o => {
   return { ...o, action: 'build'};
 });
 const repairAction = P.seqObj<RepairStructureAction>(
   P.string('r'),
-  comma,
   ['id', structureID],
-  bar
 ).map(o => {
   return { ...o, action: 'repair'};
 });
 
 const upgradeAction = P.seqObj<UpgradeStructureAction>(
   P.string('u'),
-  comma,
   ['id', structureID],
-  bar
 ).map(o => {
   return { ...o, action: 'upgrade'};
 });
 const salvageAction = P.seqObj<SalvageStructureAction>(
   P.string('s'),
-  comma,
   ['id', structureID],
-  bar
 ).map(o => {
   return { ...o, action: 'salvage'};
 });

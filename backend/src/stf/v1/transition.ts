@@ -28,7 +28,7 @@ import {
   UserStatsEffect,
   ZombieRoundEffect,
 } from './types.js';
-import { Faction, MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import { Faction, MatchState, parseInput, Structure, TurnAction } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
 
 export default async function (
@@ -40,7 +40,7 @@ export default async function (
   console.log(inputData, 'parsing input data');
   const user = inputData.userAddress.toLowerCase();
   console.log(`Processing input string: ${inputData.inputData}`);
-  const expanded = parse(inputData.inputData);
+  const expanded = parseInput(inputData.inputData);
   console.log(`Input string parsed as: ${expanded.input}`);
   switch (expanded.input) {
     case 'createdLobby':
