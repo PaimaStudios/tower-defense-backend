@@ -15,7 +15,7 @@ interface Response {
 }
 
 @Route('lobby_status')
-export class lobbyStatecontroller extends Controller {
+export class lobbyStatusController extends Controller {
   @Get()
   public async get(@Query() lobbyID: string): Promise<Response> {
     const pool = requirePool();

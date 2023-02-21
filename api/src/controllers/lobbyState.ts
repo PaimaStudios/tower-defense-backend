@@ -19,7 +19,7 @@ interface Lobby extends IGetLobbyByIdResult {
 }
 
 @Route('lobby_state')
-export class lobbyStatecontroller extends Controller {
+export class lobbyStateController extends Controller {
   @Get()
   public async get(@Query() lobbyID: string): Promise<Response> {
     const pool = requirePool();
