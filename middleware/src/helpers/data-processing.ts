@@ -39,26 +39,26 @@ export function batchedToString(b: BatchedSubunit): string {
 export function moveToString(move: TurnAction): string {
   switch (move.action) {
     case 'build':
-      return `b${move.coordinates},${conciseStructure(move.structure)}`
+      return `b${move.coordinates},${conciseStructure(move.structure)}`;
     case 'repair':
-      return `r${move.id}`
+      return `r${move.id}`;
     case 'upgrade':
-      return `u${move.id}`
+      return `u${move.id}`;
     case 'salvage':
-      return `s${move.id}`
+      return `s${move.id}`;
     default:
       pushLog('[moveToString] found move with invalid type:', move);
       throw new Error(`Invalid move submitted: ${move}`);
   }
 }
-function conciseStructure(s: Structure): string{
-    if (s === "anacondaTower") return "at";
-    else if (s === "piranhaTower") return "pt"
-    else if (s === "slothTower") return "st"
-    else if (s === "gorillaCrypt") return "gc"
-    else if (s === "jaguarCrypt") return "jc"
-    else if (s === "macawCrypt") return "mc"
-    else return "mc" // error message?
+function conciseStructure(s: Structure): string {
+  if (s === 'anacondaTower') return 'at';
+  else if (s === 'piranhaTower') return 'pt';
+  else if (s === 'slothTower') return 'st';
+  else if (s === 'gorillaCrypt') return 'gc';
+  else if (s === 'jaguarCrypt') return 'jc';
+  else if (s === 'macawCrypt') return 'mc';
+  else return 'mc'; // error message?
 }
 
 export function nftToStrings(nft: NFT): string[] {
