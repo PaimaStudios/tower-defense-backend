@@ -19,8 +19,10 @@ export const DEFAULT_FEE = process.env.DEFAULT_FEE || '10000000000000000';
 export const DEPLOYMENT = process.env.DEPLOYMENT || 'C1';
 export const START_BLOCKHEIGHT = parseInt(process.env.START_BLOCKHEIGHT || '0', 10);
 
-export const BACKEND_URI = process.env.BACKEND_URI || 'https://td-backend.paimastudios.com';
-export const INDEXER_URI = process.env.INDEXER_URI || 'https://nfts.paimastudios.com';
+export const BACKEND_URI =
+  process.env.BACKEND_URI || 'https://td-backend-testnet-c1.paimastudios.com';
+export const INDEXER_URI =
+  process.env.INDEXER_URI || 'https://nft-indexer-testnet-c1.paimastudios.com';
 //export const BATCHER_URI = "http://jw-backend.paimastudios.com:3334";
 export const BATCHER_URI = process.env.BATCHER_URI || 'http://localhost:3334';
 export const STATEFUL_URI = process.env.STATEFUL_URI || '';
