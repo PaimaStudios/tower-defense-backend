@@ -190,13 +190,15 @@ export interface ICreateConfigQuery {
   result: ICreateConfigResult;
 }
 
-const createConfigIR: any = {"usedParamSet":{"id":true,"content":true},"params":[{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":40,"b":43}]},{"name":"content","required":true,"transform":{"type":"scalar"},"locs":[{"a":46,"b":54}]}],"statement":"INSERT INTO configs(id, content)\nVALUES(:id!, :content!)               "};
+const createConfigIR: any = {"usedParamSet":{"id":true,"content":true},"params":[{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":40,"b":43}]},{"name":"content","required":true,"transform":{"type":"scalar"},"locs":[{"a":46,"b":54}]}],"statement":"INSERT INTO configs(id, content)\nVALUES(:id!, :content!)\nON CONFLICT(id)\nDO NOTHING               "};
 
 /**
  * Query generated from SQL:
  * ```
  * INSERT INTO configs(id, content)
- * VALUES(:id!, :content!)               
+ * VALUES(:id!, :content!)
+ * ON CONFLICT(id)
+ * DO NOTHING               
  * ```
  */
 export const createConfig = new PreparedQuery<ICreateConfigParams,ICreateConfigResult>(createConfigIR);

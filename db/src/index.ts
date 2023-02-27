@@ -22,7 +22,6 @@ export {
   newStats,
   createConfig,
   ICreateConfigParams,
-
 } from './insert.queries.js';
 export {
   getPaginatedOpenLobbies,
@@ -63,7 +62,7 @@ export {
   getMapLayout,
   getMatchConfig,
   getAllMaps,
-  getActiveLobbies
+  getActiveLobbies,
 } from './select.queries.js';
 export {
   IStartMatchParams,

@@ -124,6 +124,7 @@ export const executeRound = new PreparedQuery<IExecuteRoundParams,IExecuteRoundR
 
 /** 'StartMatch' parameters type */
 export interface IStartMatchParams {
+  creator_faction: role_setting | null | void;
   current_match_state: Json;
   lobby_id: string;
   player_two: string;
@@ -154,7 +155,7 @@ export interface IStartMatchQuery {
   result: IStartMatchResult;
 }
 
-const startMatchIR: any = {"usedParamSet":{"player_two":true,"current_match_state":true,"lobby_id":true},"params":[{"name":"player_two","required":true,"transform":{"type":"scalar"},"locs":[{"a":58,"b":69}]},{"name":"current_match_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":94,"b":114}]},{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":133,"b":142}]}],"statement":"UPDATE lobbies\nSET  \nlobby_state = 'active',\nplayer_two = :player_two!,\ncurrent_match_state = :current_match_state!\nWHERE lobby_id = :lobby_id!\nAND player_two IS NULL\nRETURNING *"};
+const startMatchIR: any = {"usedParamSet":{"player_two":true,"current_match_state":true,"creator_faction":true,"lobby_id":true},"params":[{"name":"player_two","required":true,"transform":{"type":"scalar"},"locs":[{"a":58,"b":69}]},{"name":"current_match_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":94,"b":114}]},{"name":"creator_faction","required":false,"transform":{"type":"scalar"},"locs":[{"a":135,"b":150}]},{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":169,"b":178}]}],"statement":"UPDATE lobbies\nSET  \nlobby_state = 'active',\nplayer_two = :player_two!,\ncurrent_match_state = :current_match_state!,\ncreator_faction = :creator_faction\nWHERE lobby_id = :lobby_id!\nAND player_two IS NULL\nRETURNING *"};
 
 /**
  * Query generated from SQL:
@@ -163,7 +164,8 @@ const startMatchIR: any = {"usedParamSet":{"player_two":true,"current_match_stat
  * SET  
  * lobby_state = 'active',
  * player_two = :player_two!,
- * current_match_state = :current_match_state!
+ * current_match_state = :current_match_state!,
+ * creator_faction = :creator_faction
  * WHERE lobby_id = :lobby_id!
  * AND player_two IS NULL
  * RETURNING *

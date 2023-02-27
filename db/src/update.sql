@@ -36,7 +36,8 @@ UPDATE lobbies
 SET  
 lobby_state = 'active',
 player_two = :player_two!,
-current_match_state = :current_match_state!
+current_match_state = :current_match_state!,
+creator_faction = :creator_faction
 WHERE lobby_id = :lobby_id!
 AND player_two IS NULL
 RETURNING *;
