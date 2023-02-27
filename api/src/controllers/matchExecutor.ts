@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Route, } from 'tsoa';
+import { Controller, Get, Query, Route } from 'tsoa';
 import {
   requirePool,
   getLobbyById,

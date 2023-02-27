@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Route,
-  ValidateError,
-} from 'tsoa';
+import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import { requirePool, getLobbyById, getRoundData, getRoundMoves } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';

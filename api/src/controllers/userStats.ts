@@ -1,4 +1,3 @@
-
 import { Controller, Get, Query, Route } from 'tsoa';
 import { requirePool, getUserStats, IGetUserStatsResult } from '@tower-defense/db';
 

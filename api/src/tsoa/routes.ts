@@ -9,6 +9,8 @@ import { lobbyStateController } from './../controllers/lobbyState';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { lobbyStatusController } from './../controllers/lobbyStatus';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { MatchWinnerController } from './../controllers/mapLayout';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { matchExecutorController } from './../controllers/matchExecutor';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { MatchWinnerController } from './../controllers/matchWinner';
@@ -42,6 +44,14 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "block_height": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MapLayoutResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "map_layout": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -240,6 +250,31 @@ export function RegisterRoutes(app: express.Router) {
                 validatedArgs = getValidatedArgs(args, request, response);
 
                 const controller = new lobbyStatusController();
+
+
+              const promise = controller.get.apply(controller, validatedArgs as any);
+              promiseHandler(controller, promise, response, undefined, next);
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/match_layout',
+            ...(fetchMiddlewares<RequestHandler>(MatchWinnerController)),
+            ...(fetchMiddlewares<RequestHandler>(MatchWinnerController.prototype.get)),
+
+            function MatchWinnerController_get(request: any, response: any, next: any) {
+            const args = {
+                    mapName: {"in":"query","name":"mapName","required":true,"dataType":"string"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = getValidatedArgs(args, request, response);
+
+                const controller = new MatchWinnerController();
 
 
               const promise = controller.get.apply(controller, validatedArgs as any);
