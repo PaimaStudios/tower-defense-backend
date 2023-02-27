@@ -45,11 +45,13 @@ A `definition` is the specification of a single piece of the match config. Like 
 In this section we will list out all of the supported definitions part of this version of the configuration.
 
 ### Base Speed
+
 How many ticks are processed per second.
 
 ```
 bs;5
 ```
+
 Json Encoding:
 
 ```json
@@ -58,7 +60,28 @@ Json Encoding:
   "value": 5
 }
 ```
+
+### Base Health
+
+Health of the defender's base.
+
+Concise Encoding:
+
+```
+bh;100
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "baseHealth",
+  "value": 100
+}
+```
+
 ### Base Gold Rate
+
 Gold received by each faction at the end of each round.
 
 Concise Encoding:
@@ -82,20 +105,61 @@ Json Encoding:
   "value": 100
 }
 ```
+
+### Repair Value
+
+How much health does a repair action increase
+
+Concise Encoding:
+
+```
+rv;25
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "repairValue",
+  "value": 25
+}
+```
+
+### Repair Cost
+
+Cost to repair a Structure.
+
+Concise Encoding:
+
+```
+rc;10
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "repairCost",
+  "value": 10
+}
+```
+
 ### Defender Towers
 
 The following attributes from defender towers are configurable:
 
-`health`: the HP of the Tower.
-`cooldown`: How long it takes for the Tower to overheat and stop attacking. 
+`price`: The price of building the tower.
+`health`: the HP of the tower.
+`cooldown`: How long it takes for the tower to overheat and stop attacking.
 `damage`: How much damage a tower hit does to an attacker unit.
 `range`: The hit range of a tower's attack.
+
 ### Anaconda Tower
 
 Concise Encoding:
 
 ```
-at;h100;c10;d5;r2
+at;p50;h16;c10;d5;r2
 ```
 
 Json Encoding:
@@ -103,29 +167,11 @@ Json Encoding:
 ```json
 {
   "name": "anacondaTower",
-  "health": 100,
-  "cooldown": 10,
-  "damage": 5,
-  "range": 2
-}
-```
-
-### Sloth Tower
-
-Concise Encoding:
-
-```
-st;h100;c10;d5;r2
-```
-
-Json Encoding:
-
-```json
-{
-  "name": "slothTower",
-  "health": 100,
-  "cooldown": 10,
-  "range": 2
+  "price": 50,
+  "health": 16,
+  "cooldown": 6,
+  "damage": 2,
+  "range": 3
 }
 ```
 
@@ -134,7 +180,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-pt;h100;c10;d5;r2
+pt;p55;h20;c4;d1;r4
 ```
 
 Json Encoding:
@@ -142,40 +188,65 @@ Json Encoding:
 ```json
 {
   "name": "piranhaTower",
-  "health": 100,
-  "cooldown": 10,
-  "damage": 5,
-  "range": 2
+  "price": 55,
+  "health": 20,
+  "cooldown": 4,
+  "damage": 1,
+  "range": 4
 }
 ```
 
-### Crypts
-The following attributes from defender towers are configurable:
-
-`unitHealth`: The health of the individual units spawned by the crypt.
-`spawnRate`: The speed at which crypts spawn units. e.g. `2` = One unit spawned every game 2 ticks.
-`capacity`: How many units can a crypt spawn before stopping.
-`damage`: The damage done by units spawned by a crypt.
-`unitSpeed`: The movement speed of units spawned by a crypt.
-
-### Macaw Crypt
+### Sloth Tower
 
 Concise Encoding:
 
 ```
-mc;h100;r2;c10;d5;s2
+st;p60;h10;c10;d3;r2
 ```
 
 Json Encoding:
 
 ```json
 {
-  "name": "macawCrypt",
-  "unitHealth": 100,
-  "spawnRate": 2,
-  "capacity": 10,
-  "damage": 5,
-  "unitSpeed": 2
+  "name": "slothTower",
+  "price": 60,
+  "health": 10,
+  "cooldown": 10,
+  "damage": 3,
+  "range": 2
+}
+```
+
+### Crypts
+
+The following attributes from defender towers are configurable:
+
+`price`: The price of building the crypt.
+`unitHealth`: The health of the individual units spawned by the crypt.
+`spawnRate`: The speed at which crypts spawn units. e.g. `2` = One unit spawned every game 2 ticks. `spawnDelay` in cat-astrophe's docs.
+`spawnCapacity`: How many units a crypt can spawn before stopping.
+`attackDamage`: The damage done by units spawned by a crypt.
+`unitSpeed`: The movement speed of units spawned by a crypt.
+
+### Gorilla Crypt
+
+Concise Encoding:
+
+```
+gc;p50;h5;r9;c10;d5;s2
+```
+
+Json Encoding:
+
+```json
+{
+  "name": "gorillaCrypt",
+  "price": 50,
+  "unitHealth": 5,
+  "spawnRate": 9,
+  "spawnCapacity": 10,
+  "damage": 1,
+  "unitSpeed": 11
 }
 ```
 
@@ -184,7 +255,7 @@ Json Encoding:
 Concise Encoding:
 
 ```
-jc;h100;r2;c10;d5;s2
+jc;p60;h1;r6;c8;d1;s25
 ```
 
 Json Encoding:
@@ -192,31 +263,32 @@ Json Encoding:
 ```json
 {
   "name": "jaguarCrypt",
-  "unitHealth": 100,
-  "spawnRate": 2,
-  "capacity": 10,
-  "damage": 5,
-  "unitSpeed": 2
+  "price": 60,
+  "unitHealth": 1,
+  "spawnRate": 6,
+  "spawnCapacity": 8,
+  "damage": 1,
+  "unitSpeed": 25
 }
 ```
 
-### Gorilla Crypt
+### Macaw Crypt
 
 Concise Encoding:
 
 ```
-gc;h100;c10;d5;s2
+mc;p70;h2;r2;c7;d1;s17
 ```
 
 Json Encoding:
 
 ```json
 {
-  "name": "gorillaCrypt",
-  "unitHealth": 100,
+  "name": "macawCrypt",
+  "unitHealth": 2,
   "spawnRate": 2,
-  "capacity": 10,
-  "damage": 5,
-  "unitSpeed": 2
+  "spawnCapacity": 7,
+  "damage": 1,
+  "unitSpeed": 17
 }
 ```

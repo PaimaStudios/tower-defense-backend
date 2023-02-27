@@ -1,4 +1,4 @@
-# Middleware Endpoints (as of 2022-12-15)
+# Middleware Endpoints (as of 2023-2-22)
 
 ## Wallet interaction endpoints:
 
@@ -32,9 +32,7 @@ Checks if the user’s wallet has previously authorized connecting to the game. 
 ### Endpoint `getLatestProcessedBlockHeight`:
 
 ```ts
-async function getLatestProcessedBlockHeight(): Promise<
-  SuccessfulResult<number> | FailedResult
->;
+async function getLatestProcessedBlockHeight(): Promise<SuccessfulResult<number> | FailedResult>;
 ```
 
 Returns the latest block height that the game state machine has processed.
@@ -105,7 +103,16 @@ This endpoint is paginated, meaning that the `page` argument can be used to requ
         "actorCount": 10,
         "currentRound": 20,
         "finishedSpawning": [3, 6],
-        "roundEnded": false
+        "roundEnded": false,
+        // map related attributes
+        "name": "jungle", // or whatever the map is"
+        "width" 22,
+        "height": 13,
+        "mapState": [
+          {"type": "path", "faction": "defender", "leadsTo": [4, 5]},
+          {"type": "open", "faction": "defender"},
+          ...
+        ]
       }
     }
     // ...
@@ -173,9 +180,7 @@ Returns a random open lobby.
 ### Endpoint `getUserStats`:
 
 ```ts
-async function getUserStats(
-  walletAddress: string
-): Promise<UserStats | FailedResult>;
+async function getUserStats(walletAddress: string): Promise<UserStats | FailedResult>;
 ```
 
 Returns the stats of all of the specified user’s previous matches that they have played.
@@ -224,9 +229,7 @@ Returns a (potentially empty) list of lobbies created by the specified user at t
 ### Endpoint `getLobbyState`:
 
 ```ts
-async function getLobbyState(
-  lobbyID: string
-): Promise<PackedLobbyState | FailedResult>;
+async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult>;
 ```
 
 Returns the current state of the lobby specified by `lobbyID`.
@@ -293,7 +296,7 @@ This endpoint is paginated, meaning that the `page` argument can be used to requ
   "success": true,
   "lobbies": [
     {
-    // ...
+      // ...
     }
   ]
 }
@@ -340,9 +343,7 @@ If the lobby exists, returns the lobby state and a winner address string; if the
 Returns a list of NFTs owned by the specified wallet.
 
 ```ts
-async function getUserWalletNfts(
-  address: string
-): Promise<SuccessfulResult<NFT[]> | FailedResult>;
+async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[]> | FailedResult>;
 ```
 
 #### Example Output:
@@ -369,9 +370,7 @@ async function getUserWalletNfts(
 Returns the title and image url of the NFT previously registered by the specified address using the `setNft` write endpoint. The ownership of this NFT by this address is also verified at this point.
 
 ```ts
-async function getUserSetNFT(
-  wallet: string
-): Promise<SuccessfulResult<NFT> | FailedResult>;
+async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | FailedResult>;
 ```
 
 #### Example Output:
@@ -445,6 +444,7 @@ loop {
     ...
 }
 ```
+
 For examples of Round Executor events please see the Game Tick Events document.
 
 ---
@@ -460,15 +460,21 @@ These endpoints are used to post data to the blockchain. Each of them triggers a
 Asks the user to sign a transaction which allows them to create a new lobby, requiring the specification of various match settings.
 
 ```ts
-async function createLobby(
-  configName: string,         // 14 character string. Default is "defaultedfault"
-  role: "attacker" | "defender" | "random",  // role of the lobby creator
-  numberOfRounds: number,     // must be a positive whole number
-  roundLength: number,        // must be a positive whole number
-  mapName: string,            
-  isHidden = false: boolean   // false by default
-  isPractice = false: boolean // false by default
-): Promise<LobbyResponse | FailedResult>
+async function createLobby(arg: string): Promise<LobbyResponse | FailedResult>;
+```
+
+The argument of this function is a JSON string, which when unpacked looks like:
+
+```json
+{
+  "configName": string,         // 14 character string. Default is "defaultedfault"
+  "creatorRole": "attacker" | "defender" | "random",  // role of the lobby creator
+  "numberOfRounds": number,     // must be a positive whole number
+  "roundLength": number,        // must be a positive whole number
+  "mapName": string,
+  "isHidden" = false: boolean   // false by default
+  "isPractice" = false: boolean // false by default
+}
 ```
 
 #### Example Output:
@@ -488,9 +494,7 @@ async function createLobby(
 Asks the user to sign a transaction which allows them to join the given lobby.
 
 ```ts
-async function joinLobby(
-  lobbyID: string,
-): Promise<Result>;
+async function joinLobby(lobbyID: string): Promise<Result>;
 ```
 
 #### Example Output:
@@ -503,14 +507,13 @@ async function joinLobby(
 ```
 
 ---
+
 ### Endpoint `closeLobby`:
 
 Asks the user to sign a transaction which allows them to close the given lobby.
 
 ```ts
-async function closeLobby(
-  lobbyID: string,
-): Promise<Result>;
+async function closeLobby(lobbyID: string): Promise<Result>;
 ```
 
 #### Example Output:
@@ -523,19 +526,23 @@ async function closeLobby(
 ```
 
 ---
-
 
 ### Endpoint `submitMoves`:
 
 Asks the user to sign a transaction which submits 3 moves in the latest round of a actively running match. The user can only submit their moves once per round, and cannot revert their actions once submitted. The parameter `moves` has to be an array of exactly 3 objects.
 
 ```ts
-async function submitMoves(
-  lobbyID: string,
-  // must be a positive whole number; round 0 means the match has not started yet so moves with round number 0 are invalid
-  roundNumber: number,
-  moves: TurnAction[]
-): Promise<Result>;
+async function submitMoves(arg: string): Promise<Result>;
+```
+
+The argument to this function is a JSON string which when unpacked looks like:
+
+```json
+{
+  "lobbyID": string,
+  "roundNumber": number,   // must be a positive whole number; round 0 means the match has not started yet so moves with round number 0 are invalid
+  "moves": TurnAction[]
+}
 ```
 
 The `moves` list must be a list of objects of one of the following four forms:

@@ -10,6 +10,7 @@ Each unit and structure has a deterministic id generated for it when it is creat
 As each action is processed during a game tick, it generates a game tick event. The round executor returns a list of game tick events based on all of the actions which took place in said tick. It is up to the frontend to process all of these events visually.
 
 Below we will specify the different types of game tick events which will be supported.
+
 ## Structure Events
 
 Users in both factions submit actions in every turn concerning the structures they can place of the map. Each action produces an event.
@@ -29,6 +30,7 @@ Note `coordinates` here and in any other event are a single integer, referring t
 ```
 
 ### Repair Structure Event
+
 ```json
 {
   "eventType": "repair",
@@ -36,7 +38,9 @@ Note `coordinates` here and in any other event are a single integer, referring t
   "id": number
 }
 ```
+
 ### Upgrade Structure Event
+
 ```json
 {
   "eventType": "upgrade",
@@ -44,7 +48,9 @@ Note `coordinates` here and in any other event are a single integer, referring t
   "id": number
 }
 ```
+
 ### Salvage Structure Event
+
 ```json
 {
   "eventType": "salvage",
@@ -53,6 +59,7 @@ Note `coordinates` here and in any other event are a single integer, referring t
   "gold": number
 }
 ```
+
 ## Other Events
 
 Once the structure events are processed, the round's "battle phase" starts. The battle phase is a list of events which derive deterministically from the state of the map, i.e. the kind of structures that are placed in the map.
@@ -80,7 +87,6 @@ When a crypt spawns a unit, this event specifies all of the relevant details abo
 ## Unit Movement Event
 
 An event which specifies the current position of the unit on the map and how fast/where it is moving to. Movement events are emitted on every tick after a unit is spawned, as long as it's alive.
-
 
 This event includes:
 
@@ -138,7 +144,7 @@ When an attacker’s unit or a defender’s tower hit 0 hp, then they are delete
 ```json
 {
   "event": "actorDeleted",
-  "faction": 
+  "faction":
   "id": 2593
 }
 ```
@@ -152,6 +158,7 @@ The tick event includes:
 - Source Structure ID
 - Target Unit ID
 - Status type
+
 ```json
 {
   "eventType": "statusApply",
