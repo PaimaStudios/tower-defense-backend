@@ -4,7 +4,7 @@ import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from
 interface MapLayoutResponse{
   map_layout: string;
 }
-@Route('match_layout')
+@Route('map_layout')
 export class MapLayoutController extends Controller {
   @Get()
   public async get(@Query() mapName: string): Promise<MapLayoutResponse | {}> {
