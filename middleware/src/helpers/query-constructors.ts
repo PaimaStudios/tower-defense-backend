@@ -223,6 +223,13 @@ export function backendQueryMatchWinner(lobbyID: string): string {
   };
   return buildBackendQuery(endpoint, options);
 }
+export function backendQueryMapByName(mapName: string): string {
+  const endpoint = 'match_winner';
+  const options = {
+    mapName,
+  };
+  return buildBackendQuery(endpoint, options);
+}
 
 export function backendQueryBackendVersion(): string {
   const endpoint = 'backend_version';

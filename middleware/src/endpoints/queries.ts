@@ -1,4 +1,4 @@
-import { MatchWinnerResponse } from '../types';
+import { MapByNameResponse, MatchWinnerResponse } from '../types';
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
@@ -15,6 +15,7 @@ import { calculateRoundEnd } from '../helpers/data-processing';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
 import { getBlockNumber } from '../helpers/general';
 import {
+  backendQueryMapByName,
   backendQueryMatchExecutor,
   backendQueryMatchWinner,
   backendQueryOpenLobbies,
@@ -191,7 +192,6 @@ async function getUserStats(walletAddress: string): Promise<PackedUserStats | Fa
         wallet: j.stats.wallet,
         wins: j.stats.wins,
         losses: j.stats.losses,
-        ties: j.stats.ties,
       },
     };
   } catch (err) {
@@ -337,10 +337,12 @@ async function getOpenLobbies(
 
   try {
     const j = await res.json();
-    const richLobbies = await addLobbyCreatorNftStats(j.lobbies, latestBlockHeight);
+    console.log(j, 'open lobbies');
+    // TODO mmm this is a weird flow
+    // const richLobbies = await addLobbyCreatorNftStats(j.lobbies, latestBlockHeight);
     return {
       success: true,
-      lobbies: richLobbies,
+      lobbies: j.lobbies,
     };
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
@@ -476,6 +478,31 @@ async function getMatchExecutor(
     return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR, err);
   }
 }
+async function getMapByName(
+  mapName: string
+): Promise<SuccessfulResult<MapByNameResponse> | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getMapByName');
+
+  let res: Response;
+  try {
+    const query = backendQueryMapByName(mapName);
+    res = await fetch(query);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = await res.json();
+    return {
+      success: true,
+      result: {
+        map_layout: j.map_layout
+      },
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
 
 export const queryEndpoints = {
   getUserStats,
@@ -493,4 +520,5 @@ export const queryEndpoints = {
   getNftStats,
   getRoundExecutor,
   getMatchExecutor,
+  getMapByName
 };
