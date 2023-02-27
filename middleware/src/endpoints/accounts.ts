@@ -1,4 +1,9 @@
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode, FE_ERR_METAMASK_NOT_INSTALLED } from '../errors';
+import { WalletAddress } from '@tower-defense/utils/src/parser';
+import {
+  buildEndpointErrorFxn,
+  CatapultMiddlewareErrorCode,
+  FE_ERR_METAMASK_NOT_INSTALLED,
+} from '../errors';
 import { localRemoteVersionsCompatible } from '../helpers/auxiliary-queries';
 import { updateFee } from '../helpers/posting';
 import {
@@ -7,9 +12,7 @@ import {
   switchChain,
   verifyWalletChain,
 } from '../helpers/wallet-metamask';
-import {
-  setEthAddress,
-} from '../state';
+import { setEthAddress } from '../state';
 import { Result, OldResult, Wallet } from '../types';
 
 // Wrapper function for all wallet status checking functions
@@ -24,7 +27,11 @@ async function userWalletLogin(): Promise<Result<Wallet>> {
   const errorFxn = buildEndpointErrorFxn('userWalletLogin');
 
   if (typeof window.ethereum === 'undefined') {
-    return errorFxn(CatapultMiddlewareErrorCode.METAMASK_NOT_INSTALLED, undefined, FE_ERR_METAMASK_NOT_INSTALLED);
+    return errorFxn(
+      CatapultMiddlewareErrorCode.METAMASK_NOT_INSTALLED,
+      undefined,
+      FE_ERR_METAMASK_NOT_INSTALLED
+    );
   }
 
   let account: string;
@@ -65,11 +72,11 @@ async function userWalletLogin(): Promise<Result<Wallet>> {
     success: true,
     result: {
       walletAddress: userWalletAddress,
-    }
+    },
   };
 }
 
 export const accountsEndpoints = {
   userWalletLogin,
-  checkWalletStatus
+  checkWalletStatus,
 };

@@ -7,7 +7,11 @@ import {
 import { pushLog } from './helpers/logging';
 import type { FailedResult } from './types';
 
-export type EndpointErrorFxn = (errorDescription: ErrorCode | string,  err?: any, errorCode?: number) => FailedResult;
+export type EndpointErrorFxn = (
+  errorDescription: ErrorCode | string,
+  err?: any,
+  errorCode?: number
+) => FailedResult;
 
 type CatapultErrorMessageMapping = Record<CatapultMiddlewareErrorCode, string>;
 
@@ -165,7 +169,7 @@ export function buildEndpointErrorFxn(endpointName: string): EndpointErrorFxn {
     return {
       success: false,
       errorMessage: msg,
-      errorCode: errorCode ? errorCode : FE_ERR_GENERIC
+      errorCode: errorCode ? errorCode : FE_ERR_GENERIC,
     };
   };
 }

@@ -1,4 +1,4 @@
-import HDWalletProvider from "@truffle/hdwallet-provider";
+import HDWalletProvider from '@truffle/hdwallet-provider';
 
 import {
   BACKEND_URI,
@@ -45,6 +45,8 @@ export const POSTING_MODE_NAMES: Record<PostingMode, PostingModeString> = {
   [PostingMode.AUTOMATIC]: 'automatic',
 };
 
+console.log(BACKEND_URI, 'backend');
+console.log(INDEXER_URI, 'indexer');
 let backendUri: URI = BACKEND_URI;
 const indexerUri: URI = INDEXER_URI;
 const batcherUri: URI = BATCHER_URI;
@@ -113,7 +115,8 @@ export const getCardanoApi = (): CardanoApi => cardanoApi;
 
 export const setTruffleAddress = (addr: ETHAddress) => (truffleAddress = addr);
 export const getTruffleAddress = (): ETHAddress => truffleAddress;
-export const truffleConnected = (): boolean => truffleAddress !== '' && truffleProvider !== undefined && truffleWeb3 !== undefined;
+export const truffleConnected = (): boolean =>
+  truffleAddress !== '' && truffleProvider !== undefined && truffleWeb3 !== undefined;
 
 export const setTruffleProvider = (provider: HDWalletProvider) => (truffleProvider = provider);
 export const getTruffleProvider = (): HDWalletProvider | undefined => truffleProvider;

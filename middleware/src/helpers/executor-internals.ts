@@ -25,13 +25,7 @@ export async function buildRoundExecutor(data: RoundExecutorData): Promise<Round
   const matchConfig: MatchConfig = parseConfig(data.config);
   const matchState = data.state;
   const rng = new Prando(seed);
-  return RoundExecutorConstructor.initialize(
-    matchConfig,
-    matchState,
-    data.moves,
-    rng,
-    processTick
-  );
+  return RoundExecutorConstructor.initialize(matchConfig, matchState, data.moves, rng, processTick);
 }
 
 export async function buildMatchExecutor(data: MatchExecutorData): Promise<MatchExecutor> {
@@ -65,4 +59,3 @@ export async function buildMatchExecutor(data: MatchExecutorData): Promise<Match
   //   processTick
   // );
 }
-

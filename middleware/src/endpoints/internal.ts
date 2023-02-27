@@ -39,19 +39,19 @@ export async function userWalletLoginWithoutChecks(): Promise<Result<Wallet>> {
     success: true,
     result: {
       walletAddress: userWalletAddress,
-    }
+    },
   };
 }
 
 export async function cardanoWalletLoginEndpoint(): Promise<Result<Wallet>> {
   const errorFxn = buildEndpointErrorFxn('cardanoWalletLoginEndpoint');
   try {
-    await cardanoLogin(); 
+    await cardanoLogin();
     return {
       success: true,
       result: {
         walletAddress: getCardanoAddress(),
-      }
+      },
     };
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.CARDANO_LOGIN, err);
@@ -66,7 +66,7 @@ export async function automaticWalletLogin(privateKey: string): Promise<Result<W
       success: true,
       result: {
         walletAddress: getTruffleAddress(),
-      }
+      },
     };
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.TRUFFLE_LOGIN, err);
@@ -101,7 +101,7 @@ export async function switchToAutomaticMode(): Promise<PostingModeSwitchResult> 
   setAutomaticMode();
   return {
     success: true,
-    ...getPostingInfo()
+    ...getPostingInfo(),
   };
 }
 

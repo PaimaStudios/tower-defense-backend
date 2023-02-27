@@ -1,4 +1,3 @@
-
 import { retrieveFee, retryPromise, wait } from 'paima-engine/paima-utils';
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import { getFee, getPostingMode, getStorageAddress, getWeb3, PostingMode, setFee } from '../state';
@@ -6,7 +5,10 @@ import type { BatchedSubunit, BatcherPostResponse, BatcherTrackResponse, Result 
 import { batchedToJsonString, buildBatchedSubunit, buildDirectTx } from './data-processing';
 import { batcherQuerySubmitUserInput, batcherQueryTrackUserInput } from './query-constructors';
 import { signMessageCardano } from './wallet-cardano';
-import { sendWalletTransaction as sendMetamaskWalletTransaction, signMessageEth } from './wallet-metamask';
+import {
+  sendWalletTransaction as sendMetamaskWalletTransaction,
+  signMessageEth,
+} from './wallet-metamask';
 import { sendWalletTransaction as sendTruffleWalletTransaction } from './wallet-truffle';
 import { postDataToEndpoint } from './general';
 import { pushLog } from './logging';
@@ -47,8 +49,8 @@ export async function postConciselyEncodedData(
       return buildBatchedSubunit(signMessageEth, userAddress, gameInput).then(submitToBatcher);
     case PostingMode.BATCHED_CARDANO:
       return buildBatchedSubunit(signMessageCardano, userAddress, gameInput).then(submitToBatcher);
-      case PostingMode.AUTOMATIC:
-        return postString(sendTruffleWalletTransaction, userAddress, methodName, gameInput);
+    case PostingMode.AUTOMATIC:
+      return postString(sendTruffleWalletTransaction, userAddress, methodName, gameInput);
     default:
       return errorFxn(
         CatapultMiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE,

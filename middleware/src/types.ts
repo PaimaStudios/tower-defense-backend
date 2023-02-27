@@ -203,7 +203,6 @@ export interface UserStats {
   wallet: UserAddress;
   wins: number;
   losses: number;
-  ties: number;
 }
 
 export interface PackedUserStats {
@@ -383,6 +382,9 @@ export interface MockData {
 export interface MatchWinnerResponse {
   match_status: LobbyStatus;
   winner_address: string;
+}
+export interface MapByNameResponse {
+  map_layout: string;
 }
 export interface LobbyDbQuery {
   created_at: Date;

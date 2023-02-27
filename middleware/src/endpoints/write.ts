@@ -33,44 +33,48 @@ const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
   }
 };
 
-async function createLobby(
-  configName: string,
-  role: Faction | "random",
-  numberOfRounds: number,
-  roundLength: number,
-  isHidden: boolean,
-  mapName: string,
-  isPractice: boolean
-): Promise<CreateLobbyResponse> {
+interface CreateLobbyParams {
+  configName: string;
+  role: Faction | 'random';
+  numberOfRounds: number;
+  roundLength: number;
+  isHidden: boolean;
+  mapName: string;
+  isPractice: boolean;
+}
+
+async function createLobby(json: string): Promise<CreateLobbyResponse> {
   const errorFxn = buildEndpointErrorFxn('createLobby');
 
   const query = getUserWallet(errorFxn);
   if (!query.success) return query;
   const userWalletAddress = query.result;
+  console.log(JSON.parse(json), 'json parsed');
+  const parsed: CreateLobbyParams = JSON.parse(json);
+  const { configName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
 
-  const roleEncoding = role === "attacker" 
-  ? "a"
-  : role === "defender"
-  ? "d"
-  : role === "random"
-  ? "r"
-  : "r"
+  const roleEncoding =
+    role === 'attacker' ? 'a' : role === 'defender' ? 'd' : role === 'random' ? 'r' : 'r';
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('c');
   conciseBuilder.addValues([
-    {value: configName},
-    {value: roleEncoding },
-    {value: numberOfRounds.toString(10)},
-    {value: roundLength.toString(10)},
-    {value: isHidden ? "T" : "F"},
-    {value: mapName},
-    {value: isPractice ? "T": "F"}
-  ])
+    { value: configName },
+    { value: roleEncoding },
+    { value: numberOfRounds.toString(10) },
+    { value: roundLength.toString(10) },
+    { value: isHidden ? 'T' : 'F' },
+    { value: mapName },
+    { value: isPractice ? 'T' : 'F' },
+  ]);
 
   let currentBlockVar: number;
   try {
-    const result = await postConciselyEncodedData(userWalletAddress, 'paimaSubmitGameInput', conciseBuilder.build());
+    const result = await postConciselyEncodedData(
+      userWalletAddress,
+      'paimaSubmitGameInput',
+      conciseBuilder.build()
+    );
     if (!result.success) {
       return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
     }
@@ -220,17 +224,19 @@ async function closeLobby(lobbyID: string): Promise<OldResult> {
     return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
   }
 }
-
-async function submitMoves(
-  lobbyID: string,
-  roundNumber: number,
-  moves: TurnAction[]
-): Promise<OldResult> {
+interface SubmitMovesParams {
+  lobbyID: string;
+  roundNumber: number;
+  moves: TurnAction[];
+}
+async function submitMoves(json: string): Promise<OldResult> {
   const errorFxn = buildEndpointErrorFxn('submitMoves');
 
   const query = getUserWallet(errorFxn);
   if (!query.success) return query;
   const userWalletAddress = query.result;
+  const parsed: SubmitMovesParams = JSON.parse(json);
+  const { lobbyID, roundNumber, moves } = parsed;
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('s');
@@ -238,7 +244,7 @@ async function submitMoves(
   conciseBuilder.addValue({ value: roundNumber.toString(10) });
 
   try {
-      conciseBuilder.addValues(moves.map(m => ({value: moveToString(m)})));
+    conciseBuilder.addValues(moves.map(m => ({ value: moveToString(m) })));
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.SUBMIT_MOVES_INVALID_MOVES, err);
   }
