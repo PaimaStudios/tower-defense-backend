@@ -382,7 +382,7 @@ export function parseInput(s: string): ParsedSubmittedInput {
   else if (c.concisePrefix === 'n') return parseNFT(c);
   else if (c.concisePrefix === 'z') return parseZombie(c);
   else if (c.concisePrefix === 'u') return parseUserStats(c);
-  else return {input: "invalidString"}
+  else return { input: 'invalidString' };
 }
 function parseCreate(c: ConciseConsumer): CreatedLobbyInput | InvalidInput {
   try {
@@ -520,19 +520,19 @@ function parseZombie(c: ConciseConsumer): ScheduledDataInput | InvalidInput {
     return { input: 'invalidString' };
   }
 }
-const pResult = P.oneOf("wl").map(s => s as "w" | "l");
+const pResult = P.oneOf('wl').map(s => s as 'w' | 'l');
 function parseUserStats(c: ConciseConsumer): ScheduledDataInput | InvalidInput {
   try {
     const wallet = tryParse(c.nextValue(), pWallet);
-    const result= tryParse(c.nextValue(), pResult);
+    const result = tryParse(c.nextValue(), pResult);
     return {
-      input: "scheduledData",
+      input: 'scheduledData',
       effect: {
-        type: "stats",
+        type: 'stats',
         user: wallet,
-        result
-      }
-    }
+        result,
+      },
+    };
   } catch {
     return { input: 'invalidString' };
   }

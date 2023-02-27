@@ -162,7 +162,7 @@ export type Tile =
   | DefenderStructureTile
   | AttackerStructureTile
   | DefenderUnbuildableTile
-  | AttackerUnbuildableTile
+  | AttackerUnbuildableTile;
 
 export interface PathTile {
   type: 'path';
@@ -207,12 +207,12 @@ export interface AttackerOpenTile {
   faction: 'attacker';
 }
 export interface DefenderUnbuildableTile {
-  type: "unbuildable";
-  faction: "defender";
+  type: 'unbuildable';
+  faction: 'defender';
 }
 export interface AttackerUnbuildableTile {
-  type: "unbuildable";
-  faction: "attacker";
+  type: 'unbuildable';
+  faction: 'attacker';
 }
 
 export type Wallet = string;
@@ -221,7 +221,7 @@ export type TurnAction =
   | BuildStructureAction
   | RepairStructureAction
   | SalvageStructureAction
-  | UpgradeStructureAction
+  | UpgradeStructureAction;
 
 export type Structure = Tower | Crypt;
 export type Tower = 'piranhaTower' | 'slothTower' | 'anacondaTower';
@@ -242,7 +242,7 @@ export interface RepairStructureAction {
 }
 export interface SalvageStructureAction {
   round: number;
-  action: "salvage";
+  action: 'salvage';
   faction: Faction;
   id: number;
 }
@@ -256,30 +256,30 @@ export type StructureEvent =
   | BuildStructureEvent
   | RepairStructureEvent
   | UpgradeStructureEvent
-  | SalvageStructureEvent
-  export interface BuildStructureEvent {
-    eventType: "build";
-    coordinates: number;
-    faction: Faction;
-    id: number;
-    structure: Structure;
-  }
-  export interface RepairStructureEvent {
-    eventType: "repair";
-    faction: Faction;
-    id: number;
-  }
-  export interface SalvageStructureEvent {
-    eventType: "salvage";
-    faction: Faction;
-    id: number;
-    gold: number;
-  }
-  export interface UpgradeStructureEvent {
-    eventType: "upgrade",
-    faction: Faction;
-    id: number;
-  }
+  | SalvageStructureEvent;
+export interface BuildStructureEvent {
+  eventType: 'build';
+  coordinates: number;
+  faction: Faction;
+  id: number;
+  structure: Structure;
+}
+export interface RepairStructureEvent {
+  eventType: 'repair';
+  faction: Faction;
+  id: number;
+}
+export interface SalvageStructureEvent {
+  eventType: 'salvage';
+  faction: Faction;
+  id: number;
+  gold: number;
+}
+export interface UpgradeStructureEvent {
+  eventType: 'upgrade';
+  faction: Faction;
+  id: number;
+}
 
 export type TickEvent =
   | GoldRewardEvent
@@ -310,7 +310,7 @@ export interface GoldRewardEvent {
 export type UnitType = 'jaguar' | 'macaw' | 'gorilla';
 export interface UnitSpawnedEvent {
   eventType: 'spawn';
-  faction: "attacker";
+  faction: 'attacker';
   cryptID: number;
   actorID: number;
   coordinates: number;
@@ -322,7 +322,7 @@ export interface UnitSpawnedEvent {
 }
 export interface UnitMovementEvent {
   eventType: 'movement';
-  faction: "attacker";
+  faction: 'attacker';
   actorID: number;
   coordinates: number;
   nextCoordinates: number | null;
@@ -340,7 +340,7 @@ export interface DamageEvent {
 }
 export interface DefenderBaseUpdateEvent {
   eventType: 'defenderBaseUpdate';
-  faction: "defender";
+  faction: 'defender';
   health: number;
 }
 export interface ActorDeletedEvent {
@@ -351,7 +351,7 @@ export interface ActorDeletedEvent {
 export type StatusType = 'speedDebuff' | 'speedBuff' | 'healthBuff';
 export interface StatusEffectAppliedEvent {
   eventType: 'statusApply';
-  faction: "attacker";
+  faction: 'attacker';
   sourceID: number;
   targetID: number;
   statusType: StatusType;
