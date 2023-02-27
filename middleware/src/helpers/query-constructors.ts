@@ -224,7 +224,7 @@ export function backendQueryMatchWinner(lobbyID: string): string {
   return buildBackendQuery(endpoint, options);
 }
 export function backendQueryMapByName(mapName: string): string {
-  const endpoint = 'match_winner';
+  const endpoint = 'map_layout';
   const options = {
     mapName,
   };
