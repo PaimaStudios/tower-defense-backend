@@ -13,7 +13,7 @@ import { setPool } from '@tower-defense/db';
 const POLLING_RATE = 1;
 
 async function main() {
-  console.log(STORAGE_ADDRESS, "storage address");
+  console.log(STORAGE_ADDRESS, 'storage address');
   const chainFunnel = await paimaFunnel.initialize(CHAIN_URI, STORAGE_ADDRESS);
   setPool(gameSM.getReadonlyDbConn());
   const engine = paimaRuntime.initialize(chainFunnel, gameSM, gameBackendVersion);

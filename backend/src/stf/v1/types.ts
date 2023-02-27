@@ -1,4 +1,4 @@
-import { TurnAction } from "@tower-defense/utils";
+import { TurnAction } from '@tower-defense/utils';
 
 export type ParsedSubmittedInput =
   | CreatedLobbyInput
@@ -12,7 +12,7 @@ export type ParsedSubmittedInput =
 export interface InvalidInput {
   input: 'invalidString';
 }
-export type RoleSetting = "attacker" | "defender" | "random";
+export type RoleSetting = 'attacker' | 'defender' | 'random';
 export interface CreatedLobbyInput {
   input: 'createdLobby';
   creatorFaction: RoleSetting;
@@ -38,9 +38,8 @@ export interface SubmittedTurnInput {
   input: 'submittedTurn';
   lobbyID: string;
   roundNumber: number;
-  actions: TurnAction[]
+  actions: TurnAction[];
 }
-
 
 export interface SetNFTInput {
   input: 'setNFT';

@@ -4,12 +4,13 @@ import {
   WalletAddress,
   SetNFTInput,
   SubmittedTurnInput,
+  RoleSetting,
 } from './types.js';
 import Prando from 'paima-engine/paima-prando';
 import { RoundExecutor } from 'paima-engine/paima-executors';
-import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
+import processTick, { getMap, parseConfig } from '@tower-defense/game-logic';
 // import { SQLUpdate } from 'paima-engine/paima-utils';
-type SQLUpdate = [any, any]
+type SQLUpdate = [any, any];
 import {
   LobbyStatus,
   MatchConfig,
@@ -23,7 +24,6 @@ import {
 import {
   createLobby,
   ICreateLobbyParams,
-  IGetCachedMovesResult,
   IGetLobbyByIdResult,
   IGetMapLayoutResult,
   IGetRoundDataResult,
@@ -55,8 +55,8 @@ import {
   INewStatsParams,
   newStats,
 } from '@tower-defense/db';
-import parse from './parser.js';
 import { PreparedQuery } from '@pgtyped/query';
+import { Json } from '@tower-defense/db/src/select.queries.js';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -179,7 +179,7 @@ function generateMatchState(
     actors: { crypts: {}, towers: {}, units: {} },
     currentRound: 1,
     finishedSpawning: [],
-    roundEnded: false
+    roundEnded: false,
   };
 }
 function randomizeRoles(
@@ -199,7 +199,10 @@ function processMapLayout(mapName: string, mapString: string): RawMap {
     name: mapName,
     width: rows[0].length,
     height: rows.length,
-    contents: rows.join('').split('').map(s => parseInt(s) as TileNumber),
+    contents: rows
+      .join('')
+      .split('')
+      .map(s => parseInt(s) as TileNumber),
   };
 }
 
@@ -225,7 +228,11 @@ export function persistLobbyJoin(
       configString,
       randomnessGenerator
     );
-    const updateLobbyTuple = activateLobby(user, lobbyState, matchState, blockHeight);
+    // We update the Lobby table with the new state, and determine the creator role if it was random
+    const creator_role = lobbyState.creator_faction === "random" 
+    ? matchState.attacker === lobbyState.lobby_creator ? "attacker" : "defender"
+    : lobbyState.creator_faction 
+    const updateLobbyTuple = activateLobby(user, lobbyState, creator_role, matchState, blockHeight);
     const blankStatsTuple: SQLUpdate = blankStats(user);
     return [...updateLobbyTuple, blankStatsTuple];
   } else return [];
@@ -247,6 +254,7 @@ export function persistCloseLobby(
 function activateLobby(
   user: WalletAddress,
   lobbyState: IGetLobbyByIdResult,
+  creator_faction: RoleSetting,
   matchState: MatchState,
   blockHeight: number
 ): SQLUpdate[] {
@@ -254,6 +262,7 @@ function activateLobby(
     lobby_id: lobbyState.lobby_id,
     player_two: user,
     current_match_state: matchState as any, // TODO mmm
+    creator_faction
   };
   const newMatchTuple: SQLUpdate = [startMatch, smParams];
   const newRoundTuples = incrementRound(
@@ -321,7 +330,11 @@ export function persistMoveSubmission(
 }
 
 // Persist submitted move to database
-function persistMove(matchId: string, user: WalletAddress, a: TurnAction): [PreparedQuery<INewMatchMoveParams, INewMatchMoveResult>, INewMatchMoveParams] {
+function persistMove(
+  matchId: string,
+  user: WalletAddress,
+  a: TurnAction
+): [PreparedQuery<INewMatchMoveParams, INewMatchMoveResult>, INewMatchMoveParams] {
   const move_target = a.action === 'build' ? `${a.structure}--${a.coordinates}` : `${a.id}`;
   const mmParams: INewMatchMoveParams = {
     new_move: {
@@ -394,7 +407,7 @@ function execute(
 }
 function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
   const faction = databaseMove.wallet === matchState.attacker ? 'attacker' : 'defender';
-  console.log(databaseMove, "dbm")
+  console.log(databaseMove, 'dbm');
   if (databaseMove.move_type === 'build') {
     const [structure, coords] = databaseMove.move_target.split('--');
     return {

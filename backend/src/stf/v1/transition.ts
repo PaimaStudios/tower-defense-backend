@@ -7,7 +7,6 @@ import {
   getMapLayout,
   getMatchConfig,
 } from '@tower-defense/db';
-import parse from './parser';
 import Prando from 'paima-engine/paima-prando';
 import { SCHEDULED_DATA_ADDRESS, SQLUpdate, SubmittedChainData } from 'paima-engine/paima-utils';
 import {
@@ -28,8 +27,9 @@ import {
   UserStatsEffect,
   ZombieRoundEffect,
 } from './types.js';
-import { Faction, MatchState, parseInput, Structure, TurnAction } from '@tower-defense/utils';
+import { MatchState, parseInput } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
+import { validateMoves } from '@tower-defense/game-logic';
 
 export default async function (
   inputData: SubmittedChainData,
@@ -122,8 +122,8 @@ async function processSubmittedTurn(
   console.log(role, 'role');
   // add the faction to the actions in the input
   expanded.actions = expanded.actions.map(a => {
-    return {...a, faction: role}
-  })
+    return { ...a, faction: role };
+  });
   if (role === 'attacker' && lobby.current_round % 2 !== 0) return [];
   if (role === 'defender' && lobby.current_round % 2 !== 1) return [];
   // moves are valid
@@ -150,30 +150,6 @@ async function processSubmittedTurn(
     round,
     randomnessGenerator
   );
-}
-function validateMoves(actions: TurnAction[], faction: Faction, matchState: MatchState): boolean {
-  const res = actions.reduce((acc, item) => {
-    if (item.action === 'build')
-      return canBuild(faction, item.coordinates, item.structure, matchState) ? acc : false;
-    else return hasStructure(faction, item.id, matchState) ? acc : false;
-  }, true);
-  return res;
-}
-// Helper function to see if a structure is being built in an available tile
-function canBuild(
-  faction: Faction,
-  coords: number,
-  structure: Structure,
-  matchState: MatchState
-): boolean {
-  const structureFaction = structure.includes('rypt') ? 'attacker' : 'defender';
-  const tile = matchState.mapState[coords];
-  return tile.type === 'open' && tile.faction === faction && faction === structureFaction;
-}
-// Helper function to see if structure ID is on the matchState actor map
-function hasStructure(faction: Faction, id: number, matchState: MatchState): boolean {
-  if (faction === 'attacker') return !!matchState.actors.crypts[id];
-  else return !!matchState.actors.towers[id];
 }
 
 async function processScheduledData(

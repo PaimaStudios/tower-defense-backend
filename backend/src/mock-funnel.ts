@@ -77,7 +77,7 @@ export async function randomClose() {
 }
 export async function randomJoin() {
   const [lobby] = await getRandomLobby.run(undefined, pool);
-  console.log(lobby, "lobby")
+  console.log(lobby, 'lobby');
   const data = ['j', '*' + lobby.lobby_id].join('|');
   return {
     userAddress: `${randomHex()}`,
@@ -92,10 +92,11 @@ export async function randomMoves() {
   const matchState = lobby.current_match_state as unknown as MatchState;
   const defenders = randomDefenderMoves(matchState);
   const attackers = randomAttackerMoves(matchState);
-  const [user, inputs] = lobby.current_round % 2 === 1 
-  ?  [matchState.defender, defenders]
-  :  [matchState.attacker, attackers]
-  console.log(matchState)
+  const [user, inputs] =
+    lobby.current_round % 2 === 1
+      ? [matchState.defender, defenders]
+      : [matchState.attacker, attackers];
+  console.log(matchState);
   const data = ['s', '*' + lobby.lobby_id, lobby.current_round, inputs].join('|');
   return {
     userAddress: user,
@@ -126,8 +127,7 @@ function randomAttackerMoves(m: MatchState): string {
 }
 function randomBuildTowers(m: MatchState): [string, string] {
   const indexes = m.mapState.reduce((acc: number[], tile, index) => {
-    if (tile.type === 'open' && tile.faction === 'defender')
-      return [...acc, index];
+    if (tile.type === 'open' && tile.faction === 'defender') return [...acc, index];
     else return acc;
   }, []);
   const towers = ['at', 'pt', 'st'];
@@ -140,8 +140,7 @@ function randomBuildTowers(m: MatchState): [string, string] {
 function randomBuildCrypts(m: MatchState): [string, string] {
   const indexes = m.mapState.reduce((acc: number[], tile, index) => {
     // TODO check if path is next to tile
-    if (tile.type === 'open' && tile.faction === 'attacker')
-      return [...acc, index];
+    if (tile.type === 'open' && tile.faction === 'attacker') return [...acc, index];
     else return acc;
   }, []);
   const towers = ['gc', 'jc', 'mc'];
@@ -156,9 +155,7 @@ function indexToCoords(i: number, width: number): Coordinates {
   const x = i - y * width;
   return { x, y };
 }
-function randomConfig(){
-
-}
+function randomConfig() {}
 async function randomInput() {
   // const matches = await getActiveLobbies.run(undefined, pool);
   // const moves = Array.from(Array(100)).map(i => randomMove(matches))
