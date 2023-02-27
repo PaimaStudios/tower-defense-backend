@@ -45,7 +45,7 @@ function piranhaUpgrade3(t: TowerConfig): TowerConfig {
     health: Math.floor(t.health * 1.25),
     damage: Math.floor(t.damage * 2),
     range: Math.floor(t.range * 1.25),
-    cooldown: t.cooldown
+    cooldown: t.cooldown,
   };
 }
 const baseSlothTowerConfig1: TowerConfig = {
@@ -309,7 +309,7 @@ export function parseConfig(s: string | null): MatchConfig {
   // "r|1|gr;d;105|st;h150;c6;d5;r2
   if (!s) return baseConfig;
   // TODO revisit this
-  if (s === "default") return baseConfig
+  if (s === 'default') return baseConfig;
   else {
     const c = consumer.initialize(s);
     const version = c.nextValue();

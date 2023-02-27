@@ -1,5 +1,5 @@
 import Prando from 'paima-engine/paima-prando';
-import processTick, { getMap } from './index';
+import processTick from './processTick';
 
 import { baseConfig, parseConfig } from './config';
 import type {
@@ -21,7 +21,6 @@ import type {
   PathTile,
   Tile,
 } from '@tower-defense/utils';
-import { crypt } from '@tower-defense/utils/src/parser';
 import applyEvents from './apply';
 import { fillMap } from './map-processor';
 
@@ -486,13 +485,13 @@ describe('Game Logic', () => {
     let ok = true;
     for (let tick of ticks) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-      if (!events) console.log(tick, "tick")
+      if (!events) console.log(tick, 'tick');
       if (events) {
         const movementEvents = events.filter(
           (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
         );
         const units = Object.values(matchState.actors.units);
-        console.log(units.length, "units")
+        console.log(units.length, 'units');
         for (let u of units) {
           const me = movementEvents.find(m => m.actorID === u.id);
           if (!me) ok = false;

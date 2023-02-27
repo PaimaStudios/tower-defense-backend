@@ -47,14 +47,7 @@ export default function applyEvents(
         if (spendIfCan) {
           // mutate map with new actor
           setStructureFromEvent(config, matchState, event, faction as Faction, event.id);
-          // NEW Catastrophe doesn't do it this way. Could've told me earlier but let's try
-          // create new tile object
-          // const tile = buildTileFromEvent(event, faction as Faction, event.id);
-          // replace old tile with new tile
-          // m.mapState[coordsToIndex({x: event.x, y: event.y}, m.width)] = tile;
-          // m.contents[event.y][event.x] = tile;
           matchState.actorCount++;
-          // // drain gold
         }
         break;
       case 'repair':
@@ -140,7 +133,12 @@ export default function applyEvents(
         if (event.completion >= 100) {
           unitMoving.previousCoordinates = unitMoving.coordinates;
           unitMoving.coordinates = event.nextCoordinates as number;
-          unitMoving.nextCoordinates = findDestination(matchState, unitMoving.coordinates, unitMoving.previousCoordinates, randomnessGenerator);
+          unitMoving.nextCoordinates = findDestination(
+            matchState,
+            unitMoving.coordinates,
+            unitMoving.previousCoordinates,
+            randomnessGenerator
+          );
           unitMoving.movementCompletion = 0;
           // }
         } else unitMoving.movementCompletion = event.completion;

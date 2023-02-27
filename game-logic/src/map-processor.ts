@@ -1,11 +1,4 @@
-import type {
-  AnnotatedMap,
-  MatchState,
-  PathTile,
-  RawMap,
-  Tile,
-  TileNumber,
-} from '@tower-defense/utils';
+import type { AnnotatedMap, RawMap, Tile, TileNumber } from '@tower-defense/utils';
 
 export function getMap(m: RawMap): AnnotatedMap {
   return {
@@ -63,36 +56,7 @@ function isPath(tile: Tile) {
 function isBase(tile: Tile) {
   return tile?.type === 'base' && tile?.faction === 'defender';
 }
-// mutating logic
-// export function setPath(map: Tile[][]): Tile[][] {
-//   for (const [rowidx, row] of map.entries()) {
-//     // console.log(row, "Row")
-//     for (const [tileidx, tile] of row.entries()) {
-//       // console.log(tile, "tile")
-//       if (isPath(tile)) {
-//         const t = tile as PathTile;
-//         const left = row?.[tileidx - 1];
-//         const right = row?.[tileidx + 1];
-//         const up = map[rowidx - 1]?.[tileidx];
-//         const down = map[rowidx + 1]?.[tileidx];
-//         // set one single possible path if the defender base is nearby, as we want to go there and nowhere else
-//         if (isBase(left)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx - 1, y: rowidx }];
-//         else if (isBase(right)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx + 1, y: rowidx }];
-//         else if (isBase(up)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx, y: rowidx - 1 }];
-//         else if (isBase(down)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx, y: rowidx + 1 }];
-//         // set all possible paths if the defender base is not around
-//         else {
-//           // check where the base is so units don't backtrack
-//           if (isPath(left)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx - 1, y: rowidx }];
-//           if (isPath(right)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx + 1, y: rowidx }];
-//           if (isPath(up)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx, y: rowidx - 1 }];
-//           if (isPath(down)) t['leadsTo'] = [...t['leadsTo'], { x: tileidx, y: rowidx + 1 }];
-//         }
-//       }
-//     }
-//   }
-//   return map;
-// }
+
 const tileMap: Record<TileNumber, Tile> = {
   1: { type: 'open', faction: 'defender' },
   2: { type: 'open', faction: 'attacker' },
