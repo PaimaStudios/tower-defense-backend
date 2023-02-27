@@ -39,7 +39,7 @@ export default function applyEvents(
     switch (event.eventType) {
       case 'goldUpdate':
         if (faction === 'attacker') matchState.attackerGold = event.amount;
-        else if (faction === 'defender') matchState.defenderGold === event.amount;
+        else if (faction === 'defender') matchState.defenderGold = event.amount;
         break;
       case 'build':
         const cost = config[event.structure][1].price;
