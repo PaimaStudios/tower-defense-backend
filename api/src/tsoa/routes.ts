@@ -9,7 +9,7 @@ import { lobbyStateController } from './../controllers/lobbyState';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { lobbyStatusController } from './../controllers/lobbyStatus';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { MatchWinnerController } from './../controllers/mapLayout';
+import { MapLayoutController } from './../controllers/mapLayout';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { matchExecutorController } from './../controllers/matchExecutor';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -260,10 +260,10 @@ export function RegisterRoutes(app: express.Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.get('/match_layout',
-            ...(fetchMiddlewares<RequestHandler>(MatchWinnerController)),
-            ...(fetchMiddlewares<RequestHandler>(MatchWinnerController.prototype.get)),
+            ...(fetchMiddlewares<RequestHandler>(MapLayoutController)),
+            ...(fetchMiddlewares<RequestHandler>(MapLayoutController.prototype.get)),
 
-            function MatchWinnerController_get(request: any, response: any, next: any) {
+            function MapLayoutController_get(request: any, response: any, next: any) {
             const args = {
                     mapName: {"in":"query","name":"mapName","required":true,"dataType":"string"},
             };
@@ -274,7 +274,7 @@ export function RegisterRoutes(app: express.Router) {
             try {
                 validatedArgs = getValidatedArgs(args, request, response);
 
-                const controller = new MatchWinnerController();
+                const controller = new MapLayoutController();
 
 
               const promise = controller.get.apply(controller, validatedArgs as any);

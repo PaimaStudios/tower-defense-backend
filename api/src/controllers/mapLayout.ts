@@ -5,7 +5,7 @@ interface MapLayoutResponse{
   map_layout: string;
 }
 @Route('match_layout')
-export class MatchWinnerController extends Controller {
+export class MapLayoutController extends Controller {
   @Get()
   public async get(@Query() mapName: string): Promise<MapLayoutResponse | {}> {
     const pool = requirePool();
