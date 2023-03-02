@@ -1,4 +1,4 @@
-import { MapByNameResponse, MatchWinnerResponse } from '../types';
+import { MapByNameResponse, MatchWinnerResponse, PackedCurrentRound } from '../types';
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
@@ -15,6 +15,7 @@ import { calculateRoundEnd } from '../helpers/data-processing';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
 import { getBlockNumber } from '../helpers/general';
 import {
+  backendQueryCurrentRound,
   backendQueryMapByName,
   backendQueryMatchExecutor,
   backendQueryMatchWinner,
@@ -135,43 +136,28 @@ async function getLobbySearch(
   }
 }
 
-async function getRoundExecutionState(
-  lobbyID: string,
-  round: number
-): Promise<PackedRoundExecutionState | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('getRoundExecutionState');
+async function getCurrentRound(lobbyID: string): Promise<PackedCurrentRound | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getUserStats');
 
   let res: Response;
-  let latestBlockHeight: number;
-
   try {
-    const query = backendQueryRoundStatus(lobbyID, round);
-    [res, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
+    const query = backendQueryCurrentRound(lobbyID);
+    res = await fetch(query);
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
-    const roundStatusData = (await res.json()) as RoundStatusData;
-    const r = roundStatusData.round;
+    const j = (await res.json()) as { currentRound: number, roundStartHeight: number };
     // TODO: properly typecheck
-
-    let [start, length] = [r.roundStarted, r.roundLength];
-    const end = calculateRoundEnd(start, length, latestBlockHeight);
     return {
       success: true,
-      round: {
-        executed: r.executed,
-        usersWhoSubmittedMoves: r.usersWhoSubmittedMoves,
-        roundEndsInBlocks: end.blocks,
-        roundEndsInSeconds: end.seconds,
-      },
+      result: j
     };
   } catch (err) {
     return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
-
 async function getUserStats(walletAddress: string): Promise<PackedUserStats | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserStats');
 
@@ -508,7 +494,7 @@ export const queryEndpoints = {
   getUserStats,
   getLobbyState,
   getLobbySearch,
-  getRoundExecutionState,
+  getCurrentRound,
   getRandomOpenLobby,
   getOpenLobbies,
   getUserLobbiesMatches,

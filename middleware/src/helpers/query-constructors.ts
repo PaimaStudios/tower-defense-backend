@@ -132,6 +132,13 @@ export function backendQueryUserLobbiesBlockheight(
   return buildBackendQuery(endpoint, options);
 }
 
+export function backendQueryCurrentRound(lobbyID: string): string {
+  const endpoint = 'current_round';
+  const options = {
+    lobbyID,
+  };
+  return buildBackendQuery(endpoint, options);
+}
 export function backendQueryRoundStatus(lobbyID: string, round: number): string {
   const endpoint = 'round_status';
   const options = {

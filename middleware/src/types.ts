@@ -164,6 +164,14 @@ export interface PackedRoundExecutionState {
   round: RoundExecutionState;
 }
 
+export interface PackedCurrentRound{
+  success: true;
+  result:{
+    currentRound: number;
+    roundStartHeight: number;
+  }
+}
+
 export interface RichOpenLobbyStates {
   success: true;
   lobbies: RichOpenLobbyState[];
