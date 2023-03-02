@@ -298,7 +298,7 @@ export function RegisterRoutes(app: express.Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        app.get('/match_layout',
+        app.get('/map_layout',
             ...(fetchMiddlewares<RequestHandler>(MapLayoutController)),
             ...(fetchMiddlewares<RequestHandler>(MapLayoutController.prototype.get)),
 
