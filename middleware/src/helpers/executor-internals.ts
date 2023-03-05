@@ -1,8 +1,8 @@
 import processTick, { parseConfig } from '@tower-defense/game-logic';
 import { MatchConfig } from '@tower-defense/utils';
 import {
-  MatchExecutor as MatchExecutorConstructor,
-  RoundExecutor as RoundExecutorConstructor,
+  matchExecutor as matchExecutorConstructor,
+  roundExecutor as roundExecutorConstructor,
 } from 'paima-engine/paima-executors';
 import Prando from 'paima-engine/paima-prando';
 
@@ -25,7 +25,7 @@ export async function buildRoundExecutor(data: RoundExecutorData): Promise<Round
   const matchConfig: MatchConfig = parseConfig(data.config);
   const matchState = data.state;
   const rng = new Prando(seed);
-  return RoundExecutorConstructor.initialize(matchConfig, matchState, data.moves, rng, processTick);
+  return roundExecutorConstructor.initialize(matchConfig, matchState, data.moves, rng, processTick);
 }
 
 export async function buildMatchExecutor(data: MatchExecutorData): Promise<MatchExecutor> {
