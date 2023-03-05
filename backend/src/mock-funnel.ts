@@ -63,6 +63,7 @@ export function randomCreate() {
     inputData: data,
     inputNonce: randomString(),
     suppliedValue: '',
+    scheduled: false
   };
 }
 export async function randomClose() {
@@ -73,6 +74,7 @@ export async function randomClose() {
     inputData: data,
     inputNonce: randomString(),
     suppliedValue: '',
+    scheduled: false
   };
 }
 export async function randomJoin() {
@@ -84,6 +86,7 @@ export async function randomJoin() {
     inputData: data,
     inputNonce: randomString(),
     suppliedValue: '',
+    scheduled: false
   };
 }
 export async function randomMoves() {
@@ -103,6 +106,7 @@ export async function randomMoves() {
     inputData: data,
     inputNonce: randomString(),
     suppliedValue: '',
+    scheduled: false
   };
 }
 function randomDefenderMoves(m: MatchState): string {
