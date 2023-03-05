@@ -50,6 +50,8 @@ export default async function (
       } else return persistLobbyCreation(blockHeight, user, expanded, randomnessGenerator);
     case 'joinedLobby':
       const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
+      // if Lobby doesn't exist, bail
+      if (!lobbyState) return []
       const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
       // if match config is not in the database, bail
       const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
@@ -109,8 +111,6 @@ async function processSubmittedTurn(
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   // if moves sent don't belong to the current round, bail
-  console.log(lobby.current_round, 'current round');
-  console.log(expanded.roundNumber, 'round sent');
   if (expanded.roundNumber !== lobby.current_round) return [];
   // <validation
   // role is valid
@@ -119,10 +119,9 @@ async function processSubmittedTurn(
     user === (lobby.current_match_state as unknown as MatchState).attacker
       ? 'attacker'
       : 'defender';
-  console.log(role, 'role');
   // add the faction to the actions in the input
   expanded.actions = expanded.actions.map(a => {
-    return { ...a, faction: role };
+    return { ...a, faction: role, round: expanded.roundNumber };
   });
   if (role === 'attacker' && lobby.current_round % 2 !== 0) return [];
   if (role === 'defender' && lobby.current_round % 2 !== 1) return [];

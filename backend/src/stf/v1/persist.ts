@@ -7,7 +7,7 @@ import {
   RoleSetting,
 } from './types.js';
 import Prando from 'paima-engine/paima-prando';
-import { RoundExecutor } from 'paima-engine/paima-executors';
+import { roundExecutor } from 'paima-engine/paima-executors';
 import processTick, { getMap, parseConfig } from '@tower-defense/game-logic';
 // import { SQLUpdate } from 'paima-engine/paima-utils';
 type SQLUpdate = [any, any];
@@ -317,6 +317,7 @@ export function persistMoveSubmission(
   // We'll assume the moves are valid at this stage, invalid moves shouldn't have got this far.
   // Save the moves to the database;
   const movesTuples = inputData.actions.map(a => persistMove(lobbyState.lobby_id, user, a));
+  console.log(inputData.actions, "actions sent by user")
   // Execute the round after moves come in. Pass the moves in database params format to the round executor.
   const roundExecutionTuples = execute(
     blockHeight,
@@ -345,6 +346,7 @@ function persistMove(
       move_target,
     },
   };
+  console.log(mmParams, "submitting moves")
   return [newMatchMove, mmParams];
 }
 // Calls the 'round executor' and produces the necessary SQL updates which result
@@ -357,7 +359,7 @@ function execute(
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const matchState = lobbyState.current_match_state as unknown as MatchState;
-  const executor = RoundExecutor.initialize(
+  const executor = roundExecutor.initialize(
     matchConfig,
     matchState,
     moves,
