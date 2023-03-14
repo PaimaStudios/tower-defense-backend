@@ -278,23 +278,29 @@ function findClosebyPath(m: MatchState, coords: number, rng: Prando, range = 1):
 
 // Movement events, dervive from the units already on the match sate.
 function movementEvents(
-  config: MatchConfig,
-  m: MatchState,
+  matchConfig: MatchConfig,
+  matchState: MatchState,
   currentTick: number,
   randomnessGenerator: Prando
 ): Array<StatusEffectAppliedEvent | UnitMovementEvent | StatusEffectAppliedEvent> {
-  const attackers = Object.values(m.actors.units);
+  const attackers = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
     const busyAttacking =
-      a.subType === 'macaw' && findClosebyTowers(m, a.coordinates, 1).length > 0;
+      a.subType === 'macaw' && findClosebyTowers(matchState, a.coordinates, 1).length > 0;
     if (busyAttacking) return null;
     else {
       // Generate movement events
-      const event = move(config, a);
+      const event = move(matchConfig, a);
       // See if unit moved next to a friendly crypt and got a status buff from it
-      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(m, event);
-      applyEvents(config, m, [event, ...buffStatusEvents], currentTick, randomnessGenerator);
+      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(matchConfig, matchState, event);
+      applyEvents(
+        matchConfig,
+        matchState,
+        [event, ...buffStatusEvents],
+        currentTick,
+        randomnessGenerator
+      );
       return [event, ...buffStatusEvents];
     }
   });
@@ -333,10 +339,14 @@ function getCurrentSpeed(config: MatchConfig, a: AttackerUnit): number {
 }
 
 // Buff events, status events which happen as units pass next to friendly crypts.
-function buff(m: MatchState, e: UnitMovementEvent): StatusEffectAppliedEvent[] {
-  if (e.completion === 100) {
-    const crypts = findClosebyCrypts(m, e.nextCoordinates, 1);
-    const events = crypts.map(c => buffEvent(c, e.actorID));
+function buff(
+  matchConfig: MatchConfig,
+  matchState: MatchState,
+  event: UnitMovementEvent
+): StatusEffectAppliedEvent[] {
+  if (event.completion === 100) {
+    const crypts = findClosebyCrypts(matchState, event.nextCoordinates, 1);
+    const events = crypts.map(c => buffEvent(matchConfig, c, event.actorID));
     const eventTypeGuard = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent =>
       !!e;
     return events.filter(eventTypeGuard);
@@ -344,7 +354,11 @@ function buff(m: MatchState, e: UnitMovementEvent): StatusEffectAppliedEvent[] {
 }
 
 // helper function to emit buff events according to cryptType
-function buffEvent(crypt: AttackerStructure, unitId: number): StatusEffectAppliedEvent | null {
+function buffEvent(
+  matchConfig: MatchConfig,
+  crypt: AttackerStructure,
+  unitId: number
+): StatusEffectAppliedEvent | null {
   if (crypt.structure === 'gorillaCrypt' && crypt.upgrades === 2)
     return {
       eventType: 'statusApply',
@@ -352,6 +366,7 @@ function buffEvent(crypt: AttackerStructure, unitId: number): StatusEffectApplie
       sourceID: crypt.id,
       targetID: unitId,
       statusType: 'healthBuff',
+      statusAmount: matchConfig.healthBuffAmount,
     };
   else if (crypt.structure === 'jaguarCrypt' && crypt.upgrades === 2)
     return {
@@ -360,6 +375,7 @@ function buffEvent(crypt: AttackerStructure, unitId: number): StatusEffectApplie
       sourceID: crypt.id,
       targetID: unitId,
       statusType: 'speedBuff',
+      statusAmount: matchConfig.speedBuffAmount,
     };
   else return null;
 }
@@ -509,6 +525,7 @@ function slothDamage(
       sourceID: tower.id,
       targetID: unit.id,
       statusType: 'speedDebuff',
+      statusAmount: unit.speed / 2, // 50% speed reduction
     };
     const damageEvent: DamageEvent = {
       eventType: 'damage',
@@ -523,28 +540,25 @@ function slothDamage(
       faction: 'attacker',
       id: unit.id,
     };
+    const deflectingDamageEvent: DamageEvent = {
+      eventType: 'damage',
+      faction: 'attacker',
+      sourceID: unit.id,
+      targetID: tower.id,
+      damageAmount,
+      damageType: 'neutral',
+    };
     const dying = damageAmount >= unit.health;
-    const events = dying
-      ? [statusEvent, damageEvent, ...deflectingDamage(unit, tower.id, damageAmount), killEvent]
-      : [statusEvent, damageEvent, ...deflectingDamage(unit, tower.id, damageAmount)];
+    const buffing = tower.upgrades === 2;
+    const events: TowerAttack[] = [damageEvent];
+    const superMacaw = unit.subType === 'macaw' && unit.upgradeTier === 2;
+    if (buffing) events.push(statusEvent);
+    if (dying) events.push(killEvent);
+    if (superMacaw) events.push(deflectingDamageEvent);
     applyEvents(config, m, events, currentTick, rng);
     return events;
   });
   return damageEvents.flat();
-}
-function deflectingDamage(attacker: AttackerUnit, towerID: number, amount: number): DamageEvent[] {
-  if (attacker.subType === 'macaw' && attacker.upgradeTier === 2)
-    return [
-      {
-        eventType: 'damage',
-        faction: 'attacker',
-        sourceID: attacker.id,
-        targetID: towerID,
-        damageAmount: amount,
-        damageType: 'neutral',
-      },
-    ];
-  else return [];
 }
 // Events where Units attack the defender.
 // Either Macaws attacking Towers, or any unit attacking the Defender Base

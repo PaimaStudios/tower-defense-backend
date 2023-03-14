@@ -24,6 +24,8 @@ export interface MatchConfig {
   towerRepairValue: number;
   repairCost: number;
   recoupAmount: number; // cash we get on salvaging towers
+  healthBuffAmount: number;
+  speedBuffAmount: number;
 }
 export interface TowerConfig {
   price: number;
@@ -355,6 +357,7 @@ export interface StatusEffectAppliedEvent {
   sourceID: number;
   targetID: number;
   statusType: StatusType;
+  statusAmount: number;
 }
 export type TowerAttack = DamageEvent | ActorDeletedEvent | StatusEffectAppliedEvent;
 export type UnitAttack = DamageEvent | DefenderBaseUpdateEvent | ActorDeletedEvent;
