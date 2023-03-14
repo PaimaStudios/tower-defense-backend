@@ -298,6 +298,8 @@ export const baseConfig: MatchConfig = {
   repairCost: 10,
   recoupAmount: 20,
   baseSpeed: 10,
+  healthBuffAmount: 5,
+  speedBuffAmount: 10,
   anacondaTower: baseAnacondaTowerConfig,
   piranhaTower: basePiranhaTowerConfig,
   slothTower: baseSlothTowerConfig,
