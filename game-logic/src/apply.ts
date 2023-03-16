@@ -206,8 +206,9 @@ function findDestination(
     // if there is more than one available path (i.e. go left or go up/down) determine according to randomness.
     const nextCoords =
       leadsTo.length > 1
-        ? randomizePath(leadsTo, randomnessGenerator, coordinates, !!previousCoordinates)
+        ? randomizePath(leadsTo, randomnessGenerator, coordinates, !previousCoordinates)
         : leadsTo[0];
+    console.log(nextCoords, "nextcoords")
     return nextCoords;
   }
 }
