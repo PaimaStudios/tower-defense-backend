@@ -104,7 +104,7 @@ This event includes:
   "coordinates": number,
   "nextCoordinates": number | null,
   "completion": number,
-  "movement-speed": number
+  "movementSpeed": number
 }
 ```
 
@@ -144,7 +144,7 @@ When an attacker’s unit or a defender’s tower hit 0 hp, then they are delete
 ```json
 {
   "event": "actorDeleted",
-  "faction":
+  "faction": "attacker" | "defender",
   "id": 2593
 }
 ```
@@ -165,7 +165,8 @@ The tick event includes:
   "faction": "attacker" | "defender",
   "sourceID": number,
   "targetID": number,
-  "statusType": "speedDebuff" | "speedBuff" | "healthBuff"
+  "statusType": "speedDebuff" | "speedBuff" | "healthBuff",
+  "statusAmount": number
 }
 ```
 
