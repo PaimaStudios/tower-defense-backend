@@ -46,12 +46,20 @@ export default async function (
     case 'createdLobby':
       if (expanded.isPractice) {
         const [map] = await getMapLayout.run({ name: expanded.map }, dbConn);
-        return persistPracticeLobbyCreation(blockHeight, user, expanded, map, randomnessGenerator);
+        const [configContent] = await getMatchConfig.run({ id: expanded.matchConfigID }, dbConn);
+        return persistPracticeLobbyCreation(
+          blockHeight,
+          user,
+          expanded,
+          map,
+          configContent.content,
+          randomnessGenerator
+        );
       } else return persistLobbyCreation(blockHeight, user, expanded, randomnessGenerator);
     case 'joinedLobby':
       const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
       // if Lobby doesn't exist, bail
-      if (!lobbyState) return []
+      if (!lobbyState) return [];
       const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
       // if match config is not in the database, bail
       const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
