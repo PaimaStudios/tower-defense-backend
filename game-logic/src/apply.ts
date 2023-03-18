@@ -224,7 +224,7 @@ function randomizePath(
   if (fresh) {
     const forwardPaths = paths.filter(p => p < presentCoordinates);
     const index = Math.floor(randomness * forwardPaths.length);
-    return forwardPaths[index];
+    return forwardPaths[index] || Math.min(...paths);
   } else {
     const index = Math.floor(randomness * paths.length);
     return paths[index];
