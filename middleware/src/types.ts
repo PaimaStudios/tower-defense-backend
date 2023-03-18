@@ -127,7 +127,6 @@ export interface User {
 export interface BasicLobbyInfo {
   lobby_id: Hash;
   health: number;
-  grid_size: number;
   num_of_rounds: number;
   current_round: number;
   round_length: number;
@@ -136,9 +135,7 @@ export interface BasicLobbyInfo {
   created_at: string;
   creation_block_height: number;
   lobby_creator: UserAddress;
-  lobby_creator_animal: UserAnimal;
   player_two: UserAddress;
-  player_two_animal: UserAnimal;
   round_ends_in_blocks: number;
   round_ends_in_secs: number;
 }
@@ -328,16 +325,17 @@ export interface ExecutorDataSeed {
 
 export interface RoundExecutorData {
   block_height: ExecutorDataBlockHeight;
-  config: string; // config concise encoding
-  state: MatchState;
+  lobby: any;
   moves: TurnAction[];
+  round_data: any;
 }
 
 export interface MatchExecutorData {
-  lobby: LobbyState;
+  lobby: any;
   states: ExecutorDataPlayerState[];
   seeds: ExecutorDataSeed[];
   moves: TurnAction[];
+  initialState: MatchState;
 }
 
 export type NftScore = {
