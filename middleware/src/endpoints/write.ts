@@ -34,7 +34,7 @@ const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
 };
 
 interface CreateLobbyParams {
-  configName: string;
+  presetName: "short" | "medium" | "long";
   role: Faction | 'random';
   numberOfRounds: number;
   roundLength: number;
@@ -51,8 +51,14 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   const userWalletAddress = query.result;
   console.log(JSON.parse(json), 'json parsed');
   const parsed: CreateLobbyParams = JSON.parse(json);
-  const { configName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
-
+  const { presetName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
+  const configName = presetName === "short" 
+  ? "defaultdefault" 
+  : presetName === "medium" 
+  ? "defaultdefault"
+  : presetName === "long"
+  ? "defaultdefault"
+  : "defaultdefault"
   const roleEncoding =
     role === 'attacker' ? 'a' : role === 'defender' ? 'd' : role === 'random' ? 'r' : 'r';
 
