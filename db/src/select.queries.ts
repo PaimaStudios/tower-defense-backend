@@ -112,6 +112,7 @@ export interface IGetMatchSeedsResult {
   execution_block_height: number | null;
   id: number;
   lobby_id: string;
+  match_state: Json;
   round_within_match: number;
   seed: string;
   starting_block_height: number;
@@ -179,6 +180,7 @@ export interface IGetRoundDataResult {
   execution_block_height: number | null;
   id: number;
   lobby_id: string;
+  match_state: Json;
   round_within_match: number;
   starting_block_height: number;
 }

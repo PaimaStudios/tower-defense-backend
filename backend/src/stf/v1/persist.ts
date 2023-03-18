@@ -8,7 +8,7 @@ import {
 } from './types.js';
 import Prando from 'paima-engine/paima-prando';
 import { roundExecutor } from 'paima-engine/paima-executors';
-import processTick, { getMap, parseConfig } from '@tower-defense/game-logic';
+import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
 // import { SQLUpdate } from 'paima-engine/paima-utils';
 type SQLUpdate = [any, any];
 import {
@@ -114,6 +114,7 @@ export function persistPracticeLobbyCreation(
   user: WalletAddress,
   inputData: CreatedLobbyInput,
   map: IGetMapLayoutResult,
+  configContent: string,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
@@ -139,15 +140,15 @@ export function persistPracticeLobbyCreation(
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
   // In case of a practice lobby join with a predetermined opponent right away and use the same animal as user
-  // const practiceLobbyTuples = persistLobbyJoin(
-  //   blockHeight,
-  //   PRACTICE_BOT_ADDRESS,
-  //   params,
-  //   map,
-  //   randomnessGenerator
-  // );
-  // return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
-  return [];
+  const practiceLobbyTuples = persistLobbyJoin(
+    blockHeight,
+    PRACTICE_BOT_ADDRESS,
+    params,
+    map,
+    configContent,
+    randomnessGenerator
+  );
+  return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
 }
 // TODO PLAYER TURNS / ROUNDS ???
 function generateMatchState(
@@ -200,6 +201,7 @@ function processMapLayout(mapName: string, mapString: string): RawMap {
     width: rows[0].length,
     height: rows.length,
     contents: rows
+      .reverse()
       .join('')
       .split('')
       .map(s => parseInt(s) as TileNumber),
@@ -269,6 +271,7 @@ function activateLobby(
     lobbyState.lobby_id,
     0,
     lobbyState.round_length,
+    matchState,
     blockHeight
   );
   // We insert the round and first two empty user states in their tables at this stage, so the round executor has empty states to iterate from.
@@ -281,6 +284,7 @@ function incrementRound(
   lobbyID: string,
   round: number,
   round_length: number,
+  matchState: MatchState,
   blockHeight: number
 ): SQLUpdate[] {
   const nrParams: INewRoundParams = {
@@ -288,6 +292,7 @@ function incrementRound(
     round_within_match: round + 1,
     starting_block_height: blockHeight,
     execution_block_height: null,
+    match_state: matchState as any
   };
   const newRoundTuple: SQLUpdate = [newRound, nrParams];
   // Scheduling of the zombie round execution in the future
@@ -327,6 +332,13 @@ export function persistMoveSubmission(
     roundData,
     randomnessGenerator
   );
+  if (lobbyState.practice){
+    const state = lobbyState.current_match_state as unknown as MatchState;
+    const faction = user === state.attacker ? "defender" : "attacker";
+    const moves = generateRandomMoves(matchConfig, state, faction);
+    return []
+  }
+  else
   return [...movesTuples, ...roundExecutionTuples];
 }
 
@@ -402,6 +414,7 @@ function execute(
       lobbyState.lobby_id,
       lobbyState.current_round,
       lobbyState.round_length,
+      matchState,
       blockHeight
     );
     return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuple, updateStateTuple];

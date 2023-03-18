@@ -42,6 +42,7 @@ export const newScheduledData = new PreparedQuery<INewScheduledDataParams,INewSc
 export interface INewRoundParams {
   execution_block_height: number | null | void;
   lobby_id: string;
+  match_state: Json;
   round_within_match: number;
   starting_block_height: number;
 }
@@ -51,6 +52,7 @@ export interface INewRoundResult {
   execution_block_height: number | null;
   id: number;
   lobby_id: string;
+  match_state: Json;
   round_within_match: number;
   starting_block_height: number;
 }
@@ -61,13 +63,13 @@ export interface INewRoundQuery {
   result: INewRoundResult;
 }
 
-const newRoundIR: any = {"usedParamSet":{"lobby_id":true,"round_within_match":true,"starting_block_height":true,"execution_block_height":true},"params":[{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":104,"b":113}]},{"name":"round_within_match","required":true,"transform":{"type":"scalar"},"locs":[{"a":116,"b":135}]},{"name":"starting_block_height","required":true,"transform":{"type":"scalar"},"locs":[{"a":138,"b":160}]},{"name":"execution_block_height","required":false,"transform":{"type":"scalar"},"locs":[{"a":163,"b":185}]}],"statement":"INSERT INTO rounds(lobby_id, round_within_match, starting_block_height, execution_block_height)\nVALUES (:lobby_id!, :round_within_match!, :starting_block_height!, :execution_block_height)\nRETURNING *             "};
+const newRoundIR: any = {"usedParamSet":{"lobby_id":true,"round_within_match":true,"match_state":true,"starting_block_height":true,"execution_block_height":true},"params":[{"name":"lobby_id","required":true,"transform":{"type":"scalar"},"locs":[{"a":117,"b":126}]},{"name":"round_within_match","required":true,"transform":{"type":"scalar"},"locs":[{"a":129,"b":148}]},{"name":"match_state","required":true,"transform":{"type":"scalar"},"locs":[{"a":151,"b":163}]},{"name":"starting_block_height","required":true,"transform":{"type":"scalar"},"locs":[{"a":166,"b":188}]},{"name":"execution_block_height","required":false,"transform":{"type":"scalar"},"locs":[{"a":191,"b":213}]}],"statement":"INSERT INTO rounds(lobby_id, round_within_match, match_state, starting_block_height, execution_block_height)\nVALUES (:lobby_id!, :round_within_match!, :match_state!, :starting_block_height!, :execution_block_height)\nRETURNING *             "};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO rounds(lobby_id, round_within_match, starting_block_height, execution_block_height)
- * VALUES (:lobby_id!, :round_within_match!, :starting_block_height!, :execution_block_height)
+ * INSERT INTO rounds(lobby_id, round_within_match, match_state, starting_block_height, execution_block_height)
+ * VALUES (:lobby_id!, :round_within_match!, :match_state!, :starting_block_height!, :execution_block_height)
  * RETURNING *             
  * ```
  */

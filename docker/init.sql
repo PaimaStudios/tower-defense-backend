@@ -104,6 +104,7 @@ CREATE TABLE rounds(
   id SERIAL PRIMARY KEY,
   lobby_id TEXT NOT NULL references lobbies(lobby_id),
   round_within_match INTEGER NOT NULL,
+  match_state JSONB NOT NULL,
   starting_block_height INTEGER NOT NULL references block_heights(block_height),
   execution_block_Height INTEGER references block_heights(block_height)
 );

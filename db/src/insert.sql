@@ -9,8 +9,8 @@ VALUES (:block_height!, :input_data!);
 /* 
   @name newRound
 */
-INSERT INTO rounds(lobby_id, round_within_match, starting_block_height, execution_block_height)
-VALUES (:lobby_id!, :round_within_match!, :starting_block_height!, :execution_block_height)
+INSERT INTO rounds(lobby_id, round_within_match, match_state, starting_block_height, execution_block_height)
+VALUES (:lobby_id!, :round_within_match!, :match_state!, :starting_block_height!, :execution_block_height)
 RETURNING *;
 
 /*  Stats  */
