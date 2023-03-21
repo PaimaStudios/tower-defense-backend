@@ -24,9 +24,9 @@ export class currentRoundController extends Controller {
       pool
     );
     if (!lobby || !roundData) return { error: 'lobby not found' };
-    else {
-      const currentRound = lobby.current_round;
-      const roundStartHeight = roundData.starting_block_height;
+    else { 
+      const currentRound = lobby.lobby_state === "finished" ? lobby.current_round + 1 : lobby.current_round;
+      const roundStartHeight = lobby.lobby_creator === "finished" ? roundData.execution_block_height as number : roundData.starting_block_height;
       return { currentRound, roundStartHeight };
     }
   }
