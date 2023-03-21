@@ -1,4 +1,4 @@
-import { MapByNameResponse, MatchWinnerResponse, PackedCurrentRound } from '../types';
+import { MapByNameResponse, MatchWinnerResponse, PackedCurrentRound, PackedLobbyConfig } from '../types';
 
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
@@ -16,6 +16,7 @@ import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-inte
 import { getBlockNumber } from '../helpers/general';
 import {
   backendQueryCurrentRound,
+  backendQueryLobbyConfig,
   backendQueryMapByName,
   backendQueryMatchExecutor,
   backendQueryMatchWinner,
@@ -50,6 +51,7 @@ import {
   SuccessfulResult,
   UserStats,
 } from '../types';
+import { MatchConfig } from '@tower-defense/utils';
 
 const RETRY_PERIOD_RANDOM_LOBBY = 1000;
 
@@ -136,8 +138,30 @@ async function getLobbySearch(
   }
 }
 
+async function getConfig(lobbyID: string): Promise<PackedLobbyConfig | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getConfig');
+
+  let res: Response;
+  try {
+    const query = backendQueryLobbyConfig(lobbyID);
+    res = await fetch(query);
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = (await res.json()) as { config: MatchConfig };
+    // TODO: properly typecheck
+    return {
+      success: true,
+      result: j
+    };
+  } catch (err) {
+    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
 async function getCurrentRound(lobbyID: string): Promise<PackedCurrentRound | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('getUserStats');
+  const errorFxn = buildEndpointErrorFxn('getCurrentRound');
 
   let res: Response;
   try {
@@ -506,5 +530,6 @@ export const queryEndpoints = {
   getNftStats,
   getRoundExecutor,
   getMatchExecutor,
-  getMapByName
+  getMapByName,
+  getConfig
 };

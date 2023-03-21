@@ -243,6 +243,8 @@ async function submitMoves(json: string): Promise<OldResult> {
   const userWalletAddress = query.result;
   const parsed: SubmitMovesParams = JSON.parse(json);
   const { lobbyID, roundNumber, moves } = parsed;
+  console.log(moves, "moves sent")
+  console.log(moves.map(m => ({ value: moveToString(m) })))
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('s');

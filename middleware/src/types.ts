@@ -161,6 +161,12 @@ export interface PackedRoundExecutionState {
   round: RoundExecutionState;
 }
 
+export interface PackedLobbyConfig{
+  success: true;
+  result:{
+    config: MatchConfig
+  }
+}
 export interface PackedCurrentRound{
   success: true;
   result:{
