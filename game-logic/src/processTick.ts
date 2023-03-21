@@ -626,10 +626,12 @@ function computeDamageToBase(
   if (!(t.type === 'base' && t.faction === 'defender')) return [];
   // If unit is at the defender's base, emit events for base damage and death of unit
   else {
+    const remainingHealth = matchState.defenderBase.health - attackerUnit.damage;
+    const health = remainingHealth < 0 ? 0 : remainingHealth;
     const baseEvent: DefenderBaseUpdateEvent = {
       eventType: 'defenderBaseUpdate',
       faction: 'defender',
-      health: matchState.defenderBase.health - attackerUnit.damage, // TODO: Do Macaws do the same damage to the base as they do to towers?
+      health
     };
     const deathEvent: ActorDeletedEvent = {
       eventType: 'actorDeleted',
