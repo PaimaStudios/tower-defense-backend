@@ -17,7 +17,6 @@ export class currentRoundController extends Controller {
   @Get()
   public async get(@Query() lobbyID: string): Promise<Response> {
     const pool = requirePool();
-    console.log(lobbyID, "querying")
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
     const [roundData] = await getRoundData.run(
       { lobby_id: lobbyID, round_number: lobby.current_round },

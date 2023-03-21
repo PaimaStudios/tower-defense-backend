@@ -3,6 +3,8 @@
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { Controller, ValidationService, FieldErrors, ValidateError, TsoaRoute, HttpStatusCodeLiteral, TsoaResponse, fetchMiddlewares } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { configController } from './../controllers/config';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { currentRoundController } from './../controllers/currentRound';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { latestProcessedBlockheightController } from './../controllers/latestProcessedBlockheight';
@@ -40,11 +42,83 @@ import * as express from 'express';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
-    "RoundData": {
+    "TowerConfig": {
         "dataType": "refObject",
         "properties": {
-            "currentRound": {"dataType":"double","required":true},
-            "roundStartHeight": {"dataType":"double","required":true},
+            "price": {"dataType":"double","required":true},
+            "health": {"dataType":"double","required":true},
+            "cooldown": {"dataType":"double","required":true},
+            "damage": {"dataType":"double","required":true},
+            "range": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TowerConfigGraph": {
+        "dataType": "refObject",
+        "properties": {
+            "1": {"ref":"TowerConfig","required":true},
+            "2": {"ref":"TowerConfig","required":true},
+            "3": {"ref":"TowerConfig","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CryptConfig": {
+        "dataType": "refObject",
+        "properties": {
+            "price": {"dataType":"double","required":true},
+            "cryptHealth": {"dataType":"double","required":true},
+            "buffRange": {"dataType":"double","required":true},
+            "buffCooldown": {"dataType":"double","required":true},
+            "spawnRate": {"dataType":"double","required":true},
+            "spawnCapacity": {"dataType":"double","required":true},
+            "attackDamage": {"dataType":"double","required":true},
+            "attackWarmup": {"dataType":"double","required":true},
+            "attackRange": {"dataType":"double","required":true},
+            "attackCooldown": {"dataType":"double","required":true},
+            "unitSpeed": {"dataType":"double","required":true},
+            "unitHealth": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CryptConfigGraph": {
+        "dataType": "refObject",
+        "properties": {
+            "1": {"ref":"CryptConfig","required":true},
+            "2": {"ref":"CryptConfig","required":true},
+            "3": {"ref":"CryptConfig","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "MatchConfig": {
+        "dataType": "refObject",
+        "properties": {
+            "defenderBaseHealth": {"dataType":"double","required":true},
+            "baseAttackerGoldRate": {"dataType":"double","required":true},
+            "baseDefenderGoldRate": {"dataType":"double","required":true},
+            "anacondaTower": {"ref":"TowerConfigGraph","required":true},
+            "piranhaTower": {"ref":"TowerConfigGraph","required":true},
+            "slothTower": {"ref":"TowerConfigGraph","required":true},
+            "macawCrypt": {"ref":"CryptConfigGraph","required":true},
+            "gorillaCrypt": {"ref":"CryptConfigGraph","required":true},
+            "jaguarCrypt": {"ref":"CryptConfigGraph","required":true},
+            "baseSpeed": {"dataType":"double","required":true},
+            "towerRepairValue": {"dataType":"double","required":true},
+            "repairCost": {"dataType":"double","required":true},
+            "recoupAmount": {"dataType":"double","required":true},
+            "healthBuffAmount": {"dataType":"double","required":true},
+            "speedBuffAmount": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Config": {
+        "dataType": "refObject",
+        "properties": {
+            "config": {"ref":"MatchConfig","required":true},
         },
         "additionalProperties": false,
     },
@@ -52,14 +126,14 @@ const models: TsoaRoute.Models = {
     "Error": {
         "dataType": "refObject",
         "properties": {
-            "error": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["round not found"]},{"dataType":"enum","enums":["lobby not found"]}],"required":true},
+            "error": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["config not found"]},{"dataType":"enum","enums":["lobby not found"]}],"required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Response": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"RoundData"},{"ref":"Error"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"Config"},{"ref":"Error"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "MapLayoutResponse": {
@@ -199,6 +273,31 @@ export function RegisterRoutes(app: express.Router) {
     //  NOTE: If you do not see routes for all of your controllers in this file, then you might not have informed tsoa of where to look
     //      Please look into the "controllerPathGlobs" config option described in the readme: https://github.com/lukeautry/tsoa
     // ###########################################################################################################
+        app.get('/config',
+            ...(fetchMiddlewares<RequestHandler>(configController)),
+            ...(fetchMiddlewares<RequestHandler>(configController.prototype.get)),
+
+            function configController_get(request: any, response: any, next: any) {
+            const args = {
+                    lobbyID: {"in":"query","name":"lobbyID","required":true,"dataType":"string"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = getValidatedArgs(args, request, response);
+
+                const controller = new configController();
+
+
+              const promise = controller.get.apply(controller, validatedArgs as any);
+              promiseHandler(controller, promise, response, undefined, next);
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.get('/current_round',
             ...(fetchMiddlewares<RequestHandler>(currentRoundController)),
             ...(fetchMiddlewares<RequestHandler>(currentRoundController.prototype.get)),
