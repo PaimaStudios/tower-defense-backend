@@ -145,18 +145,13 @@ export default function applyEvents(
         break;
       case 'damage':
         const damageEvent = event as DamageEvent;
-        if (event.targetID === 0) {
-          matchState.defenderBase.health--; // TODO calculate base damage
-        } else {
           // find the affected unit
           const damagedUnit =
             faction === 'attacker'
               ? matchState.actors.towers[damageEvent.targetID]
               : matchState.actors.units[damageEvent.targetID];
           if (damagedUnit && damageEvent.damageType === 'neutral')
-            // TODO
-            damagedUnit.health = damagedUnit.health - event.damageAmount; // TODO this bugs out if the unit has been killed already
-        }
+            damagedUnit.health = damagedUnit.health - event.damageAmount;
         break;
       case 'actorDeleted':
         // it may happen that several actorDeleted events are issued about one single unit
@@ -208,7 +203,6 @@ function findDestination(
       leadsTo.length > 1
         ? randomizePath(leadsTo, randomnessGenerator, coordinates, !previousCoordinates)
         : leadsTo[0];
-    console.log(nextCoords, "nextcoords")
     return nextCoords;
   }
 }

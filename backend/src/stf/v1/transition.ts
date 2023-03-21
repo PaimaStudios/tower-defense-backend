@@ -99,7 +99,6 @@ async function processCloseLobby(
   const query = persistCloseLobby(user, lobbyState);
   // persisting failed the validation, bail
   if (!query) return [];
-  console.log(query, 'closing lobby');
   return [query];
 }
 async function processSubmittedTurn(
@@ -202,9 +201,7 @@ async function processStatsEffect(
 ): Promise<SQLUpdate[]> {
   const effect = expanded.effect as UserStatsEffect;
   const [stats] = await getUserStats.run({ wallet: effect.user }, dbConn);
-  console.log(stats, 'stats');
   if (!stats) return [];
   const query = persistStatsUpdate(effect.user, effect.result, stats);
-  console.log(query, 'updating stats');
   return [query];
 }
