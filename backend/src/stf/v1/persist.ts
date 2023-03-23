@@ -233,10 +233,24 @@ export function persistLobbyJoin(
     // We update the Lobby table with the new state, and determine the creator role if it was random
     const creator_role = lobbyState.creator_faction === "random" 
     ? matchState.attacker === lobbyState.lobby_creator ? "attacker" : "defender"
-    : lobbyState.creator_faction 
+    : lobbyState.creator_faction;
+    // If it's a practice lobby and it's the bot's turn first we run that turn too.
+    // We have to pass it fake round data as the round hasn't been persisted yet.
+    const firstRound = lobbyState.practice &&  creator_role === "attacker" 
+    ? practiceRound(blockHeight, 
+      {...lobbyState, current_round: 1},
+      parseConfig(configString), {
+      round_within_match: 0,
+      lobby_id: lobbyState.lobby_id,
+      starting_block_height: blockHeight,
+      execution_block_height: null,
+      id: 0,
+      match_state: matchState as any
+    }, randomnessGenerator)
+    : []
     const updateLobbyTuple = activateLobby(user, lobbyState, creator_role, matchState, blockHeight);
     const blankStatsTuple: SQLUpdate = blankStats(user);
-    return [...updateLobbyTuple, blankStatsTuple];
+    return [...updateLobbyTuple, blankStatsTuple, ...firstRound];
   } else return [];
 }
 
@@ -331,14 +345,33 @@ export function persistMoveSubmission(
     roundData,
     randomnessGenerator
   );
-  if (lobbyState.practice){
-    const state = lobbyState.current_match_state as unknown as MatchState;
-    const faction = user === state.attacker ? "defender" : "attacker";
-    const moves = generateRandomMoves(matchConfig, state, faction);
-    return []
-  }
-  else
-  return [...movesTuples, ...roundExecutionTuples];
+  const practiceTuples = lobbyState.practice 
+  ? practiceRound(blockHeight, lobbyState, matchConfig, roundData, randomnessGenerator)
+  : []
+  return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
+};
+
+function practiceRound(
+  blockHeight: number,
+  lobbyState: IGetLobbyByIdResult,
+  matchConfig: MatchConfig,
+  roundData: IGetRoundDataResult,
+  randomnessGenerator: Prando
+): SQLUpdate[]{
+    const matchState = roundData.match_state as unknown as MatchState;
+    const user = PRACTICE_BOT_ADDRESS;
+    const faction = user === matchState.defender ? "defender" : "attacker";
+    const moves = generateRandomMoves(matchConfig, matchState, faction, roundData.round_within_match + 1);
+    const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a))
+    const roundExecutionTuples = execute(
+      blockHeight,
+      lobbyState,
+      matchConfig,
+      moves,
+      {...roundData, round_within_match: roundData.round_within_match + 1},
+      randomnessGenerator
+    )
+    return [...movesTuples, ...roundExecutionTuples]
 }
 
 // Persist submitted move to database
@@ -368,7 +401,7 @@ function execute(
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
-  const matchState = lobbyState.current_match_state as unknown as MatchState;
+  const matchState = roundData.match_state as unknown as MatchState;
   const executor = roundExecutor.initialize(
     matchConfig,
     matchState,
