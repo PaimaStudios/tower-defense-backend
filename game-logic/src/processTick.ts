@@ -128,11 +128,11 @@ function computeGoldRewards(
   ];
   return events;
 }
-function structureEvents(c: MatchConfig, m: MatchState, moves: TurnAction[]): TickEvent[] {
+function structureEvents(c: MatchConfig, matchState: MatchState, moves: TurnAction[]): TickEvent[] {
   // We need to keep a global account of all actors in the match.
   // We iterate over user actions and reduce to a tuple of events produced and actor count,
   // then return the event array.
-  const accumulator: [StructureEvent[], number] = [[], m.actorCount + 1];
+  const accumulator: [StructureEvent[], number] = [[], matchState.actorCount + 1];
   const structuralTick: typeof accumulator = moves.reduce((acc, item) => {
     if (item.action === 'build') {
       const events = [...acc[0], buildEvent(item, acc[1])];
@@ -199,12 +199,12 @@ function eventsFromMatchState(
 // Spawn events, derive from the Crypts present at the map.
 function spawnEvents(
   config: MatchConfig,
-  m: MatchState,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): UnitSpawnedEvent[] {
   // Crypts are stored in an ordered map in the map state, we extract an array and iterate.
-  const crypts: AttackerStructure[] = Object.values(m.actors.crypts);
+  const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts);
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
     const { spawnCapacity, spawnRate } = config[ss.structure][ss.upgrades];
@@ -215,10 +215,10 @@ function spawnEvents(
     // tick 1 is reserved for structures. Spawning happens from tick 2.
     const aboutTime = (currentTick - 2) % spawnRate === 0;
     // 3.- The crypt is still active. They become inactive 3 rounds after being built. upgrades reset this
-    const stillNew = m.currentRound - ss.builtOnRound < 3 * (ss.upgrades + 1);
+    const stillNew = matchState.currentRound - ss.builtOnRound < 3 * (ss.upgrades + 1);
     if (hasCapacity && aboutTime && stillNew) {
-      const newUnit = spawn(config, m, ss, rng);
-      applyEvents(config, m, [newUnit], currentTick, rng); // one by one now
+      const newUnit = spawn(config, matchState, ss, rng);
+      applyEvents(config, matchState, [newUnit], currentTick, rng); // one by one now
       return newUnit;
     } else return null;
   });
@@ -228,18 +228,18 @@ function spawnEvents(
 // Function to generate a single spawn event.
 function spawn(
   config: MatchConfig,
-  m: MatchState,
+  matchState: MatchState,
   crypt: AttackerStructure,
   rng: Prando
 ): UnitSpawnedEvent {
   // First we look up the unit stats with the Match Config
   // Then we compute the path tile in the map where the units will spawn at.
-  const path = findClosebyPath(m, crypt.coordinates, rng);
+  const path = findClosebyPath(matchState, crypt.coordinates, rng);
   return {
     eventType: 'spawn',
     faction: 'attacker',
     cryptID: crypt.id,
-    actorID: m.actorCount + 1, // increment
+    actorID: matchState.actorCount + 1, // increment
     coordinates: path,
     unitType: crypt.structure.replace('Crypt', '') as UnitType,
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
@@ -250,25 +250,25 @@ function spawn(
 }
 // Function to find an available path next to a crypt to place a newly spawned unit.
 // If there is more than one candidate then randomness is used to select one.
-function findClosebyPath(m: MatchState, coords: number, rng: Prando, range = 1): number {
+function findClosebyPath(matchState: MatchState, coords: number, rng: Prando, range = 1): number {
   const c: number[] = [];
   // Find all 8 adjacent cells to the crypt.
   const [up, upRight, right, downRight, down, downLeft, left, upLeft] = closeByIndexes(
     coords,
-    m.width,
+    matchState.width,
     range
   );
   // Of these, push to the array if they are a path.
-  if (m.mapState[up]?.type === 'path') c.push(up);
-  if (m.mapState[upRight]?.type === 'path') c.push(upRight);
-  if (m.mapState[right]?.type === 'path') c.push(right);
-  if (m.mapState[downRight]?.type === 'path') c.push(downRight);
-  if (m.mapState[down]?.type === 'path') c.push(down);
-  if (m.mapState[downLeft]?.type === 'path') c.push(downLeft);
-  if (m.mapState[left]?.type === 'path') c.push(left);
-  if (m.mapState[upLeft]?.type === 'path') c.push(upLeft);
+  if (matchState.mapState[up]?.type === 'path') c.push(up);
+  if (matchState.mapState[upRight]?.type === 'path') c.push(upRight);
+  if (matchState.mapState[right]?.type === 'path') c.push(right);
+  if (matchState.mapState[downRight]?.type === 'path') c.push(downRight);
+  if (matchState.mapState[down]?.type === 'path') c.push(down);
+  if (matchState.mapState[downLeft]?.type === 'path') c.push(downLeft);
+  if (matchState.mapState[left]?.type === 'path') c.push(left);
+  if (matchState.mapState[upLeft]?.type === 'path') c.push(upLeft);
   // If no cell is a path, i.e. the array is empty, recurse this function with an incremented range, so cells further away are searched
-  if (c.length === 0) return findClosebyPath(m, coords, rng, range + 1);
+  if (c.length === 0) return findClosebyPath(matchState, coords, rng, range + 1);
   else if (c.length > 1) {
     // if more than one candidate, get any random one using the randomness generator.
     const randomness = rng.next();
@@ -307,10 +307,8 @@ function movementEvents(
   const eventTypeGuard = (
     e: UnitMovementEvent | StatusEffectAppliedEvent | null
   ): e is UnitMovementEvent => !!e;
-  return events
-    .flat()
-    .filter(eventTypeGuard)
-    // .filter(e => e.completion === 100);
+  return events.flat().filter(eventTypeGuard);
+  // .filter(e => e.completion === 100);
 }
 
 // Function to generate individual movement events
@@ -382,42 +380,63 @@ function buffEvent(
 // Tower Attack Events, where defender towers try to destroy nearby units
 function towerAttackEvents(
   config: MatchConfig,
-  m: MatchState,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): TowerAttack[] {
-  const towers: DefenderStructure[] = Object.values(m.actors.towers);
-  const events = towers.map(t => computeDamageToUnit(config, t, m, currentTick, rng));
+  const towers: DefenderStructure[] = Object.values(matchState.actors.towers);
+  const events = towers.map(t => computeDamageToUnit(config, t, matchState, currentTick, rng));
   return events.flat();
 }
 // damage made by defender towers against units
 function computeDamageToUnit(
-  config: MatchConfig,
-  t: DefenderStructure,
-  m: MatchState,
+  matchConfig: MatchConfig,
+  tower: DefenderStructure,
+  matchState: MatchState,
   currentTick: number,
-  rng: Prando
+  randomnessGenerator: Prando
 ): TowerAttack[] {
   //  Towers attack once every n ticks, the number being their "shot delay" or "cooldown" in this config.
   //  If not cooled down yet, return an empty array
-  const cooldown = config[t.structure][t.upgrades].cooldown;
+  const cooldown = matchConfig[tower.structure][tower.upgrades].cooldown;
   const cool = cooldown % (currentTick - 2);
   if (!cool) return [];
   //  Check the attack range of the tower with the Match Config
-  const range = config[t.structure][t.upgrades].range;
+  const range = matchConfig[tower.structure][tower.upgrades].range;
   // Given the computed rate, scan for all units that can be attacked
-  const unitsNearby = scanForUnits(m, t.coordinates, range);
+  const unitsNearby = findCloseByUnits(matchState, tower.coordinates, range);
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
   const pickedOne = unitsNearby.reduce(pickOne);
   // Sloth towers attack a whole range, so we pass the whole array of nearby units. Same for upgraded Piranha tower.
   // Else we pass the single unit chosen.
-  if (t.structure === 'piranhaTower')
-    return piranhaDamage(config, t, [pickedOne], m, currentTick, rng);
-  else if (t.structure === 'slothTower')
-    return slothDamage(config, t, unitsNearby, m, currentTick, rng);
-  else if (t.structure === 'anacondaTower')
-    return anacondaDamage(config, t, [pickedOne], m, currentTick, rng);
+  if (tower.structure === 'piranhaTower')
+    return piranhaDamage(
+      matchConfig,
+      tower,
+      [pickedOne],
+      matchState,
+      currentTick,
+      randomnessGenerator
+    );
+  else if (tower.structure === 'slothTower')
+    return slothDamage(
+      matchConfig,
+      tower,
+      unitsNearby,
+      matchState,
+      currentTick,
+      randomnessGenerator
+    );
+  else if (tower.structure === 'anacondaTower')
+    return anacondaDamage(
+      matchConfig,
+      tower,
+      [pickedOne],
+      matchState,
+      currentTick,
+      randomnessGenerator
+    );
   else return [];
 }
 
@@ -433,14 +452,14 @@ function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure 
 }
 // Function to calculate damage done by Piranha Towers
 function piranhaDamage(
-  config: MatchConfig,
+  matchConfig: MatchConfig,
   tower: DefenderStructure,
   a: AttackerUnit[],
-  m: MatchState,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): TowerAttack[] {
-  const damageAmount = config.piranhaTower[tower.upgrades].damage;
+  const damageAmount = matchConfig.piranhaTower[tower.upgrades].damage;
   // Generate damage events iterating on affected units
   const damageEvents: TowerAttack[][] = a.map(unit => {
     // Generate single damage event per unit
@@ -465,7 +484,7 @@ function piranhaDamage(
     // const events = dead ? [] : dying ? [damageEvent, killEvent] : [damageEvent];
     const events = dying ? [damageEvent, killEvent] : [damageEvent];
     // Apply events to update match state
-    applyEvents(config, m, events, currentTick, rng);
+    applyEvents(matchConfig, matchState, events, currentTick, rng);
     return events;
   });
   // return flattened array of events
@@ -473,10 +492,10 @@ function piranhaDamage(
 }
 // Function to calculate damage done by Anaconda Towers
 function anacondaDamage(
-  config: MatchConfig,
+  matchConfig: MatchConfig,
   tower: DefenderStructure,
   a: AttackerUnit[],
-  m: MatchState,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): TowerAttack[] {
@@ -485,7 +504,7 @@ function anacondaDamage(
   const damageEvents: TowerAttack[][] = a.map(unit => {
     // Damage amount equals to unit health if instakill
     const damageAmount =
-      rng.next() < killChance ? unit.health : config.anacondaTower[tower.upgrades].damage;
+      rng.next() < killChance ? unit.health : matchConfig.anacondaTower[tower.upgrades].damage;
     const damageEvent: DamageEvent = {
       eventType: 'damage',
       faction: 'defender',
@@ -501,22 +520,22 @@ function anacondaDamage(
     };
     const dying = damageAmount >= unit.health;
     const events = dying ? [damageEvent, killEvent] : [damageEvent];
-    applyEvents(config, m, events, currentTick, rng);
+    applyEvents(matchConfig, matchState, events, currentTick, rng);
     return events;
   });
   return damageEvents.flat();
 }
 // Function to calculate damage done by Sloth Towers
 function slothDamage(
-  config: MatchConfig,
+  matchConfig: MatchConfig,
   tower: DefenderStructure,
   a: AttackerUnit[],
-  m: MatchState,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): TowerAttack[] {
   // Compute damage amount according to Match Config
-  const damageAmount = config.slothTower[tower.upgrades].damage;
+  const damageAmount = matchConfig.slothTower[tower.upgrades].damage;
   // Sloth towers are special in that they impose speed debuff statuses on affected units.
   const damageEvents: TowerAttack[][] = a.map(unit => {
     const statusEvent: StatusEffectAppliedEvent = {
@@ -555,7 +574,7 @@ function slothDamage(
     if (buffing) events.push(statusEvent);
     if (dying) events.push(killEvent);
     if (superMacaw) events.push(deflectingDamageEvent);
-    applyEvents(config, m, events, currentTick, rng);
+    applyEvents(matchConfig, matchState, events, currentTick, rng);
     return events;
   });
   return damageEvents.flat();
@@ -563,16 +582,24 @@ function slothDamage(
 // Events where Units attack the defender.
 // Either Macaws attacking Towers, or any unit attacking the Defender Base
 function unitAttackEvents(
-  config: MatchConfig,
-  m: MatchState,
+  matchConfig: MatchConfig,
+  matchState: MatchState,
   currentTick: number,
   rng: Prando
 ): UnitAttack[] {
-  const attackers: AttackerUnit[] = Object.values(m.actors.units);
+  const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
     const damageToTower =
-      a.subType === 'macaw' ? computeDamageToTower(config, m, a, currentTick, rng) : [];
-    const damageToBase: UnitAttack[] = computeDamageToBase(config, m, a, currentTick, rng);
+      a.subType === 'macaw'
+        ? computeDamageToTower(matchConfig, matchState, a, currentTick, rng)
+        : [];
+    const damageToBase: UnitAttack[] = computeDamageToBase(
+      matchConfig,
+      matchState,
+      a,
+      currentTick,
+      rng
+    );
     const eventTypeGuard = (e: UnitAttack | null): e is DamageEvent => !!e;
     return [...damageToTower, ...damageToBase].filter(eventTypeGuard);
   });
@@ -580,27 +607,27 @@ function unitAttackEvents(
 }
 // Damage made by Macaws to Defender Tower
 function computeDamageToTower(
-  config: MatchConfig,
-  m: MatchState,
-  a: AttackerUnit,
+  matchConfig: MatchConfig,
+  matchState: MatchState,
+  attacker: AttackerUnit,
   currentTick: number,
-  rng: Prando
+  randomnessGenerator: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
-  // Find all towers in range (range = 1) // TOO confirm
-  const nearbyStructures = findClosebyTowers(m, a.coordinates, 1);
+  const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
+  const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
   // choose one Tower to attack on the same basis: weakest or oldest
   const pickedOne = nearbyStructures.reduce(pickOne);
   const damageEvent: DamageEvent = {
     eventType: 'damage',
     faction: 'attacker',
-    sourceID: a.id,
+    sourceID: attacker.id,
     targetID: pickedOne.id,
     damageType: 'neutral',
-    damageAmount: a.damage,
+    damageAmount: attacker.damage,
   };
   // If damage kills the tower, generate kill event
-  const dying = a.damage >= pickedOne.health;
+  const dying = attacker.damage >= pickedOne.health;
   const killEvent: ActorDeletedEvent = {
     eventType: 'actorDeleted',
     faction: 'defender',
@@ -609,7 +636,7 @@ function computeDamageToTower(
   const events: (DamageEvent | ActorDeletedEvent)[] = dying
     ? [damageEvent, killEvent]
     : [damageEvent];
-  applyEvents(config, m, events, currentTick, rng);
+  applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
   return events;
 }
 // Damage of units to defender base
@@ -631,7 +658,7 @@ function computeDamageToBase(
     const baseEvent: DefenderBaseUpdateEvent = {
       eventType: 'defenderBaseUpdate',
       faction: 'defender',
-      health
+      health,
     };
     const deathEvent: ActorDeletedEvent = {
       eventType: 'actorDeleted',
@@ -643,35 +670,23 @@ function computeDamageToBase(
     return events;
   }
 }
-// Determines whether a macaw attacker unit should start attacking a tower.
-// Macaws have a range of 1. Diagonals count as 1.
-function canReach(
-  attackerCoordinates: Coordinates,
-  structureCoordinates: Coordinates,
-  range: number
-): boolean {
-  const ax = attackerCoordinates.x;
-  const ay = attackerCoordinates.y;
-  const sx = structureCoordinates.x;
-  const sy = structureCoordinates.y;
-  const sameX = ax === sx;
-  const sameY = ay === sy;
-  const nearX = ax - range === sx || ax + range === sx;
-  const nearY = ay - range === sy || ay + range === sy;
-  return (
-    // (sameX && nearY) || (sameY && nearX) // diagonals dont count
-    nearX && nearY // diagonals count
-  );
-}
 //  Locate nearby structures, units etc.
 //
-function scanForUnits(m: MatchState, coords: number, range: number): AttackerUnit[] {
+function findCloseByUnits(
+  matchState: MatchState,
+  coords: number,
+  range: number,
+  radius = 1
+): AttackerUnit[] {
+  if (radius > range) return [];
   // Get all surrounding tile indexes;
-  const surrounding = closeByIndexes(coords, m.width, range);
+  const surrounding = closeByIndexes(coords, matchState.width, radius);
   // Get all units present on the map
-  const units: AttackerUnit[] = Object.values(m.actors.units);
-  // Filter units which are on closeby indexes
-  return units.filter(u => surrounding.includes(u.coordinates));
+  const units: AttackerUnit[] = Object.values(matchState.actors.units).filter(u =>
+    surrounding.includes(u.coordinates)
+  );
+  if (units.length > 0) return units;
+  else return findCloseByUnits(matchState, coords, range, radius + 1);
 }
 
 export function coordsToIndex(coords: Coordinates, width: number): number {
@@ -683,14 +698,14 @@ export function indexToCoords(i: number, width: number): Coordinates {
   return { x, y };
 }
 function closeByIndexes(coords: number, mapWidth: number, range: number) {
-  const upIndex = coords - mapWidth;
-  const upRightIndex = coords - mapWidth + range;
+  const upIndex = coords - mapWidth * range;
+  const upRightIndex = coords - mapWidth * range - range;
   const rightIndex = coords + range;
-  const downRightIndex = coords + mapWidth + range;
-  const downIndex = coords + mapWidth;
-  const downLeftIndex = coords + mapWidth - range;
-  const leftIndex = (coords = range);
-  const upLeftIndex = coords - mapWidth - range;
+  const downRightIndex = coords + mapWidth * range + range;
+  const downIndex = coords + mapWidth * range;
+  const downLeftIndex = coords + mapWidth * range - range;
+  const leftIndex = coords - range;
+  const upLeftIndex = coords - mapWidth * range - range;
   return [
     upIndex,
     upRightIndex,
@@ -700,62 +715,37 @@ function closeByIndexes(coords: number, mapWidth: number, range: number) {
     downLeftIndex,
     leftIndex,
     upLeftIndex,
-  ];
+  ].filter(n => n >= 0);
 }
-function findCloseByTiles(m: MatchState, coords: number, range: number): Tile[] {
-  const upIndex = coords - m.width;
-  const upRightIndex = coords - m.width + 1;
-  const rightIndex = coords + 1;
-  const downRightIndex = coords + m.width + 1;
-  const downIndex = coords + m.width;
-  const downLeftIndex = coords + m.width - 1;
-  const leftIndex = (coords = 1);
-  const upLeftIndex = coords - m.width - 1;
-  const up = m.mapState[upIndex];
-  const upright = m.mapState[upRightIndex];
-  const right = m.mapState[rightIndex];
-  const downright = m.mapState[downRightIndex];
-  const down = m.mapState[downIndex];
-  const downleft = m.mapState[downLeftIndex];
-  const left = m.mapState[leftIndex];
-  const upleft = m.mapState[upLeftIndex];
-  return [up, upright, right, downright, down, downleft, left, upleft];
-}
-// function findClosebyAttackers(m: MatchState, coords: number, range: number): ActorID[] {
-//   const tiles = findCloseByTiles(m, coords, range).filter(
-//     s => s && s.type === 'path' && s.units.length
-//   );
-//   const units = tiles.map(t => {
-//     const tt = t as PathTile;
-//     return tt.units;
-//   });
-//   return units.flat();
-// }
 
-function findClosebyTowers(m: MatchState, coords: number, range: number): DefenderStructure[] {
-  const tiles = findCloseByTiles(m, coords, range).filter(
-    s => s && s.type === 'structure' && s.faction === 'defender'
+function findClosebyTowers(
+  matchState: MatchState,
+  coords: number,
+  range: number,
+  radius = 1
+): DefenderStructure[] {
+  if (radius > range) return [];
+  const inRange = closeByIndexes(coords, matchState.width, radius);
+  const structures = Object.values(matchState.actors.towers).filter(tw =>
+    inRange.includes(tw.coordinates)
   );
-  const structures = tiles.map(t => m.actors.towers[(t as DefenderStructureTile).id]);
-  return structures as DefenderStructure[];
+  if (structures.length) return structures;
+  else return findClosebyTowers(matchState, coords, range, radius + 1);
 }
 function findClosebyCrypts(
-  m: MatchState,
+  matchState: MatchState,
   coords: number | null,
-  range: number
+  range: number,
+  radius = 1
 ): AttackerStructure[] {
   if (!coords) return [];
-  const tiles = findCloseByTiles(m, coords, range).filter(
-    s => s && s.type === 'structure' && s.faction === 'attacker'
+  if (radius > range) return [];
+  const inRange = closeByIndexes(coords, matchState.width, radius);
+  const structures = Object.values(matchState.actors.crypts).filter(tw =>
+    inRange.includes(tw.coordinates)
   );
-  const structures = tiles.map(t => m.actors.crypts[(t as AttackerStructureTile).id]);
-  return structures as AttackerStructure[];
-}
-
-//
-
-export function generateRandomMoves(randomnessGenerator: Prando): TurnAction[] {
-  return [];
+  if (structures.length) return structures;
+  else return findClosebyCrypts(matchState, coords, range, radius + 1);
 }
 
 export default processTick;
