@@ -23,6 +23,7 @@ import type {
 } from '@tower-defense/utils';
 import applyEvents from './apply';
 import { fillMap } from './map-processor';
+import { generateRandomMoves } from './ai';
 
 export const testmap: TileNumber[] = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
@@ -479,6 +480,13 @@ describe('Game Logic', () => {
     }, true);
     expect(ok).toBeTruthy();
   });
+  test('AI creates moves', () => {
+    const matchConfig = getMatchConfig();
+    const matchState = getMatchState();
+    const moves = generateRandomMoves(matchConfig, matchState, "defender", 1)
+    const ok = moves.length > 0;
+    expect(ok).toBeTruthy
+  });
   test('units move forward', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
@@ -541,3 +549,4 @@ function damage(u: AttackerUnit, t: DefenderStructure[]): DamageEvent[] {
     };
   });
 }
+
