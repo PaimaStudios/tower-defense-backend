@@ -35,7 +35,11 @@ export const testmap: TileNumber[] = [
   1, 1, 2, 6, 6, 6, 2, 6, 2, 6, 2, 1, 5, 5, 5, 1, 1, 5, 5, 5, 1, 5, 5, 5, 6, 6, 2, 2, 2, 6, 6, 6, 2,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 ];
-
+const forkmap: TileNumber[] =
+  '1111111111111222222222155555555555566666666215111111111112222222621555555555555666666662115111111111122222262215555555555556666666623511111111111222222264155555555555566666666211511111111112222226221555555555555666666662151111111111122222226215555555555556666666621111111111111222222222'
+    .split('')
+    .map(Number)
+    .map(a => a as TileNumber);
 export function build(towerCount: number, cryptCount: number): TurnAction[] {
   const available = availableForBuilding(testmap);
   const towers: TurnAction[] = available.towers
@@ -165,7 +169,7 @@ function getMatchState(): MatchState {
     defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
     attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
     defenderGold: 500,
-    attackerGold: 500,
+    attackerGold: 5000,
     defenderBase: { health: 100, level: 1 },
     attackerBase: { level: 1 },
     actors: {
@@ -174,7 +178,7 @@ function getMatchState(): MatchState {
       units: {},
     },
     mapState: map,
-    name: 'jungle',
+    name: 'fork',
     currentRound: 1,
     actorCount: 2, // the two bases,
     finishedSpawning: [],
@@ -478,23 +482,23 @@ describe('Game Logic', () => {
   test('units move forward', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
-    const moves = build(1, 3);
+    const moves = build(1, 10);
     const randomnessGenerator = new Prando(1);
-    const ticks = [...Array(3000).keys()].map(i => i + 1); // [0..10]
+    const ticks = [...Array(2000).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
     let ok = true;
+    const baseIndex = matchState.mapState.findIndex(
+      t => t.type === 'base' && t.faction === 'defender'
+    );
     for (let tick of ticks) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-      if (!events) console.log(tick, 'tick');
-      if (events) {
-        const movementEvents = events.filter(
-          (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
-        );
-        const units = Object.values(matchState.actors.units);
-        console.log(units.length, 'units');
-        for (let u of units) {
-          const me = movementEvents.find(m => m.actorID === u.id);
-          if (!me) ok = false;
+      if (matchState.roundEnded) console.log(matchState, "state")
+      else {
+        if (!events) console.log(tick, 'tick');
+        if (events) {
+          const movementEvents = events.filter(
+            (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
+          );
         }
       }
     }

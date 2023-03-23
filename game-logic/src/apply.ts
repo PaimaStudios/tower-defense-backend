@@ -14,6 +14,8 @@ import type {
   AttackerStructure,
   DefenderStructure,
   UpgradeTier,
+  Tile,
+  Coordinates,
 } from '@tower-defense/utils';
 // Function to check if the user has enough money to spend in structures. Mutates state if true, returns the boolean result of the check.
 function spendMoney(matchState: MatchState, faction: Faction | null, amount: number): boolean {
@@ -140,7 +142,6 @@ export default function applyEvents(
             randomnessGenerator
           );
           unitMoving.movementCompletion = 0;
-          // }
         } else unitMoving.movementCompletion = event.completion;
         break;
       case 'damage':
@@ -184,6 +185,7 @@ export default function applyEvents(
   }
 }
 
+const isBase = (t: Tile) => t.type === "base" && t.faction === "defender";
 // Function to find the path which a unit will move towards.
 function findDestination(
   matchState: MatchState,
@@ -192,19 +194,64 @@ function findDestination(
   randomnessGenerator: Prando
 ): number | null {
   const tile = matchState.mapState[coordinates];
-  // if the unit is at the defender base, they don't move anymore, time to die
-  if (tile.type === 'base' && tile.faction === 'defender') return null;
+  // if the unit is already at the defender base, they don't move anymore, time to die
+  if (isBase(tile)) return null;
   else {
     const t = tile as PathTile;
-    // check available paths and delete the previous one, i.e. don't go backwards
-    const leadsTo = t['leadsTo'].filter(p => p !== previousCoordinates);
-    // if there is more than one available path (i.e. go left or go up/down) determine according to randomness.
-    const nextCoords =
-      leadsTo.length > 1
-        ? randomizePath(leadsTo, randomnessGenerator, coordinates, !previousCoordinates)
-        : leadsTo[0];
-    return nextCoords;
+    const baseIndex = matchState.mapState.findIndex(t => t.type === "base" &&  t.faction === "defender");
+    const baseCoords = indexToCoords(baseIndex, matchState.width);
+    // filter available paths for distance to base, make sure you're not going the wrong path
+    // If only one available path just go right there
+    if (t['leadsTo'].length === 1) return t['leadsTo'][0]
+    // If more than one path available, find the fastest path to the base
+    const ret =  t['leadsTo']
+    // Filter out the previous coordinates so the unit doesn't go backwards
+    .filter(p => p !== previousCoordinates)
+    // Then compare distance to base of the second next tile, not the immediately next one.
+    .reduce((prev, curr) => {
+      const a = distanceToBase(prev, baseCoords, matchState.width);
+      const b = distanceToBase(curr, baseCoords, matchState.width);
+      const closest = a < b ? prev : curr;
+      const nextA = naiveNext(prev, previousCoordinates || coordinates, baseCoords, matchState);
+      const nextB = naiveNext(curr, previousCoordinates || coordinates, baseCoords, matchState);
+      // Mostly just a type check, shouldn't happen
+      if (!nextA || !nextB) return closest
+      else{
+        const distA = distanceToBase(nextA, baseCoords, matchState.width);
+        const distB = distanceToBase(nextB, baseCoords, matchState.width)
+        const ret = distA < distB 
+        ? prev 
+        : distA === distB
+        ? closest 
+        : curr;
+        return ret
+      }
+    })
+    return ret
   }
+}
+// Function to find the next tile a unit will move to according to a simple distance calculation
+function naiveNext(coord: number, previousCoords: number, baseCoords: Coordinates, matchState: MatchState): number | null{
+  const tile = matchState.mapState[coord];
+  if (isBase(tile)) return coord;
+  if (tile.type !== "path") return null
+  else return tile.leadsTo
+  .filter(p => p!== previousCoords)
+  .reduce((prev, curr) => {
+    const a = distanceToBase(prev, baseCoords, matchState.width);
+    const b = distanceToBase(curr, baseCoords, matchState.width);
+    return a < b ? prev : curr
+  })
+}
+function indexToCoords(i: number, width: number): Coordinates{
+  const y = Math.floor(i / width);
+  const x = i - y * width;
+  return { x, y };
+}
+function distanceToBase(path: number, baseCoords: Coordinates, mapWidth: number){
+   const myCoords = indexToCoords(path, mapWidth);
+   const distanceToBase = Math.abs(baseCoords.x - myCoords.x) + Math.abs(baseCoords.y - myCoords.y);
+   return distanceToBase 
 }
 // Simple helper function to select a random path with the randomness generator.
 function randomizePath(
@@ -213,16 +260,12 @@ function randomizePath(
   presentCoordinates: number,
   fresh: boolean
 ): number {
-  // If freshly spawned, make sure the unit moves preferrable towards the left
   const randomness = randomnessGenerator.next();
-  if (fresh) {
-    const forwardPaths = paths.filter(p => p < presentCoordinates);
-    const index = Math.floor(randomness * forwardPaths.length);
-    return forwardPaths[index] || Math.min(...paths);
-  } else {
-    const index = Math.floor(randomness * paths.length);
-    return paths[index];
-  }
+  let forwardPaths = paths;
+  // If freshly spawned, make sure the unit moves preferrable towards the left
+  if (fresh) forwardPaths = paths.filter(p => p < presentCoordinates);
+  const index = Math.floor(randomness * forwardPaths.length);
+  return forwardPaths[index] || Math.min(...paths);
 }
 
 function setStructureFromEvent(

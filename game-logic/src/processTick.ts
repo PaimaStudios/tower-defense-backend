@@ -310,7 +310,7 @@ function movementEvents(
   return events
     .flat()
     .filter(eventTypeGuard)
-    .filter(e => e.completion === 100);
+    // .filter(e => e.completion === 100);
 }
 
 // Function to generate individual movement events
