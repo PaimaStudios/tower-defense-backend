@@ -445,14 +445,14 @@ function execute(
   }
   // Increment round and update match state if not at final round
   else {
-    const incrementRoundTuple = incrementRound(
+    const incrementRoundTuples = incrementRound(
       lobbyState.lobby_id,
       lobbyState.current_round,
       lobbyState.round_length,
       matchState,
       blockHeight
     );
-    return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuple, updateStateTuple];
+    return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuples, updateStateTuple];
   }
 }
 function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
@@ -489,13 +489,21 @@ function finalizeMatch(
     console.log(`Practice match ended, ignoring results`);
     return [endMatchTuple];
   }
+  const p1isAttacker = matchState.attacker === lobbyState.creator_faction;
+  const defenderSurvived = matchState.defenderBase.health > 0;
   // Save the final user states in the final state table
-  const [p1Gold, p2Gold] =
-    matchState.attacker === lobbyState.creator_faction
+  const [p1Gold, p2Gold] = p1isAttacker
       ? [matchState.attackerGold, matchState.defenderGold]
       : [matchState.defenderGold, matchState.attackerGold];
-  const [p1Result, p2Result] =
-    matchState.defenderBase.health > 0 ? ['loss', 'win'] : ['win', 'loss'];
+  const calculateResult = (isAttacker: boolean, defenderSurvived: boolean): 'win' | 'loss' => {
+    if (isAttacker && defenderSurvived) return 'loss'
+    else if (isAttacker && !defenderSurvived) return 'win'
+    else if (!isAttacker && defenderSurvived) return 'win'
+    else if (!isAttacker && !defenderSurvived) return 'loss'
+    else return 'loss'
+  }
+  const p1Result = calculateResult(p1isAttacker, defenderSurvived); 
+  const p2Result = p1Result === 'win' ? 'loss' : 'win';
   const finalMatchTuple: SQLUpdate = [
     newFinalState,
     {
