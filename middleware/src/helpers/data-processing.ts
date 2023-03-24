@@ -1,7 +1,7 @@
 import pkg from 'web3-utils';
 const { numberToHex, utf8ToHex } = pkg;
 
-import { NFT_CONTRACT, Structure, TurnAction, UserAddress } from '@tower-defense/utils';
+import { GameENV, Structure, TurnAction } from '@tower-defense/utils';
 import { LobbyWebserverQuery, UserNft } from '../types';
 import { getTxTemplate } from 'paima-engine/paima-tx';
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
@@ -10,15 +10,12 @@ import type {
   BatchedSubunit,
   IndexerNftOwnership,
   LobbyState,
-  MatchMove,
   NFT,
-  NftId,
   NftScore,
   NftScoreSnake,
   PackedLobbyState,
   RoundEnd,
   SignFunction,
-  StatefulNftId,
 } from '../types';
 import { getBlockTime } from './general';
 import { pushLog } from './logging';
@@ -190,7 +187,7 @@ export function lobbiesToTokenIdSet(lobbies: LobbyWebserverQuery[]): number[] {
   const s = new Set<number>([]);
   // NOTE: All NFTs are expected to be of the same contract
   for (const lobby of lobbies) {
-    if (lobby.nft.nftContract === NFT_CONTRACT && lobby.nft.tokenId) {
+    if (lobby.nft.nftContract === GameENV.NFT_CONTRACT && lobby.nft.tokenId) {
       s.add(lobby.nft.tokenId);
     }
   }

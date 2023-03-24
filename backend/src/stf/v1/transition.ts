@@ -30,6 +30,7 @@ import {
 import { MatchState, parseInput } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
 import { validateMoves } from '@tower-defense/game-logic';
+import { SQLUpdate } from 'paima-engine/paima-db';
 
 type SQLUpdate = [any, any];
 export default async function (

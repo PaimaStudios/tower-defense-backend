@@ -1,38 +1,28 @@
-export const gameBackendVersion = '0.1.0';
+import { ENV } from 'paima-engine/paima-utils';
+type VersionString = `${number}.${number}.${number}`;
 
-// TODO: dotenv config
+const VERSION_MAJOR = 0;
+const VERSION_MINOR = 1;
+const VERSION_PATCH = 0;
 
-export const CHAIN_URI = process.env.CHAIN_URI || 'https://rpc-devnet-cardano-evm.c1.milkomeda.com';
-export const CHAIN_NAME = process.env.CHAIN_NAME || 'Milkomeda Cardano Testnet';
-export const CHAIN_ID = parseInt(process.env.CHAIN_ID || '200101', 10);
-export const CHAIN_EXPLORER_URI = process.env.CHAIN_EXPLORER_URI || '';
-export const CHAIN_CURRENCY_NAME = process.env.CHAIN_CURRENCY_NAME || '';
-export const CHAIN_CURRENCY_SYMBOL = process.env.CHAIN_CURRENCY_SYMBOL || '';
-export const CHAIN_CURRENCY_DECIMALS = parseInt(process.env.CHAIN_CURRENCY_DECIMALS || '0', 10);
+export const gameBackendVersion: VersionString = `${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}`;
 
-export const STORAGE_ADDRESS =
-  process.env.STORAGE_ADDRESS || '0x58cd762320187D68523946cdab7095F3C441C0fD';
-export const STORAGE_CONTRACT_DEPLOYMENT_BLOCKHEIGHT = parseInt(
-  process.env.STORAGE_CONTRACT_DEPLOYMENT_BLOCKHEIGHT || '0'
-);
-export const DEFAULT_FEE = process.env.DEFAULT_FEE || '10000000000000000';
-export const DEPLOYMENT = process.env.DEPLOYMENT || 'C1';
-export const START_BLOCKHEIGHT = parseInt(process.env.START_BLOCKHEIGHT || '0', 10);
+export const GAME_NAME = 'Wrath of the Jungle';
 
-export const BACKEND_URI =
-  process.env.BACKEND_URI || 'https://td-backend-testnet-c1.paimastudios.com';
-export const INDEXER_URI =
-  process.env.INDEXER_URI || 'https://nft-indexer-testnet-c1.paimastudios.com';
-//export const BATCHER_URI = "http://jw-backend.paimastudios.com:3334";
-export const BATCHER_URI = process.env.BATCHER_URI || 'http://localhost:3334';
-export const STATEFUL_URI = process.env.STATEFUL_URI || '';
-export const SERVER_ONLY_MODE = process.env.SERVER_ONLY_MODE === 'true';
+// CONFIG VALUES
+export class GameENV extends ENV {
+  static get INDEXER_URI(): string {
+    return process.env.INDEXER_URI || '';
+  }
+  static get STATEFUL_URI(): string {
+    return process.env.STATEFUL_URI || '';
+  }
+  static get NFT_CONTRACT(): string {
+    return process.env.NFT_CONTRACT || '';
+  }
+}
 
-export const NFT_CONTRACT = process.env.NFT_CONTRACT || '';
-export const STOP_BLOCKHEIGHT = process.env.STOP_BLOCKHEIGHT
-  ? parseInt(process.env.STOP_BLOCKHEIGHT)
-  : null;
-
+// OTHER CONSTANTS
 export const PRACTICE_BOT_ADDRESS = '0x0101';
 
 export * from './types.js';

@@ -1,13 +1,14 @@
 import mockFunnel from './mock-funnel.js';
 import gameSM from './sm.js';
-import { STORAGE_ADDRESS, CHAIN_URI } from '@tower-defense/utils';
+import { GameENV } from '@tower-defense/utils';
 import { setPool } from '@tower-defense/db';
-import { GameStateMachine } from 'paima-engine/paima-utils';
+import { GameStateMachine } from 'paima-engine/paima-db';
+
 const mockRuntime = {
   initialize: (chainFunnel: any, sm: GameStateMachine) => {
     return {
       async run() {
-        const latestReadBlockHeight = await sm.latestBlockHeight();
+        const latestReadBlockHeight = await sm.latestProcessedBlockHeight();
         const latestChainDataList = await chainFunnel.readData(latestReadBlockHeight + 1);
         for (const block of latestChainDataList) {
           await sm.process(block);
@@ -18,8 +19,8 @@ const mockRuntime = {
   },
 };
 async function main() {
-  console.log(STORAGE_ADDRESS);
-  const chainFunnel = await mockFunnel.initialize(CHAIN_URI, STORAGE_ADDRESS);
+  console.log(GameENV.CONTRACT_ADDRESS);
+  const chainFunnel = await mockFunnel.initialize(GameENV.CHAIN_URI, GameENV.CONTRACT_ADDRESS);
   setPool(gameSM.getReadonlyDbConn());
   const engine = mockRuntime.initialize(chainFunnel, gameSM);
   engine.run();
