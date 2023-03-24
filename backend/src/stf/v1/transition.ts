@@ -8,7 +8,7 @@ import {
   getMatchConfig,
 } from '@tower-defense/db';
 import Prando from 'paima-engine/paima-prando';
-import { SCHEDULED_DATA_ADDRESS, SQLUpdate, SubmittedChainData } from 'paima-engine/paima-utils';
+import { SCHEDULED_DATA_ADDRESS, SubmittedChainData } from 'paima-engine/paima-utils';
 import {
   executeZombieRound,
   persistCloseLobby,
@@ -31,6 +31,7 @@ import { MatchState, parseInput } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
 import { validateMoves } from '@tower-defense/game-logic';
 
+type SQLUpdate = [any, any];
 export default async function (
   inputData: SubmittedChainData,
   blockHeight: number,
@@ -81,7 +82,7 @@ export default async function (
       return [query];
     case 'scheduledData':
       if (user !== SCHEDULED_DATA_ADDRESS) return [];
-      else processScheduledData(expanded, blockHeight, randomnessGenerator, dbConn);
+      else return processScheduledData(expanded, blockHeight, randomnessGenerator, dbConn);
     case 'invalidString':
       return [];
     default:
@@ -163,10 +164,11 @@ async function processScheduledData(
   blockHeight: number,
   randomnessGenerator: Prando,
   dbConn: Pool
-) {
+): Promise<SQLUpdate[]> {
   if (expanded.effect.type === 'zombie')
-    processZombieEffect(expanded, blockHeight, randomnessGenerator, dbConn);
-  else if (expanded.effect.type === 'stats') processStatsEffect(expanded, dbConn);
+    return processZombieEffect(expanded, blockHeight, randomnessGenerator, dbConn);
+  else if (expanded.effect.type === 'stats') return processStatsEffect(expanded, dbConn);
+  else return [];
 }
 async function processZombieEffect(
   expanded: ScheduledDataInput,
@@ -185,15 +187,7 @@ async function processZombieEffect(
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
-  const cachedMoves = await getCachedMoves.run({ lobby_id: lobby.lobby_id }, dbConn);
-  return executeZombieRound(
-    blockHeight,
-    lobby,
-    matchConfig,
-    cachedMoves,
-    round,
-    randomnessGenerator
-  );
+  return executeZombieRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
 }
 async function processStatsEffect(
   expanded: ScheduledDataInput,
