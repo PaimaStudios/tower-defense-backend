@@ -1,14 +1,8 @@
-import {
-  ContractAddress,
-  gameBackendVersion,
-  NFT_CONTRACT,
-  UserAddress,
-} from '@tower-defense/utils';
+import { ContractAddress, gameBackendVersion, GameENV, UserAddress } from '@tower-defense/utils';
 import { LobbyWebserverQuery, RichOpenLobbyState, UserNft } from '../types';
 import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
 import {
   FailedResult,
-  IndexerNftOwnership,
   LobbyState,
   NewLobbies,
   NewLobby,
@@ -353,7 +347,7 @@ async function fetchMultipleNftOwners(
   try {
     const query = indexerQueryHistoricalOwnerMultiple();
     const body = JSON.stringify({
-      contract: NFT_CONTRACT,
+      contract: GameENV.NFT_CONTRACT,
       blockHeight,
       tokenIds,
     });
@@ -389,7 +383,7 @@ export async function addLobbyCreatorNftStats(
   }
 
   const nftIds: StatefulNftId[] = resVerification.result.map(nft => ({
-    nft_contract: nft.nftContract || NFT_CONTRACT,
+    nft_contract: nft.nftContract || GameENV.NFT_CONTRACT,
     token_id: nft.tokenId || 0,
   }));
   const resScores = await fetchMultipleNftScores(nftIds);
@@ -405,7 +399,7 @@ export async function addLobbyCreatorNftStats(
     score: resScores.result[index],
   }));
 
-  const nftContract = NFT_CONTRACT.toLowerCase();
+  const nftContract = GameENV.NFT_CONTRACT.toLowerCase();
 
   return lobbies.map(lobby => {
     if (lobby.nft.nftContract?.toLowerCase() === nftContract) {
