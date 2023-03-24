@@ -346,7 +346,11 @@ export function persistMoveSubmission(
     randomnessGenerator
   );
   const practiceTuples = lobbyState.practice 
-  ? practiceRound(blockHeight, lobbyState, matchConfig, roundData, randomnessGenerator)
+  ? practiceRound(blockHeight, 
+    {...lobbyState, current_round: lobbyState.current_round + 1}, 
+    matchConfig, 
+    roundData, // match state here should have been mutated by the previous round execution...
+    randomnessGenerator)
   : []
   return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
 };
