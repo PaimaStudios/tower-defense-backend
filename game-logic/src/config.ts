@@ -137,7 +137,7 @@ const baseJaguarCryptConfig2: CryptConfig = {
 const baseJaguarCryptConfig3: CryptConfig = {
   price: 50,
   cryptHealth: 3,
-  buffRange: 1.5, // "range"
+  buffRange: 2, // "range"
   buffCooldown: 30, // "shotDelay"
   spawnRate: 10, // "spawnDelay"
   spawnCapacity: 13, // "spawnQuantity"
