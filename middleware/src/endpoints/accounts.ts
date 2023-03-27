@@ -26,7 +26,7 @@ async function checkWalletStatus(): Promise<OldResult> {
 async function userWalletLogin(): Promise<Result<Wallet>> {
   const errorFxn = buildEndpointErrorFxn('userWalletLogin');
 
-  if (typeof window.ethereum === 'undefined') {
+  if (typeof (window as any).ethereum === 'undefined') {
     return errorFxn(
       CatapultMiddlewareErrorCode.METAMASK_NOT_INSTALLED,
       undefined,

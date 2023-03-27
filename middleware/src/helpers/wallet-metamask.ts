@@ -16,6 +16,10 @@ import {
 } from '../state';
 import { OldResult } from '../types';
 import { pushLog } from './logging';
+export interface CustomWindow extends Window {
+    ethereum: any;
+}
+declare let window: CustomWindow;
 
 interface MetamaskSwitchError {
   code: number;
@@ -92,7 +96,7 @@ export async function verifyWalletChain(): Promise<boolean> {
   try {
     return window.ethereum
       .request({ method: 'eth_chainId' })
-      .then(res => parseInt(res as string) === getChainId());
+      .then((res: string) => parseInt(res as string) === getChainId());
   } catch (e) {
     console.error(e);
     return false;
@@ -114,7 +118,7 @@ export async function signMessageEth(userAddress: string, message: string): Prom
 
 export async function initAccountGuard() {
   // Update the selected Eth address if the user changes after logging in.
-  window.ethereum.on('accountsChanged', newAccounts => {
+  window.ethereum.on('accountsChanged', (newAccounts: string[]) => {
     const accounts = newAccounts as string[];
     if (!accounts || !accounts[0] || accounts[0] !== getActiveAddress()) {
       setEthAddress('');
