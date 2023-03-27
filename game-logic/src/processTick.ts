@@ -26,6 +26,7 @@ import type {
   BuildStructureAction,
 } from '@tower-defense/utils';
 import applyEvents from './apply';
+import { match } from 'assert';
 
 // Main function, exported as default.
 
@@ -255,7 +256,7 @@ function findClosebyPath(matchState: MatchState, coords: number, rng: Prando, ra
   // Find all 8 adjacent cells to the crypt.
   const [up, upRight, right, downRight, down, downLeft, left, upLeft] = closeByIndexes(
     coords,
-    matchState.width,
+    matchState,
     range
   );
   // Of these, push to the array if they are a path.
@@ -680,7 +681,7 @@ function findCloseByUnits(
 ): AttackerUnit[] {
   if (radius > range) return [];
   // Get all surrounding tile indexes;
-  const surrounding = closeByIndexes(coords, matchState.width, radius);
+  const surrounding = closeByIndexes(coords, matchState, radius);
   // Get all units present on the map
   const units: AttackerUnit[] = Object.values(matchState.actors.units).filter(u =>
     surrounding.includes(u.coordinates)
@@ -692,21 +693,27 @@ function findCloseByUnits(
 export function coordsToIndex(coords: Coordinates, width: number): number {
   return width * coords.y + coords.x;
 }
+export function validateCoords(coords: Coordinates, matchState: MatchState): number | null {
+  if (coords.x < 0 || coords.x > matchState.width) return null;
+  if (coords.y < 0 || coords.y > matchState.height) return null;
+  else return coordsToIndex(coords, matchState.width);
+}
 export function indexToCoords(i: number, width: number): Coordinates {
   const y = Math.floor(i / width);
   const x = i - y * width;
   return { x, y };
 }
-function closeByIndexes(coords: number, mapWidth: number, range: number) {
-  const upIndex = coords - mapWidth * range;
-  const upRightIndex = coords - mapWidth * range - range;
-  const rightIndex = coords + range;
-  const downRightIndex = coords + mapWidth * range + range;
-  const downIndex = coords + mapWidth * range;
-  const downLeftIndex = coords + mapWidth * range - range;
-  const leftIndex = coords - range;
-  const upLeftIndex = coords - mapWidth * range - range;
-  return [
+function closeByIndexes(index: number, matchState: MatchState, range: number): number[] {
+  const coords = indexToCoords(index, matchState.width);
+  const upIndex = { x: coords.x, y: coords.y - range };
+  const upRightIndex = { x: coords.x + range, y: coords.x - range };
+  const rightIndex = { x: coords.x + range, y: coords.y };
+  const downRightIndex = { x: coords.x + range, y: coords.y + range };
+  const downIndex = { x: coords.x, y: coords.y + range };
+  const downLeftIndex = { x: coords.x - range, y: coords.y + range };
+  const leftIndex = { x: coords.x - range, y: coords.y };
+  const upLeftIndex = { x: coords.x - range, y: coords.y - range };
+  const ret = [
     upIndex,
     upRightIndex,
     rightIndex,
@@ -715,7 +722,9 @@ function closeByIndexes(coords: number, mapWidth: number, range: number) {
     downLeftIndex,
     leftIndex,
     upLeftIndex,
-  ].filter(n => n >= 0);
+  ].map(c => validateCoords(c, matchState))
+  .filter((n: number | null): n is number => !!n);
+  return ret;
 }
 
 function findClosebyTowers(
@@ -725,7 +734,7 @@ function findClosebyTowers(
   radius = 1
 ): DefenderStructure[] {
   if (radius > range) return [];
-  const inRange = closeByIndexes(coords, matchState.width, radius);
+  const inRange = closeByIndexes(coords, matchState, radius);
   const structures = Object.values(matchState.actors.towers).filter(tw =>
     inRange.includes(tw.coordinates)
   );
@@ -740,7 +749,7 @@ function findClosebyCrypts(
 ): AttackerStructure[] {
   if (!coords) return [];
   if (radius > range) return [];
-  const inRange = closeByIndexes(coords, matchState.width, radius);
+  const inRange = closeByIndexes(coords, matchState, radius);
   const structures = Object.values(matchState.actors.crypts).filter(tw =>
     inRange.includes(tw.coordinates)
   );
