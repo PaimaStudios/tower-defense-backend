@@ -76,7 +76,8 @@ export interface AnnotatedMap {
   name: string;
   width: number;
   height: number;
-  mapState: Tile[];
+  map: Tile[];
+  pathMap: Array<0 | 1>[];
 }
 
 export interface MatchState extends AnnotatedMap {
@@ -113,10 +114,9 @@ export interface AttackerUnit {
   faction: 'attacker';
   subType: AttackerUnitType;
   id: ActorID;
-  previousCoordinates: number | null; // null if just spawned
   coordinates: number;
-  nextCoordinates: number | null; // null if already on defender base
   movementCompletion: number;
+  path: number[];
   health: number;
   speed: number;
   damage: number;
@@ -149,7 +149,7 @@ export interface DefenderStructure {
   upgrades: UpgradeTier;
 }
 interface DefenderBase {
-  // coordinates: Coordinates;
+  coordinates: number;
   health: number;
   level: Level;
 }
@@ -171,7 +171,6 @@ export type Tile =
 export interface PathTile {
   type: 'path';
   faction: Faction;
-  leadsTo: number[]; // indexes of the tile array
 }
 export interface Coordinates {
   x: number;
@@ -289,7 +288,6 @@ export type TickEvent =
   | DefenderBaseUpdateEvent
   | ActorDeletedEvent
   | StatusEffectAppliedEvent;
-
 export type Faction = 'attacker' | 'defender';
 // export interface GoldRewardEvent {
 //   eventType: "goldReward";
@@ -321,7 +319,7 @@ export interface UnitMovementEvent {
   faction: 'attacker';
   actorID: number;
   coordinates: number;
-  nextCoordinates: number | null;
+  nextCoordinates: number;
   completion: number;
   movementSpeed: number;
 }

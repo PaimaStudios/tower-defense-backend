@@ -45,14 +45,14 @@ function processTick(
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomnessGenerator.next();
   if (currentTick === 1) {
-  // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
-  // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
-  // Only state mutation that happens in the event production flow.
+    // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
+    // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
+    // Only state mutation that happens in the event production flow.
     for (const c of Object.values(matchState.actors.crypts)) {
       const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
       if (old) matchState.finishedSpawning.push(c.id);
     }
-  // First tick is reserved to processing the user actions, i.e. events related to structures.
+    // First tick is reserved to processing the user actions, i.e. events related to structures.
     return structureEvents(matchConfig, matchState, moves);
   } else {
     // ticks 2+
@@ -309,7 +309,7 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     .map(coordinates => validateCoords(coordinates, matchState))
     .filter((index): index is number => {
       if (index == null) return false;
-      const tile = matchState.mapState[index];
+      const tile = matchState.map[index];
       return tile.type === 'path' && tile.faction === 'attacker';
     });
 }
@@ -329,14 +329,17 @@ function choosePath(paths: number[], mapWidth: number): number {
 // If there is more than one candidate then randomness is used to select one.
 function findClosebyPath(matchState: MatchState, coords: number, range = 1): number {
   const adjacentPaths = closeByPaths(coords, matchState);
-  if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width);
-  else {
-    const morePaths = getSurroundingCells(coords, matchState, range + 1).filter(
-      n => matchState.mapState[n].type === 'path'
-    );
-    if (morePaths.length > 0) return choosePath(morePaths, matchState.width);
-    else return findClosebyPath(matchState, coords, range + 1);
+  if (adjacentPaths.length > 0) {
+    return choosePath(adjacentPaths, matchState.width);
   }
+  const morePaths = getSurroundingCells(coords, matchState, range + 1).filter(
+    n => matchState.map[n].type === 'path'
+  );
+  if (morePaths.length > 0) {
+    return choosePath(morePaths, matchState.width);
+  }
+
+  return findClosebyPath(matchState, coords, range + 1);
 }
 
 // Movement events, dervive from the units already on the match sate.
@@ -375,12 +378,14 @@ function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
   // First we lookup the unit speed given the match config and possible status debuffs.
   const unitSpeed = getCurrentSpeed(config, a);
   const completion = (a.movementCompletion += unitSpeed);
+  const nextIndex = a.path.indexOf(a.coordinates) + 1;
+  const nextCoordinates = a.path[nextIndex];
   return {
     eventType: 'movement',
     faction: 'attacker',
     actorID: a.id,
     coordinates: a.coordinates,
-    nextCoordinates: a.nextCoordinates,
+    nextCoordinates,
     // if movement reaches 100% then movement is finalized
     completion: completion > 100 ? 100 : completion,
     movementSpeed: unitSpeed,
@@ -633,7 +638,7 @@ function computeDamageToBase(
   attackerUnit: AttackerUnit
 ): [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] {
   // Check the tile the unit is at;
-  const t: Tile = matchState.mapState[attackerUnit.coordinates];
+  const t: Tile = matchState.map[attackerUnit.coordinates];
   // If unit is not at the defender's base, return empty event list
   if (!(t.type === 'base' && t.faction === 'defender')) return [];
   // If unit is at the defender's base, emit events for base damage and death of unit
@@ -669,7 +674,7 @@ function findCloseByUnits(
   const units: AttackerUnit[] = Object.values(matchState.actors.units).filter(u =>
     surrounding.includes(u.coordinates)
   );
-  return units
+  return units;
 }
 
 // Converts coord notation ({x: number, y: number}) to a single number, index of the flat map array.

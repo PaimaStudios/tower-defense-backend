@@ -12,71 +12,13 @@ import type {
 } from '@tower-defense/db';
 import { closeLobby, startMatch } from '@tower-defense/db';
 import { createLobby } from '@tower-defense/db';
-import type { MatchState, RawMap, RoleSetting, TileNumber } from '@tower-defense/utils';
+import type { MatchState, RoleSetting } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
-import { getMap, parseConfig } from '@tower-defense/game-logic';
+import { parseConfig } from '@tower-defense/game-logic';
 import { blankStats } from './stats';
 import { practiceRound } from '../transition';
 import { persistNewRound } from './match';
-
-// TODO PLAYER TURNS / ROUNDS ???
-function generateMatchState(
-  lobbyState: IGetLobbyByIdResult,
-  playerTwo: WalletAddress,
-  mapLayout: string,
-  configString: string,
-  randomnessGenerator: Prando
-): MatchState {
-  const [attacker, defender] =
-    lobbyState.creator_faction === 'attacker'
-      ? [lobbyState.lobby_creator, playerTwo]
-      : lobbyState.creator_faction === 'defender'
-      ? [playerTwo, lobbyState.lobby_creator]
-      : randomizeRoles(lobbyState.lobby_creator, playerTwo, randomnessGenerator);
-  const matchConfig = parseConfig(configString);
-  // TODO are all maps going to be the same width?
-  const rawMap = processMapLayout(lobbyState.map, mapLayout);
-  const annotatedMap = getMap(rawMap);
-  return {
-    ...annotatedMap,
-    attacker,
-    defender,
-    attackerGold: matchConfig.baseAttackerGoldRate, // TODO
-    defenderGold: matchConfig.baseDefenderGoldRate, // TODO
-    attackerBase: { level: 1 },
-    defenderBase: { level: 1, health: matchConfig.defenderBaseHealth }, // TODO
-    actorCount: 2,
-    actors: { crypts: {}, towers: {}, units: {} },
-    currentRound: 1,
-    finishedSpawning: [],
-    roundEnded: false,
-  };
-}
-
-function randomizeRoles(
-  creator: WalletAddress,
-  joiner: WalletAddress,
-  randomnessGenerator: Prando
-): [WalletAddress, WalletAddress] {
-  const number = randomnessGenerator.next();
-  if (number < 0.5) return [creator, joiner];
-  else return [joiner, creator];
-}
-// Layouts as given by catastrophe are a long string, with rows of numbers
-// separated by \r\n .
-function processMapLayout(mapName: string, mapString: string): RawMap {
-  const rows = mapString.split('\\r\\n');
-  return {
-    name: mapName,
-    width: rows[0].length,
-    height: rows.length,
-    contents: rows
-      .reverse()
-      .join('')
-      .split('')
-      .map(s => parseInt(s) as TileNumber),
-  };
-}
+import { generateMatchState } from '@tower-defense/game-logic';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
@@ -163,7 +105,15 @@ export function persistLobbyJoin(
     return [];
   }
   // We initialize the match state on lobby joining
-  const matchState = generateMatchState(lobby, user, map.layout, configString, randomnessGenerator);
+  const matchState = generateMatchState(
+    lobby.creator_faction,
+    lobby.lobby_creator,
+    user,
+    lobby.map,
+    map.layout,
+    configString,
+    randomnessGenerator
+  );
   // We update the Lobby table with the new state, and determine the creator role if it was random
   const creator_role =
     lobby.creator_faction === 'random'
