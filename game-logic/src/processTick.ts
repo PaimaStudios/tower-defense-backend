@@ -26,7 +26,6 @@ import type {
   BuildStructureAction,
 } from '@tower-defense/utils';
 import applyEvents from './apply';
-import { match } from 'assert';
 
 // Main function, exported as default.
 
@@ -78,13 +77,13 @@ function processTick(
   }
 }
 function incrementRound(matchState: MatchState): null {
-  console.log(matchState.currentRound, 'incrementing round');
   // reset the list of spawned units of every crypt
   for (let crypt of Object.keys(matchState.actors.crypts)) {
     // annoying that Object.values stripes the types
     const c = matchState.actors.crypts[parseInt(crypt)];
     c.spawned = [];
   }
+  matchState.finishedSpawning = [];
   // increment round
   matchState.currentRound++;
   // reset matchState so it starts processing on next tick
@@ -97,8 +96,6 @@ function endRound(
   currentTick: number,
   randomnessGenerator: Prando
 ): [GoldRewardEvent, GoldRewardEvent] {
-  console.log(matchState.currentRound, 'ending round');
-  console.log(matchState.defenderBase.health, 'base health');
   matchState.roundEnded = true;
   const gold = computeGoldRewards(matchConfig, matchState);
   applyEvents(matchConfig, matchState, gold, currentTick, randomnessGenerator);
@@ -204,20 +201,29 @@ function spawnEvents(
   currentTick: number,
   rng: Prando
 ): UnitSpawnedEvent[] {
-  // Crypts are stored in an ordered map in the map state, we extract an array and iterate.
-  const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts);
+  // Crypts are stored in an ordered map in the map state, we extract an array, filter active ones, and iterate.
+  const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts).filter(
+    c => !matchState.finishedSpawning.includes(c.id)
+  );
+  // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
+  // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
+  if (currentTick === 2) {
+    for (let c of crypts) {
+      const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
+      if (old) matchState.finishedSpawning.push(c.id);
+    }
+  }
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
     const { spawnCapacity, spawnRate } = config[ss.structure][ss.upgrades];
     // Crypts spawn units if three conditions are met:
-    // 1.- They have remaining spawn capacity
+    // 1.- They're not old, see above
+    // 2.- They have remaining spawn capacity
     const hasCapacity = ss.spawned.length < spawnCapacity;
-    // 2.- The spawn rate fits the current tick.
+    // 3.- The spawn rate fits the current tick.
     // tick 1 is reserved for structures. Spawning happens from tick 2.
     const aboutTime = (currentTick - 2) % spawnRate === 0;
-    // 3.- The crypt is still active. They become inactive 3 rounds after being built. upgrades reset this
-    const stillNew = matchState.currentRound - ss.builtOnRound < 3 * (ss.upgrades + 1);
-    if (hasCapacity && aboutTime && stillNew) {
+    if (hasCapacity && aboutTime) {
       const newUnit = spawn(config, matchState, ss, rng);
       applyEvents(config, matchState, [newUnit], currentTick, rng); // one by one now
       return newUnit;
@@ -722,8 +728,9 @@ function closeByIndexes(index: number, matchState: MatchState, range: number): n
     downLeftIndex,
     leftIndex,
     upLeftIndex,
-  ].map(c => validateCoords(c, matchState))
-  .filter((n: number | null): n is number => !!n);
+  ]
+    .map(c => validateCoords(c, matchState))
+    .filter((n: number | null): n is number => !!n);
   return ret;
 }
 
