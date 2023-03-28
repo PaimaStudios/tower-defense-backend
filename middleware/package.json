@@ -1,27 +1,31 @@
 {
   "name": "@tower-defense/middleware",
   "version": "1.0.0",
-  "description": "Middleware for the Tower Defense game, to be imported into any frontend",
+  "description": "Middleware for the Catapult game, to be imported into any frontend",
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cross-env NODE_ENV=devnet sh scripts/build.sh",
-    "build:prod": "cross-env NODE_ENV=mainnet sh scripts/build.sh",
+    "build": "sh scripts/build.sh",
+    "build:prod": "cross-env NODE_ENV=production sh scripts/build.sh",
     "lint": "prettier --write '**/*.ts'"
   },
   "keywords": [],
   "author": "PaimaStudios",
   "dependencies": {
-    "@dcspark/cardano-multiplatform-lib-browser": "^3.0.0-beta.0",
-    "@esbuild-plugins/esm-externals": "^0.0.6",
-    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
-    "@esbuild-plugins/node-resolve": "^0.1.4",
-    "@metamask/providers": "^9.0.0",
-    "esbuild": "^0.14.38",
     "@tower-defense/game-logic": "1.0.0",
     "@tower-defense/utils": "1.0.0",
-    "web3-utils": "^1.7.3"
+    "@dcspark/cardano-multiplatform-lib-browser": "^3.0.0-beta.0",
+    "@metamask/providers": "^9.0.0",
+    "web3-utils": "^1.7.3",
+    "web3": "1.8.1"
+  },
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^2.0.14",
+    "dotenv": "^16.0.3",
+    "esbuild": "^0.15.15",
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4"
   }
 }

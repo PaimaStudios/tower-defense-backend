@@ -11,6 +11,7 @@ These are the types of game input a user can submit:
    ...
 
 ### Create Lobby
+
 Middleware endpoint:
 
 ```js
@@ -89,8 +90,7 @@ Build Structure:
 ```json
 {
   "action": "build",
-  "x": 12,
-  "y": 5,
+  "coordinates": 12,
   "structure": "anaconda-tower"
 }
 ```
@@ -150,25 +150,25 @@ When the middleware receives the `turnActions`, it then must iterate through all
 Build Structure:
 
 ```json
-|b,12,5,anaconda-tower|
+|b12,anaconda-tower|
 ```
 
 Repair Structure:
 
 ```json
-|r,12,5|
+|r12|
 ```
 
 Destroy Structure:
 
 ```json
-|d,12,5|
+|d12|
 ```
 
 Upgrade Structure:
 
 ```json
-|u,12,5,1|
+|u12|
 ```
 
 Submit Turn Encoding:

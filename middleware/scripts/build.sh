@@ -1,16 +1,23 @@
+# echo "Installing dependencies"
+# npm i
+
+# echo "Compiling all libraries"
+# sh scripts/compile_libraries.sh
+
 
 sh scripts/set_fs_removal.sh
 echo "FS dependency removed"
 
-echo "Packaging Middleware"
-node ./esbuildconfig.cjs
+ENVIRONMENT=${NODE_ENV:-development}
+echo "Packaging Middleware for $ENVIRONMENT"
+DOTENV_CONFIG_PATH="../.env.$ENVIRONMENT" node --require dotenv/config ./esbuildconfig.cjs
 echo "Finished Packaging"
 
 sh scripts/undo_fs_removal.sh
 echo "FS dependency re-set"
 
-echo "Vanilla Middleware (With Exports) Prepared In: packaged/middleware.js"
 
+echo "Vanilla Middleware (With Exports) Prepared In: packaged/middleware.js"
 head -n $(( $(grep -n '^export {' packaged/middleware.js | head -1 | cut -d: -f1) - 1 )) packaged/middleware.js > packaged/paimaMiddleware.js
 cp packaged/paimaMiddleware.js ../WebGL/paima-towerdefense/
 echo "Frontend-ready Middleware (Without Exports) Prepared In: packaged/paimaMiddleware.js"

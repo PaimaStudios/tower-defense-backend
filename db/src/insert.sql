@@ -9,14 +9,14 @@ VALUES (:block_height!, :input_data!);
 /* 
   @name newRound
 */
-INSERT INTO rounds(lobby_id, round_within_match, starting_block_height, execution_block_height)
-VALUES (:lobby_id!, :round_within_match!, :starting_block_height!, :execution_block_height)
+INSERT INTO rounds(lobby_id, round_within_match, match_state, starting_block_height, execution_block_height)
+VALUES (:lobby_id!, :round_within_match!, :match_state!, :starting_block_height!, :execution_block_height)
 RETURNING *;
 
 /*  Stats  */
 
 /* @name newStats
-  @param stats -> (wallet!, wins!, losses!, ties!)
+  @param stats -> (wallet!, wins!, losses!)
 */
 INSERT INTO global_user_state
 VALUES :stats
@@ -25,15 +25,14 @@ DO NOTHING;
 
 /* 
   @name updateStats
-  @param stats -> (wallet!, wins!, losses!, ties!)
+  @param stats -> (wallet!, wins!, losses!)
 */
 INSERT INTO global_user_state
 VALUES :stats
 ON CONFLICT (wallet)
 DO UPDATE SET
 wins = EXCLUDED.wins,
-losses = EXCLUDED.losses,
-ties = EXCLUDED.ties;
+losses = EXCLUDED.losses;
 
 /*  NFTs  */
 
@@ -50,7 +49,9 @@ timestamp = EXCLUDED.timestamp;
 
 /* @name createConfig */
 INSERT INTO configs(id, content)
-VALUES(:id!, :content!);
+VALUES(:id!, :content!)
+ON CONFLICT(id)
+DO NOTHING;
 
 /*  Lobbies  */
 
@@ -60,10 +61,14 @@ VALUES(:id!, :content!);
 INSERT INTO lobbies(
   lobby_id,
   lobby_creator,
+  creator_faction,
   num_of_rounds,
+  round_length,
   current_round,
+  lobby_state,
   creation_block_height,
   map,
+  config_id,
   created_at,
   hidden,
   practice,
@@ -72,10 +77,14 @@ INSERT INTO lobbies(
 VALUES(
   :lobby_id!,
   :lobby_creator!,
+  :creator_faction!,
   :num_of_rounds!,
+  :round_length!,
   :current_round!,
+  :lobby_state!,
   :creation_block_height!,
   :map!,
+  :config_id!,
   :created_at!,
   :hidden!,
   :practice!,
@@ -91,3 +100,11 @@ VALUES(
 */
 INSERT INTO match_moves(lobby_id, wallet, round, move_type, move_target)
 VALUES :new_move;
+
+/* Final Match State */
+
+/* @name newFinalState
+  @param final_state -> (lobby_id!, player_one_wallet!, player_one_result!, player_one_gold!, player_two_wallet!, player_two_result!, player_two_gold!, final_health!)
+*/
+INSERT INTO final_match_state(lobby_id, player_one_wallet, player_one_result, player_one_gold, player_two_wallet, player_two_result, player_two_gold, final_health)
+VALUES :final_state;

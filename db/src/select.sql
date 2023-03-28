@@ -81,7 +81,7 @@ OR lobbies.player_two = global_user_state.wallet
 WHERE global_user_state.wallet = :wallet1;
 
 /* @name getBothUserStats */
-SELECT global_user_state.wallet, wins, losses, ties
+SELECT global_user_state.wallet, wins, losses
 FROM global_user_state
 WHERE global_user_state.wallet = :wallet
 OR global_user_state.wallet = :wallet2;
@@ -104,6 +104,11 @@ LIMIT 1;
 SELECT * FROM maps
 WHERE name = :name!;
 
+/* for testing */
+
+/* @name getAllMaps */
+SELECT * FROM maps;
+
 /*  Configs  */
 
 /* @name getMatchConfig */
@@ -114,10 +119,13 @@ WHERE id = :id;
 
 /* @name getPaginatedOpenLobbies */
 SELECT * FROM lobbies
+INNER JOIN global_user_state
+ON lobbies.lobby_creator = global_user_state.wallet
 WHERE lobbies.lobby_state = 'open' AND lobbies.hidden IS FALSE AND lobbies.lobby_creator != :wallet
 ORDER BY created_at DESC
 LIMIT :count
 OFFSET :page;
+
 
 /* @name searchPaginatedOpenLobbies */
 SELECT * FROM lobbies
@@ -131,7 +139,7 @@ SELECT * FROM lobbies
 WHERE lobbies.lobby_state = 'open' AND lobbies.lobby_id = :searchQuery AND lobbies.lobby_creator != :wallet;
 
 /* @name getRandomLobby */
-SELECT
+SELECT *
 FROM lobbies
 WHERE random() < 0.1
 AND lobbies.lobby_state = 'open' AND lobbies.hidden is FALSE
@@ -175,7 +183,11 @@ WHERE lobby_creator = :wallet
 AND creation_block_height = :block_height;
 
 /* @name getCurrentMatchState */
-SELECT current_match_state FROM Lobbies
+SELECT current_match_state FROM lobbies
+WHERE lobby_id = :lobby_id;
+
+/* @name getLobbyStatus */
+SELECT lobby_state FROM lobbies
 WHERE lobby_id = :lobby_id;
 
 /*  Moves  */
@@ -186,7 +198,14 @@ WHERE lobby_id = :lobby_id!
 AND   round = :round!;
 
 /* @name getCachedMoves */
-SELECT * FROM match_moves
+SELECT 
+  match_moves.id,
+  match_moves.lobby_id,
+  move_type,
+  move_target,
+  round,
+  wallet 
+FROM match_moves
 INNER JOIN rounds
 ON match_moves.lobby_id = rounds.lobby_id
 AND match_moves.round = rounds.round_within_match
@@ -197,3 +216,9 @@ AND match_moves.lobby_id = :lobby_id;
 SELECT *
 FROM match_moves
 WHERE match_moves.lobby_id = :lobby_id;
+
+/* Final Match State */
+
+/* @name getFinalState */
+SELECT * FROM final_match_state
+WHERE lobby_id = :lobby_id;

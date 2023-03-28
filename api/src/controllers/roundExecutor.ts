@@ -1,12 +1,8 @@
 import {
-  Body,
   Controller,
   Get,
-  Path,
-  Post,
   Query,
   Route,
-  SuccessResponse,
   ValidateError,
 } from 'tsoa';
 import {
@@ -15,15 +11,14 @@ import {
   getLobbyById,
   getRoundData,
   getRoundMoves,
-  getUserStatesByRound,
-  IGetAllMatchStatesResult,
   IGetBlockHeightResult,
   IGetLobbyByIdResult,
   IGetMovesByLobbyResult,
   IGetRoundDataResult,
-} from '@catapult/db';
+} from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
+import { MatchState, Structure, TurnAction } from '@tower-defense/utils';
 
 type Response = RoundData | Error;
 
@@ -33,8 +28,7 @@ interface Error {
 
 interface RoundData {
   lobby: IGetLobbyByIdResult;
-  states: IGetAllMatchStatesResult[];
-  moves: IGetMovesByLobbyResult[];
+  moves: TurnAction[];
   round_data: IGetRoundDataResult;
   block_height: IGetBlockHeightResult;
 }
@@ -60,7 +54,6 @@ export class roundExecutorController extends Controller {
       else {
         if (!(round > 0)) return { error: 'bad round number' };
         else {
-          const states = await getUserStatesByRound.run({ lobby_id: lobbyID, round: round }, pool);
           const [round_data] = await getRoundData.run(
             { lobby_id: lobbyID, round_number: round },
             pool
@@ -71,11 +64,33 @@ export class roundExecutorController extends Controller {
               { block_height: round_data.execution_block_height },
               pool
             );
-            const moves = await getRoundMoves.run({ lobby_id: lobbyID, round: round }, pool);
-            return { lobby, states, round_data, moves, block_height };
+            const matchState = round_data.match_state as unknown as MatchState
+            const dbMoves = await getRoundMoves.run({ lobby_id: lobbyID, round: round }, pool);
+            const moves = dbMoves.map(m => moveToAction(m, matchState.attacker))
+            return { lobby, round_data, moves, block_height };
           }
         }
       }
     }
+  }
+}
+
+function moveToAction(m: IGetMovesByLobbyResult, attacker: string): TurnAction {
+  if (m.move_type === 'build') {
+    const [structure, coordinates] = m.move_target.split('--');
+    return {
+      round: m.round,
+      action: m.move_type,
+      faction: m.wallet === attacker ? "attacker" : "defender",
+      structure: structure as Structure,
+      coordinates: parseInt(coordinates),
+    };
+  } else {
+    return {
+      round: m.round,
+      action: m.move_type,
+      faction: m.wallet === attacker ? "attacker" : "defender",
+      id: parseInt(m.move_target),
+    };
   }
 }

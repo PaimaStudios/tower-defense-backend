@@ -12,6 +12,7 @@
     "prettier": "prettier --config .prettierrc --ignore-path .prettierignore --check .",
     "prettier:fix": "prettier --write --config .prettierrc --ignore-path .prettierignore --check .",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "t": "NODE_OPTIONS=--experimental-vm-modules jest -t 'units move forward'",
     "test:watch": "npm test -- --watch"
   },
   "workspaces": [

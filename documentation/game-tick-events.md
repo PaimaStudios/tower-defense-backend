@@ -11,90 +11,116 @@ As each action is processed during a game tick, it generates a game tick event. 
 
 Below we will specify the different types of game tick events which will be supported.
 
-## Gold Reward Events
+## Structure Events
 
-At the end of a round/combat phase after all units are destroyed, both the attacker and defender are rewarded gold as a result. The amount of gold is modulated based on the current round number, and how many gold mine structures each player respectively has (which increase gold rewards). Two gold rewards events are emitted at the end of every round, thereby defining exactly how much each player receives.
+Users in both factions submit actions in every turn concerning the structures they can place of the map. Each action produces an event.
 
-```json
-{
-  "event": "gold-reward",
-  "faction": "attacker",
-  "amount": 50
-}
-```
+### Build Structure Event
 
-OR
+Note `coordinates` here and in any other event are a single integer, referring to the index of the given cell in the map, which is a simple 1D array of cells.
 
 ```json
 {
-  "event": "gold-reward",
-  "faction": "defender",
-  "amount": 50
+  "eventType": "build",
+  "coordinates": number,
+  "faction": "attacker" | "defender",
+  "id": number,
+  "structure": "anacondaTower" | "gorillaCrypt" ...
 }
 ```
+
+### Repair Structure Event
+
+```json
+{
+  "eventType": "repair",
+  "faction": "attacker" | "defender",
+  "id": number
+}
+```
+
+### Upgrade Structure Event
+
+```json
+{
+  "eventType": "upgrade",
+  "faction": "attacker" | "defender",
+  "id": number
+}
+```
+
+### Salvage Structure Event
+
+```json
+{
+  "eventType": "salvage",
+  "faction": "attacker" | "defender",
+  "id": number,
+  "gold": number
+}
+```
+
+## Other Events
+
+Once the structure events are processed, the round's "battle phase" starts. The battle phase is a list of events which derive deterministically from the state of the map, i.e. the kind of structures that are placed in the map.
 
 ## Unit Spawned Event
 
 When a crypt spawns a unit, this event specifies all of the relevant details about the unit.
+`tier` refers to the level of the crypt structure that spawned. That affects how a unit responds to status buffs.
 
 ```json
 {
-  "event": "spawn",
-  "crypt-id": 923,
-  "unit-id": 362,
-  "unit-x": 10,
-  "unit-y": 5,
-  "unit-type": "jaguar",
-  "unit-health": 100,
-  "unit-movement-speed": 35,
-  "unit-attack-speed": 0,
-  "unit-attack": 0
+  "eventType": "spawn",
+  "faction": "attacker" | "defender",
+  "cryptID": number,
+  "actorID": number,
+  "coordinates": number,
+  "unitType": "jaguar" | "gorilla" | "macaw",
+  "unitHealth": number,
+  "unitSpeed": number,
+  "unitAttack": number,
+  "tier": number
 }
 ```
 
 ## Unit Movement Event
 
-An event which specifies the current position of the unit on the map and how fast/where it is moving to.
-
-This is emitted when:
-
-- A unit moves onto a new square (has completed the previous square)
-- Has a speed buff/debuff applied to it
-- Has a speed buff/debuff removed from it
-- A unit is spawned and begins moving (units spawn with completion 0)
+An event which specifies the current position of the unit on the map and how fast/where it is moving to. Movement events are emitted on every tick after a unit is spawned, as long as it's alive.
 
 This event includes:
 
 - Unit ID
-- Current X/Y Position (what square on the map)
-- Next X/Y Position (square the unit is moving towards)
 - Completion (an integer between 0-100 that represents how much of the square has been completed)
 - Movement Speed (an integer between 0-100 that represents how much completion of a square a unit makes per tick)
+- Coordinates: The index where the unit currently is.
+- nextCoordinates: The index where the unit is headed to, and will move to once movement completion is 100. This will be null once the unit has reached it's final destination, the defender's base.
 
 ```json
 {
-  "event": "movement",
-  "unit-id": 5262,
-  "unit-x": 10,
-  "unit-y": 5,
-  "next-x": 11,
-  "next-y": 5,
-  "completion": 7,
-  "movement-speed": 20
+  "eventType": "movement",
+  "faction": "attacker" | "defender",
+  "actorID": number,
+  "coordinates": number,
+  "nextCoordinates": number | null,
+  "completion": number,
+  "movementSpeed": number
 }
 ```
 
 ## Damage Event
 
 Both units and defender towers can take damage. When they do take damage we emit an event.
+`faction` here means the faction causing the damage, not receiving it.
 
 ```json
 {
-  "event": "damage",
-  "source-id": 923,
-  "target-id": 362,
-  "damage-type": "neutral",
-  "damage-amount": 20
+  "eventType": "damage",
+  "faction": "attacker" | "defender",
+  "sourceID": number,
+  "targetID": number,
+  "damageType": "neutral",
+  "damageAmount": number
 }
 ```
 
@@ -105,8 +131,9 @@ Returns the defender's base remaining health (if == 0, then the match is over an
 
 ```json
 {
-  "event": "defender-base-update",
-  "health": 25
+  "event": "defenderBaseUpdate",
+  "faction": "defender",
+  "health": number
 }
 ```
 
@@ -116,32 +143,41 @@ When an attacker’s unit or a defender’s tower hit 0 hp, then they are delete
 
 ```json
 {
-  "event": "actor-deleted",
+  "event": "actorDeleted",
+  "faction": "attacker" | "defender",
   "id": 2593
 }
 ```
 
 ## Status Effect Applied Event
 
-Some structures target units to apply status to them (attacker applies buffs, defender applies debuffs). The status effect game tick event is emitted when a status effect is applied to a unit, and it carries with that unit for the duration specified (ex. increase movement speed by 20 speed for 10 ticks). Of note, besides visually displaying the status effect being applied to the unit, the frontend doesn't need to calculate anything based off of this event. The round executor will take into account all changes this applies to the state/stats internally.
-
-If a speed buff/debuff is applied, a movement event will follow this event for the target unit.
+Some structures target units to apply status to them (attacker applies buffs, defender applies debuffs). The status effect game tick event is emitted when a status effect is applied to a unit, and it carries with that unit forever. Of note, besides visually displaying the status effect being applied to the unit, the frontend doesn't need to calculate anything based off of this event. The round executor will take into account all changes this applies to the state/stats internally.
 
 The tick event includes:
 
 - Source Structure ID
 - Target Unit ID
 - Status type
-- Status amount (absolute value that buff has increased, ie. 20 speed buff means a base unit's 20 + 20 buff speed, results in 40 total speed, a 100% increase)
-- Status duration (in game ticks)
 
 ```json
 {
-  "event": "status-apply",
-  "source-id": 923,
-  "target-id": 362,
-  "status-type": "speed-debuff",
-  "status-amount": 20,
-  "status-duration": 30
+  "eventType": "statusApply",
+  "faction": "attacker" | "defender",
+  "sourceID": number,
+  "targetID": number,
+  "statusType": "speedDebuff" | "speedBuff" | "healthBuff",
+  "statusAmount": number
+}
+```
+
+### Gold Reward Events
+
+At the end of a round/combat phase after all units are destroyed, both the attacker and defender are rewarded gold as a result. The amount of gold is modulated based on the current round number, the level of each faction's base and the chosen match configuration. Two gold rewards events are emitted at the end of every round, thereby defining exactly how much each player receives. The `amount` of gold is the total gold that the player has after the event, not the amount to be added.
+
+```json
+{
+  "event": "goldUpdate",
+  "faction": "attacker",
+  "amount": 50
 }
 ```

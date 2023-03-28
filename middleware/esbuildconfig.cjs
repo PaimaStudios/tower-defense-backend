@@ -1,7 +1,5 @@
 const g = require('@esbuild-plugins/node-globals-polyfill');
 const m = require('@esbuild-plugins/node-modules-polyfill');
-const esbuild = require('esbuild');
-
 const modules = m.NodeModulesPolyfillPlugin();
 
 const define = { global: 'window' };
@@ -15,12 +13,15 @@ const global = g.NodeGlobalsPolyfillPlugin({
   buffer: true,
   define: { 'process.env.var': '"hello"' }, // inject will override define, to keep env vars you must also pass define here https://github.com/evanw/esbuild/issues/660
 });
-
-esbuild.build({
+const esbuild = require('esbuild');
+const config = {
   entryPoints: ['src/index.ts'],
   bundle: true,
   format: 'esm',
-  define: { global: 'window' },
+  define,
   outfile: 'packaged/middleware.js',
   plugins: [global, modules],
-});
+  external: ['pg-native'],
+};
+
+esbuild.build(config);

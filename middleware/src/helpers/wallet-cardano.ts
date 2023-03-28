@@ -1,4 +1,5 @@
-import { utf8ToHex } from 'web3-utils';
+import pkg from 'web3-utils';
+const { utf8ToHex } = pkg;
 
 import { cardanoConnected, getCardanoApi, setCardanoAddress, setCardanoApi } from '../state';
 
