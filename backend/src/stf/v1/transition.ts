@@ -2,7 +2,6 @@ import type { Pool } from 'pg';
 import {
   getLobbyById,
   getRoundData,
-  getCachedMoves,
   getUserStats,
   getMapLayout,
   getMatchConfig,
@@ -32,7 +31,6 @@ import { parseConfig } from '@tower-defense/game-logic';
 import { validateMoves } from '@tower-defense/game-logic';
 import { SQLUpdate } from 'paima-engine/paima-db';
 
-type SQLUpdate = [any, any];
 export default async function (
   inputData: SubmittedChainData,
   blockHeight: number,

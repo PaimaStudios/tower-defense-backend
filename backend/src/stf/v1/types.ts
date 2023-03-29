@@ -1,4 +1,5 @@
 import { TurnAction } from '@tower-defense/utils';
+import { WalletAddress } from 'paima-engine/paima-utils';
 
 export type ParsedSubmittedInput =
   | CreatedLobbyInput
@@ -65,7 +66,6 @@ export interface UserStatsEffect {
   result: 'w' | 't' | 'l';
 }
 
-export type WalletAddress = string;
 export type Map = string;
 
 export type GameInput = 'createdLobby' | 'joinedLobby' | 'submittedTurn';

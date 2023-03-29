@@ -1,7 +1,7 @@
 import P from 'parsimmon';
 import { consumer } from 'paima-engine/paima-concise';
-import { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise/build/types';
-import {
+import type { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise/build/types';
+import type {
   BuildStructureAction,
   RepairStructureAction,
   SalvageStructureAction,
@@ -9,6 +9,7 @@ import {
   TurnAction,
   UpgradeStructureAction,
 } from './types';
+import { WalletAddress } from 'paima-engine/paima-utils';
 // Types
 export type ParsedSubmittedInput =
   | CreatedLobbyInput
@@ -74,7 +75,6 @@ export interface UserStatsEffect {
   user: WalletAddress;
   result: 'w' | 'l';
 }
-export type WalletAddress = string;
 export type Map = string;
 
 // TODO
@@ -338,13 +338,13 @@ const pWallet = pBase62.many().tie();
 const pLobbyID = pBase62.times(12).map((list: string[]) => list.join(''));
 const pMatchConfigID = pBase62.times(14).map((list: string[]) => list.join(''));
 // Lobby attributes
-/// Roles
+// Roles
 
 const attackerRole = P.string('a').map(_ => 'attacker' as RoleSetting);
 const defenderRole = P.string('d').map(_ => 'defender' as RoleSetting);
 const randomRole = P.string('r').map(_ => 'random' as RoleSetting);
 const pRoleSetting = P.alt(attackerRole, defenderRole, randomRole);
-/// Rounds
+// Rounds
 
 function validateRoundLength(n: number): boolean {
   // NOTE: This currently returns the wrong blocks per second for A1
@@ -361,7 +361,7 @@ const pNumOfRounds = P.digits.map(Number).chain(n => {
   if (n >= 3 && n <= 1000) return P.succeed(n);
   else return P.fail(`Round Number must be between 3 and 1000`);
 });
-/// Maps
+// Maps
 const pMaps = P.alt(
   P.string('jungle'),
   P.string('backwards'),
@@ -456,20 +456,20 @@ const buildAction = P.seqObj<BuildStructureAction>(
   pComma,
   ['structure', pStructureType]
 ).map(o => {
-  return { ...o, action: 'build' as 'build' };
+  return { ...o, action: 'build' as const };
 });
 const repairAction = P.seqObj<RepairStructureAction>(P.string('r'), ['id', pStructureID]).map(o => {
-  return { ...o, action: 'repair' as 'repair' };
+  return { ...o, action: 'repair' as const };
 });
 
 const upgradeAction = P.seqObj<UpgradeStructureAction>(P.string('u'), ['id', pStructureID]).map(
   o => {
-    return { ...o, action: 'upgrade' as 'upgrade' };
+    return { ...o, action: 'upgrade' as const };
   }
 );
 const salvageAction = P.seqObj<SalvageStructureAction>(P.string('s'), ['id', pStructureID]).map(
   o => {
-    return { ...o, action: 'salvage' as 'salvage' };
+    return { ...o, action: 'salvage' as const };
   }
 );
 
