@@ -82,7 +82,7 @@ function processTick(
 // Then we return null which signals the end of the round executor
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
-  for (let crypt of Object.keys(matchState.actors.crypts)) {
+  for (const crypt of Object.keys(matchState.actors.crypts)) {
     // annoying that Object.values stripes the types
     const c = matchState.actors.crypts[parseInt(crypt)];
     c.spawned = [];
@@ -263,7 +263,7 @@ function spawnEvents(
   // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
   // Only state mutation that happens in the event production flow.
   if (currentTick === 2) {
-    for (let c of crypts) {
+    for (const c of crypts) {
       const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
       if (old) matchState.finishedSpawning.push(c.id);
     }
