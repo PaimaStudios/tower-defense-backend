@@ -382,7 +382,7 @@ function persistMove(
   matchId: string,
   user: WalletAddress,
   a: TurnAction
-): [PreparedQuery<INewMatchMoveParams, INewMatchMoveResult>, INewMatchMoveParams] {
+): SQLUpdate {
   const move_target = a.action === 'build' ? `${a.structure}--${a.coordinates}` : `${a.id}`;
   const mmParams: INewMatchMoveParams = {
     new_move: {
