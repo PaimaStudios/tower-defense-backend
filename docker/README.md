@@ -1,10 +1,10 @@
-# Paima Catapult Docker Setup
+# Paima Tower Defense Docker Setup
 
 ## How to use
 
 Paima games are structured as a set of npm packages for the generic Paima Engine, and a set of npm packages for each individual game.
 
-Dockerfiles can't traverse their parent folders, so copy all the files in this folder to a root folder containing both the `paima-engine` folder and the game (in this case `catapult`) folder. There you can run the following commands.
+Dockerfiles can't traverse their parent folders, so copy all the files in this folder to a root folder containing both the `paima-engine` folder and the game (in this case `tower-defense`) folder. There you can run the following commands.
 
 ## Useful commands
 
