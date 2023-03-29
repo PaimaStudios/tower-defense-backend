@@ -9,17 +9,27 @@ These endpoints facilitate interaction with the user's wallet.
 ### Endpoint `userWalletLogin`:
 
 ```ts
-async function userWalletLogin(): Promise<Wallet | FailedResult>;
+async function userWalletLogin(loginType: string): Promise<Wallet | FailedResult>;
 ```
 
-Checks if the user’s wallet has previously authorized connecting to the game. If yes, then it will instantly return the wallet information. If not, then the user will have a pop-up window which they will have to confirm authorizing connecting their wallet to the game, before the data is returned.
+Attempts to log into the specified wallet. If the user’s wallet has previously authorized connecting to the game, the endpoint will instantly return the wallet information. If not, the connection is attempted, which may result in a pop-up window which the user will have to confirm authorizing connecting their wallet to the game before the data is returned.
+
+The single parameter, `loginType`, is a string specifying which wallet should be used. Case is ignored (the string is converted to lowercase before processing). Only the following values are currently supported:
+
+- `"metamask"`
+- `"flint"`
+- `"nufi"`
+- `"nami"`
+- `"eternl"`
 
 #### Example Output:
 
 ```json
 {
   "success": true,
-  "walletAddress": "0x186...a40"
+  "result": {
+    "walletAddress": "0x186...a40"
+  }
 }
 ```
 
@@ -106,12 +116,12 @@ This endpoint is paginated, meaning that the `page` argument can be used to requ
         "roundEnded": false,
         // map related attributes
         "name": "jungle", // or whatever the map is"
-        "width" 22,
+        "width": 22,
         "height": 13,
         "mapState": [
           {"type": "path", "faction": "defender", "leadsTo": [4, 5]},
           {"type": "open", "faction": "defender"},
-          ...
+          // ...
         ]
       }
     }
@@ -465,7 +475,7 @@ async function createLobby(arg: string): Promise<LobbyResponse | FailedResult>;
 
 The argument of this function is a JSON string, which when unpacked looks like:
 
-```json
+```ts
 {
   "configName": string,         // 14 character string. Default is "defaultedfault"
   "creatorRole": "attacker" | "defender" | "random",  // role of the lobby creator
@@ -537,7 +547,7 @@ async function submitMoves(arg: string): Promise<Result>;
 
 The argument to this function is a JSON string which when unpacked looks like:
 
-```json
+```ts
 {
   "lobbyID": string,
   "roundNumber": number,   // must be a positive whole number; round 0 means the match has not started yet so moves with round number 0 are invalid
