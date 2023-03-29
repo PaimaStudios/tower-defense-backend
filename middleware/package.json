@@ -8,21 +8,18 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "sh scripts/build.sh",
-    "build:prod": "cross-env NODE_ENV=production sh scripts/build.sh",
+    "build:devnet": "cross-env NODE_ENV=devnet sh scripts/build.sh",
+    "build:mainnet": "cross-env NODE_ENV=mainnet sh scripts/build.sh",
     "lint": "prettier --write '**/*.ts'"
   },
   "keywords": [],
   "author": "PaimaStudios",
   "dependencies": {
     "@tower-defense/game-logic": "1.0.0",
-    "@tower-defense/utils": "1.0.0",
-    "@dcspark/cardano-multiplatform-lib-browser": "^3.0.0-beta.0",
-    "@metamask/providers": "^9.0.0",
-    "web3-utils": "^1.7.3",
-    "web3": "1.8.1"
+    "@tower-defense/utils": "1.0.0"
   },
   "devDependencies": {
-    "@truffle/hdwallet-provider": "^2.0.14",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "esbuild": "^0.15.15",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
