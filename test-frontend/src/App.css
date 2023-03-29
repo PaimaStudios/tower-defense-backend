@@ -1,0 +1,41 @@
+.App-header {
+  text-align: center;
+  background-color: #282c34;
+  min-height: 10vh;
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-body {
+  text-align: left;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  justify-content: left;
+  font-size: calc(15px + 1vmin);
+  color: white;
+}
+
+.endpoint-buttons {
+  flex-direction: row;
+}
+
+.button-group {
+  width: 25%;
+  float: left;
+}
+
+.warning-label {
+  font-weight: bold;
+  color: red;
+}
+
+button {
+  font-size: calc(10px + 2vmin);
+}
