@@ -1,13 +1,15 @@
 import processTick, { parseConfig } from '@tower-defense/game-logic';
-import { MatchConfig, MatchState } from '@tower-defense/utils';
+import type { MatchConfig, MatchState } from '@tower-defense/utils';
 import {
+  MatchExecutor,
   matchExecutor as matchExecutorConstructor,
+  RoundExecutor,
   roundExecutor as roundExecutorConstructor,
 } from 'paima-engine/paima-executors';
+import { pushLog } from 'paima-engine/paima-mw-core';
 import Prando from 'paima-engine/paima-prando';
 
-import { MatchExecutor, MatchExecutorData, RoundExecutor, RoundExecutorData } from '../types';
-import { pushLog } from './logging';
+import type { MatchExecutorData, RoundExecutorData } from '../types';
 
 // executor
 export async function buildRoundExecutor(data: RoundExecutorData): Promise<RoundExecutor> {
@@ -24,6 +26,8 @@ export async function buildRoundExecutor(data: RoundExecutorData): Promise<Round
     rng,
     processTick
   );
+  //TODO: check with santiago
+  //@ts-ignore
   return { ...executor, altCurrentState: newActors(executor.currentState) };
   // return executor
 }

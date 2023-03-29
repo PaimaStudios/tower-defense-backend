@@ -1,31 +1,37 @@
-import { accountsEndpoints } from './endpoints/accounts';
-import { queryEndpoints } from './endpoints/queries';
-import { writeEndpoints } from './endpoints/write';
-import { utilityEndpoints } from './endpoints/utility';
-
+import { paimaEndpoints } from 'paima-engine/paima-mw-core';
 import {
+  initMiddlewareCore,
   cardanoWalletLoginEndpoint,
-  getMiddlewareConfig,
+  retrievePostingInfo,
   switchToBatchedCardanoMode,
   switchToBatchedEthMode,
+  switchToBatchedPolkadotMode,
   switchToUnbatchedMode,
   switchToAutomaticMode,
   userWalletLoginWithoutChecks,
   automaticWalletLogin,
   updateBackendUri,
-} from './endpoints/internal';
+  getRemoteBackendVersion,
+  sendMetamaskWalletTransaction,
+  signMessageCardano,
+  postConciselyEncodedData,
+  polkadotLoginRaw,
+  signMessagePolkadot,
+} from 'paima-engine/paima-mw-core';
+import type { PostingModeSwitchResult } from 'paima-engine/paima-mw-core';
 
-import { getRemoteBackendVersion } from './helpers/auxiliary-queries';
-import { postString } from './helpers/posting';
+import { gameBackendVersion, GAME_NAME } from '@tower-defense/utils';
 
-import { initAccountGuard } from './helpers/wallet-metamask';
+import { queryEndpoints } from './endpoints/queries';
+import { writeEndpoints } from './endpoints/write';
 
-initAccountGuard();
+import { getMiddlewareConfig } from './endpoints/internal';
+
+initMiddlewareCore(GAME_NAME, gameBackendVersion);
 
 const endpoints = {
-  ...accountsEndpoints,
+  ...paimaEndpoints,
   ...queryEndpoints,
-  ...utilityEndpoints,
   ...writeEndpoints,
 };
 
@@ -34,14 +40,21 @@ export {
   getMiddlewareConfig,
   userWalletLoginWithoutChecks,
   cardanoWalletLoginEndpoint,
+  retrievePostingInfo,
   switchToUnbatchedMode,
   switchToBatchedEthMode,
   switchToBatchedCardanoMode,
+  switchToBatchedPolkadotMode,
   switchToAutomaticMode,
   automaticWalletLogin,
   updateBackendUri,
   getRemoteBackendVersion,
-  postString,
+  sendMetamaskWalletTransaction,
+  signMessageCardano,
+  postConciselyEncodedData,
+  polkadotLoginRaw,
+  signMessagePolkadot,
+  PostingModeSwitchResult,
 };
 
 export default endpoints;

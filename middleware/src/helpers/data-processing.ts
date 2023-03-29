@@ -1,37 +1,17 @@
-import pkg from 'web3-utils';
-const { numberToHex, utf8ToHex } = pkg;
-
-import { GameENV, Structure, TurnAction } from '@tower-defense/utils';
-import { LobbyWebserverQuery, UserNft } from '../types';
-import { getTxTemplate } from 'paima-engine/paima-tx';
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
-import { getDeployment, getFee, getStorageAddress } from '../state';
+import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
+import type { Structure, TurnAction } from '@tower-defense/utils';
+import { GameENV } from '@tower-defense/utils';
+import type { LobbyWebserverQuery, UserNft } from '../types';
+import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
-  BatchedSubunit,
   IndexerNftOwnership,
   LobbyState,
-  NFT,
   NftScore,
   NftScoreSnake,
   PackedLobbyState,
   RoundEnd,
-  SignFunction,
 } from '../types';
-import { getBlockTime } from './general';
-import { pushLog } from './logging';
-
-export function batchedToJsonString(b: BatchedSubunit): string {
-  return JSON.stringify({
-    user_address: b.userAddress,
-    user_signature: b.userSignature,
-    game_input: b.gameInput,
-    timestamp: b.millisecondTimestamp,
-  });
-}
-
-export function batchedToString(b: BatchedSubunit): string {
-  return [b.userAddress, b.userSignature, b.gameInput, b.millisecondTimestamp].join('/');
-}
+import { getBlockTime } from 'paima-engine/paima-utils';
 
 export function moveToString(move: TurnAction): string {
   switch (move.action) {
@@ -56,10 +36,6 @@ function conciseStructure(s: Structure): string {
   else if (s === 'jaguarCrypt') return 'jc';
   else if (s === 'macawCrypt') return 'mc';
   else return 'mc'; // error message?
-}
-
-export function nftToStrings(nft: NFT): string[] {
-  return [nft.title, nft.imageUrl, nft.nftAddress, `${nft.tokenId}`];
 }
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {
@@ -101,38 +77,6 @@ export function lobbyWasClosed(lobby: PackedLobbyState): boolean {
   return lobbyState.lobby_state === 'closed';
 }
 
-export function buildDirectTx(
-  userAddress: string,
-  methodName: 'paimaSubmitGameInput',
-  dataUtf8: string
-): Record<string, any> {
-  const hexData = utf8ToHex(dataUtf8);
-  const txTemplate = getTxTemplate(getStorageAddress(), methodName, hexData);
-  const tx = {
-    ...txTemplate,
-    from: userAddress,
-    value: numberToHex(getFee()),
-  };
-
-  return tx;
-}
-
-export async function buildBatchedSubunit(
-  signFunction: SignFunction,
-  userAddress: string,
-  gameInput: string
-): Promise<BatchedSubunit> {
-  const millisecondTimestamp: string = new Date().getTime().toString(10);
-  const message: string = gameInput + millisecondTimestamp;
-  const userSignature = await signFunction(userAddress, message);
-  return {
-    userAddress,
-    userSignature,
-    gameInput,
-    millisecondTimestamp,
-  };
-}
-
 export function calculateRoundEnd(
   roundStart: number,
   roundLength: number,
@@ -142,7 +86,7 @@ export function calculateRoundEnd(
 
   let roundEnd = roundStart + roundLength;
   if (roundEnd < current) {
-    errorFxn(CatapultMiddlewareErrorCode.CALCULATED_ROUND_END_IN_PAST);
+    errorFxn(MiddlewareErrorCode.CALCULATED_ROUND_END_IN_PAST);
     roundEnd = current;
   }
 
@@ -155,7 +99,7 @@ export function calculateRoundEnd(
       seconds: secondsToEnd,
     };
   } catch (err) {
-    errorFxn(CatapultMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
+    errorFxn(MiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
     return {
       blocks: 0,
       seconds: 0,

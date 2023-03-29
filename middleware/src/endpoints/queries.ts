@@ -1,10 +1,14 @@
-import { MapByNameResponse, MatchWinnerResponse, PackedCurrentRound, PackedLobbyConfig } from '../types';
+import type {
+  MapByNameResponse,
+  MatchWinnerResponse,
+  PackedCurrentRound,
+  PackedLobbyConfig,
+} from '../types';
 
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
+import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import {
   fetchNftTitleImage,
   fetchUserSetNft,
-  getRawLatestProcessedBlockHeight,
   getRawLobbyState,
   getRawNewLobbies,
   verifyNft,
@@ -13,7 +17,6 @@ import {
 } from '../helpers/auxiliary-queries';
 import { calculateRoundEnd } from '../helpers/data-processing';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
-import { getBlockNumber } from '../helpers/general';
 import {
   backendQueryCurrentRound,
   backendQueryLobbyConfig,
@@ -23,46 +26,31 @@ import {
   backendQueryOpenLobbies,
   backendQueryRandomLobby,
   backendQueryRoundExecutor,
-  backendQueryRoundStatus,
   backendQuerySearchLobby,
   backendQueryUserLobbies,
   backendQueryUserStats,
   indexerQueryAccountNfts,
 } from '../helpers/query-constructors';
-import {
+import type {
   AccountNftsData,
   AccountNftsResult,
-  FailedResult,
   LobbyState,
   LobbyStates,
-  MatchExecutor,
   MatchExecutorData,
   NewLobbies,
   NFT,
   NftId,
   NftScore,
   PackedLobbyState,
-  PackedRoundExecutionState,
   PackedUserStats,
   RichOpenLobbyStates,
-  RoundExecutor,
   RoundExecutorData,
-  RoundStatusData,
   SuccessfulResult,
   UserStats,
 } from '../types';
-import { MatchConfig } from '@tower-defense/utils';
-
-const RETRY_PERIOD_RANDOM_LOBBY = 1000;
-
-async function getLatestProcessedBlockHeight(): Promise<SuccessfulResult<number> | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('getLatestProcessedBlockHeight');
-  try {
-    return getRawLatestProcessedBlockHeight();
-  } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.UNKNOWN, err);
-  }
-}
+import type { MatchConfig } from '@tower-defense/utils';
+import { FailedResult, getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
+import { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');
@@ -80,7 +68,7 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
       return errorFxn(packedLobbyState.errorMessage);
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -104,7 +92,7 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -122,7 +110,7 @@ async function getLobbySearch(
     const query = backendQuerySearchLobby(wallet, searchQuery, page, count);
     [response, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -134,7 +122,7 @@ async function getLobbySearch(
       lobbies: richLobbies,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -146,7 +134,7 @@ async function getConfig(lobbyID: string): Promise<PackedLobbyConfig | FailedRes
     const query = backendQueryLobbyConfig(lobbyID);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -154,10 +142,10 @@ async function getConfig(lobbyID: string): Promise<PackedLobbyConfig | FailedRes
     // TODO: properly typecheck
     return {
       success: true,
-      result: j
+      result: j,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 async function getCurrentRound(lobbyID: string): Promise<PackedCurrentRound | FailedResult> {
@@ -168,18 +156,18 @@ async function getCurrentRound(lobbyID: string): Promise<PackedCurrentRound | Fa
     const query = backendQueryCurrentRound(lobbyID);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
-    const j = (await res.json()) as { currentRound: number, roundStartHeight: number };
+    const j = (await res.json()) as { currentRound: number; roundStartHeight: number };
     // TODO: properly typecheck
     return {
       success: true,
-      result: j
+      result: j,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 async function getUserStats(walletAddress: string): Promise<PackedUserStats | FailedResult> {
@@ -190,7 +178,7 @@ async function getUserStats(walletAddress: string): Promise<PackedUserStats | Fa
     const query = backendQueryUserStats(walletAddress);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -205,7 +193,7 @@ async function getUserStats(walletAddress: string): Promise<PackedUserStats | Fa
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -214,7 +202,7 @@ async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[
 
   const initSize = 100;
   const resultList: AccountNftsResult[] = [];
-  let pages: number = 1;
+  let pages = 1;
 
   for (let page = 0; page < pages; page++) {
     let res: Response;
@@ -223,7 +211,7 @@ async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[
       const query = indexerQueryAccountNfts(address, initSize, page);
       res = await fetch(query);
     } catch (err) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+      return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
     }
 
     try {
@@ -234,7 +222,7 @@ async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[
       }
       resultList.push(...j.response.result);
     } catch (err) {
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
+      return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
     }
   }
 
@@ -249,7 +237,7 @@ async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[
       })),
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
+    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
   }
 }
 
@@ -268,7 +256,7 @@ async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | Fa
     latestBlockHeight = blockNumber;
     nftId = res.result;
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   // Verify NFT ownership with the indexer:
@@ -278,14 +266,14 @@ async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | Fa
       return res;
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
 
   // Fetch title and image of NFT and return result:
   try {
     return fetchNftTitleImage(nftId);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
 }
 
@@ -297,7 +285,7 @@ async function getNewLobbies(
   try {
     return getRawNewLobbies(wallet, blockHeight);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.UNKNOWN, err);
+    return errorFxn(PaimaMiddlewareErrorCode.UNKNOWN, err);
   }
 }
 
@@ -313,7 +301,7 @@ async function getUserLobbiesMatches(
     const query = backendQueryUserLobbies(walletAddress, count, page);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -324,7 +312,7 @@ async function getUserLobbiesMatches(
       lobbies: j.lobbies,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -342,7 +330,7 @@ async function getOpenLobbies(
     const query = backendQueryOpenLobbies(wallet, count, page);
     [res, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -355,7 +343,7 @@ async function getOpenLobbies(
       lobbies: j.lobbies,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -367,20 +355,20 @@ async function getRandomOpenLobby(): Promise<PackedLobbyState | FailedResult> {
     const query = backendQueryRandomLobby();
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
     const j = (await res.json()) as { lobby: LobbyState };
     if (j.lobby === null) {
-      return errorFxn(CatapultMiddlewareErrorCode.NO_OPEN_LOBBIES);
+      return errorFxn(MiddlewareErrorCode.NO_OPEN_LOBBIES);
     }
     return {
       success: true,
       lobby: j.lobby,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -394,7 +382,7 @@ async function getMatchWinner(
     const query = backendQueryMatchWinner(lobbyId);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -407,7 +395,7 @@ async function getMatchWinner(
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -430,7 +418,7 @@ async function getRoundExecutor(
     const query = backendQueryRoundExecutor(lobbyId, roundNumber);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   let data: RoundExecutorData;
@@ -438,7 +426,7 @@ async function getRoundExecutor(
     data = (await res.json()) as RoundExecutorData;
     // TODO: more proper type checking
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 
   // Process data:
@@ -449,7 +437,7 @@ async function getRoundExecutor(
       result: executor,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR, err);
+    return errorFxn(MiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR, err);
   }
 }
 
@@ -465,7 +453,7 @@ async function getMatchExecutor(
     const query = backendQueryMatchExecutor(lobbyId);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   let data: MatchExecutorData;
@@ -474,7 +462,7 @@ async function getMatchExecutor(
     data = (await res.json()) as MatchExecutorData;
     // TODO: more proper error checking
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 
   // Process data:
@@ -485,7 +473,7 @@ async function getMatchExecutor(
       result: executor,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR, err);
+    return errorFxn(MiddlewareErrorCode.UNABLE_TO_BUILD_EXECUTOR, err);
   }
 }
 async function getMapByName(
@@ -498,7 +486,7 @@ async function getMapByName(
     const query = backendQueryMapByName(mapName);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -506,11 +494,11 @@ async function getMapByName(
     return {
       success: true,
       result: {
-        map_layout: j.map_layout
+        map_layout: j.map_layout,
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -523,7 +511,6 @@ export const queryEndpoints = {
   getOpenLobbies,
   getUserLobbiesMatches,
   getUserWalletNfts,
-  getLatestProcessedBlockHeight,
   getNewLobbies,
   getUserSetNFT,
   getMatchWinner,
@@ -531,5 +518,5 @@ export const queryEndpoints = {
   getRoundExecutor,
   getMatchExecutor,
   getMapByName,
-  getConfig
+  getConfig,
 };
