@@ -146,13 +146,13 @@ export default function applyEvents(
         break;
       case 'damage':
         const damageEvent = event as DamageEvent;
-          // find the affected unit
-          const damagedUnit =
-            faction === 'attacker'
-              ? matchState.actors.towers[damageEvent.targetID]
-              : matchState.actors.units[damageEvent.targetID];
-          if (damagedUnit && damageEvent.damageType === 'neutral')
-            damagedUnit.health = damagedUnit.health - event.damageAmount;
+        // find the affected unit
+        const damagedUnit =
+          faction === 'attacker'
+            ? matchState.actors.towers[damageEvent.targetID]
+            : matchState.actors.units[damageEvent.targetID];
+        if (damagedUnit && damageEvent.damageType === 'neutral')
+          damagedUnit.health = damagedUnit.health - event.damageAmount;
         break;
       case 'actorDeleted':
         // it may happen that several actorDeleted events are issued about one single unit
@@ -185,7 +185,7 @@ export default function applyEvents(
   }
 }
 
-const isBase = (t: Tile) => t.type === "base" && t.faction === "defender";
+const isBase = (t: Tile) => t.type === 'base' && t.faction === 'defender';
 // Function to find the path which a unit will move towards.
 function findDestination(
   matchState: MatchState,
@@ -198,60 +198,64 @@ function findDestination(
   if (isBase(tile)) return null;
   else {
     const t = tile as PathTile;
-    const baseIndex = matchState.mapState.findIndex(t => t.type === "base" &&  t.faction === "defender");
+    const baseIndex = matchState.mapState.findIndex(
+      t => t.type === 'base' && t.faction === 'defender'
+    );
     const baseCoords = indexToCoords(baseIndex, matchState.width);
     // filter available paths for distance to base, make sure you're not going the wrong path
     // If only one available path just go right there
-    if (t['leadsTo'].length === 1) return t['leadsTo'][0]
+    if (t['leadsTo'].length === 1) return t['leadsTo'][0];
     // If more than one path available, find the fastest path to the base
-    const ret =  t['leadsTo']
-    // Filter out the previous coordinates so the unit doesn't go backwards
-    .filter(p => p !== previousCoordinates)
-    // Then compare distance to base of the second next tile, not the immediately next one.
-    .reduce((prev, curr) => {
-      const a = distanceToBase(prev, baseCoords, matchState.width);
-      const b = distanceToBase(curr, baseCoords, matchState.width);
-      const closest = a < b ? prev : curr;
-      const nextA = naiveNext(prev, previousCoordinates || coordinates, baseCoords, matchState);
-      const nextB = naiveNext(curr, previousCoordinates || coordinates, baseCoords, matchState);
-      // Mostly just a type check, shouldn't happen
-      if (!nextA || !nextB) return closest
-      else{
-        const distA = distanceToBase(nextA, baseCoords, matchState.width);
-        const distB = distanceToBase(nextB, baseCoords, matchState.width)
-        const ret = distA < distB 
-        ? prev 
-        : distA === distB
-        ? closest 
-        : curr;
-        return ret
-      }
-    })
-    return ret
+    const ret = t['leadsTo']
+      // Filter out the previous coordinates so the unit doesn't go backwards
+      .filter(p => p !== previousCoordinates)
+      // Then compare distance to base of the second next tile, not the immediately next one.
+      .reduce((prev, curr) => {
+        const a = distanceToBase(prev, baseCoords, matchState.width);
+        const b = distanceToBase(curr, baseCoords, matchState.width);
+        const closest = a < b ? prev : curr;
+        const nextA = naiveNext(prev, previousCoordinates || coordinates, baseCoords, matchState);
+        const nextB = naiveNext(curr, previousCoordinates || coordinates, baseCoords, matchState);
+        // Mostly just a type check, shouldn't happen
+        if (!nextA || !nextB) return closest;
+        else {
+          const distA = distanceToBase(nextA, baseCoords, matchState.width);
+          const distB = distanceToBase(nextB, baseCoords, matchState.width);
+          const ret = distA < distB ? prev : distA === distB ? closest : curr;
+          return ret;
+        }
+      });
+    return ret;
   }
 }
 // Function to find the next tile a unit will move to according to a simple distance calculation
-function naiveNext(coord: number, previousCoords: number, baseCoords: Coordinates, matchState: MatchState): number | null{
+function naiveNext(
+  coord: number,
+  previousCoords: number,
+  baseCoords: Coordinates,
+  matchState: MatchState
+): number | null {
   const tile = matchState.mapState[coord];
   if (isBase(tile)) return coord;
-  if (tile.type !== "path") return null
-  else return tile.leadsTo
-  .filter(p => p!== previousCoords)
-  .reduce((prev, curr) => {
-    const a = distanceToBase(prev, baseCoords, matchState.width);
-    const b = distanceToBase(curr, baseCoords, matchState.width);
-    return a < b ? prev : curr
-  })
+  if (tile.type !== 'path') return null;
+  else
+    return tile.leadsTo
+      .filter(p => p !== previousCoords)
+      .reduce((prev, curr) => {
+        const a = distanceToBase(prev, baseCoords, matchState.width);
+        const b = distanceToBase(curr, baseCoords, matchState.width);
+        return a < b ? prev : curr;
+      });
 }
-function indexToCoords(i: number, width: number): Coordinates{
+function indexToCoords(i: number, width: number): Coordinates {
   const y = Math.floor(i / width);
   const x = i - y * width;
   return { x, y };
 }
-function distanceToBase(path: number, baseCoords: Coordinates, mapWidth: number){
-   const myCoords = indexToCoords(path, mapWidth);
-   const distanceToBase = Math.abs(baseCoords.x - myCoords.x) + Math.abs(baseCoords.y - myCoords.y);
-   return distanceToBase 
+function distanceToBase(path: number, baseCoords: Coordinates, mapWidth: number) {
+  const myCoords = indexToCoords(path, mapWidth);
+  const distanceToBase = Math.abs(baseCoords.x - myCoords.x) + Math.abs(baseCoords.y - myCoords.y);
+  return distanceToBase;
 }
 // Simple helper function to select a random path with the randomness generator.
 function randomizePath(

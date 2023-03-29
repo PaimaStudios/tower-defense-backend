@@ -195,7 +195,7 @@ const baseMacawCryptConfig3: CryptConfig = {
 const baseAnacondaTowerConfig = {
   1: baseAnacondaTowerConfig1,
   2: baseAnacondaTowerConfig2,
-  3: baseAnacondaTowerConfig3
+  3: baseAnacondaTowerConfig3,
 };
 const basePiranhaTowerConfig = {
   1: basePiranhaTowerConfig1,
@@ -243,7 +243,7 @@ export const baseConfig: MatchConfig = {
 export function parseConfig(s: string | null): MatchConfig {
   if (!s) return baseConfig;
   if (s === 'default') return baseConfig;
-  else return baseConfig
+  else return baseConfig;
   // else {
   //   const c = consumer.initialize(s);
   //   const version = c.nextValue();
@@ -282,7 +282,7 @@ export function parseConfig(s: string | null): MatchConfig {
   //           baseConfig.macawCrypt[1] = { ...baseConfig.macawCrypt[1], ...p };
   //           break;
   //       }
-    // }
+  // }
   // } else
   // return { ...baseConfig };
 }

@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Route,
-  ValidateError,
-} from 'tsoa';
+import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import {
   requirePool,
   getBlockHeight,
@@ -64,9 +58,9 @@ export class roundExecutorController extends Controller {
               { block_height: round_data.execution_block_height },
               pool
             );
-            const matchState = round_data.match_state as unknown as MatchState
+            const matchState = round_data.match_state as unknown as MatchState;
             const dbMoves = await getRoundMoves.run({ lobby_id: lobbyID, round: round }, pool);
-            const moves = dbMoves.map(m => moveToAction(m, matchState.attacker))
+            const moves = dbMoves.map(m => moveToAction(m, matchState.attacker));
             return { lobby, round_data, moves, block_height };
           }
         }
@@ -81,7 +75,7 @@ function moveToAction(m: IGetMovesByLobbyResult, attacker: string): TurnAction {
     return {
       round: m.round,
       action: m.move_type,
-      faction: m.wallet === attacker ? "attacker" : "defender",
+      faction: m.wallet === attacker ? 'attacker' : 'defender',
       structure: structure as Structure,
       coordinates: parseInt(coordinates),
     };
@@ -89,7 +83,7 @@ function moveToAction(m: IGetMovesByLobbyResult, attacker: string): TurnAction {
     return {
       round: m.round,
       action: m.move_type,
-      faction: m.wallet === attacker ? "attacker" : "defender",
+      faction: m.wallet === attacker ? 'attacker' : 'defender',
       id: parseInt(m.move_target),
     };
   }

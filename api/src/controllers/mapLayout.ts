@@ -1,7 +1,7 @@
 import { getMapLayout, requirePool } from '@tower-defense/db';
 import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
 
-interface MapLayoutResponse{
+interface MapLayoutResponse {
   map_layout: string;
 }
 @Route('map_layout')
@@ -12,7 +12,7 @@ export class MapLayoutController extends Controller {
     const [mapString] = await getMapLayout.run({ name: mapName }, pool);
     if (!mapString) return {};
     return {
-      map_layout: mapString
+      map_layout: mapString,
     };
   }
 }

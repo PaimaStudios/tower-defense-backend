@@ -5,7 +5,7 @@ export function validateMoves(
   faction: Faction,
   matchState: MatchState
 ): boolean {
-  console.log("validating moves")
+  console.log('validating moves');
   const res = actions.reduce((acc, item) => {
     if (item.action === 'build')
       return canBuild(faction, item.coordinates, item.structure, matchState) ? acc : false;
@@ -20,11 +20,11 @@ function canBuild(
   structure: Structure,
   matchState: MatchState
 ): boolean {
-  console.log(structure, "structure")
+  console.log(structure, 'structure');
   const structureFaction = structure.includes('rypt') ? 'attacker' : 'defender';
-  console.log(structureFaction, "structure faction")
+  console.log(structureFaction, 'structure faction');
   const tile = matchState.mapState[coords];
-  console.log(tile, "tile")
+  console.log(tile, 'tile');
   return tile.type === 'open' && tile.faction === faction && faction === structureFaction;
 }
 // Helper function to see if structure ID is on the matchState actor map

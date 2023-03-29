@@ -78,7 +78,7 @@ function processTick(
 }
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
-  for (let crypt of Object.keys(matchState.actors.crypts)) {
+  for (const crypt of Object.keys(matchState.actors.crypts)) {
     // annoying that Object.values stripes the types
     const c = matchState.actors.crypts[parseInt(crypt)];
     c.spawned = [];
@@ -208,7 +208,7 @@ function spawnEvents(
   // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
   // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
   if (currentTick === 2) {
-    for (let c of crypts) {
+    for (const c of crypts) {
       const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
       if (old) matchState.finishedSpawning.push(c.id);
     }
