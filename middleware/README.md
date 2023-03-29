@@ -1,6 +1,6 @@
-# Catapult Middleware
+# Tower Defense Middleware
 
-The middleware for the Catapult game, which provides a simple API for any frontend to interact with the targeted backend.
+The middleware for the Tower Defense game, which provides a simple API for any frontend to interact with the targeted backend.
 
 ## Usage
 

@@ -13,7 +13,7 @@ export type EndpointErrorFxn = (
   errorCode?: number
 ) => FailedResult;
 
-type CatapultErrorMessageMapping = Record<MiddlewareErrorCode, string>;
+type ErrorMessageMapping = Record<MiddlewareErrorCode, string>;
 
 export const FE_ERR_OK = 0;
 export const FE_ERR_GENERIC = 1;
@@ -22,7 +22,7 @@ export const FE_ERR_METAMASK_NOT_INSTALLED = 2;
 export { PaimaMiddlewareErrorCode };
 
 export const enum MiddlewareErrorCode {
-  GENERIC_CATAPULT_ERROR = PaimaMiddlewareErrorCode.FINAL_PAIMA_GENERIC_ERROR + 1,
+  GENERIC_GAME_ERROR = PaimaMiddlewareErrorCode.FINAL_PAIMA_GENERIC_ERROR + 1,
   // Query endpoint related:
   ERROR_QUERYING_INDEXER_ENDPOINT,
   ERROR_QUERYING_STATEFUL_ENDPOINT,
@@ -49,8 +49,8 @@ export const enum MiddlewareErrorCode {
   INTERNAL_INVALID_POSTING_MODE,
 }
 
-const CATAPULT_MIDDLEWARE_ERROR_MESSAGES: CatapultErrorMessageMapping = {
-  [MiddlewareErrorCode.GENERIC_CATAPULT_ERROR]: 'Unspecified generit Catapult error',
+const MIDDLEWARE_ERROR_MESSAGES: ErrorMessageMapping = {
+  [MiddlewareErrorCode.GENERIC_GAME_ERROR]: 'Unspecified generic Game error',
   [MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT]:
     'An error occured while querying an NFT indexer endpoint',
   [MiddlewareErrorCode.ERROR_QUERYING_STATEFUL_ENDPOINT]:
@@ -84,7 +84,7 @@ const CATAPULT_MIDDLEWARE_ERROR_MESSAGES: CatapultErrorMessageMapping = {
 
 export const errorMessageFxn: ErrorMessageFxn = buildErrorCodeTranslator({
   ...PAIMA_MIDDLEWARE_ERROR_MESSAGES,
-  ...CATAPULT_MIDDLEWARE_ERROR_MESSAGES,
+  ...MIDDLEWARE_ERROR_MESSAGES,
 });
 
 export function buildEndpointErrorFxn(endpointName: string): EndpointErrorFxn {
