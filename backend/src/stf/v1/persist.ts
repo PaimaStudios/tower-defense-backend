@@ -1,12 +1,12 @@
 import {
   CreatedLobbyInput,
   JoinedLobbyInput,
-  WalletAddress,
   SetNFTInput,
   SubmittedTurnInput,
   RoleSetting,
 } from './types.js';
 import Prando from 'paima-engine/paima-prando';
+import { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
 // import { SQLUpdate } from 'paima-engine/paima-utils';
@@ -56,7 +56,6 @@ import {
   newStats,
 } from '@tower-defense/db';
 import { PreparedQuery } from '@pgtyped/query';
-import { Json } from '@tower-defense/db/src/select.queries.js';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
