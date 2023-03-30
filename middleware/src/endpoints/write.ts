@@ -10,7 +10,7 @@ import {
   userCreatedLobby,
   userJoinedLobby,
 } from '../helpers/data-processing';
-import type { CreateLobbyResponse, OldResult, Result } from '../types';
+import type { CreateLobbyResponse, MapName, OldResult, Result } from '../types';
 import type { Faction, TurnAction } from '@tower-defense/utils';
 import {
   awaitBlock,
@@ -40,7 +40,7 @@ interface CreateLobbyParams {
   numberOfRounds: number;
   roundLength: number;
   isHidden: boolean;
-  mapName: string;
+  mapName: MapName;
   isPractice: boolean;
 }
 
