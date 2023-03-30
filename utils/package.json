@@ -11,5 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "parsimmon": "^1.18.1"
+  },
+  "devDependencies": {
+    "@types/parsimmon": "^1.10.6"
   }
 }

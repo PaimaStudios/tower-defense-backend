@@ -240,6 +240,7 @@ export const baseConfig: MatchConfig = {
   gorillaCrypt: baseGorillaCryptConfig,
   jaguarCrypt: baseJaguarCryptConfig,
 };
+//TODO: add config parser later
 export function parseConfig(s: string | null): MatchConfig {
   if (!s) return baseConfig;
   if (s === 'default') return baseConfig;
