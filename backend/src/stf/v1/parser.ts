@@ -50,9 +50,9 @@ const pRoleSetting = P.alt(attackerRole, defenderRole, randomRole);
 // Rounds
 
 function validateRoundLength(n: number): boolean {
-  // NOTE: This currently returns the wrong blocks per second for A1
-  const BLOCKS_PER_SECOND = 4; // TODO: pull from some config? see getBlockTime
-  const BLOCKS_PER_MINUTE = 60 / BLOCKS_PER_SECOND;
+  // TODO: maybe utilize getBlockTime
+  // NOTE: This currently uses the wrong block_time for A1 deployment
+  const BLOCKS_PER_MINUTE = 60 / GameENV.BLOCK_TIME;
   const BLOCKS_PER_DAY = BLOCKS_PER_MINUTE * 60 * 24;
   return n >= BLOCKS_PER_MINUTE && n <= BLOCKS_PER_DAY;
 }
