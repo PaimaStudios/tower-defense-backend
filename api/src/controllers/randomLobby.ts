@@ -21,7 +21,7 @@ export class RandomLobbyController extends Controller {
     }
 
     const [backupLobby] = await getPaginatedOpenLobbies.run(
-      { wallet: '', count: `1`, page: `1` },
+      { wallet: '', count: '1', page: '0' },
       pool
     );
     const result = backupLobby || null;
