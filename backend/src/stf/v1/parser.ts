@@ -9,83 +9,25 @@ import type {
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
-import { WalletAddress } from 'paima-engine/paima-utils';
-// Types
-export type ParsedSubmittedInput =
-  | CreatedLobbyInput
-  | JoinedLobbyInput
-  | ClosedLobbyInput
-  | SubmittedTurnInput
-  | ScheduledDataInput
-  | SetNFTInput
-  | InvalidInput;
+import { GameENV } from '@tower-defense/utils';
 
-export interface InvalidInput {
-  input: 'invalidString';
-}
-export type RoleSetting = 'attacker' | 'defender' | 'random';
-export interface CreatedLobbyInput {
-  input: 'createdLobby';
-  creatorFaction: RoleSetting;
-  numOfRounds: number;
-  roundLength: number;
-  map: Map;
-  matchConfigID: string; // same format as lobby ID, 12char base 62
-  isHidden: boolean;
-  isPractice: boolean;
-}
-
-export interface JoinedLobbyInput {
-  input: 'joinedLobby';
-  lobbyID: string;
-}
-
-export interface ClosedLobbyInput {
-  input: 'closedLobby';
-  lobbyID: string;
-}
-
-export interface SubmittedTurnInput {
-  input: 'submittedTurn';
-  lobbyID: string;
-  roundNumber: number;
-  actions: TurnAction[];
-}
-
-export interface SetNFTInput {
-  input: 'setNFT';
-  address: string;
-  tokenID: number;
-}
-
-export interface ScheduledDataInput {
-  input: 'scheduledData';
-  effect: SideEffect;
-}
-
-type SideEffect = ZombieRoundEffect | UserStatsEffect;
-
-export interface ZombieRoundEffect {
-  type: 'zombie';
-  lobbyID: string;
-}
-
-export interface UserStatsEffect {
-  type: 'stats';
-  user: WalletAddress;
-  result: 'w' | 'l';
-}
-export type Map = string;
-
-// TODO
-// There's 3 versions for every tower/crypt.
-// We can either let users configure every single version, and so we'd have `at1;whatever;` `at2;whatever`
-// Or we let them only configure the first iteration and then buff the specs by some agreed ratio on every upgrade
+import {
+  ClosedLobbyInput,
+  CreatedLobbyInput,
+  InvalidInput,
+  JoinedLobbyInput,
+  ParsedSubmittedInput,
+  RoleSetting,
+  ScheduledDataInput,
+  SetNFTInput,
+  SubmittedTurnInput,
+} from './types';
 
 function tryParse<T>(c: ConciseValue | null, parser: P.Parser<T>): T {
   if (!c) throw 'parsing error';
   return parser.tryParse(c.value);
 }
+
 // Parser for Game Inputs read by Paima Funnel
 // Base parsers
 const pBase62 = P.alt(P.letter, P.digit);

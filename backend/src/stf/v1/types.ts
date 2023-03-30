@@ -1,4 +1,4 @@
-import { TurnAction } from '@tower-defense/utils';
+import { MapName, TurnAction } from '@tower-defense/utils';
 import { WalletAddress } from 'paima-engine/paima-utils';
 
 export type ParsedSubmittedInput =
@@ -19,7 +19,7 @@ export interface CreatedLobbyInput {
   creatorFaction: RoleSetting;
   numOfRounds: number;
   roundLength: number;
-  map: Map;
+  map: MapName;
   matchConfigID: string; // same format as lobby ID, 12char base 62
   isHidden: boolean;
   isPractice: boolean;
@@ -60,12 +60,10 @@ export interface ZombieRoundEffect {
   lobbyID: string;
 }
 
+export type ConciseResult = 'w' | 't' | 'l';
+
 export interface UserStatsEffect {
   type: 'stats';
   user: WalletAddress;
-  result: 'w' | 't' | 'l';
+  result: ConciseResult;
 }
-
-export type Map = string;
-
-export type GameInput = 'createdLobby' | 'joinedLobby' | 'submittedTurn';

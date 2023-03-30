@@ -356,18 +356,15 @@ export interface StatusEffectAppliedEvent {
 export type TowerAttack = DamageEvent | ActorDeletedEvent | StatusEffectAppliedEvent;
 export type UnitAttack = DamageEvent | DefenderBaseUpdateEvent | ActorDeletedEvent;
 
-export interface PlayersState {
-  user1: PlayerState;
-  user2: PlayerState;
-}
-interface PlayerState {
-  wallet: string;
-  health: number;
-  position: number;
-}
-
-export interface InvalidInput {
-  error: 'invalidString';
-}
-
 export type LobbyStatus = 'open' | 'active' | 'finished' | 'closed';
+
+export type MapName =
+  | 'jungle'
+  | 'backwards'
+  | 'crossing'
+  | 'narrow'
+  | 'snake'
+  | 'straight'
+  | 'wavy'
+  | 'fork'
+  | 'islands';
