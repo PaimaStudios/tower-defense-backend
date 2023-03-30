@@ -36,33 +36,33 @@ import { parseConfig, validateMoves } from '@tower-defense/game-logic';
 export const processCreateLobby = async (
   user: WalletAddress,
   blockHeight: number,
-  expanded: CreatedLobbyInput,
+  input: CreatedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> => {
-  if (expanded.isPractice) {
-    const [map] = await getMapLayout.run({ name: expanded.map }, dbConn);
-    const [configContent] = await getMatchConfig.run({ id: expanded.matchConfigID }, dbConn);
+  if (input.isPractice) {
+    const [map] = await getMapLayout.run({ name: input.map }, dbConn);
+    const [configContent] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
     return persistPracticeLobbyCreation(
       blockHeight,
       user,
-      expanded,
+      input,
       map,
       configContent.content,
       randomnessGenerator
     );
   }
-  return persistLobbyCreation(blockHeight, user, expanded, randomnessGenerator);
+  return persistLobbyCreation(blockHeight, user, input, randomnessGenerator);
 };
 
 export const processJoinLobby = async (
   user: WalletAddress,
   blockHeight: number,
-  expanded: JoinedLobbyInput,
+  input: JoinedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> => {
-  const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
+  const [lobbyState] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   // if Lobby doesn't exist, bail
   if (!lobbyState) return [];
   const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
@@ -81,10 +81,10 @@ export const processJoinLobby = async (
 
 export async function processCloseLobby(
   user: WalletAddress,
-  expanded: ClosedLobbyInput,
+  input: ClosedLobbyInput,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
+  const [lobbyState] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   if (!lobbyState) return [];
   const query = persistCloseLobby(user, lobbyState);
   // persisting failed the validation, bail
@@ -100,11 +100,11 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
 export async function processSubmittedTurn(
   blockHeight: number,
   user: string,
-  expanded: SubmittedTurnInput,
+  input: SubmittedTurnInput,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  const [lobby] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
+  const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   // if lobby not active or existing, bail
   if (!lobby || lobby.lobby_state !== 'active') return [];
   const users = [lobby.lobby_creator, lobby.player_two];
@@ -114,7 +114,7 @@ export async function processSubmittedTurn(
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   // if moves sent don't belong to the current round, bail
-  if (expanded.roundNumber !== lobby.current_round) return [];
+  if (input.roundNumber !== lobby.current_round) return [];
   // <validation
   // role is valid
   // NOTE: defenders are odd turns, attackers are even turns
@@ -123,13 +123,13 @@ export async function processSubmittedTurn(
       ? 'attacker'
       : 'defender';
   // add the faction to the actions in the input
-  expanded.actions = expanded.actions.map(a => {
-    return { ...a, faction: role, round: expanded.roundNumber };
+  input.actions = input.actions.map(a => {
+    return { ...a, faction: role, round: input.roundNumber };
   });
   if (role === 'attacker' && lobby.current_round % 2 !== 0) return [];
   if (role === 'defender' && lobby.current_round % 2 !== 1) return [];
   // moves are valid
-  if (!validateMoves(expanded.actions, role, lobby.current_match_state as unknown as MatchState)) {
+  if (!validateMoves(input.actions, role, lobby.current_match_state as unknown as MatchState)) {
     console.log('invalid moves');
     return [];
   }
@@ -137,7 +137,7 @@ export async function processSubmittedTurn(
 
   // If no such round, bail
   const [round] = await getRoundData.run(
-    { lobby_id: lobby.lobby_id, round_number: expanded.roundNumber },
+    { lobby_id: lobby.lobby_id, round_number: input.roundNumber },
     dbConn
   );
   if (!round) return [];
@@ -146,7 +146,7 @@ export async function processSubmittedTurn(
   return persistMoveSubmission(
     blockHeight,
     user,
-    expanded,
+    input,
     lobby,
     matchConfig,
     round,
@@ -155,25 +155,28 @@ export async function processSubmittedTurn(
 }
 
 export async function processScheduledData(
-  expanded: ScheduledDataInput,
+  input: ScheduledDataInput,
   blockHeight: number,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  if (expanded.effect.type === 'zombie')
-    return processZombieEffect(expanded, blockHeight, randomnessGenerator, dbConn);
-  else if (expanded.effect.type === 'stats') return processStatsEffect(expanded, dbConn);
-  else return [];
+  if (input.effect.type === 'zombie') {
+    return processZombieEffect(input, blockHeight, randomnessGenerator, dbConn);
+  }
+  if (input.effect.type === 'stats') {
+    return processStatsEffect(input, dbConn);
+  }
+  return [];
 }
 
 export async function processZombieEffect(
-  expanded: ScheduledDataInput,
+  input: ScheduledDataInput,
   blockHeight: number,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
   const [lobby] = await getLobbyById.run(
-    { lobby_id: (expanded.effect as ZombieRoundEffect).lobbyID },
+    { lobby_id: (input.effect as ZombieRoundEffect).lobbyID },
     dbConn
   );
   const [round] = await getRoundData.run(
@@ -187,10 +190,10 @@ export async function processZombieEffect(
 }
 
 export async function processStatsEffect(
-  expanded: ScheduledDataInput,
+  input: ScheduledDataInput,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  const effect = expanded.effect as UserStatsEffect;
+  const effect = input.effect as UserStatsEffect;
   const [stats] = await getUserStats.run({ wallet: effect.user }, dbConn);
   if (!stats) return [];
   const query = persistStatsUpdate(effect.user, effect.result, stats);

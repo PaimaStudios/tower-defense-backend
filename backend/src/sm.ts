@@ -1,6 +1,6 @@
 import PaimaSM from 'paima-engine/paima-sm';
 import { creds } from '@tower-defense/db';
-import gameStateTransitionV1 from './stf/v1/transition.js';
+import gameStateTransitionV1 from './stf/v1';
 import { GameENV } from '@tower-defense/utils';
 
 function gameStateTransitionRouter(blockHeight: number) {

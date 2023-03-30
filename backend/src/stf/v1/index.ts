@@ -22,23 +22,23 @@ export default async function (
   console.log(inputData, 'parsing input data');
   const user = inputData.userAddress.toLowerCase();
   console.log(`Processing input string: ${inputData.inputData}`);
-  const expanded = parseInput(inputData.inputData);
-  console.log(`Input string parsed as: ${expanded.input}`);
+  const parsed = parseInput(inputData.inputData);
+  console.log(`Input string parsed as: ${parsed.input}`);
 
-  switch (expanded.input) {
+  switch (parsed.input) {
     case 'createdLobby':
-      return processCreateLobby(user, blockHeight, expanded, randomnessGenerator, dbConn);
+      return processCreateLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
     case 'joinedLobby':
-      return processJoinLobby(user, blockHeight, expanded, randomnessGenerator, dbConn);
+      return processJoinLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
     case 'closedLobby':
-      return processCloseLobby(user, expanded, dbConn);
+      return processCloseLobby(user, parsed, dbConn);
     case 'submittedTurn':
-      return processSubmittedTurn(blockHeight, user, expanded, randomnessGenerator, dbConn);
+      return processSubmittedTurn(blockHeight, user, parsed, randomnessGenerator, dbConn);
     case 'setNFT':
-      return processSetNFT(user, blockHeight, expanded);
+      return processSetNFT(user, blockHeight, parsed);
     case 'scheduledData':
       if (user !== SCHEDULED_DATA_ADDRESS) return [];
-      return processScheduledData(expanded, blockHeight, randomnessGenerator, dbConn);
+      return processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
     case 'invalidString':
       return [];
     default:
