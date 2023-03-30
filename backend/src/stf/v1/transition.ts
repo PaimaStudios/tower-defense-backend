@@ -26,10 +26,11 @@ import {
   UserStatsEffect,
   ZombieRoundEffect,
 } from './types.js';
-import { MatchState, parseInput } from '@tower-defense/utils';
+import { MatchState } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
 import { validateMoves } from '@tower-defense/game-logic';
 import { SQLUpdate } from 'paima-engine/paima-db';
+import { parseInput } from './parser.js';
 
 export default async function (
   inputData: SubmittedChainData,
