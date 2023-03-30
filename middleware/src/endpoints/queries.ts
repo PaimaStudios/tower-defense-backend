@@ -1,5 +1,6 @@
 import type {
   MapByNameResponse,
+  MapName,
   MatchWinnerResponse,
   PackedCurrentRound,
   PackedLobbyConfig,
@@ -477,7 +478,7 @@ async function getMatchExecutor(
   }
 }
 async function getMapByName(
-  mapName: string
+  mapName: MapName
 ): Promise<SuccessfulResult<MapByNameResponse> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getMapByName');
 

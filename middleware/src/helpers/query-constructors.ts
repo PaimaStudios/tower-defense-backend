@@ -3,6 +3,7 @@ import { buildBackendQuery, buildQuery } from 'paima-engine/paima-mw-core';
 import { WalletAddress } from 'paima-engine/paima-utils';
 
 import { getIndexerUri, getStatefulUri } from '../state';
+import { MapName } from '../types';
 
 function buildIndexerQuery(endpoint: string, options: QueryOptions): string {
   return `${getIndexerUri()}/api/v1/${buildQuery(endpoint, options)}`;
@@ -79,12 +80,6 @@ export function backendQuerySearchLobby(
     options.count = count;
   }
 
-  return buildBackendQuery(endpoint, options);
-}
-
-export function backendQueryLatestProcessedBlockHeight(): string {
-  const endpoint = 'latest_processed_blockheight';
-  const options = {};
   return buildBackendQuery(endpoint, options);
 }
 
@@ -205,17 +200,11 @@ export function backendQueryMatchWinner(lobbyID: string): string {
   };
   return buildBackendQuery(endpoint, options);
 }
-export function backendQueryMapByName(mapName: string): string {
+export function backendQueryMapByName(mapName: MapName): string {
   const endpoint = 'map_layout';
   const options = {
     mapName,
   };
-  return buildBackendQuery(endpoint, options);
-}
-
-export function backendQueryBackendVersion(): string {
-  const endpoint = 'backend_version';
-  const options = {};
   return buildBackendQuery(endpoint, options);
 }
 

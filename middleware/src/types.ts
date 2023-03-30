@@ -40,7 +40,16 @@ export interface RoundEnd {
 export type Result<T> = SuccessfulResult<T> | FailedResult;
 export type OldResult = SuccessfulResultMessage | FailedResult;
 
-export type MapName = 'jungle' | 'ocean';
+export type MapName =
+  | 'jungle'
+  | 'backwards'
+  | 'crossing'
+  | 'narrow'
+  | 'snake'
+  | 'straight'
+  | 'wavy'
+  | 'fork'
+  | 'islands';
 
 interface CreateLobbySuccessfulResponse {
   success: true;
