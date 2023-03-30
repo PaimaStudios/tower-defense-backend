@@ -257,8 +257,8 @@ Returns the current state of the lobby specified by `lobbyID`.
 
 ---
 
-### Endpoint `getRoundExecutionState`:
-
+### 🚧 Endpoint `getRoundExecutionState`:
+*Not implemented*
 ```ts
 async function getRoundExecutionState(
   lobbyID: string,

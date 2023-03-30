@@ -7,12 +7,6 @@ interface GeneralQueriesProps {
 }
 
 export const GeneralQueries: React.FC<GeneralQueriesProps> = ({ lobby, round, lobby_to_count }) => {
-  //TODO: unavailable
-  // const getRoundState = async () => {
-  //   const result = await mw.getRoundExecutionState(lobby, round);
-  //   console.log(result);
-  // };
-
   const getOpenLobbies = async (page: number, count?: number) => {
     const result = await mw.getOpenLobbies('', page, count);
     console.log(result, 'getOpenLobbies');
@@ -55,7 +49,6 @@ export const GeneralQueries: React.FC<GeneralQueriesProps> = ({ lobby, round, lo
       <button onClick={() => matchWinner(lobby)}>Get Match Winner</button>
       <button onClick={() => nftStats(lobby, round)}>Get NFT Stats</button>
       <button onClick={getLobbyState}>Get Lobby State</button>
-      {/* <button onClick={getRoundState}>Get Round Execution State</button> */}
     </div>
   );
 };
