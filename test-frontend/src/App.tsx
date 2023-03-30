@@ -40,7 +40,6 @@ function App() {
     console.log(mw, 'mw');
     console.log(lobby, 'lobby');
   };
-  // 4pzpsMzRgHQi
 
   const {
     storageAddress,
@@ -131,10 +130,18 @@ function App() {
   //   await submitMoves(moves);
   // }
 
-  //TODO: create lobby
-  // async function createSpecificLobby() {
-  //   mw.createLobby(/** JSON */).then(console.log).catch(console.error);
-  // }
+  async function createSpecificLobby() {
+    const lobby = {
+      presetName: 'short',
+      role: 'random',
+      numberOfRounds: 10,
+      roundLength: 100,
+      isHidden: false,
+      mapName: 'jungle',
+      isPractice: false,
+    };
+    mw.createLobby(JSON.stringify(lobby)).then(console.log).catch(console.error);
+  }
 
   async function joinSpecificLobby() {
     mw.joinLobby(lobby).then(console.log).catch(console.error);
@@ -316,7 +323,7 @@ function App() {
           <p>Wallet actions</p>
           <button onClick={loginCheck}>Check Login</button>
           <button onClick={userWalletLoginWrapper}>User Wallet Login</button>
-          {/* <button onClick={createSpecificLobby}>Create Lobby hardcoded</button> */}
+          <button onClick={createSpecificLobby}>Create Lobby hardcoded</button>
           <button onClick={joinSpecificLobby}>Join Lobby specified</button>
           <button onClick={closeSpecificLobby}>Close Lobby specified</button>
           {/* <button onClick={submitRandomMoves}>Submit Moves random</button> */}
