@@ -1,4 +1,8 @@
 import type { Pool } from 'pg';
+import Prando from 'paima-engine/paima-prando';
+import { SQLUpdate } from 'paima-engine/paima-db';
+import { WalletAddress } from 'paima-engine/paima-utils';
+
 import {
   getLobbyById,
   getRoundData,
@@ -6,8 +10,6 @@ import {
   getMapLayout,
   getMatchConfig,
 } from '@tower-defense/db';
-import Prando from 'paima-engine/paima-prando';
-import { SCHEDULED_DATA_ADDRESS, SubmittedChainData } from 'paima-engine/paima-utils';
 import {
   executeZombieRound,
   persistCloseLobby,
@@ -20,6 +22,8 @@ import {
 } from './persist.js';
 import {
   ClosedLobbyInput,
+  CreatedLobbyInput,
+  JoinedLobbyInput,
   ScheduledDataInput,
   SetNFTInput,
   SubmittedTurnInput,
@@ -27,71 +31,56 @@ import {
   ZombieRoundEffect,
 } from './types.js';
 import { MatchState } from '@tower-defense/utils';
-import { parseConfig } from '@tower-defense/game-logic';
-import { validateMoves } from '@tower-defense/game-logic';
-import { SQLUpdate } from 'paima-engine/paima-db';
-import { parseInput } from './parser.js';
+import { parseConfig, validateMoves } from '@tower-defense/game-logic';
 
-export default async function (
-  inputData: SubmittedChainData,
+export const processCreateLobby = async (
+  user: WalletAddress,
   blockHeight: number,
+  expanded: CreatedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: Pool
-): Promise<SQLUpdate[]> {
-  console.log(inputData, 'parsing input data');
-  const user = inputData.userAddress.toLowerCase();
-  console.log(`Processing input string: ${inputData.inputData}`);
-  const expanded = parseInput(inputData.inputData);
-  console.log(`Input string parsed as: ${expanded.input}`);
-  switch (expanded.input) {
-    case 'createdLobby':
-      if (expanded.isPractice) {
-        const [map] = await getMapLayout.run({ name: expanded.map }, dbConn);
-        const [configContent] = await getMatchConfig.run({ id: expanded.matchConfigID }, dbConn);
-        return persistPracticeLobbyCreation(
-          blockHeight,
-          user,
-          expanded,
-          map,
-          configContent.content,
-          randomnessGenerator
-        );
-      } else return persistLobbyCreation(blockHeight, user, expanded, randomnessGenerator);
-    case 'joinedLobby':
-      const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
-      // if Lobby doesn't exist, bail
-      if (!lobbyState) return [];
-      const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
-      // if match config is not in the database, bail
-      const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
-      if (!configString) return [];
-      return persistLobbyJoin(
-        blockHeight,
-        user,
-        lobbyState,
-        map,
-        configString.content,
-        randomnessGenerator
-      );
-    case 'closedLobby':
-      return processCloseLobby(user, expanded, dbConn);
-    case 'submittedTurn':
-      return processSubmittedTurn(blockHeight, user, expanded, randomnessGenerator, dbConn);
-    case 'setNFT':
-      const query = persistNFT(user, blockHeight, expanded as SetNFTInput);
-      return [query];
-    case 'scheduledData':
-      if (user !== SCHEDULED_DATA_ADDRESS) return [];
-      else return processScheduledData(expanded, blockHeight, randomnessGenerator, dbConn);
-    case 'invalidString':
-      return [];
-    default:
-      return [];
+): Promise<SQLUpdate[]> => {
+  if (expanded.isPractice) {
+    const [map] = await getMapLayout.run({ name: expanded.map }, dbConn);
+    const [configContent] = await getMatchConfig.run({ id: expanded.matchConfigID }, dbConn);
+    return persistPracticeLobbyCreation(
+      blockHeight,
+      user,
+      expanded,
+      map,
+      configContent.content,
+      randomnessGenerator
+    );
   }
-}
+  return persistLobbyCreation(blockHeight, user, expanded, randomnessGenerator);
+};
 
-async function processCloseLobby(
-  user: string,
+export const processJoinLobby = async (
+  user: WalletAddress,
+  blockHeight: number,
+  expanded: JoinedLobbyInput,
+  randomnessGenerator: Prando,
+  dbConn: Pool
+): Promise<SQLUpdate[]> => {
+  const [lobbyState] = await getLobbyById.run({ lobby_id: expanded.lobbyID }, dbConn);
+  // if Lobby doesn't exist, bail
+  if (!lobbyState) return [];
+  const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
+  // if match config is not in the database, bail
+  const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
+  if (!configString) return [];
+  return persistLobbyJoin(
+    blockHeight,
+    user,
+    lobbyState,
+    map,
+    configString.content,
+    randomnessGenerator
+  );
+};
+
+export async function processCloseLobby(
+  user: WalletAddress,
   expanded: ClosedLobbyInput,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
@@ -102,7 +91,13 @@ async function processCloseLobby(
   if (!query) return [];
   return [query];
 }
-async function processSubmittedTurn(
+
+export function processSetNFT(user: WalletAddress, blockHeight: number, expanded: SetNFTInput) {
+  const query = persistNFT(user, blockHeight, expanded);
+  return [query];
+}
+
+export async function processSubmittedTurn(
   blockHeight: number,
   user: string,
   expanded: SubmittedTurnInput,
@@ -159,7 +154,7 @@ async function processSubmittedTurn(
   );
 }
 
-async function processScheduledData(
+export async function processScheduledData(
   expanded: ScheduledDataInput,
   blockHeight: number,
   randomnessGenerator: Prando,
@@ -170,7 +165,8 @@ async function processScheduledData(
   else if (expanded.effect.type === 'stats') return processStatsEffect(expanded, dbConn);
   else return [];
 }
-async function processZombieEffect(
+
+export async function processZombieEffect(
   expanded: ScheduledDataInput,
   blockHeight: number,
   randomnessGenerator: Prando,
@@ -189,7 +185,8 @@ async function processZombieEffect(
   const matchConfig = parseConfig(configString.content);
   return executeZombieRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
 }
-async function processStatsEffect(
+
+export async function processStatsEffect(
   expanded: ScheduledDataInput,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
