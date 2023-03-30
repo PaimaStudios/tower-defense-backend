@@ -8,9 +8,7 @@ import type {
   GoldRewardEvent,
   Tile,
   UnitSpawnedEvent,
-  AttackerStructureTile,
   BuildStructureEvent,
-  DefenderStructureTile,
   DamageEvent,
   DefenderBaseUpdateEvent,
   AttackerUnit,
@@ -27,7 +25,9 @@ import type {
 } from '@tower-defense/utils';
 import applyEvents from './apply';
 
-// Main function, exported as default.
+// Main function, exported as default. Mostly pure functions, outputting events
+// given moves and a match state. The few exceptions are there to ensure
+// rounds end when they must.
 
 function processTick(
   matchConfig: MatchConfig,
@@ -64,9 +64,11 @@ function processTick(
     // End round if defender base health is 0
     if (matchState.defenderBase.health === 0)
       return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
+    // We check if all crypts have finished spawning by checking the key on the match state tracking that
     const allSpawned = Object.keys(matchState.actors.crypts).every(c =>
       matchState.finishedSpawning.includes(parseInt(c))
     );
+    // We check if there are no more units running around
     const remainingUnits = Object.values(matchState.actors.units);
     // End the round when no events and all crypts stopped spawning
     if (events.length === 0 && allSpawned && remainingUnits.length === 0)
@@ -76,6 +78,9 @@ function processTick(
     }
   }
 }
+// We increment the round and mutate the few keys of the match state
+// so the next round is saved clean to the database.
+// Then we return null which signals the end of the round executor
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
   for (let crypt of Object.keys(matchState.actors.crypts)) {
@@ -90,6 +95,9 @@ function incrementRound(matchState: MatchState): null {
   matchState.roundEnded = false;
   return null;
 }
+// Function triggered as the final tick of the round .
+// We send the last events, the gold rewards, and mark mutate the match state round as ended
+// This then triggers the calling of incrementRound().
 function endRound(
   matchConfig: MatchConfig,
   matchState: MatchState,
@@ -101,7 +109,7 @@ function endRound(
   applyEvents(matchConfig, matchState, gold, currentTick, randomnessGenerator);
   return gold;
 }
-
+// Output the gold rewards for each side, according to the match config.
 function computeGoldRewards(
   matchConfig: MatchConfig,
   matchState: MatchState
@@ -126,6 +134,7 @@ function computeGoldRewards(
   ];
   return events;
 }
+// Outputs the events from the first tick, a function of the moves sent by the players.
 function structureEvents(c: MatchConfig, matchState: MatchState, moves: TurnAction[]): TickEvent[] {
   // We need to keep a global account of all actors in the match.
   // We iterate over user actions and reduce to a tuple of events produced and actor count,
@@ -207,6 +216,7 @@ function spawnEvents(
   );
   // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
   // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
+  // Only state mutation that happens in the event production flow.
   if (currentTick === 2) {
     for (let c of crypts) {
       const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
@@ -315,7 +325,10 @@ function movementEvents(
     e: UnitMovementEvent | StatusEffectAppliedEvent | null
   ): e is UnitMovementEvent => !!e;
   return events.flat().filter(eventTypeGuard);
-  // .filter(e => e.completion === 100);
+  // .filter(e => e.completion === 100);dd
+  // We had agreed with cat-astrophe that we'd only send movement events when the movement
+  // was complete and they'd run the logic on the frontend, but they haven't yet so as of now
+  // we still send them every single movement event. Once they fix that we can just uncomment that line.
 }
 
 // Function to generate individual movement events
@@ -406,7 +419,7 @@ function computeDamageToUnit(
   //  Towers attack once every n ticks, the number being their "shot delay" or "cooldown" in this config.
   //  If not cooled down yet, return an empty array
   const cooldown = matchConfig[tower.structure][tower.upgrades].cooldown;
-  const cool = cooldown % (currentTick - 2);
+  const cool = (currentTick - 2) % cooldown === 0;
   if (!cool) return [];
   //  Check the attack range of the tower with the Match Config
   const range = matchConfig[tower.structure][tower.upgrades].range;
@@ -414,37 +427,14 @@ function computeDamageToUnit(
   const unitsNearby = findCloseByUnits(matchState, tower.coordinates, range);
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
-  const pickedOne = unitsNearby.reduce(pickOne);
-  // Sloth towers attack a whole range, so we pass the whole array of nearby units. Same for upgraded Piranha tower.
-  // Else we pass the single unit chosen.
-  if (tower.structure === 'piranhaTower')
-    return piranhaDamage(
-      matchConfig,
-      tower,
-      [pickedOne],
-      matchState,
-      currentTick,
-      randomnessGenerator
-    );
-  else if (tower.structure === 'slothTower')
-    return slothDamage(
-      matchConfig,
-      tower,
-      unitsNearby,
-      matchState,
-      currentTick,
-      randomnessGenerator
-    );
-  else if (tower.structure === 'anacondaTower')
-    return anacondaDamage(
-      matchConfig,
-      tower,
-      [pickedOne],
-      matchState,
-      currentTick,
-      randomnessGenerator
-    );
-  else return [];
+  const events =  damageByTower(
+    matchConfig,
+    tower,
+    unitsNearby,
+    randomnessGenerator
+  );
+  applyEvents(matchConfig, matchState, events, currentTick, randomnessGenerator);
+  return events
 }
 
 // Reducer function to pass to computeUnitDamage() above. Selects the unit with the least health.
@@ -457,94 +447,84 @@ function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure 
   else if (item.id < acc.id) return item;
   else return acc;
 }
-// Function to calculate damage done by Piranha Towers
-function piranhaDamage(
+// Calculates damage done by the tower according to the tower type
+function damageByTower(
   matchConfig: MatchConfig,
   tower: DefenderStructure,
-  a: AttackerUnit[],
-  matchState: MatchState,
-  currentTick: number,
-  rng: Prando
+  units: AttackerUnit[],
+  randomnessGenerator: Prando
 ): TowerAttack[] {
-  const damageAmount = matchConfig.piranhaTower[tower.upgrades].damage;
-  // Generate damage events iterating on affected units
-  const damageEvents: TowerAttack[][] = a.map(unit => {
-    // Generate single damage event per unit
-    const damageEvent: DamageEvent = {
-      eventType: 'damage',
-      faction: 'defender',
-      sourceID: tower.id,
-      targetID: unit.id,
-      damageType: 'neutral',
-      damageAmount: damageAmount,
-    };
-    // Check if unit was killed by this damage
-    const dying = damageAmount >= unit.health;
-    // Generate a death event
-    const killEvent: ActorDeletedEvent = {
-      eventType: 'actorDeleted',
-      faction: 'attacker',
-      id: unit.id,
-    };
-    // const dead = unit.health < damageAmount; // TODO
-    // If the unit died, return a damage event and unit deletion event. Else only damage event
-    // const events = dead ? [] : dying ? [damageEvent, killEvent] : [damageEvent];
-    const events = dying ? [damageEvent, killEvent] : [damageEvent];
-    // Apply events to update match state
-    applyEvents(matchConfig, matchState, events, currentTick, rng);
-    return events;
-  });
-  // return flattened array of events
-  return damageEvents.flat();
+  if (tower.structure === "slothTower") return slothDamage(matchConfig, tower, units, randomnessGenerator);
+  else if (tower.structure === "piranhaTower" && tower.upgrades === 2)
+  return units.map(u => towerShot(matchConfig, tower, u, randomnessGenerator)).flat()
+  else {
+    const pickedOne = units.reduce(pickOne);
+    return towerShot(matchConfig, tower, pickedOne, randomnessGenerator)
+  }
 }
-// Function to calculate damage done by Anaconda Towers
-function anacondaDamage(
+function towerShot(
   matchConfig: MatchConfig,
   tower: DefenderStructure,
-  a: AttackerUnit[],
-  matchState: MatchState,
-  currentTick: number,
-  rng: Prando
+  unit: AttackerUnit,
+  randomnessGenerator: Prando
 ): TowerAttack[] {
-  // AnacondaTowers are special in that they can insta kill if upgraded twice
-  const killChance = tower.upgrades === 2 ? 0.5 : 0; // 50/50 chance of instakill if upgraded twice
-  const damageEvents: TowerAttack[][] = a.map(unit => {
-    // Damage amount equals to unit health if instakill
-    const damageAmount =
-      rng.next() < killChance ? unit.health : matchConfig.anacondaTower[tower.upgrades].damage;
-    const damageEvent: DamageEvent = {
-      eventType: 'damage',
-      faction: 'defender',
-      sourceID: tower.id,
-      targetID: unit.id,
-      damageType: 'neutral',
-      damageAmount: damageAmount,
-    };
-    const killEvent: ActorDeletedEvent = {
-      eventType: 'actorDeleted',
-      faction: 'attacker',
-      id: unit.id,
-    };
-    const dying = damageAmount >= unit.health;
-    const events = dying ? [damageEvent, killEvent] : [damageEvent];
-    applyEvents(matchConfig, matchState, events, currentTick, rng);
-    return events;
-  });
-  return damageEvents.flat();
+  const damageAmount = computeDamageByTowerAmount(matchConfig, tower, unit, randomnessGenerator);
+  const damageEvent: DamageEvent = {
+    eventType: 'damage',
+    faction: 'defender',
+    sourceID: tower.id,
+    targetID: unit.id,
+    damageType: 'neutral',
+    damageAmount: damageAmount,
+  };
+  const events: TowerAttack[] = [damageEvent];
+  // Check if unit was killed by this damage
+  const dying = damageAmount >= unit.health;
+  // Generate a death event
+  const killEvent: ActorDeletedEvent = {
+    eventType: 'actorDeleted',
+    faction: 'attacker',
+    id: unit.id,
+  };
+  // If the shot killed the unit, add the event.
+  if (dying) events.push(killEvent);
+  // Macaws if upgraded can deflect attacks.
+  const superMacaw = unit.subType === 'macaw' && unit.upgradeTier === 2;
+  const deflectingDamageEvent: DamageEvent = {
+    eventType: 'damage',
+    faction: 'attacker',
+    sourceID: unit.id,
+    targetID: tower.id,
+    damageAmount,
+    damageType: 'neutral',
+  };
+  if (superMacaw) events.push(deflectingDamageEvent);
+  return events;
+}
+// Calculate the damage caused by a tower attack. Upgraded Anaconda Towers have a 50% instakill chance.
+function computeDamageByTowerAmount(
+  matchConfig: MatchConfig,
+  tower: DefenderStructure,
+  unit: AttackerUnit,
+  randomnessGenerator: Prando
+): number {
+  if (tower.structure === 'anacondaTower') {
+    const killChance = tower.upgrades === 2 ? 0.5 : 0; // 50/50 chance of instakill if upgraded twice
+    return randomnessGenerator.next() < killChance
+      ? unit.health
+      : matchConfig.anacondaTower[tower.upgrades].damage;
+  } else return matchConfig[tower.structure][tower.upgrades].damage;
 }
 // Function to calculate damage done by Sloth Towers
 function slothDamage(
   matchConfig: MatchConfig,
   tower: DefenderStructure,
-  a: AttackerUnit[],
-  matchState: MatchState,
-  currentTick: number,
-  rng: Prando
+  units: AttackerUnit[],
+  randomnessGenerator: Prando
 ): TowerAttack[] {
-  // Compute damage amount according to Match Config
-  const damageAmount = matchConfig.slothTower[tower.upgrades].damage;
-  // Sloth towers are special in that they impose speed debuff statuses on affected units.
-  const damageEvents: TowerAttack[][] = a.map(unit => {
+  // Sloth towers are special in that they impose speed debuff statuses on affected units, and attack the whole range.
+  const damageEvents: TowerAttack[][] = units.map(unit => {
+    const events = towerShot(matchConfig, tower, unit, randomnessGenerator)
     const statusEvent: StatusEffectAppliedEvent = {
       eventType: 'statusApply',
       faction: 'attacker',
@@ -553,35 +533,8 @@ function slothDamage(
       statusType: 'speedDebuff',
       statusAmount: unit.speed / 2, // 50% speed reduction
     };
-    const damageEvent: DamageEvent = {
-      eventType: 'damage',
-      faction: 'defender',
-      sourceID: tower.id,
-      targetID: unit.id,
-      damageType: 'neutral',
-      damageAmount: damageAmount,
-    };
-    const killEvent: ActorDeletedEvent = {
-      eventType: 'actorDeleted',
-      faction: 'attacker',
-      id: unit.id,
-    };
-    const deflectingDamageEvent: DamageEvent = {
-      eventType: 'damage',
-      faction: 'attacker',
-      sourceID: unit.id,
-      targetID: tower.id,
-      damageAmount,
-      damageType: 'neutral',
-    };
-    const dying = damageAmount >= unit.health;
     const buffing = tower.upgrades === 2;
-    const events: TowerAttack[] = [damageEvent];
-    const superMacaw = unit.subType === 'macaw' && unit.upgradeTier === 2;
     if (buffing) events.push(statusEvent);
-    if (dying) events.push(killEvent);
-    if (superMacaw) events.push(deflectingDamageEvent);
-    applyEvents(matchConfig, matchState, events, currentTick, rng);
     return events;
   });
   return damageEvents.flat();
@@ -677,8 +630,7 @@ function computeDamageToBase(
     return events;
   }
 }
-//  Locate nearby structures, units etc.
-//
+//  Locate nearby units.
 function findCloseByUnits(
   matchState: MatchState,
   coords: number,
@@ -696,29 +648,33 @@ function findCloseByUnits(
   else return findCloseByUnits(matchState, coords, range, radius + 1);
 }
 
+// Converts coord notation ({x: number, y: number}) to a single number, index of the flat map array.
 export function coordsToIndex(coords: Coordinates, width: number): number {
   return width * coords.y + coords.x;
 }
-export function validateCoords(coords: Coordinates, matchState: MatchState): number | null {
-  if (coords.x < 0 || coords.x > matchState.width) return null;
-  if (coords.y < 0 || coords.y > matchState.height) return null;
-  else return coordsToIndex(coords, matchState.width);
-}
+// Converts an index of the flat map to to coord notation
 export function indexToCoords(i: number, width: number): Coordinates {
   const y = Math.floor(i / width);
   const x = i - y * width;
   return { x, y };
 }
+// Validate that coords don't overflow the map.
+export function validateCoords(coords: Coordinates, matchState: MatchState): number | null {
+  if (coords.x < 0 || coords.x > matchState.width) return null;
+  if (coords.y < 0 || coords.y > matchState.height) return null;
+  else return coordsToIndex(coords, matchState.width);
+}
+// Outputs the indexes (i.e. coordinates in the map) surrounding a given index and a range.
 function closeByIndexes(index: number, matchState: MatchState, range: number): number[] {
-  const coords = indexToCoords(index, matchState.width);
-  const upIndex = { x: coords.x, y: coords.y - range };
-  const upRightIndex = { x: coords.x + range, y: coords.x - range };
-  const rightIndex = { x: coords.x + range, y: coords.y };
-  const downRightIndex = { x: coords.x + range, y: coords.y + range };
-  const downIndex = { x: coords.x, y: coords.y + range };
-  const downLeftIndex = { x: coords.x - range, y: coords.y + range };
-  const leftIndex = { x: coords.x - range, y: coords.y };
-  const upLeftIndex = { x: coords.x - range, y: coords.y - range };
+  const { x, y } = indexToCoords(index, matchState.width);
+  const upIndex = { x, y: y - range };
+  const upRightIndex = { x: x + range, y: y - range };
+  const rightIndex = { x: x + range, y };
+  const downRightIndex = { x: x + range, y: y + range };
+  const downIndex = { x, y: y + range };
+  const downLeftIndex = { x: x - range, y: y + range };
+  const leftIndex = { x: x - range, y };
+  const upLeftIndex = { x: x - range, y: y - range };
   const ret = [
     upIndex,
     upRightIndex,
@@ -728,10 +684,11 @@ function closeByIndexes(index: number, matchState: MatchState, range: number): n
     downLeftIndex,
     leftIndex,
     upLeftIndex,
-  ]
+  ];
+  const rett = ret
     .map(c => validateCoords(c, matchState))
     .filter((n: number | null): n is number => !!n);
-  return ret;
+  return rett;
 }
 
 function findClosebyTowers(
