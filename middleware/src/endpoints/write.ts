@@ -10,8 +10,8 @@ import {
   userCreatedLobby,
   userJoinedLobby,
 } from '../helpers/data-processing';
-import type { CreateLobbyResponse, MapName, OldResult, Result } from '../types';
-import type { Faction, TurnAction } from '@tower-defense/utils';
+import type { CreateLobbyResponse, OldResult, Result } from '../types';
+import type { Faction, MapName, TurnAction } from '@tower-defense/utils';
 import {
   awaitBlock,
   getActiveAddress,

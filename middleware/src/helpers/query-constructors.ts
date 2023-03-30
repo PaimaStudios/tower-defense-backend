@@ -1,9 +1,9 @@
+import { MapName } from '@tower-defense/utils';
 import type { QueryOptions } from 'paima-engine/paima-mw-core';
 import { buildBackendQuery, buildQuery } from 'paima-engine/paima-mw-core';
 import { WalletAddress } from 'paima-engine/paima-utils';
 
 import { getIndexerUri, getStatefulUri } from '../state';
-import { MapName } from '../types';
 
 function buildIndexerQuery(endpoint: string, options: QueryOptions): string {
   return `${getIndexerUri()}/api/v1/${buildQuery(endpoint, options)}`;

@@ -19,7 +19,7 @@ Users in both factions submit actions in every turn concerning the structures th
 
 Note `coordinates` here and in any other event are a single integer, referring to the index of the given cell in the map, which is a simple 1D array of cells.
 
-```json
+```ts
 {
   "eventType": "build",
   "coordinates": number,
@@ -31,7 +31,7 @@ Note `coordinates` here and in any other event are a single integer, referring t
 
 ### Repair Structure Event
 
-```json
+```ts
 {
   "eventType": "repair",
   "faction": "attacker" | "defender",
@@ -41,7 +41,7 @@ Note `coordinates` here and in any other event are a single integer, referring t
 
 ### Upgrade Structure Event
 
-```json
+```ts
 {
   "eventType": "upgrade",
   "faction": "attacker" | "defender",
@@ -51,7 +51,7 @@ Note `coordinates` here and in any other event are a single integer, referring t
 
 ### Salvage Structure Event
 
-```json
+```ts
 {
   "eventType": "salvage",
   "faction": "attacker" | "defender",
@@ -69,7 +69,7 @@ Once the structure events are processed, the round's "battle phase" starts. The 
 When a crypt spawns a unit, this event specifies all of the relevant details about the unit.
 `tier` refers to the level of the crypt structure that spawned. That affects how a unit responds to status buffs.
 
-```json
+```ts
 {
   "eventType": "spawn",
   "faction": "attacker" | "defender",
@@ -96,7 +96,7 @@ This event includes:
 - Coordinates: The index where the unit currently is.
 - nextCoordinates: The index where the unit is headed to, and will move to once movement completion is 100. This will be null once the unit has reached it's final destination, the defender's base.
 
-```json
+```ts
 {
   "eventType": "movement",
   "faction": "attacker" | "defender",
@@ -113,7 +113,7 @@ This event includes:
 Both units and defender towers can take damage. When they do take damage we emit an event.
 `faction` here means the faction causing the damage, not receiving it.
 
-```json
+```ts
 {
   "eventType": "damage",
   "faction": "attacker" | "defender",
@@ -129,7 +129,7 @@ Both units and defender towers can take damage. When they do take damage we emit
 When the attacker’s units walk onto the square of the defender’s base, the base takes damage and emits an event (and the unit is deleted).
 Returns the defender's base remaining health (if == 0, then the match is over and the defender lost).
 
-```json
+```ts
 {
   "event": "defenderBaseUpdate",
   "faction": "defender",
@@ -159,7 +159,7 @@ The tick event includes:
 - Target Unit ID
 - Status type
 
-```json
+```ts
 {
   "eventType": "statusApply",
   "faction": "attacker" | "defender",

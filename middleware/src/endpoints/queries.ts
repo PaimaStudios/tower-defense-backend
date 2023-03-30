@@ -1,6 +1,5 @@
 import type {
   MapByNameResponse,
-  MapName,
   MatchWinnerResponse,
   PackedCurrentRound,
   PackedLobbyConfig,
@@ -49,7 +48,7 @@ import type {
   SuccessfulResult,
   UserStats,
 } from '../types';
-import type { MatchConfig } from '@tower-defense/utils';
+import type { MapName, MatchConfig } from '@tower-defense/utils';
 import { FailedResult, getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
 import { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 

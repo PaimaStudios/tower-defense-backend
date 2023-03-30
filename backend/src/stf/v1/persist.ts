@@ -1,16 +1,15 @@
+import { SQLUpdate } from 'paima-engine/paima-db';
 import {
   CreatedLobbyInput,
-  JoinedLobbyInput,
   SetNFTInput,
   SubmittedTurnInput,
   RoleSetting,
+  ConciseResult,
 } from './types.js';
 import Prando from 'paima-engine/paima-prando';
 import { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
-// import { SQLUpdate } from 'paima-engine/paima-utils';
-type SQLUpdate = [any, any];
 import {
   LobbyStatus,
   MatchConfig,
@@ -30,7 +29,6 @@ import {
   IGetRoundMovesResult,
   IGetUserStatsResult,
   INewMatchMoveParams,
-  INewMatchMoveResult,
   INewRoundParams,
   INewScheduledDataParams,
   IStartMatchParams,
@@ -55,7 +53,6 @@ import {
   INewStatsParams,
   newStats,
 } from '@tower-defense/db';
-import { PreparedQuery } from '@pgtyped/query';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -559,8 +556,6 @@ export function persistStatsUpdate(
   };
   return [updateStats, userParams];
 }
-
-type ConciseResult = 'w' | 't' | 'l';
 
 // This function executes 'zombie rounds', rounds where both users haven't submitted input, but which have reached the specified timeout time per round.
 // We just call the 'execute' function passing the unexecuted moves from the database, if any.
