@@ -26,6 +26,7 @@ import type {
   BuildStructureAction,
 } from '@tower-defense/utils';
 import applyEvents from './apply';
+import { baseGoldProduction, cryptUnitMap } from './config';
 
 // Main function, exported as default.
 
@@ -106,10 +107,8 @@ function computeGoldRewards(
   matchConfig: MatchConfig,
   matchState: MatchState
 ): [GoldRewardEvent, GoldRewardEvent] {
-  const baseGoldProduction = (level: number) =>
-    level === 1 ? 100 : level === 2 ? 200 : level === 3 ? 400 : 0; // ...
-  const defenderBaseGold = baseGoldProduction(matchState.defenderBase.level);
-  const attackerBaseGold = baseGoldProduction(matchState.attackerBase.level);
+  const defenderBaseGold = baseGoldProduction[matchState.defenderBase.level] ?? 0;
+  const attackerBaseGold = baseGoldProduction[matchState.attackerBase.level] ?? 0;
   const attackerReward = attackerBaseGold + matchConfig.baseAttackerGoldRate;
   const defenderReward = defenderBaseGold + matchConfig.baseDefenderGoldRate;
   const events: [GoldRewardEvent, GoldRewardEvent] = [
@@ -248,7 +247,7 @@ function spawn(
     cryptID: crypt.id,
     actorID: matchState.actorCount + 1, // increment
     coordinates: path,
-    unitType: crypt.structure.replace('Crypt', '') as UnitType,
+    unitType: cryptUnitMap[crypt.structure],
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
     unitAttack: config[crypt.structure][crypt.upgrades].attackDamage,
