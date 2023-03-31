@@ -48,7 +48,7 @@ export default function applyEvents(
         const spendIfCan = spendMoney(matchState, faction, cost);
         if (spendIfCan) {
           // mutate map with new actor
-          setStructureFromEvent(config, matchState, event, faction as Faction, event.id);
+          setStructureFromEvent(config, matchState, event, faction, event.id);
           matchState.actorCount++;
         }
         break;
@@ -145,30 +145,28 @@ export default function applyEvents(
         } else unitMoving.movementCompletion = event.completion;
         break;
       case 'damage':
-        const damageEvent = event as DamageEvent;
         // find the affected unit
         const damagedUnit =
           faction === 'attacker'
-            ? matchState.actors.towers[damageEvent.targetID]
-            : matchState.actors.units[damageEvent.targetID];
-        if (damagedUnit && damageEvent.damageType === 'neutral')
+            ? matchState.actors.towers[event.targetID]
+            : matchState.actors.units[event.targetID];
+        if (damagedUnit && event.damageType === 'neutral')
           damagedUnit.health = damagedUnit.health - event.damageAmount;
         break;
       case 'actorDeleted':
         // it may happen that several actorDeleted events are issued about one single unit
         // if e.g. several units attack her at the same tick
-        const deleteEvent = event as ActorDeletedEvent;
         const unitToDelete =
           event.faction === 'attacker'
-            ? matchState.actors.units[deleteEvent.id]
-            : matchState.actors.towers[deleteEvent.id];
+            ? matchState.actors.units[event.id]
+            : matchState.actors.towers[event.id];
         if (!unitToDelete)
           // because already wiped out by a previous event
           break;
         else {
           // delete unit from unit list
-          if (event.faction === 'attacker') delete matchState.actors.units[deleteEvent.id];
-          else delete matchState.actors.towers[deleteEvent.id];
+          if (event.faction === 'attacker') delete matchState.actors.units[event.id];
+          else delete matchState.actors.towers[event.id];
           // we do not decrement the MatchState unitCount as we don't want to recycle ids
           break;
         }
