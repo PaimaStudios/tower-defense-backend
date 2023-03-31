@@ -67,3 +67,11 @@ export interface UserStatsEffect {
   user: WalletAddress;
   result: ConciseResult;
 }
+
+export function isZombieRound(input: SideEffect): input is ZombieRoundEffect {
+  return (input as ZombieRoundEffect).type === 'zombie';
+}
+
+export function isUserStats(input: SideEffect): input is UserStatsEffect {
+  return (input as UserStatsEffect).type === 'stats';
+}

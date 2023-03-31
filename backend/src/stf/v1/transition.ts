@@ -29,6 +29,8 @@ import {
   SubmittedTurnInput,
   UserStatsEffect,
   ZombieRoundEffect,
+  isUserStats,
+  isZombieRound,
 } from './types.js';
 import { MatchState } from '@tower-defense/utils';
 import { parseConfig, validateMoves } from '@tower-defense/game-logic';
@@ -160,25 +162,22 @@ export async function processScheduledData(
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  if (input.effect.type === 'zombie') {
-    return processZombieEffect(input, blockHeight, randomnessGenerator, dbConn);
+  if (isZombieRound(input.effect)) {
+    return processZombieEffect(input.effect, blockHeight, randomnessGenerator, dbConn);
   }
-  if (input.effect.type === 'stats') {
-    return processStatsEffect(input, dbConn);
+  if (isUserStats(input.effect)) {
+    return processStatsEffect(input.effect, dbConn);
   }
   return [];
 }
 
 export async function processZombieEffect(
-  input: ScheduledDataInput,
+  effect: ZombieRoundEffect,
   blockHeight: number,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  const [lobby] = await getLobbyById.run(
-    { lobby_id: (input.effect as ZombieRoundEffect).lobbyID },
-    dbConn
-  );
+  const [lobby] = await getLobbyById.run({ lobby_id: effect.lobbyID }, dbConn);
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: lobby.current_round },
     dbConn
@@ -190,10 +189,9 @@ export async function processZombieEffect(
 }
 
 export async function processStatsEffect(
-  input: ScheduledDataInput,
+  effect: UserStatsEffect,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  const effect = input.effect as UserStatsEffect;
   const [stats] = await getUserStats.run({ wallet: effect.user }, dbConn);
   if (!stats) return [];
   const query = persistStatsUpdate(effect.user, effect.result, stats);
