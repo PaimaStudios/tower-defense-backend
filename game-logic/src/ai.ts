@@ -19,10 +19,10 @@ export function generateRandomMoves(
   faction: Faction,
   round: number
 ): TurnAction[] {
-  const [gold, structures] =
-    faction === 'defender'
-      ? [matchState.defenderGold, ['anacondaTower', 'piranhaTower', 'slothTower'] as Tower[]]
-      : [matchState.attackerGold, ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'] as Crypt[]];
+  const towers: Tower[] = ['anacondaTower', 'piranhaTower', 'slothTower'];
+  const crypts: Crypt[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
+  const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
+  const structures = faction === 'defender' ? towers : crypts;
   console.log(gold, 'generating moves');
   const toBuild = chooseStructures(
     matchConfig,

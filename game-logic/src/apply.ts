@@ -10,7 +10,6 @@ import type {
   PathTile,
   DamageEvent,
   AttackerUnit,
-  ActorDeletedEvent,
   AttackerStructure,
   DefenderStructure,
   UpgradeTier,
@@ -106,18 +105,17 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
     case 'actorDeleted':
       // it may happen that several actorDeleted events are issued about one single unit
       // if e.g. several units attack her at the same tick
-      const deleteEvent = event as ActorDeletedEvent;
       const unitToDelete =
         event.faction === 'attacker'
-          ? matchState.actors.units[deleteEvent.id]
-          : matchState.actors.towers[deleteEvent.id];
+          ? matchState.actors.units[event.id]
+          : matchState.actors.towers[event.id];
       if (!unitToDelete)
         // because already wiped out by a previous event
         break;
       else {
         // delete unit from unit list
-        if (event.faction === 'attacker') delete matchState.actors.units[deleteEvent.id];
-        else delete matchState.actors.towers[deleteEvent.id];
+        if (event.faction === 'attacker') delete matchState.actors.units[event.id];
+        else delete matchState.actors.towers[event.id];
         // we do not decrement the MatchState unitCount as we don't want to recycle ids
         break;
       }

@@ -20,7 +20,6 @@ import type {
   Coordinates,
   TowerAttack,
   UnitAttack,
-  UnitType,
   BuildStructureAction,
   Faction,
   UpgradeTier,
@@ -283,8 +282,8 @@ function spawnEvents(
       return newUnit;
     } else return null;
   });
-  const eventTypeGuard = (e: UnitSpawnedEvent | null): e is UnitSpawnedEvent => !!e;
-  return events.filter(eventTypeGuard);
+  const isNotNull = (e: UnitSpawnedEvent | null): e is UnitSpawnedEvent => !!e;
+  return events.filter(isNotNull);
 }
 // Function to generate a single spawn event.
 function spawn(
@@ -354,7 +353,7 @@ function findClosebyPath(matchState: MatchState, coords: number, range = 1): num
 function movementEvents(
   matchConfig: MatchConfig,
   matchState: MatchState
-): Array<StatusEffectAppliedEvent | UnitMovementEvent | StatusEffectAppliedEvent> {
+): Array<UnitMovementEvent | StatusEffectAppliedEvent> {
   const attackers = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
@@ -363,16 +362,16 @@ function movementEvents(
     if (busyAttacking) return null;
     else {
       // Generate movement events
-      const event = move(matchConfig, a);
+      const moveEvent = move(matchConfig, a);
       // See if unit moved next to a friendly crypt and got a status buff from it
-      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(matchConfig, matchState, event);
-      return [event, ...buffStatusEvents];
+      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(matchConfig, matchState, moveEvent);
+      return [moveEvent, ...buffStatusEvents];
     }
   });
-  const eventTypeGuard = (
+  const isNotNull = (
     e: UnitMovementEvent | StatusEffectAppliedEvent | null
-  ): e is UnitMovementEvent => !!e;
-  const ret = events.flat().filter(eventTypeGuard);
+  ): e is UnitMovementEvent | StatusEffectAppliedEvent => !!e;
+  const ret = events.flat().filter(isNotNull);
   for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
   // .filter(e => e.completion === 100);dd
@@ -415,9 +414,8 @@ function buff(
   if (event.completion === 100) {
     const crypts = findClosebyCrypts(matchState, event.nextCoordinates, 1);
     const events = crypts.map(c => buffEvent(matchConfig, c, event.actorID));
-    const eventTypeGuard = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent =>
-      !!e;
-    return events.filter(eventTypeGuard);
+    const isNotNull = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent => !!e;
+    return events.filter(isNotNull);
   } else return [];
 }
 
@@ -595,19 +593,10 @@ function unitAttackEvents(
 ): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
-    const damageToTower =
-      a.subType === 'macaw'
-        ? computeDamageToTower(matchConfig, matchState, a, currentTick, rng)
-        : [];
-    const damageToBase: UnitAttack[] = computeDamageToBase(
-      matchConfig,
-      matchState,
-      a,
-      currentTick,
-      rng
-    );
-    const eventTypeGuard = (e: UnitAttack | null): e is DamageEvent => !!e;
-    return [...damageToTower, ...damageToBase].filter(eventTypeGuard);
+    const damageToTower = computeDamageToTower(matchConfig, matchState, a, currentTick, rng);
+    const damageToBase = computeDamageToBase(matchConfig, matchState, a, currentTick, rng);
+    const isNotNull = (e: UnitAttack | null): e is UnitAttack => !!e;
+    return [...damageToTower, ...damageToBase].filter(isNotNull);
   });
   return events.flat();
 }
@@ -619,6 +608,8 @@ function computeDamageToTower(
   currentTick: number,
   randomnessGenerator: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
+  if (attacker.subType !== 'macaw') return [];
+
   const cooldown = 10;
   if ((currentTick - 2) % cooldown !== 0) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;

@@ -94,7 +94,7 @@ export function persistLobbyCreation(
     created_at: new Date(),
     hidden: inputData.isHidden,
     practice: inputData.isPractice,
-    lobby_state: 'open' as LobbyStatus,
+    lobby_state: 'open',
     player_two: null,
     current_match_state: {},
   };
@@ -114,7 +114,7 @@ export function persistPracticeLobbyCreation(
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
-  const params: IGetLobbyByIdResult = {
+  const params = {
     lobby_id: lobby_id,
     lobby_creator: user,
     creator_faction: inputData.creatorFaction,
@@ -127,10 +127,10 @@ export function persistPracticeLobbyCreation(
     created_at: new Date(),
     hidden: inputData.isHidden,
     practice: inputData.isPractice,
-    lobby_state: 'open' as LobbyStatus,
+    lobby_state: 'open',
     player_two: null,
     current_match_state: {},
-  };
+  } satisfies ICreateLobbyParams;
   // create the lobby according to the input data.
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
@@ -397,7 +397,7 @@ function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUp
       lobby_id: matchId,
       wallet: user,
       round: a.round,
-      move_type: a.action as move_type,
+      move_type: a.action,
       move_target,
     },
   };
