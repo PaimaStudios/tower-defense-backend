@@ -7,6 +7,8 @@ import {
   Level,
   UnitType,
   Crypt,
+  RoleSetting,
+  RoleSettingConcise,
 } from '@tower-defense/utils';
 
 const baseAnacondaTowerConfig1: TowerConfig = {
@@ -242,6 +244,12 @@ export const cryptUnitMap: Record<Crypt, UnitType> = {
   macawCrypt: 'macaw',
   jaguarCrypt: 'jaguar',
   gorillaCrypt: 'gorilla',
+};
+
+export const conciseFactionMap: Record<RoleSettingConcise, RoleSetting> = {
+  a: 'attacker',
+  d: 'defender',
+  r: 'random',
 };
 
 export const baseConfig: MatchConfig = {

@@ -27,8 +27,8 @@ import {
   ScheduledDataInput,
   SetNFTInput,
   SubmittedTurnInput,
-  UserStatsEffect,
-  ZombieRoundEffect,
+  UserStats,
+  ZombieRound,
   isUserStats,
   isZombieRound,
 } from './types.js';
@@ -125,9 +125,11 @@ export async function processSubmittedTurn(
       ? 'attacker'
       : 'defender';
   // add the faction to the actions in the input
-  input.actions = input.actions.map(a => {
-    return { ...a, faction: role, round: input.roundNumber };
-  });
+  input.actions = input.actions.map(action => ({
+    ...action,
+    faction: role,
+    round: input.roundNumber,
+  }));
   if (role === 'attacker' && lobby.current_round % 2 !== 0) return [];
   if (role === 'defender' && lobby.current_round % 2 !== 1) return [];
   // moves are valid
@@ -162,22 +164,22 @@ export async function processScheduledData(
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  if (isZombieRound(input.effect)) {
-    return processZombieEffect(input.effect, blockHeight, randomnessGenerator, dbConn);
+  if (isZombieRound(input)) {
+    return processZombieEffect(input, blockHeight, randomnessGenerator, dbConn);
   }
-  if (isUserStats(input.effect)) {
-    return processStatsEffect(input.effect, dbConn);
+  if (isUserStats(input)) {
+    return processStatsEffect(input, dbConn);
   }
   return [];
 }
 
 export async function processZombieEffect(
-  effect: ZombieRoundEffect,
+  input: ZombieRound,
   blockHeight: number,
   randomnessGenerator: Prando,
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
-  const [lobby] = await getLobbyById.run({ lobby_id: effect.lobbyID }, dbConn);
+  const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: lobby.current_round },
     dbConn
@@ -188,12 +190,9 @@ export async function processZombieEffect(
   return executeZombieRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
 }
 
-export async function processStatsEffect(
-  effect: UserStatsEffect,
-  dbConn: Pool
-): Promise<SQLUpdate[]> {
-  const [stats] = await getUserStats.run({ wallet: effect.user }, dbConn);
+export async function processStatsEffect(input: UserStats, dbConn: Pool): Promise<SQLUpdate[]> {
+  const [stats] = await getUserStats.run({ wallet: input.user }, dbConn);
   if (!stats) return [];
-  const query = persistStatsUpdate(effect.user, effect.result, stats);
+  const query = persistStatsUpdate(input.user, input.result, stats);
   return [query];
 }

@@ -223,29 +223,25 @@ export type Structure = Tower | Crypt;
 export type Tower = 'piranhaTower' | 'slothTower' | 'anacondaTower';
 export type Crypt = 'macawCrypt' | 'jaguarCrypt' | 'gorillaCrypt';
 
-export interface BuildStructureAction {
+export interface BaseAction {
   round: number;
+  faction: Faction;
+}
+export interface BuildStructureAction extends BaseAction {
   action: 'build';
   coordinates: number;
-  faction: Faction;
   structure: Structure;
 }
-export interface RepairStructureAction {
-  round: number;
+export interface RepairStructureAction extends BaseAction {
   action: 'repair';
-  faction: Faction;
   id: number;
 }
-export interface SalvageStructureAction {
-  round: number;
+export interface SalvageStructureAction extends BaseAction {
   action: 'salvage';
-  faction: Faction;
   id: number;
 }
-export interface UpgradeStructureAction {
-  round: number;
+export interface UpgradeStructureAction extends BaseAction {
   action: 'upgrade';
-  faction: Faction;
   id: number;
 }
 export type StructureEvent =
@@ -358,13 +354,19 @@ export type UnitAttack = DamageEvent | DefenderBaseUpdateEvent | ActorDeletedEve
 
 export type LobbyStatus = 'open' | 'active' | 'finished' | 'closed';
 
-export type MapName =
-  | 'jungle'
-  | 'backwards'
-  | 'crossing'
-  | 'narrow'
-  | 'snake'
-  | 'straight'
-  | 'wavy'
-  | 'fork'
-  | 'islands';
+export const maps = [
+  'jungle',
+  'backwards',
+  'crossing',
+  'narrow',
+  'snake',
+  'straight',
+  'wavy',
+  'fork',
+  'islands',
+] as const;
+export type MapName = (typeof maps)[number];
+
+export type RoleSetting = 'attacker' | 'defender' | 'random';
+export type RoleSettingConcise = 'a' | 'd' | 'r';
+export type StructureConcise = 'at' | 'pt' | 'st' | 'gc' | 'jc' | 'mc';
