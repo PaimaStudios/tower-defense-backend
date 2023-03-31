@@ -322,7 +322,6 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     .filter((n: number | null): n is number => !!n)
     .filter(n => {
       const tile = matchState.mapState[n];
-      console.log(matchState.mapState[n], "wtf")
       return tile.type === "path" && tile.faction === "attacker" 
     })
 }
@@ -342,7 +341,6 @@ function choosePath(paths: number[], mapWidth: number): number{
 // If there is more than one candidate then randomness is used to select one.
 function findClosebyPath(matchState: MatchState, coords: number, range = 1): number {
   const adjacentPaths = closeByPaths(coords, matchState);
-  console.log(adjacentPaths, "adjacent paths")
   if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width)
   else {
     const morePaths = getSurroundingCells(coords, matchState, range + 1)
@@ -622,7 +620,7 @@ function computeDamageToTower(
   randomnessGenerator: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
   const cooldown = 10;
-  if (currentTick - (2 % cooldown) !== 0) return [];
+  if ((currentTick - 2) % cooldown !== 0) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
