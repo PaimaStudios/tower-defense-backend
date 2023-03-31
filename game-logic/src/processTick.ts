@@ -607,6 +607,8 @@ function computeDamageToTower(
   currentTick: number,
   randomnessGenerator: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
+  const cooldown = 10;
+  if (currentTick - 2 % cooldown !== 0) return []
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
