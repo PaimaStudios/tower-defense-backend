@@ -240,7 +240,6 @@ function applyBuild(
       spawned: [],
     };
     matchState.actors.crypts[unit.id] = unit;
-    console.log(matchState.attackerGold, 'attacker gold');
     matchState.attackerGold -= cost;
   } else {
     const unit: DefenderStructure = {
@@ -253,7 +252,6 @@ function applyBuild(
       coordinates: eventType.coordinates,
     };
     matchState.actors.towers[unit.id] = unit;
-    console.log(matchState.defenderGold, 'defender gold');
     matchState.defenderGold -= cost;
   }
 }

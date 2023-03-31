@@ -296,7 +296,7 @@ function spawn(
 ): UnitSpawnedEvent {
   // First we look up the unit stats with the Match Config
   // Then we compute the path tile in the map where the units will spawn at.
-  const path = findClosebyPath(matchState, crypt.coordinates, rng);
+  const path = findClosebyPath(matchState, crypt.coordinates);
   return {
     eventType: 'spawn',
     faction: 'attacker',
@@ -310,32 +310,46 @@ function spawn(
     tier: crypt.upgrades,
   };
 }
+function closeByPaths(index: number, matchState: MatchState): number[] {
+  const { x, y } = indexToCoords(index, matchState.width);
+  return [
+    { x, y: y - 1 },
+    { x: x + 1, y },
+    { x, y: y + 1 },
+    { x: x - 1, y },
+  ]
+    .map(c => validateCoords(c, matchState))
+    .filter((n: number | null): n is number => !!n)
+    .filter(n => {
+      const tile = matchState.mapState[n];
+      console.log(matchState.mapState[n], "wtf")
+      return tile.type === "path" && tile.faction === "attacker" 
+    })
+}
+function choosePath(paths: number[], mapWidth: number): number{
+  const pick = paths.reduce((prev, curr) => {
+    const a = indexToCoords(prev, mapWidth)
+    const b = indexToCoords(curr, mapWidth)
+    // whoever is further to the left
+    if (a.x < b.x) return prev
+    else if (b.x < a.x) return curr
+    // else whoever is more centered in the y axis
+    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr
+  })
+  return pick
+}
 // Function to find an available path next to a crypt to place a newly spawned unit.
 // If there is more than one candidate then randomness is used to select one.
-function findClosebyPath(matchState: MatchState, coords: number, rng: Prando, range = 1): number {
-  const c: number[] = [];
-  // Find all 8 adjacent cells to the crypt.
-  const [up, upRight, right, downRight, down, downLeft, left, upLeft] = closeByIndexes(
-    coords,
-    matchState,
-    range
-  );
-  // Of these, push to the array if they are a path.
-  if (matchState.mapState[up]?.type === 'path') c.push(up);
-  // if (matchState.mapState[upRight]?.type === 'path') c.push(upRight);
-  if (matchState.mapState[right]?.type === 'path') c.push(right);
-  // if (matchState.mapState[downRight]?.type === 'path') c.push(downRight);
-  if (matchState.mapState[down]?.type === 'path') c.push(down);
-  // if (matchState.mapState[downLeft]?.type === 'path') c.push(downLeft);
-  if (matchState.mapState[left]?.type === 'path') c.push(left);
-  // if (matchState.mapState[upLeft]?.type === 'path') c.push(upLeft);
-  // If no cell is a path, i.e. the array is empty, recurse this function with an incremented range, so cells further away are searched
-  if (c.length === 0) return findClosebyPath(matchState, coords, rng, range + 1);
-  else if (c.length > 1) {
-    // if more than one candidate, get any random one using the randomness generator.
-    const randomness = rng.next();
-    return c[Math.floor(randomness * c.length)];
-  } else return c[0];
+function findClosebyPath(matchState: MatchState, coords: number, range = 1): number {
+  const adjacentPaths = closeByPaths(coords, matchState);
+  console.log(adjacentPaths, "adjacent paths")
+  if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width)
+  else {
+    const morePaths = getSurroundingCells(coords, matchState, range + 1)
+    .filter(n => matchState.mapState[n].type === "path");
+    if (morePaths.length > 0) return choosePath(morePaths, matchState.width)
+    else return findClosebyPath(matchState, coords, range + 1)
+  }
 }
 
 // Movement events, dervive from the units already on the match sate.
@@ -608,7 +622,7 @@ function computeDamageToTower(
   randomnessGenerator: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
   const cooldown = 10;
-  if (currentTick - 2 % cooldown !== 0) return []
+  if (currentTick - (2 % cooldown) !== 0) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
@@ -675,7 +689,7 @@ function findCloseByUnits(
 ): AttackerUnit[] {
   if (radius > range) return [];
   // Get all surrounding tile indexes;
-  const surrounding = closeByIndexes(coords, matchState, radius);
+  const surrounding = getSurroundingCells(coords, matchState, radius);
   // Get all units present on the map
   const units: AttackerUnit[] = Object.values(matchState.actors.units).filter(u =>
     surrounding.includes(u.coordinates)
@@ -700,31 +714,28 @@ export function validateCoords(coords: Coordinates, matchState: MatchState): num
   if (coords.y < 0 || coords.y > matchState.height) return null;
   else return coordsToIndex(coords, matchState.width);
 }
-// Outputs the indexes (i.e. coordinates in the map) surrounding a given index and a range.
-function closeByIndexes(index: number, matchState: MatchState, range: number): number[] {
-  const { x, y } = indexToCoords(index, matchState.width);
-  const upIndex = { x, y: y - range };
-  const upRightIndex = { x: x + range, y: y - range };
-  const rightIndex = { x: x + range, y };
-  const downRightIndex = { x: x + range, y: y + range };
-  const downIndex = { x, y: y + range };
-  const downLeftIndex = { x: x - range, y: y + range };
-  const leftIndex = { x: x - range, y };
-  const upLeftIndex = { x: x - range, y: y - range };
-  const ret = [
-    upIndex,
-    upRightIndex,
-    rightIndex,
-    downRightIndex,
-    downIndex,
-    downLeftIndex,
-    leftIndex,
-    upLeftIndex,
-  ];
-  const rett = ret
+function getSurroundingCells(index: number, matchState: MatchState, range: number): number[] {
+  const center = indexToCoords(index, matchState.width);
+  let surroundingCells: Coordinates[] = [];
+  for (let x = center.x - range; x <= center.x + range; x++) {
+    for (let y = center.y - range; y <= center.y + range; y++) {
+      // Exclude the center cell itself
+      if (x === center.x && y === center.y) {
+        continue;
+      }
+      // Calculate the distance from the center cell
+      let dx = Math.abs(x - center.x);
+      let dy = Math.abs(y - center.y);
+
+      // Exclude diagonals for each range
+      if (dx + dy <= range) {
+        surroundingCells.push({ x, y });
+      }
+    }
+  }
+  return surroundingCells
     .map(c => validateCoords(c, matchState))
     .filter((n: number | null): n is number => !!n);
-  return rett;
 }
 
 function findClosebyTowers(
@@ -734,7 +745,7 @@ function findClosebyTowers(
   radius = 1
 ): DefenderStructure[] {
   if (radius > range) return [];
-  const inRange = closeByIndexes(coords, matchState, radius);
+  const inRange = getSurroundingCells(coords, matchState, radius);
   const structures = Object.values(matchState.actors.towers).filter(tw =>
     inRange.includes(tw.coordinates)
   );
@@ -749,7 +760,7 @@ function findClosebyCrypts(
 ): AttackerStructure[] {
   if (!coords) return [];
   if (radius > range) return [];
-  const inRange = closeByIndexes(coords, matchState, radius);
+  const inRange = getSurroundingCells(coords, matchState, radius);
   const structures = Object.values(matchState.actors.crypts).filter(tw =>
     inRange.includes(tw.coordinates)
   );
