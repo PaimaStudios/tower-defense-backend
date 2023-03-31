@@ -1,5 +1,5 @@
 import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
-import type { Structure, TurnAction } from '@tower-defense/utils';
+import type { Structure, StructureConcise, TurnAction } from '@tower-defense/utils';
 import { GameENV } from '@tower-defense/utils';
 import type { LobbyWebserverQuery, UserNft } from '../types';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
@@ -12,6 +12,15 @@ import type {
   RoundEnd,
 } from '../types';
 import { getBlockTime } from 'paima-engine/paima-utils';
+
+const conciseMap: Record<Structure, StructureConcise> = {
+  anacondaTower: 'at',
+  piranhaTower: 'pt',
+  slothTower: 'st',
+  gorillaCrypt: 'gc',
+  jaguarCrypt: 'jc',
+  macawCrypt: 'mc',
+};
 
 export function moveToString(move: TurnAction): string {
   switch (move.action) {
@@ -33,15 +42,6 @@ export function moveToString(move: TurnAction): string {
       throw new Error(`Invalid move submitted: ${move}`);
   }
 }
-
-const conciseMap: Record<Structure, string> = {
-  anacondaTower: 'at',
-  piranhaTower: 'pt',
-  slothTower: 'st',
-  gorillaCrypt: 'gc',
-  jaguarCrypt: 'jc',
-  macawCrypt: 'mc',
-};
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {
   if (!lobby.hasOwnProperty('lobby')) {

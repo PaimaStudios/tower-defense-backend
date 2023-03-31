@@ -1,21 +1,15 @@
 import { SQLUpdate } from 'paima-engine/paima-db';
-import {
-  CreatedLobbyInput,
-  SetNFTInput,
-  SubmittedTurnInput,
-  RoleSetting,
-  ConciseResult,
-} from './types.js';
+import { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult } from './types.js';
 import Prando from 'paima-engine/paima-prando';
 import { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
 import {
-  LobbyStatus,
   MatchConfig,
   MatchState,
   PRACTICE_BOT_ADDRESS,
   RawMap,
+  RoleSetting,
   Structure,
   TileNumber,
   TurnAction,
@@ -34,7 +28,6 @@ import {
   IStartMatchParams,
   ICloseLobbyParams,
   closeLobby,
-  move_type,
   newMatchMove,
   newRound,
   newScheduledData,

@@ -1,150 +1,103 @@
+import type { ParserRecord } from 'paima-engine/paima-utils-backend';
+import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
-import { consumer } from 'paima-engine/paima-concise';
-import type { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise/build/types';
-import type {
+import {
   BuildStructureAction,
+  MapName,
   RepairStructureAction,
+  RoleSettingConcise,
   SalvageStructureAction,
   Structure,
   TurnAction,
   UpgradeStructureAction,
+  maps,
 } from '@tower-defense/utils';
-import { GameENV } from '@tower-defense/utils';
 
 import {
   ClosedLobbyInput,
+  ConciseResult,
   CreatedLobbyInput,
-  InvalidInput,
   JoinedLobbyInput,
   ParsedSubmittedInput,
-  RoleSetting,
-  ScheduledDataInput,
   SetNFTInput,
   SubmittedTurnInput,
+  UserStats,
+  ZombieRound,
 } from './types';
+import { conciseFactionMap } from '@tower-defense/game-logic/src/config';
+import { ConciseConsumer, ConciseValue, consumer } from 'paima-engine/paima-concise';
 
-function tryParse<T>(c: ConciseValue | null, parser: P.Parser<T>): T {
-  if (!c) throw 'parsing error';
-  return parser.tryParse(c.value);
-}
+// submittedMoves left out for now intentionally
+const myGrammar = `
+createdLobby        = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?
+joinedLobby         = j|*lobbyID
+closedLobby         = cs|*lobbyID
+setNFT              = n|address|nftID
+zombieScheduledData = z|*lobbyID
+userScheduledData   = u|*user|result
+`;
 
-// Parser for Game Inputs read by Paima Funnel
-// Base parsers
-const pBase62 = P.alt(P.letter, P.digit);
-const pComma = P.string(',');
-const pBoolean = P.alt(P.string('T'), P.string('F'), P.string('')).map(value => {
-  if (value === 'T') return true;
-  return false;
-});
-// IDs
-const pWallet = pBase62.many().tie();
-const pLobbyID = pBase62.times(12).map((list: string[]) => list.join(''));
-const pMatchConfigID = pBase62.times(14).map((list: string[]) => list.join(''));
-// Lobby attributes
-// Roles
+const roleSettings: RoleSettingConcise[] = ['a', 'd', 'r'];
+const createdLobby: ParserRecord<CreatedLobbyInput> = {
+  matchConfigID: PaimaParser.NCharsParser(14, 14),
+  creatorFaction: PaimaParser.EnumParser(
+    roleSettings,
+    value => conciseFactionMap[value as RoleSettingConcise]
+  ),
+  numOfRounds: PaimaParser.NumberParser(3, 1000),
+  roundLength: PaimaParser.DefaultRoundLength(),
+  isHidden: PaimaParser.TrueFalseParser(false),
+  map: PaimaParser.EnumParser(maps),
+  isPractice: PaimaParser.TrueFalseParser(false),
+};
+const joinedLobby: ParserRecord<JoinedLobbyInput> = {
+  lobbyID: PaimaParser.NCharsParser(12, 12),
+};
+const closedLobby: ParserRecord<ClosedLobbyInput> = {
+  lobbyID: PaimaParser.NCharsParser(12, 12),
+};
+const setNFT: ParserRecord<SetNFTInput> = {
+  address: PaimaParser.WalletAddress(), // not a user's walletAddress but same possible characters
+  tokenID: PaimaParser.NumberParser(),
+};
+const zombieScheduledData: ParserRecord<ZombieRound> = {
+  renameCommand: 'scheduledData',
+  effect: 'zombie',
+  lobbyID: PaimaParser.NCharsParser(12, 12),
+};
+const results: ConciseResult[] = ['w', 'l'];
+const userScheduledData: ParserRecord<UserStats> = {
+  renameCommand: 'scheduledData',
+  effect: 'stats',
+  user: PaimaParser.WalletAddress(),
+  result: PaimaParser.EnumParser(results),
+};
 
-const attackerRole = P.string('a').map(_ => 'attacker' as RoleSetting);
-const defenderRole = P.string('d').map(_ => 'defender' as RoleSetting);
-const randomRole = P.string('r').map(_ => 'random' as RoleSetting);
-const pRoleSetting = P.alt(attackerRole, defenderRole, randomRole);
-// Rounds
+const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
+  createdLobby,
+  joinedLobby,
+  closedLobby,
+  setNFT,
+  zombieScheduledData,
+  userScheduledData,
+};
 
-function validateRoundLength(n: number): boolean {
-  // TODO: maybe utilize getBlockTime
-  // NOTE: This currently uses the wrong block_time for A1 deployment
-  const BLOCKS_PER_MINUTE = 60 / GameENV.BLOCK_TIME;
-  const BLOCKS_PER_DAY = BLOCKS_PER_MINUTE * 60 * 24;
-  return n >= BLOCKS_PER_MINUTE && n <= BLOCKS_PER_DAY;
-}
-const pRoundLength = P.digits.map(Number).chain(n => {
-  if (validateRoundLength(n)) return P.succeed(n);
-  else return P.fail(`Round Length must be between 1 minute and 1 day`);
-});
-const pNumOfRounds = P.digits.map(Number).chain(n => {
-  if (n >= 3 && n <= 1000) return P.succeed(n);
-  else return P.fail(`Round Number must be between 3 and 1000`);
-});
-// Maps
-const pMaps = P.alt(
-  P.string('jungle'),
-  P.string('backwards'),
-  P.string('crossing'),
-  P.string('narrow'),
-  P.string('snake'),
-  P.string('straight'),
-  P.string('wavy'),
-  P.string('fork'),
-  P.string('islands')
-);
-export function parseInput(s: string): ParsedSubmittedInput {
-  const c = consumer.initialize(s);
-  if (c.concisePrefix === 'c') return parseCreate(c);
-  else if (c.concisePrefix === 'j') return parseJoin(c);
-  else if (c.concisePrefix === 'cs') return parseClose(c);
-  else if (c.concisePrefix === 's') return parseSubmitTurn(c);
-  else if (c.concisePrefix === 'n') return parseNFT(c);
-  else if (c.concisePrefix === 'z') return parseZombie(c);
-  else if (c.concisePrefix === 'u') return parseUserStats(c);
-  else return { input: 'invalidString' };
-}
-function parseCreate(c: ConciseConsumer): CreatedLobbyInput | InvalidInput {
-  try {
-    const matchConfigID = tryParse(c.nextValue(), pMatchConfigID);
-    const creatorFaction = tryParse(c.nextValue(), pRoleSetting);
-    const numOfRounds = tryParse(c.nextValue(), pNumOfRounds);
-    const roundLength = tryParse(c.nextValue(), pRoundLength);
-    const isHidden = tryParse(c.nextValue(), pBoolean);
-    const map = tryParse(c.nextValue(), pMaps);
-    const isPractice = tryParse(c.nextValue(), pBoolean);
-    return {
-      input: 'createdLobby',
-      creatorFaction,
-      numOfRounds,
-      roundLength,
-      isHidden,
-      map,
-      matchConfigID,
-      isPractice,
-    };
-  } catch {
-    return { input: 'invalidString' };
-  }
-}
-function parseJoin(c: ConciseConsumer): JoinedLobbyInput | InvalidInput {
-  try {
-    const lobbyID = tryParse(c.nextValue(), pLobbyID);
-    return {
-      input: 'joinedLobby',
-      lobbyID,
-    };
-  } catch {
-    return { input: 'invalidString' };
-  }
-}
-export function parseClose(c: ConciseConsumer): ClosedLobbyInput | InvalidInput {
-  try {
-    const lobbyID = tryParse(c.nextValue(), pLobbyID);
-    return {
-      input: 'closedLobby',
-      lobbyID,
-    };
-  } catch {
-    return { input: 'invalidString' };
-  }
-}
+// Special parser for move submition
 // Submit Turn Definitions
+const pBase62 = P.alt(P.letter, P.digit);
+const pLobbyID = pBase62.times(12).map((list: string[]) => list.join(''));
 const pRoundNumber = P.digits.map(Number).chain(n => {
   if (n >= 1 && n <= 1000) return P.succeed(n);
   else return P.fail(`Round Number must be above 0`);
 });
 const pMapCoord = P.digits.map(Number);
 const pStructureID = P.digits.map(Number);
-const pAnacondaTower = P.string('at').map(_ => 'anacondaTower' as Structure);
-const pPiranhaTower = P.string('pt').map(__ => 'piranhaTower' as Structure);
-const pSlothTower = P.string('st').map(_ => 'slothTower' as Structure);
-const pGorillaCrypt = P.string('gc').map(_ => 'gorillaCrypt' as Structure);
-const pJaguarCrypt = P.string('jc').map(_ => 'jaguarCrypt' as Structure);
-const pMacawCrypt = P.string('mc').map(_ => 'macawCrypt' as Structure);
+const pAnacondaTower = P.string('at').map<Structure>(_ => 'anacondaTower');
+const pPiranhaTower = P.string('pt').map<Structure>(__ => 'piranhaTower');
+const pSlothTower = P.string('st').map<Structure>(_ => 'slothTower');
+const pGorillaCrypt = P.string('gc').map<Structure>(_ => 'gorillaCrypt');
+const pJaguarCrypt = P.string('jc').map<Structure>(_ => 'jaguarCrypt');
+const pMacawCrypt = P.string('mc').map<Structure>(_ => 'macawCrypt');
 const pStructureType = P.alt<Structure>(
   pAnacondaTower,
   pPiranhaTower,
@@ -153,10 +106,12 @@ const pStructureType = P.alt<Structure>(
   pJaguarCrypt,
   pMacawCrypt
 );
+
+// Submit move actions
 const buildAction = P.seqObj<BuildStructureAction>(
   P.string('b'),
   ['coordinates', pMapCoord],
-  pComma,
+  P.string(','),
   ['structure', pStructureType]
 ).map(o => {
   return { ...o, action: 'build' as const };
@@ -164,7 +119,6 @@ const buildAction = P.seqObj<BuildStructureAction>(
 const repairAction = P.seqObj<RepairStructureAction>(P.string('r'), ['id', pStructureID]).map(o => {
   return { ...o, action: 'repair' as const };
 });
-
 const upgradeAction = P.seqObj<UpgradeStructureAction>(P.string('u'), ['id', pStructureID]).map(
   o => {
     return { ...o, action: 'upgrade' as const };
@@ -178,65 +132,39 @@ const salvageAction = P.seqObj<SalvageStructureAction>(P.string('s'), ['id', pSt
 
 const pAction = P.alt<TurnAction>(buildAction, repairAction, upgradeAction, salvageAction);
 
-function parseSubmitTurn(c: ConciseConsumer): SubmittedTurnInput | InvalidInput {
+function tryParse<T>(c: ConciseValue | null, parser: P.Parser<T>): T {
+  if (!c) throw 'parsing error';
+  return parser.tryParse(c.value);
+}
+
+function parseSubmitTurn(c: ConciseConsumer): SubmittedTurnInput {
+  const lobbyID = tryParse(c.nextValue(), pLobbyID);
+  const roundNumber = tryParse(c.nextValue(), pRoundNumber);
+  const actions = c.remainingValues().map(c => tryParse(c, pAction));
+  return {
+    input: 'submittedTurn',
+    lobbyID,
+    roundNumber,
+    actions,
+  };
+}
+
+const myParser = new PaimaParser(myGrammar, parserCommands);
+
+function parse(input: string): ParsedSubmittedInput {
   try {
-    const lobbyID = tryParse(c.nextValue(), pLobbyID);
-    const roundNumber = tryParse(c.nextValue(), pRoundNumber);
-    const actions = c.remainingValues().map(c => tryParse(c, pAction));
-    return {
-      input: 'submittedTurn',
-      lobbyID,
-      roundNumber,
-      actions,
-    };
-  } catch {
+    const cConsumer = consumer.initialize(input);
+    // custom parser for submit moves since paima parser isn't that generic (yet)
+    if (cConsumer.prefix() === 's') {
+      return parseSubmitTurn(cConsumer);
+    } else {
+      const parsed = myParser.start(input);
+      return { input: parsed.command, ...parsed.args } as any;
+    }
+  } catch (e) {
+    console.log(e, 'Parsing error');
     return { input: 'invalidString' };
   }
 }
-// NFT Definitions
-const pNftAddress = pWallet;
-const pNftID = P.digits.map(Number);
-function parseNFT(c: ConciseConsumer): SetNFTInput | InvalidInput {
-  try {
-    const address = tryParse(c.nextValue(), pNftAddress);
-    const tokenID = tryParse(c.nextValue(), pNftID);
-    return {
-      input: 'setNFT',
-      address,
-      tokenID,
-    };
-  } catch {
-    return { input: 'invalidString' };
-  }
-}
-function parseZombie(c: ConciseConsumer): ScheduledDataInput | InvalidInput {
-  try {
-    const lobbyID = tryParse(c.nextValue(), pLobbyID);
-    return {
-      input: 'scheduledData',
-      effect: {
-        type: 'zombie',
-        lobbyID,
-      },
-    };
-  } catch {
-    return { input: 'invalidString' };
-  }
-}
-const pResult = P.oneOf('wl').map(s => s as 'w' | 'l');
-function parseUserStats(c: ConciseConsumer): ScheduledDataInput | InvalidInput {
-  try {
-    const wallet = tryParse(c.nextValue(), pWallet);
-    const result = tryParse(c.nextValue(), pResult);
-    return {
-      input: 'scheduledData',
-      effect: {
-        type: 'stats',
-        user: wallet,
-        result,
-      },
-    };
-  } catch {
-    return { input: 'invalidString' };
-  }
-}
+
+export default parse;
