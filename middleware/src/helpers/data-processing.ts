@@ -16,7 +16,12 @@ import { getBlockTime } from 'paima-engine/paima-utils';
 export function moveToString(move: TurnAction): string {
   switch (move.action) {
     case 'build':
-      return `b${move.coordinates},${conciseStructure(move.structure)}`;
+      const conciseStructure = conciseMap[move.structure];
+      if (!conciseStructure) {
+        pushLog('[moveToString] found move with invalid structure:', move.structure);
+        throw new Error(`Invalid move submitted: ${move}`);
+      }
+      return `b${move.coordinates},${conciseStructure}`;
     case 'repair':
       return `r${move.id}`;
     case 'upgrade':
@@ -28,15 +33,15 @@ export function moveToString(move: TurnAction): string {
       throw new Error(`Invalid move submitted: ${move}`);
   }
 }
-function conciseStructure(s: Structure): string {
-  if (s === 'anacondaTower') return 'at';
-  else if (s === 'piranhaTower') return 'pt';
-  else if (s === 'slothTower') return 'st';
-  else if (s === 'gorillaCrypt') return 'gc';
-  else if (s === 'jaguarCrypt') return 'jc';
-  else if (s === 'macawCrypt') return 'mc';
-  else return 'mc'; // error message?
-}
+
+const conciseMap: Record<Structure, string> = {
+  anacondaTower: 'at',
+  piranhaTower: 'pt',
+  slothTower: 'st',
+  gorillaCrypt: 'gc',
+  jaguarCrypt: 'jc',
+  macawCrypt: 'mc',
+};
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {
   if (!lobby.hasOwnProperty('lobby')) {

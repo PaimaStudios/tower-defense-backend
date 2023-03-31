@@ -1,5 +1,13 @@
 import { consumer } from 'paima-engine/paima-concise';
-import { MatchConfig, TowerConfig, CryptConfig, tryParseConfig, Crypt } from '@tower-defense/utils';
+import {
+  MatchConfig,
+  TowerConfig,
+  CryptConfig,
+  tryParseConfig,
+  Level,
+  UnitType,
+  Crypt,
+} from '@tower-defense/utils';
 
 const baseAnacondaTowerConfig1: TowerConfig = {
   price: 50,
@@ -223,6 +231,19 @@ const baseMacawCryptConfig = {
   2: baseMacawCryptConfig2,
   3: baseMacawCryptConfig3,
 };
+
+export const baseGoldProduction: Record<Level, number> = {
+  1: 100,
+  2: 200,
+  3: 400,
+};
+
+export const cryptUnitMap: Record<Crypt, UnitType> = {
+  macawCrypt: 'macaw',
+  jaguarCrypt: 'jaguar',
+  gorillaCrypt: 'gorilla',
+};
+
 export const baseConfig: MatchConfig = {
   defenderBaseHealth: 100,
   baseAttackerGoldRate: 150,

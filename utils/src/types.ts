@@ -145,10 +145,10 @@ export interface DefenderStructure {
 interface DefenderBase {
   // coordinates: Coordinates;
   health: number;
-  level: number;
+  level: Level;
 }
 interface AttackerBase {
-  level: number;
+  level: Level;
 }
 
 export type Tile =
@@ -187,7 +187,7 @@ export interface DefenderStructureTile {
   faction: 'defender';
   // "structure": DefenderStructureType
 }
-export type Level = 0 | 1 | 2;
+export type Level = 1 | 2 | 3;
 export interface DefenderBaseTile {
   type: 'base';
   faction: 'defender';

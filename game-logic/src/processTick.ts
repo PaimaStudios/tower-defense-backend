@@ -26,6 +26,7 @@ import type {
   UpgradeTier,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
+import { baseGoldProduction, cryptUnitMap } from './config';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -105,7 +106,7 @@ function endRound(
 ): [GoldRewardEvent, GoldRewardEvent] {
   matchState.roundEnded = true;
   const gold = computeGoldRewards(matchConfig, matchState);
-  for (let event of gold) applyEvent(matchConfig, matchState, event);
+  for (const event of gold) applyEvent(matchConfig, matchState, event);
   return gold;
 }
 // Output the gold rewards for each side, according to the match config.
@@ -113,10 +114,8 @@ function computeGoldRewards(
   matchConfig: MatchConfig,
   matchState: MatchState
 ): [GoldRewardEvent, GoldRewardEvent] {
-  const baseGoldProduction = (level: number) =>
-    level === 1 ? 100 : level === 2 ? 200 : level === 3 ? 400 : 0; // ...
-  const defenderBaseGold = baseGoldProduction(matchState.defenderBase.level);
-  const attackerBaseGold = baseGoldProduction(matchState.attackerBase.level);
+  const defenderBaseGold = baseGoldProduction[matchState.defenderBase.level] ?? 0;
+  const attackerBaseGold = baseGoldProduction[matchState.attackerBase.level] ?? 0;
   const attackerReward = attackerBaseGold + matchConfig.baseAttackerGoldRate;
   const defenderReward = defenderBaseGold + matchConfig.baseDefenderGoldRate;
   const events: [GoldRewardEvent, GoldRewardEvent] = [
@@ -303,7 +302,7 @@ function spawn(
     cryptID: crypt.id,
     actorID: matchState.actorCount + 1, // increment
     coordinates: path,
-    unitType: crypt.structure.replace('Crypt', '') as UnitType,
+    unitType: cryptUnitMap[crypt.structure],
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
     unitAttack: config[crypt.structure][crypt.upgrades].attackDamage,
@@ -322,31 +321,32 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     .filter((n: number | null): n is number => !!n)
     .filter(n => {
       const tile = matchState.mapState[n];
-      return tile.type === "path" && tile.faction === "attacker" 
-    })
+      return tile.type === 'path' && tile.faction === 'attacker';
+    });
 }
-function choosePath(paths: number[], mapWidth: number): number{
+function choosePath(paths: number[], mapWidth: number): number {
   const pick = paths.reduce((prev, curr) => {
-    const a = indexToCoords(prev, mapWidth)
-    const b = indexToCoords(curr, mapWidth)
+    const a = indexToCoords(prev, mapWidth);
+    const b = indexToCoords(curr, mapWidth);
     // whoever is further to the left
-    if (a.x < b.x) return prev
-    else if (b.x < a.x) return curr
+    if (a.x < b.x) return prev;
+    else if (b.x < a.x) return curr;
     // else whoever is more centered in the y axis
-    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr
-  })
-  return pick
+    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
+  });
+  return pick;
 }
 // Function to find an available path next to a crypt to place a newly spawned unit.
 // If there is more than one candidate then randomness is used to select one.
 function findClosebyPath(matchState: MatchState, coords: number, range = 1): number {
   const adjacentPaths = closeByPaths(coords, matchState);
-  if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width)
+  if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width);
   else {
-    const morePaths = getSurroundingCells(coords, matchState, range + 1)
-    .filter(n => matchState.mapState[n].type === "path");
-    if (morePaths.length > 0) return choosePath(morePaths, matchState.width)
-    else return findClosebyPath(matchState, coords, range + 1)
+    const morePaths = getSurroundingCells(coords, matchState, range + 1).filter(
+      n => matchState.mapState[n].type === 'path'
+    );
+    if (morePaths.length > 0) return choosePath(morePaths, matchState.width);
+    else return findClosebyPath(matchState, coords, range + 1);
   }
 }
 
@@ -373,7 +373,7 @@ function movementEvents(
     e: UnitMovementEvent | StatusEffectAppliedEvent | null
   ): e is UnitMovementEvent => !!e;
   const ret = events.flat().filter(eventTypeGuard);
-  for (let event of ret) applyEvent(matchConfig, matchState, event);
+  for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
   // .filter(e => e.completion === 100);dd
   // We had agreed with cat-astrophe that we'd only send movement events when the movement
@@ -478,7 +478,7 @@ function computeDamageToUnit(
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
   const events = damageByTower(matchConfig, tower, unitsNearby, randomnessGenerator);
-  for (let event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event);
   return events;
 }
 
@@ -644,7 +644,7 @@ function computeDamageToTower(
   const events: (DamageEvent | ActorDeletedEvent)[] = dying
     ? [damageEvent, killEvent]
     : [damageEvent];
-  for (let event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event);
   return events;
 }
 // Damage of units to defender base
@@ -674,7 +674,7 @@ function computeDamageToBase(
       id: attackerUnit.id,
     };
     const events: [DefenderBaseUpdateEvent, ActorDeletedEvent] = [baseEvent, deathEvent];
-    for (let event of events) applyEvent(matchConfig, matchState, event);
+    for (const event of events) applyEvent(matchConfig, matchState, event);
     return events;
   }
 }
@@ -714,7 +714,7 @@ export function validateCoords(coords: Coordinates, matchState: MatchState): num
 }
 function getSurroundingCells(index: number, matchState: MatchState, range: number): number[] {
   const center = indexToCoords(index, matchState.width);
-  let surroundingCells: Coordinates[] = [];
+  const surroundingCells: Coordinates[] = [];
   for (let x = center.x - range; x <= center.x + range; x++) {
     for (let y = center.y - range; y <= center.y + range; y++) {
       // Exclude the center cell itself
@@ -722,8 +722,8 @@ function getSurroundingCells(index: number, matchState: MatchState, range: numbe
         continue;
       }
       // Calculate the distance from the center cell
-      let dx = Math.abs(x - center.x);
-      let dy = Math.abs(y - center.y);
+      const dx = Math.abs(x - center.x);
+      const dy = Math.abs(y - center.y);
 
       // Exclude diagonals for each range
       if (dx + dy <= range) {
