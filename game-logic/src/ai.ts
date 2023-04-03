@@ -1,15 +1,15 @@
 import {
   AttackerStructure,
+  AttackerStructureType,
   BuildStructureAction,
-  Crypt,
   DefenderStructure,
+  DefenderStructureType,
   Faction,
   MatchConfig,
   MatchState,
   RepairStructureAction,
   Structure,
   Tile,
-  Tower,
   TurnAction,
 } from '@tower-defense/utils';
 
@@ -19,8 +19,8 @@ export function generateRandomMoves(
   faction: Faction,
   round: number
 ): TurnAction[] {
-  const towers: Tower[] = ['anacondaTower', 'piranhaTower', 'slothTower'];
-  const crypts: Crypt[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
+  const towers: DefenderStructureType[] = ['anacondaTower', 'piranhaTower', 'slothTower'];
+  const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
   const structures = faction === 'defender' ? towers : crypts;
   console.log(gold, 'generating moves');

@@ -6,9 +6,9 @@ import {
   tryParseConfig,
   Level,
   UnitType,
-  Crypt,
   RoleSetting,
   RoleSettingConcise,
+  AttackerStructureType,
 } from '@tower-defense/utils';
 
 const baseAnacondaTowerConfig1: TowerConfig = {
@@ -240,7 +240,7 @@ export const baseGoldProduction: Record<Level, number> = {
   3: 400,
 };
 
-export const cryptUnitMap: Record<Crypt, UnitType> = {
+export const attackerUnitMap: Record<AttackerStructureType, UnitType> = {
   macawCrypt: 'macaw',
   jaguarCrypt: 'jaguar',
   gorillaCrypt: 'gorilla',

@@ -219,9 +219,7 @@ export type TurnAction =
   | SalvageStructureAction
   | UpgradeStructureAction;
 
-export type Structure = Tower | Crypt;
-export type Tower = 'piranhaTower' | 'slothTower' | 'anacondaTower';
-export type Crypt = 'macawCrypt' | 'jaguarCrypt' | 'gorillaCrypt';
+export type Structure = DefenderStructureType | AttackerStructureType;
 
 export interface BaseAction {
   round: number;

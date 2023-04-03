@@ -25,7 +25,7 @@ import type {
   UpgradeTier,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
-import { baseGoldProduction, cryptUnitMap } from './config';
+import { baseGoldProduction, attackerUnitMap } from './config';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -301,7 +301,7 @@ function spawn(
     cryptID: crypt.id,
     actorID: matchState.actorCount + 1, // increment
     coordinates: path,
-    unitType: cryptUnitMap[crypt.structure],
+    unitType: attackerUnitMap[crypt.structure],
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
     unitAttack: config[crypt.structure][crypt.upgrades].attackDamage,
