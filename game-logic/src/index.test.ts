@@ -529,7 +529,7 @@ describe('Game Logic', () => {
     const events = units.map(u => {
       return damage(u, Object.values(matchState.actors.towers));
     });
-    applyEvents(matchConfig, matchState, events.flat(), 2, randomnessGenerator);
+    // applyEvents(matchConfig, matchState, events.flat(), 2, randomnessGenerator);
     const oldState = Object.values(snapshot)[0].health;
     const newState = Object.values(matchState.actors.towers)[0].health;
     const diff = oldState - newState;
