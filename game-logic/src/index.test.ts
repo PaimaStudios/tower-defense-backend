@@ -483,9 +483,9 @@ describe('Game Logic', () => {
   test('AI creates moves', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
-    const moves = generateRandomMoves(matchConfig, matchState, "defender", 1)
+    const moves = generateRandomMoves(matchConfig, matchState, 'defender', 1);
     const ok = moves.length > 0;
-    expect(ok).toBeTruthy
+    expect(ok).toBeTruthy;
   });
   test('units move forward', () => {
     const matchConfig = baseConfig;
@@ -494,13 +494,13 @@ describe('Game Logic', () => {
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(2000).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
-    let ok = true;
+    const ok = true;
     const baseIndex = matchState.mapState.findIndex(
       t => t.type === 'base' && t.faction === 'defender'
     );
-    for (let tick of ticks) {
+    for (const tick of ticks) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-      if (matchState.roundEnded) console.log(matchState, "state")
+      if (matchState.roundEnded) console.log(matchState, 'state');
       else {
         if (!events) console.log(tick, 'tick');
         if (events) {
@@ -549,4 +549,3 @@ function damage(u: AttackerUnit, t: DefenderStructure[]): DamageEvent[] {
     };
   });
 }
-

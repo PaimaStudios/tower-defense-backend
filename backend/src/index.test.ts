@@ -1,5 +1,5 @@
 import { getAllMaps, testPool } from '@tower-defense/db';
-import { fillMap, getMap } from '@tower-defense/game-logic/src/map-processor';
+import { getMap } from '@tower-defense/game-logic';
 import { PathTile, RawMap, Tile, TileNumber } from '@tower-defense/utils';
 test('all paths lead to other paths', async () => {
   const maps = await getAllMaps.run(undefined, testPool);

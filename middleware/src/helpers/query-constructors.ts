@@ -1,43 +1,12 @@
-import { UserAddress } from '@tower-defense/utils';
+import { MapName } from '@tower-defense/utils';
+import type { QueryOptions } from 'paima-engine/paima-mw-core';
+import { buildBackendQuery, buildQuery } from 'paima-engine/paima-mw-core';
+import { WalletAddress } from 'paima-engine/paima-utils';
 
-import { getBackendUri, getBatcherUri, getIndexerUri, getStatefulUri } from '../state';
-import { QueryOptions, QueryValue, StatefulNftId } from '../types';
-
-function queryValueToString(value: QueryValue): string {
-  if (typeof value === 'string') {
-    return value;
-  } else if (typeof value === 'number') {
-    return value.toString(10);
-  } else if (typeof value === 'boolean') {
-    return value.toString();
-  } else {
-    throw new Error('[queryValueToString] Invalid query value');
-  }
-}
-
-function buildQuery(endpoint: string, options: QueryOptions): string {
-  const optStrings: string[] = [];
-  for (let opt in options) {
-    const valString = queryValueToString(options[opt]);
-    optStrings.push(`${opt}=${valString}`);
-  }
-  if (optStrings.length === 0) {
-    return endpoint;
-  } else {
-    return `${endpoint}?${optStrings.join('&')}`;
-  }
-}
-
-function buildBackendQuery(endpoint: string, options: QueryOptions): string {
-  return `${getBackendUri()}/${buildQuery(endpoint, options)}`;
-}
+import { getIndexerUri, getStatefulUri } from '../state';
 
 function buildIndexerQuery(endpoint: string, options: QueryOptions): string {
   return `${getIndexerUri()}/api/v1/${buildQuery(endpoint, options)}`;
-}
-
-function buildBatcherQuery(endpoint: string, options: QueryOptions): string {
-  return `${getBatcherUri()}/${buildQuery(endpoint, options)}`;
 }
 
 function buildStatefulQuery(endpoint: string, options: QueryOptions): string {
@@ -100,7 +69,7 @@ export function backendQueryLobbyState(lobbyID: string): string {
 }
 
 export function backendQuerySearchLobby(
-  wallet: UserAddress,
+  wallet: WalletAddress,
   searchQuery: string,
   page: number,
   count?: number
@@ -114,14 +83,8 @@ export function backendQuerySearchLobby(
   return buildBackendQuery(endpoint, options);
 }
 
-export function backendQueryLatestProcessedBlockHeight(): string {
-  const endpoint = 'latest_processed_blockheight';
-  const options = {};
-  return buildBackendQuery(endpoint, options);
-}
-
 export function backendQueryUserLobbiesBlockheight(
-  wallet: UserAddress,
+  wallet: WalletAddress,
   blockHeight: number
 ): string {
   const endpoint = 'user_lobbies_blockheight';
@@ -155,7 +118,7 @@ export function backendQueryRoundStatus(lobbyID: string, round: number): string 
   return buildBackendQuery(endpoint, options);
 }
 
-export function backendQueryUserStats(wallet: UserAddress): string {
+export function backendQueryUserStats(wallet: WalletAddress): string {
   const endpoint = 'user_stats';
   const options = {
     wallet,
@@ -163,7 +126,7 @@ export function backendQueryUserStats(wallet: UserAddress): string {
   return buildBackendQuery(endpoint, options);
 }
 
-export function backendQueryUserNft(wallet: UserAddress): string {
+export function backendQueryUserNft(wallet: WalletAddress): string {
   const endpoint = 'user_nft';
   const options = {
     wallet,
@@ -172,7 +135,7 @@ export function backendQueryUserNft(wallet: UserAddress): string {
 }
 
 export function backendQueryUserLobbies(
-  wallet: UserAddress,
+  wallet: WalletAddress,
   count?: number,
   page?: number
 ): string {
@@ -192,7 +155,7 @@ export function backendQueryUserLobbies(
 }
 
 export function backendQueryOpenLobbies(
-  wallet: UserAddress,
+  wallet: WalletAddress,
   count?: number,
   page?: number
 ): string {
@@ -237,47 +200,12 @@ export function backendQueryMatchWinner(lobbyID: string): string {
   };
   return buildBackendQuery(endpoint, options);
 }
-export function backendQueryMapByName(mapName: string): string {
+export function backendQueryMapByName(mapName: MapName): string {
   const endpoint = 'map_layout';
   const options = {
     mapName,
   };
   return buildBackendQuery(endpoint, options);
-}
-
-export function backendQueryBackendVersion(): string {
-  const endpoint = 'backend_version';
-  const options = {};
-  return buildBackendQuery(endpoint, options);
-}
-
-export function batcherQuerySubmitUserInput(): string {
-  const endpoint = 'submit_user_input';
-  const options = {};
-  return buildBatcherQuery(endpoint, options);
-}
-
-export function batcherQueryTrackUserInput(inputHash: string): string {
-  const endpoint = 'track_user_input';
-  const options = {
-    input_hash: inputHash,
-  };
-  return buildBatcherQuery(endpoint, options);
-}
-
-export function statefulQueryStatelessNftsRanking(count?: number, page?: number): string {
-  const endpoint = 'stateless-nfts-ranking';
-  const optsStart: QueryOptions = {};
-  if (typeof count !== 'undefined') {
-    optsStart.count = count;
-  }
-  if (typeof page !== 'undefined') {
-    optsStart.page = page;
-  }
-  const options = {
-    ...optsStart,
-  };
-  return buildStatefulQuery(endpoint, options);
 }
 
 export function statefulQueryNftScore(nftContract: string, tokenId: number): string {

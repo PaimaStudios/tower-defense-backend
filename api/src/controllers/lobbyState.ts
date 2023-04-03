@@ -7,6 +7,7 @@ import {
   IGetPaginatedOpenLobbiesResult,
   requirePool,
 } from '@tower-defense/db';
+import { GameENV } from '@tower-defense/utils';
 
 interface Response {
   lobby: Lobby | null;
@@ -33,7 +34,7 @@ export class lobbyStateController extends Controller {
       const startingBlockheight = round_data?.starting_block_height || 0;
       if (lobby.lobby_state === 'open') {
         const nextRound = {
-          seconds: lobby.round_length * 4, // db holds the blockheight
+          seconds: lobby.round_length * GameENV.BLOCK_TIME, // db holds the blockheight
           calculated_at: Date.now(),
         };
         const response = {

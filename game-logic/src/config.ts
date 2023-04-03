@@ -1,5 +1,15 @@
 import { consumer } from 'paima-engine/paima-concise';
-import { MatchConfig, TowerConfig, CryptConfig, tryParseConfig, Crypt } from '@tower-defense/utils';
+import {
+  MatchConfig,
+  TowerConfig,
+  CryptConfig,
+  tryParseConfig,
+  Level,
+  UnitType,
+  RoleSetting,
+  RoleSettingConcise,
+  AttackerStructureType,
+} from '@tower-defense/utils';
 
 const baseAnacondaTowerConfig1: TowerConfig = {
   price: 50,
@@ -195,7 +205,7 @@ const baseMacawCryptConfig3: CryptConfig = {
 const baseAnacondaTowerConfig = {
   1: baseAnacondaTowerConfig1,
   2: baseAnacondaTowerConfig2,
-  3: baseAnacondaTowerConfig3
+  3: baseAnacondaTowerConfig3,
 };
 const basePiranhaTowerConfig = {
   1: basePiranhaTowerConfig1,
@@ -223,6 +233,25 @@ const baseMacawCryptConfig = {
   2: baseMacawCryptConfig2,
   3: baseMacawCryptConfig3,
 };
+
+export const baseGoldProduction: Record<Level, number> = {
+  1: 100,
+  2: 200,
+  3: 400,
+};
+
+export const attackerUnitMap: Record<AttackerStructureType, UnitType> = {
+  macawCrypt: 'macaw',
+  jaguarCrypt: 'jaguar',
+  gorillaCrypt: 'gorilla',
+};
+
+export const conciseFactionMap: Record<RoleSettingConcise, RoleSetting> = {
+  a: 'attacker',
+  d: 'defender',
+  r: 'random',
+};
+
 export const baseConfig: MatchConfig = {
   defenderBaseHealth: 100,
   baseAttackerGoldRate: 150,
@@ -240,10 +269,11 @@ export const baseConfig: MatchConfig = {
   gorillaCrypt: baseGorillaCryptConfig,
   jaguarCrypt: baseJaguarCryptConfig,
 };
+//TODO: add config parser later
 export function parseConfig(s: string | null): MatchConfig {
   if (!s) return baseConfig;
   if (s === 'default') return baseConfig;
-  else return baseConfig
+  else return baseConfig;
   // else {
   //   const c = consumer.initialize(s);
   //   const version = c.nextValue();
@@ -282,7 +312,7 @@ export function parseConfig(s: string | null): MatchConfig {
   //           baseConfig.macawCrypt[1] = { ...baseConfig.macawCrypt[1], ...p };
   //           break;
   //       }
-    // }
+  // }
   // } else
   // return { ...baseConfig };
 }

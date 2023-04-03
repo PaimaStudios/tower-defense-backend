@@ -1,22 +1,15 @@
+import type { FailedResult } from 'paima-engine/paima-mw-core';
 import type {
   ContractAddress,
-  GameInput,
   Hash,
   LobbyStatus,
+  MapName,
   MatchConfig,
   MatchState,
   TurnAction,
   URI,
-  UserAddress,
-  UserSignature,
 } from '@tower-defense/utils';
-
-export interface BatchedSubunit {
-  userAddress: UserAddress;
-  userSignature: UserSignature;
-  gameInput: GameInput;
-  millisecondTimestamp: string;
-}
+import { WalletAddress } from 'paima-engine/paima-utils';
 
 export interface MiddlewareConnectionDetails {
   storageAddress: ContractAddress;
@@ -30,25 +23,6 @@ export interface MiddlewareConfig extends MiddlewareConnectionDetails {
   localVersion: string;
 }
 
-export interface PostingInfo {
-  address: UserAddress;
-  postingModeString: PostingModeString;
-}
-
-export type PostingModeString = 'unbatched' | 'batched-eth' | 'batched-cardano' | 'automatic';
-
-export type PostingModeSwitchResult = PostingModeSwitchSuccessfulResult | FailedResult;
-
-interface PostingModeSwitchSuccessfulResult extends PostingInfo {
-  success: true;
-}
-
-export type SignFunction = (userAddress: UserAddress, message: string) => Promise<string>;
-
-export type CardanoApi = any;
-
-export type Deployment = 'C1' | 'A1';
-
 export interface SuccessfulResultMessage {
   success: true;
   message: string;
@@ -59,30 +33,13 @@ export interface SuccessfulResult<T> {
   result: T;
 }
 
-export interface FailedResult {
-  success: false;
-  errorMessage: string;
-  errorCode: number;
-}
-
 export interface RoundEnd {
   blocks: number;
   seconds: number;
 }
 
-export type QueryValue = string | number | boolean;
-export type QueryOptions = Record<string, QueryValue>;
-
 export type Result<T> = SuccessfulResult<T> | FailedResult;
 export type OldResult = SuccessfulResultMessage | FailedResult;
-
-export type MapName = 'jungle' | 'ocean';
-
-export type UserAnimal = 'piranha' | 'gorilla' | 'anaconda' | 'jaguar' | 'macaw' | 'sloth';
-
-export interface Wallet {
-  walletAddress: UserAddress;
-}
 
 interface CreateLobbySuccessfulResponse {
   success: true;
@@ -113,17 +70,6 @@ export interface NFT {
   tokenId: number;
 }
 
-export interface DisplayNFT {
-  title: string;
-  image: URI;
-}
-
-export interface User {
-  wallet: UserAddress;
-  avatarNFT: NFT;
-  tauntNFT: NFT;
-}
-
 export interface BasicLobbyInfo {
   lobby_id: Hash;
   health: number;
@@ -134,8 +80,8 @@ export interface BasicLobbyInfo {
   map: MapName;
   created_at: string;
   creation_block_height: number;
-  lobby_creator: UserAddress;
-  player_two: UserAddress;
+  lobby_creator: WalletAddress;
+  player_two: WalletAddress;
   round_ends_in_blocks: number;
   round_ends_in_secs: number;
 }
@@ -149,30 +95,18 @@ export interface PackedLobbyState {
   lobby: LobbyState;
 }
 
-export interface RoundExecutionState {
-  executed: boolean;
-  usersWhoSubmittedMoves: UserAddress[];
-  roundEndsInBlocks: number;
-  roundEndsInSeconds: number;
-}
-
-export interface PackedRoundExecutionState {
+export interface PackedLobbyConfig {
   success: true;
-  round: RoundExecutionState;
+  result: {
+    config: MatchConfig;
+  };
 }
-
-export interface PackedLobbyConfig{
+export interface PackedCurrentRound {
   success: true;
-  result:{
-    config: MatchConfig
-  }
-}
-export interface PackedCurrentRound{
-  success: true;
-  result:{
+  result: {
     currentRound: number;
     roundStartHeight: number;
-  }
+  };
 }
 
 export interface RichOpenLobbyStates {
@@ -185,33 +119,8 @@ export interface LobbyStates {
   lobbies: LobbyState[];
 }
 
-export interface UserState {
-  userAddress: UserAddress; // or wallet?
-  userPosition: number;
-  userHealth: number;
-  userAnimal: UserAnimal;
-  wallet: UserAddress;
-  avatarNFT: NFT;
-  tauntNFT: NFT;
-}
-export type MatchMove = Reposition | Fire | Taunt;
-
-export interface Reposition {
-  moveType: 'reposition';
-  position: number;
-}
-
-export interface Fire {
-  moveType: 'fire';
-  position: number;
-}
-
-export interface Taunt {
-  moveType: 'taunt';
-}
-
 export interface UserStats {
-  wallet: UserAddress;
+  wallet: WalletAddress;
   wins: number;
   losses: number;
 }
@@ -236,67 +145,6 @@ export interface AccountNftsData {
   result: AccountNftsResult[];
 }
 
-export interface RoundStatusData {
-  round: {
-    roundStarted: number;
-    roundLength: number;
-    executed: boolean;
-    usersWhoSubmittedMoves: UserAddress[];
-  };
-}
-
-interface BatcherPostResponseSuccessful {
-  success: true;
-  hash: Hash;
-}
-
-interface BatcherPostResponseUnsuccessful {
-  success: false;
-  message: string;
-}
-
-export type BatcherPostResponse = BatcherPostResponseSuccessful | BatcherPostResponseUnsuccessful;
-
-type BatcherTrackingStatus = string;
-
-interface BatcherTrackResponseUnsuccessful {
-  success: false;
-  message: string;
-}
-
-interface BatcherTrackResponseCore {
-  success: true;
-  hash: Hash;
-}
-
-interface BatcherTrackResponsePosted extends BatcherTrackResponseCore {
-  status: 'posted';
-  block_height: number;
-  transaction_hash: Hash;
-}
-
-interface BatcherTrackResponseRejected extends BatcherTrackResponseCore {
-  status: 'rejected';
-  message: string;
-}
-
-interface BatcherTrackResponseOther extends BatcherTrackResponseCore {
-  status: 'accepted' | 'validating';
-}
-
-export type BatcherTrackResponse =
-  | BatcherTrackResponsePosted
-  | BatcherTrackResponseRejected
-  | BatcherTrackResponseOther;
-
-export type RoundExecutor = any;
-export type MatchExecutor = any;
-
-export interface PlayerStatePair {
-  user1: PlayerState;
-  user2: PlayerState;
-}
-
 interface PlayerState {
   wallet: string;
   health: number;
@@ -309,21 +157,13 @@ export interface ExecutorDataPlayerState extends PlayerState {
   round: number;
 }
 
-interface ExecutorDataRoundData {
-  id: number;
-  lobby_id: string;
-  round_within_match: number;
-  starting_block_height: number;
-  execution_block_height: number;
-}
-
 interface ExecutorDataBlockHeight {
   block_height: number;
   seed: string;
   done: boolean;
 }
 
-export interface ExecutorDataSeed {
+interface ExecutorDataSeed {
   block_height: number;
   seed: string;
   round: number;
@@ -375,22 +215,6 @@ export interface IndexerNftOwnership {
   owner: string;
 }
 
-/*
-export interface Opponent{
-    opponentAddress: Hash,
-    NFT: NFT
-}
-
-export interface MockData {
-  wallet: Wallet;
-  lobbies: OpenLobby[];
-  inLobbies: Lobby[];
-  lobby: LobbyState;
-  stats: UserStats;
-  opponents: [Opponent, Opponent, Opponent];
-}
-*/
-
 export interface MatchWinnerResponse {
   match_status: LobbyStatus;
   winner_address: string;
@@ -414,7 +238,7 @@ export interface LobbyDbQuery {
   round_length: number;
 }
 export interface UserNft {
-  wallet: UserAddress;
+  wallet: WalletAddress;
   nftContract: ContractAddress | null;
   tokenId: number | null;
 }

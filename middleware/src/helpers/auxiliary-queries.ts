@@ -1,14 +1,10 @@
-import {
-  ContractAddress,
-  gameBackendVersion,
-  NFT_CONTRACT,
-  UserAddress,
-} from '@tower-defense/utils';
-import { LobbyWebserverQuery, RichOpenLobbyState, UserNft } from '../types';
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
-import {
-  FailedResult,
-  IndexerNftOwnership,
+import { FailedResult, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
+import { postDataToEndpoint, pushLog } from 'paima-engine/paima-mw-core';
+import type { ContractAddress } from '@tower-defense/utils';
+import { GameENV } from '@tower-defense/utils';
+import type { LobbyWebserverQuery, RichOpenLobbyState, UserNft } from '../types';
+import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
+import type {
   LobbyState,
   NewLobbies,
   NewLobby,
@@ -26,11 +22,7 @@ import {
   userJoinedLobby,
   userNftIndexerToMiddleware,
 } from './data-processing';
-import { postDataToEndpoint } from './general';
-import { pushLog } from './logging';
 import {
-  backendQueryBackendVersion,
-  backendQueryLatestProcessedBlockHeight,
   backendQueryLobbyState,
   backendQueryUserLobbiesBlockheight,
   backendQueryUserNft,
@@ -40,6 +32,7 @@ import {
   statefulQueryMultipleNftScores,
   statefulQueryNftScore,
 } from './query-constructors';
+import { WalletAddress } from 'paima-engine/paima-utils';
 
 export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getRawLobbyState');
@@ -49,7 +42,7 @@ export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyStat
     const query = backendQueryLobbyState(lobbyID);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -60,32 +53,7 @@ export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyStat
       lobby: j.lobby,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
-  }
-}
-
-export async function getRawLatestProcessedBlockHeight(): Promise<
-  SuccessfulResult<number> | FailedResult
-> {
-  const errorFxn = buildEndpointErrorFxn('getRawLatestProcessedBlockHeight');
-
-  let res: Response;
-  try {
-    const query = backendQueryLatestProcessedBlockHeight();
-    res = await fetch(query);
-  } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
-  }
-
-  try {
-    const j = (await res.json()) as { block_height: number };
-    // TODO: properly typecheck
-    return {
-      success: true,
-      result: j.block_height,
-    };
-  } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -100,7 +68,7 @@ export async function getRawNewLobbies(
     const query = backendQueryUserLobbiesBlockheight(wallet, blockHeight);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -111,33 +79,7 @@ export async function getRawNewLobbies(
       lobbies: j.lobbies,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
-  }
-}
-
-// TODO: reworking this to use serverEndpointCall requires the endpoint to return a JSON
-//       also purposefully not using a query constructor for extra differentiation
-export async function getRemoteBackendVersion(): Promise<string> {
-  const errorFxn = buildEndpointErrorFxn('getRemoteBackendVersion');
-
-  let res: Response;
-  try {
-    const query = backendQueryBackendVersion();
-    res = await fetch(query);
-  } catch (err) {
-    errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
-    throw err;
-  }
-
-  try {
-    const versionString = await res.text();
-    if (versionString[0] !== '"' || versionString[versionString.length - 1] !== '"') {
-      throw new Error('Invalid version string: ' + versionString);
-    }
-    return versionString.slice(1, versionString.length - 1);
-  } catch (err) {
-    errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
-    throw err;
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
@@ -179,7 +121,7 @@ export async function fetchUserSetNft(
     const query = backendQueryUserNft(address);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
@@ -188,7 +130,7 @@ export async function fetchUserSetNft(
     const tokenId: number = parseInt(j.nft.token_id, 10);
     if (isNaN(tokenId)) {
       // TODO: can the backend store a NaN somehow? Is it enforced to be an integer?
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
+      return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
     }
     return {
       success: true,
@@ -198,13 +140,13 @@ export async function fetchUserSetNft(
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
 
 export async function verifyNft(
   nftId: NftId,
-  address: UserAddress,
+  address: WalletAddress,
   latestBlockHeight: number
 ): Promise<SuccessfulResult<true> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('verifyNft');
@@ -215,20 +157,20 @@ export async function verifyNft(
     const query = indexerQueryHistoricalOwner(nftId.nftAddress, nftId.tokenId, latestBlockHeight);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
 
   try {
     const j = await res.json();
     // TODO: properly type check
     if (!j.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.UNABLE_TO_VERIFY_NFT_OWNERSHIP);
+      return errorFxn(MiddlewareErrorCode.UNABLE_TO_VERIFY_NFT_OWNERSHIP);
     }
     if (j.result.toLowerCase() !== address.toLowerCase()) {
-      return errorFxn(CatapultMiddlewareErrorCode.NFT_OWNED_BY_DIFFERENT_ADDRESS);
+      return errorFxn(MiddlewareErrorCode.NFT_OWNED_BY_DIFFERENT_ADDRESS);
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
+    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
   }
 
   return {
@@ -249,13 +191,13 @@ export async function fetchNftTitleImage(
     const query = indexerQueryTitleImage(nftId.nftAddress, nftId.tokenId);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
 
   try {
     const j = await res.json();
     if (!j.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.NFT_TITLE_IMAGE_UNKNOWN);
+      return errorFxn(MiddlewareErrorCode.NFT_TITLE_IMAGE_UNKNOWN);
     }
     const titleAndImage = j.result;
     return {
@@ -267,11 +209,14 @@ export async function fetchNftTitleImage(
       },
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
+    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
   }
 }
 
-export async function fetchAndVerifyNft(address: UserAddress, blockHeight: number): Promise<NftId> {
+export async function fetchAndVerifyNft(
+  address: WalletAddress,
+  blockHeight: number
+): Promise<NftId> {
   const EMPTY_NFT_ID: NftId = {
     nftAddress: '',
     tokenId: 0,
@@ -303,7 +248,7 @@ export async function getNftStats(
     pushLog('[getNftStats] fetching with query:', query);
     res = await fetch(query);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_STATEFUL_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_STATEFUL_ENDPOINT, err);
   }
 
   try {
@@ -313,7 +258,7 @@ export async function getNftStats(
       result: nftScoreSnakeToCamel(j),
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
+    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
   }
 }
 
@@ -328,7 +273,7 @@ async function fetchMultipleNftScores(
     const body = JSON.stringify({ nfts: nftIds });
     res = await postDataToEndpoint(query, body);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_STATEFUL_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_STATEFUL_ENDPOINT, err);
   }
 
   try {
@@ -339,7 +284,7 @@ async function fetchMultipleNftScores(
       result: nftScores,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
+    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
   }
 }
 
@@ -353,19 +298,19 @@ async function fetchMultipleNftOwners(
   try {
     const query = indexerQueryHistoricalOwnerMultiple();
     const body = JSON.stringify({
-      contract: NFT_CONTRACT,
+      contract: GameENV.NFT_CONTRACT,
       blockHeight,
       tokenIds,
     });
     res = await postDataToEndpoint(query, body);
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
+    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
 
   try {
     const j = await res.json();
     if (!j.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER);
+      return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER);
     }
     const nfts: UserNft[] = j.result.map(userNftIndexerToMiddleware);
     return {
@@ -373,7 +318,7 @@ async function fetchMultipleNftOwners(
       result: nfts,
     };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
+    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
   }
 }
 
@@ -389,7 +334,7 @@ export async function addLobbyCreatorNftStats(
   }
 
   const nftIds: StatefulNftId[] = resVerification.result.map(nft => ({
-    nft_contract: nft.nftContract || NFT_CONTRACT,
+    nft_contract: nft.nftContract || GameENV.NFT_CONTRACT,
     token_id: nft.tokenId || 0,
   }));
   const resScores = await fetchMultipleNftScores(nftIds);
@@ -405,7 +350,7 @@ export async function addLobbyCreatorNftStats(
     score: resScores.result[index],
   }));
 
-  const nftContract = NFT_CONTRACT.toLowerCase();
+  const nftContract = GameENV.NFT_CONTRACT.toLowerCase();
 
   return lobbies.map(lobby => {
     if (lobby.nft.nftContract?.toLowerCase() === nftContract) {
@@ -427,41 +372,4 @@ export async function addLobbyCreatorNftStats(
       losses: 0,
     };
   });
-}
-
-// Waits until awaitedBlock has been processed by the backend
-export async function awaitBlock(awaitedBlock: number): Promise<void> {
-  const BLOCK_DELAY = 1000;
-  let currentBlock: number;
-
-  function waitLoop() {
-    setTimeout(async () => {
-      const res = await getRawLatestProcessedBlockHeight();
-      if (res.success) {
-        currentBlock = res.result;
-      }
-      if (!res.success || currentBlock < awaitedBlock) {
-        waitLoop();
-      }
-    }, BLOCK_DELAY);
-  }
-
-  waitLoop();
-}
-
-export async function localRemoteVersionsCompatible(): Promise<boolean> {
-  const localVersion = gameBackendVersion;
-  const remoteVersion = await getRemoteBackendVersion();
-
-  const localComponents = localVersion.split('.').map(parseInt);
-  const remoteComponents = remoteVersion.split('.').map(parseInt);
-
-  pushLog('Middleware version:', localVersion);
-  pushLog('Backend version:   ', remoteVersion);
-
-  if (localComponents[0] !== remoteComponents[0]) {
-    return false;
-  } else {
-    return true;
-  }
 }

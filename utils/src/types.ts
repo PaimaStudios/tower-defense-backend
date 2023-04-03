@@ -1,13 +1,9 @@
+import { WalletAddress } from 'paima-engine/paima-utils';
+
 export type Hash = string;
 export type URI = string;
-export type ISO8601Date = string;
-export type CardanoAddress = Hash;
 export type EthAddress = Hash;
-export type Address = CardanoAddress | EthAddress;
-export type UserAddress = Address;
 export type ContractAddress = EthAddress;
-export type UserSignature = Hash;
-export type GameInput = string;
 
 // Match Config
 export interface MatchConfig {
@@ -78,10 +74,10 @@ export interface AnnotatedMap {
 }
 
 export interface MatchState extends AnnotatedMap {
-  attacker: Wallet;
+  attacker: WalletAddress;
   attackerGold: number;
   attackerBase: AttackerBase;
-  defender: Wallet;
+  defender: WalletAddress;
   defenderGold: number;
   defenderBase: DefenderBase;
   actors: ActorsObject;
@@ -149,10 +145,10 @@ export interface DefenderStructure {
 interface DefenderBase {
   // coordinates: Coordinates;
   health: number;
-  level: number;
+  level: Level;
 }
 interface AttackerBase {
-  level: number;
+  level: Level;
 }
 
 export type Tile =
@@ -191,7 +187,7 @@ export interface DefenderStructureTile {
   faction: 'defender';
   // "structure": DefenderStructureType
 }
-export type Level = 0 | 1 | 2;
+export type Level = 1 | 2 | 3;
 export interface DefenderBaseTile {
   type: 'base';
   faction: 'defender';
@@ -217,41 +213,33 @@ export interface AttackerUnbuildableTile {
   faction: 'attacker';
 }
 
-export type Wallet = string;
-
 export type TurnAction =
   | BuildStructureAction
   | RepairStructureAction
   | SalvageStructureAction
   | UpgradeStructureAction;
 
-export type Structure = Tower | Crypt;
-export type Tower = 'piranhaTower' | 'slothTower' | 'anacondaTower';
-export type Crypt = 'macawCrypt' | 'jaguarCrypt' | 'gorillaCrypt';
+export type Structure = DefenderStructureType | AttackerStructureType;
 
-export interface BuildStructureAction {
+export interface BaseAction {
   round: number;
+  faction: Faction;
+}
+export interface BuildStructureAction extends BaseAction {
   action: 'build';
   coordinates: number;
-  faction: Faction;
   structure: Structure;
 }
-export interface RepairStructureAction {
-  round: number;
+export interface RepairStructureAction extends BaseAction {
   action: 'repair';
-  faction: Faction;
   id: number;
 }
-export interface SalvageStructureAction {
-  round: number;
+export interface SalvageStructureAction extends BaseAction {
   action: 'salvage';
-  faction: Faction;
   id: number;
 }
-export interface UpgradeStructureAction {
-  round: number;
+export interface UpgradeStructureAction extends BaseAction {
   action: 'upgrade';
-  faction: Faction;
   id: number;
 }
 export type StructureEvent =
@@ -362,18 +350,21 @@ export interface StatusEffectAppliedEvent {
 export type TowerAttack = DamageEvent | ActorDeletedEvent | StatusEffectAppliedEvent;
 export type UnitAttack = DamageEvent | DefenderBaseUpdateEvent | ActorDeletedEvent;
 
-export interface PlayersState {
-  user1: PlayerState;
-  user2: PlayerState;
-}
-interface PlayerState {
-  wallet: string;
-  health: number;
-  position: number;
-}
-
-export interface InvalidInput {
-  error: 'invalidString';
-}
-
 export type LobbyStatus = 'open' | 'active' | 'finished' | 'closed';
+
+export const maps = [
+  'jungle',
+  'backwards',
+  'crossing',
+  'narrow',
+  'snake',
+  'straight',
+  'wavy',
+  'fork',
+  'islands',
+] as const;
+export type MapName = (typeof maps)[number];
+
+export type RoleSetting = 'attacker' | 'defender' | 'random';
+export type RoleSettingConcise = 'a' | 'd' | 'r';
+export type StructureConcise = 'at' | 'pt' | 'st' | 'gc' | 'jc' | 'mc';

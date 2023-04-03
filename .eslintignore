@@ -1,0 +1,14 @@
+node_modules
+**/dist
+**/build
+**/lib
+**/*.tsbuildinfo
+
+**/snapshots
+
+# bundled middleware
+**/packaged
+
+# generated but committed code
+api/src/tsoa
+db/src/*.queries.ts

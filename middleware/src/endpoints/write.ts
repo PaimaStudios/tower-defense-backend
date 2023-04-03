@@ -1,22 +1,23 @@
 import { retryPromise } from 'paima-engine/paima-utils';
 import { builder } from 'paima-engine/paima-concise';
 
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode, EndpointErrorFxn } from '../errors';
-import {
-  awaitBlock,
-  getLobbyStateWithUser,
-  getNonemptyNewLobbies,
-} from '../helpers/auxiliary-queries';
+import type { EndpointErrorFxn } from '../errors';
+import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
+import { getLobbyStateWithUser, getNonemptyNewLobbies } from '../helpers/auxiliary-queries';
 import {
   lobbyWasClosed,
   moveToString,
   userCreatedLobby,
   userJoinedLobby,
 } from '../helpers/data-processing';
-import { postConciselyEncodedData } from '../helpers/posting';
-import { getActiveAddress } from '../state';
-import { CreateLobbyResponse, OldResult, Result } from '../types';
-import { Faction, TurnAction } from '@tower-defense/utils';
+import type { CreateLobbyResponse, OldResult, Result } from '../types';
+import type { Faction, MapName, TurnAction } from '@tower-defense/utils';
+import {
+  awaitBlock,
+  getActiveAddress,
+  PaimaMiddlewareErrorCode,
+  postConciselyEncodedData,
+} from 'paima-engine/paima-mw-core';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
@@ -25,21 +26,21 @@ const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
   try {
     const wallet = getActiveAddress();
     if (wallet.length === 0) {
-      return errorFxn(CatapultMiddlewareErrorCode.WALLET_NOT_CONNECTED);
+      return errorFxn(PaimaMiddlewareErrorCode.WALLET_NOT_CONNECTED);
     }
     return { result: wallet, success: true };
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
+    return errorFxn(MiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
   }
 };
 
 interface CreateLobbyParams {
-  presetName: "short" | "medium" | "long";
+  presetName: 'short' | 'medium' | 'long';
   role: Faction | 'random';
   numberOfRounds: number;
   roundLength: number;
   isHidden: boolean;
-  mapName: string;
+  mapName: MapName;
   isPractice: boolean;
 }
 
@@ -52,13 +53,14 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   console.log(JSON.parse(json), 'json parsed');
   const parsed: CreateLobbyParams = JSON.parse(json);
   const { presetName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
-  const configName = presetName === "short" 
-  ? "defaultdefault" 
-  : presetName === "medium" 
-  ? "defaultdefault"
-  : presetName === "long"
-  ? "defaultdefault"
-  : "defaultdefault"
+  const configName =
+    presetName === 'short'
+      ? 'defaultdefault'
+      : presetName === 'medium'
+      ? 'defaultdefault'
+      : presetName === 'long'
+      ? 'defaultdefault'
+      : 'defaultdefault';
   const roleEncoding =
     role === 'attacker' ? 'a' : role === 'defender' ? 'd' : role === 'random' ? 'r' : 'r';
 
@@ -76,24 +78,20 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
 
   let currentBlockVar: number;
   try {
-    const result = await postConciselyEncodedData(
-      userWalletAddress,
-      'paimaSubmitGameInput',
-      conciseBuilder.build()
-    );
+    const result = await postConciselyEncodedData(conciseBuilder.build());
     if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
+      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
     }
     currentBlockVar = result.result;
 
     if (currentBlockVar < 0) {
       return errorFxn(
-        CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
+        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
         `Received block height: ${currentBlockVar}`
       );
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
   }
   const currentBlock = currentBlockVar;
 
@@ -109,7 +107,7 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
       !Array.isArray(newLobbies.lobbies) ||
       newLobbies.lobbies.length === 0
     ) {
-      return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CREATION);
+      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CREATION);
     } else {
       return {
         success: true,
@@ -118,7 +116,7 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
       };
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CREATION, err);
+    return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CREATION, err);
   }
 }
 
@@ -135,24 +133,20 @@ async function joinLobby(lobbyID: string): Promise<OldResult> {
 
   let currentBlockVar: number;
   try {
-    const result = await postConciselyEncodedData(
-      userWalletAddress,
-      'paimaSubmitGameInput',
-      conciseBuilder.build()
-    );
+    const result = await postConciselyEncodedData(conciseBuilder.build());
     if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
+      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
     }
     currentBlockVar = result.result;
 
     if (currentBlockVar < 0) {
       return errorFxn(
-        CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
+        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
         `Received block height: ${currentBlockVar}`
       );
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
   }
   const currentBlock = currentBlockVar;
 
@@ -169,12 +163,12 @@ async function joinLobby(lobbyID: string): Promise<OldResult> {
         message: '',
       };
     } else if (userCreatedLobby(userWalletAddress, lobbyState)) {
-      return errorFxn(CatapultMiddlewareErrorCode.CANNOT_JOIN_OWN_LOBBY);
+      return errorFxn(MiddlewareErrorCode.CANNOT_JOIN_OWN_LOBBY);
     } else {
-      return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
+      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
+    return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
   }
 }
 
@@ -191,24 +185,20 @@ async function closeLobby(lobbyID: string): Promise<OldResult> {
 
   let currentBlockVar: number;
   try {
-    const result = await postConciselyEncodedData(
-      userWalletAddress,
-      'paimaSubmitGameInput',
-      conciseBuilder.build()
-    );
+    const result = await postConciselyEncodedData(conciseBuilder.build());
     if (!result.success) {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
+      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
     }
     currentBlockVar = result.result;
 
     if (currentBlockVar < 0) {
       return errorFxn(
-        CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
+        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
         `Received block height: ${currentBlockVar}`
       );
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
   }
   const currentBlock = currentBlockVar;
 
@@ -222,12 +212,12 @@ async function closeLobby(lobbyID: string): Promise<OldResult> {
     if (lobbyWasClosed(lobbyState)) {
       return { success: true, message: '' };
     } else if (!userCreatedLobby(userWalletAddress, lobbyState)) {
-      return errorFxn(CatapultMiddlewareErrorCode.CANNOT_CLOSE_SOMEONES_LOBBY);
+      return errorFxn(MiddlewareErrorCode.CANNOT_CLOSE_SOMEONES_LOBBY);
     } else {
-      return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
+      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
+    return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
   }
 }
 interface SubmitMovesParams {
@@ -240,11 +230,11 @@ async function submitMoves(json: string): Promise<OldResult> {
 
   const query = getUserWallet(errorFxn);
   if (!query.success) return query;
-  const userWalletAddress = query.result;
+
   const parsed: SubmitMovesParams = JSON.parse(json);
   const { lobbyID, roundNumber, moves } = parsed;
-  console.log(moves, "moves sent")
-  console.log(moves.map(m => ({ value: moveToString(m) })))
+  console.log(moves, 'moves sent');
+  console.log(moves.map(m => ({ value: moveToString(m) })));
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('s');
@@ -254,21 +244,17 @@ async function submitMoves(json: string): Promise<OldResult> {
   try {
     conciseBuilder.addValues(moves.map(m => ({ value: moveToString(m) })));
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.SUBMIT_MOVES_INVALID_MOVES, err);
+    return errorFxn(MiddlewareErrorCode.SUBMIT_MOVES_INVALID_MOVES, err);
   }
   try {
-    const result = await postConciselyEncodedData(
-      userWalletAddress,
-      'paimaSubmitGameInput',
-      conciseBuilder.build()
-    );
+    const result = await postConciselyEncodedData(conciseBuilder.build());
     if (result.success) {
       return { success: true, message: '' };
     } else {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN);
+      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN);
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
   }
 }
 
@@ -277,7 +263,6 @@ async function setNft(nftAddress: string, nftId: number): Promise<OldResult> {
 
   const query = getUserWallet(errorFxn);
   if (!query.success) return query;
-  const userWalletAddress = query.result;
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('n');
@@ -285,18 +270,14 @@ async function setNft(nftAddress: string, nftId: number): Promise<OldResult> {
   conciseBuilder.addValue({ value: nftId.toString(10) });
 
   try {
-    const result = await postConciselyEncodedData(
-      userWalletAddress,
-      'paimaSubmitGameInput',
-      conciseBuilder.build()
-    );
+    const result = await postConciselyEncodedData(conciseBuilder.build());
     if (result.success) {
       return { success: true, message: '' };
     } else {
-      return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN);
+      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN);
     }
   } catch (err) {
-    return errorFxn(CatapultMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
   }
 }
 

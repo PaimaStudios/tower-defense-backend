@@ -48,7 +48,6 @@ export {
   IGetRandomActiveLobbyResult,
   getMatchSeeds,
   getMovesByLobby,
-  getLatestProcessedBlockHeight,
   IGetCachedMovesResult,
   IGetLobbyByIdResult,
   IGetMapLayoutResult,

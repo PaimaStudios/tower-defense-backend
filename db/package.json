@@ -11,5 +11,13 @@
     "compile": "npx pgtyped -w -c pgtypedconfig.json"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@pgtyped/cli": "^1.0.2",
+    "@pgtyped/query": "1.0.1",
+    "pg": "^8.7.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.6.5"
+  }
 }

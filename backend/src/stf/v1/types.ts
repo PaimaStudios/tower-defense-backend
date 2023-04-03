@@ -1,4 +1,5 @@
-import { TurnAction } from '@tower-defense/utils';
+import { MapName, RoleSetting, TurnAction } from '@tower-defense/utils';
+import { WalletAddress } from 'paima-engine/paima-utils';
 
 export type ParsedSubmittedInput =
   | CreatedLobbyInput
@@ -12,13 +13,12 @@ export type ParsedSubmittedInput =
 export interface InvalidInput {
   input: 'invalidString';
 }
-export type RoleSetting = 'attacker' | 'defender' | 'random';
 export interface CreatedLobbyInput {
   input: 'createdLobby';
   creatorFaction: RoleSetting;
   numOfRounds: number;
   roundLength: number;
-  map: Map;
+  map: MapName;
   matchConfigID: string; // same format as lobby ID, 12char base 62
   isHidden: boolean;
   isPractice: boolean;
@@ -46,26 +46,27 @@ export interface SetNFTInput {
   address: string;
   tokenID: number;
 }
+export type ConciseResult = 'w' | 'l';
 
 export interface ScheduledDataInput {
   input: 'scheduledData';
-  effect: SideEffect;
 }
 
-type SideEffect = ZombieRoundEffect | UserStatsEffect;
-
-export interface ZombieRoundEffect {
-  type: 'zombie';
+export interface ZombieRound extends ScheduledDataInput {
+  effect: 'zombie';
   lobbyID: string;
 }
 
-export interface UserStatsEffect {
-  type: 'stats';
+export interface UserStats extends ScheduledDataInput {
+  effect: 'stats';
   user: WalletAddress;
-  result: 'w' | 't' | 'l';
+  result: ConciseResult;
 }
 
-export type WalletAddress = string;
-export type Map = string;
+export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {
+  return (input as ZombieRound).effect === 'zombie';
+}
 
-export type GameInput = 'createdLobby' | 'joinedLobby' | 'submittedTurn';
+export function isUserStats(input: ScheduledDataInput): input is UserStats {
+  return (input as UserStats).effect === 'stats';
+}

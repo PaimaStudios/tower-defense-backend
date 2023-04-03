@@ -1,22 +1,15 @@
-import {
-  CreatedLobbyInput,
-  JoinedLobbyInput,
-  WalletAddress,
-  SetNFTInput,
-  SubmittedTurnInput,
-  RoleSetting,
-} from './types.js';
+import { SQLUpdate } from 'paima-engine/paima-db';
+import { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult } from './types.js';
 import Prando from 'paima-engine/paima-prando';
+import { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
-// import { SQLUpdate } from 'paima-engine/paima-utils';
-type SQLUpdate = [any, any];
 import {
-  LobbyStatus,
   MatchConfig,
   MatchState,
   PRACTICE_BOT_ADDRESS,
   RawMap,
+  RoleSetting,
   Structure,
   TileNumber,
   TurnAction,
@@ -30,13 +23,11 @@ import {
   IGetRoundMovesResult,
   IGetUserStatsResult,
   INewMatchMoveParams,
-  INewMatchMoveResult,
   INewRoundParams,
   INewScheduledDataParams,
   IStartMatchParams,
   ICloseLobbyParams,
   closeLobby,
-  move_type,
   newMatchMove,
   newRound,
   newScheduledData,
@@ -55,8 +46,6 @@ import {
   INewStatsParams,
   newStats,
 } from '@tower-defense/db';
-import { PreparedQuery } from '@pgtyped/query';
-import { Json } from '@tower-defense/db/src/select.queries.js';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -98,7 +87,7 @@ export function persistLobbyCreation(
     created_at: new Date(),
     hidden: inputData.isHidden,
     practice: inputData.isPractice,
-    lobby_state: 'open' as LobbyStatus,
+    lobby_state: 'open',
     player_two: null,
     current_match_state: {},
   };
@@ -118,7 +107,7 @@ export function persistPracticeLobbyCreation(
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
-  const params: IGetLobbyByIdResult = {
+  const params = {
     lobby_id: lobby_id,
     lobby_creator: user,
     creator_faction: inputData.creatorFaction,
@@ -131,10 +120,10 @@ export function persistPracticeLobbyCreation(
     created_at: new Date(),
     hidden: inputData.isHidden,
     practice: inputData.isPractice,
-    lobby_state: 'open' as LobbyStatus,
+    lobby_state: 'open',
     player_two: null,
     current_match_state: {},
-  };
+  } satisfies ICreateLobbyParams;
   // create the lobby according to the input data.
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
@@ -231,23 +220,31 @@ export function persistLobbyJoin(
       randomnessGenerator
     );
     // We update the Lobby table with the new state, and determine the creator role if it was random
-    const creator_role = lobbyState.creator_faction === "random" 
-    ? matchState.attacker === lobbyState.lobby_creator ? "attacker" : "defender"
-    : lobbyState.creator_faction;
+    const creator_role =
+      lobbyState.creator_faction === 'random'
+        ? matchState.attacker === lobbyState.lobby_creator
+          ? 'attacker'
+          : 'defender'
+        : lobbyState.creator_faction;
     // If it's a practice lobby and it's the bot's turn first we run that turn too.
     // We have to pass it fake round data as the round hasn't been persisted yet.
-    const firstRound = lobbyState.practice &&  creator_role === "attacker" 
-    ? practiceRound(blockHeight, 
-      {...lobbyState, current_round: 1},
-      parseConfig(configString), {
-      round_within_match: 0,
-      lobby_id: lobbyState.lobby_id,
-      starting_block_height: blockHeight,
-      execution_block_height: null,
-      id: 0,
-      match_state: matchState as any
-    }, randomnessGenerator)
-    : []
+    const firstRound =
+      lobbyState.practice && creator_role === 'attacker'
+        ? practiceRound(
+            blockHeight,
+            { ...lobbyState, current_round: 1 },
+            parseConfig(configString),
+            {
+              round_within_match: 0,
+              lobby_id: lobbyState.lobby_id,
+              starting_block_height: blockHeight,
+              execution_block_height: null,
+              id: 0,
+              match_state: matchState as any,
+            },
+            randomnessGenerator
+          )
+        : [];
     const updateLobbyTuple = activateLobby(user, lobbyState, creator_role, matchState, blockHeight);
     const blankStatsTuple: SQLUpdate = blankStats(user);
     return [...updateLobbyTuple, blankStatsTuple, ...firstRound];
@@ -278,7 +275,7 @@ function activateLobby(
     lobby_id: lobbyState.lobby_id,
     player_two: user,
     current_match_state: matchState as any, // TODO mmm
-    creator_faction
+    creator_faction,
   };
   const newMatchTuple: SQLUpdate = [startMatch, smParams];
   const newRoundTuples = incrementRound(
@@ -306,7 +303,7 @@ function incrementRound(
     round_within_match: round + 1,
     starting_block_height: blockHeight,
     execution_block_height: null,
-    match_state: matchState as any
+    match_state: matchState as any,
   };
   const newRoundTuple: SQLUpdate = [newRound, nrParams];
   // Scheduling of the zombie round execution in the future
@@ -345,15 +342,17 @@ export function persistMoveSubmission(
     roundData,
     randomnessGenerator
   );
-  const practiceTuples = lobbyState.practice 
-  ? practiceRound(blockHeight, 
-    {...lobbyState, current_round: lobbyState.current_round + 1}, 
-    matchConfig, 
-    roundData, // match state here should have been mutated by the previous round execution...
-    randomnessGenerator)
-  : []
+  const practiceTuples = lobbyState.practice
+    ? practiceRound(
+        blockHeight,
+        { ...lobbyState, current_round: lobbyState.current_round + 1 },
+        matchConfig,
+        roundData, // match state here should have been mutated by the previous round execution...
+        randomnessGenerator
+      )
+    : [];
   return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
-};
+}
 
 function practiceRound(
   blockHeight: number,
@@ -361,36 +360,37 @@ function practiceRound(
   matchConfig: MatchConfig,
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
-): SQLUpdate[]{
-    const matchState = roundData.match_state as unknown as MatchState;
-    const user = PRACTICE_BOT_ADDRESS;
-    const faction = user === matchState.defender ? "defender" : "attacker";
-    const moves = generateRandomMoves(matchConfig, matchState, faction, roundData.round_within_match + 1);
-    const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a))
-    const roundExecutionTuples = execute(
-      blockHeight,
-      lobbyState,
-      matchConfig,
-      moves,
-      {...roundData, round_within_match: roundData.round_within_match + 1},
-      randomnessGenerator
-    )
-    return [...movesTuples, ...roundExecutionTuples]
+): SQLUpdate[] {
+  const matchState = roundData.match_state as unknown as MatchState;
+  const user = PRACTICE_BOT_ADDRESS;
+  const faction = user === matchState.defender ? 'defender' : 'attacker';
+  const moves = generateRandomMoves(
+    matchConfig,
+    matchState,
+    faction,
+    roundData.round_within_match + 1
+  );
+  const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
+  const roundExecutionTuples = execute(
+    blockHeight,
+    lobbyState,
+    matchConfig,
+    moves,
+    { ...roundData, round_within_match: roundData.round_within_match + 1 },
+    randomnessGenerator
+  );
+  return [...movesTuples, ...roundExecutionTuples];
 }
 
 // Persist submitted move to database
-function persistMove(
-  matchId: string,
-  user: WalletAddress,
-  a: TurnAction
-): [PreparedQuery<INewMatchMoveParams, INewMatchMoveResult>, INewMatchMoveParams] {
+function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUpdate {
   const move_target = a.action === 'build' ? `${a.structure}--${a.coordinates}` : `${a.id}`;
   const mmParams: INewMatchMoveParams = {
     new_move: {
       lobby_id: matchId,
       wallet: user,
       round: a.round,
-      move_type: a.action as move_type,
+      move_type: a.action,
       move_target,
     },
   };
@@ -439,7 +439,7 @@ function execute(
   const updateStateTuple: SQLUpdate = [updateCurrentMatchState, stateParams];
   // Finalize match if defender dies or we've reached the final round
   if (newState.defenderBase.health <= 0 || lobbyState.current_round === lobbyState.num_of_rounds) {
-    console.log(newState.defenderBase.health ,'match ended, finalizing');
+    console.log(newState.defenderBase.health, 'match ended, finalizing');
     const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobbyState, newState);
     return [executeRoundTuple, removeScheduledDataTuple, updateStateTuple, ...finalizeMatchTuples];
   }
@@ -493,16 +493,16 @@ function finalizeMatch(
   const defenderSurvived = matchState.defenderBase.health > 0;
   // Save the final user states in the final state table
   const [p1Gold, p2Gold] = p1isAttacker
-      ? [matchState.attackerGold, matchState.defenderGold]
-      : [matchState.defenderGold, matchState.attackerGold];
+    ? [matchState.attackerGold, matchState.defenderGold]
+    : [matchState.defenderGold, matchState.attackerGold];
   const calculateResult = (isAttacker: boolean, defenderSurvived: boolean): 'win' | 'loss' => {
-    if (isAttacker && defenderSurvived) return 'loss'
-    else if (isAttacker && !defenderSurvived) return 'win'
-    else if (!isAttacker && defenderSurvived) return 'win'
-    else if (!isAttacker && !defenderSurvived) return 'loss'
-    else return 'loss'
-  }
-  const p1Result = calculateResult(p1isAttacker, defenderSurvived); 
+    if (isAttacker && defenderSurvived) return 'loss';
+    else if (isAttacker && !defenderSurvived) return 'win';
+    else if (!isAttacker && defenderSurvived) return 'win';
+    else if (!isAttacker && !defenderSurvived) return 'loss';
+    else return 'loss';
+  };
+  const p1Result = calculateResult(p1isAttacker, defenderSurvived);
   const p2Result = p1Result === 'win' ? 'loss' : 'win';
   const finalMatchTuple: SQLUpdate = [
     newFinalState,
@@ -549,8 +549,6 @@ export function persistStatsUpdate(
   };
   return [updateStats, userParams];
 }
-
-type ConciseResult = 'w' | 't' | 'l';
 
 // This function executes 'zombie rounds', rounds where both users haven't submitted input, but which have reached the specified timeout time per round.
 // We just call the 'execute' function passing the unexecuted moves from the database, if any.

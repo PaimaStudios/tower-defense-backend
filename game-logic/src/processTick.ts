@@ -20,12 +20,12 @@ import type {
   Coordinates,
   TowerAttack,
   UnitAttack,
-  UnitType,
   BuildStructureAction,
   Faction,
   UpgradeTier,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
+import { baseGoldProduction, attackerUnitMap } from './config';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -82,7 +82,7 @@ function processTick(
 // Then we return null which signals the end of the round executor
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
-  for (let crypt of Object.keys(matchState.actors.crypts)) {
+  for (const crypt of Object.keys(matchState.actors.crypts)) {
     // annoying that Object.values stripes the types
     const c = matchState.actors.crypts[parseInt(crypt)];
     c.spawned = [];
@@ -105,7 +105,7 @@ function endRound(
 ): [GoldRewardEvent, GoldRewardEvent] {
   matchState.roundEnded = true;
   const gold = computeGoldRewards(matchConfig, matchState);
-  for (let event of gold) applyEvent(matchConfig, matchState, event);
+  for (const event of gold) applyEvent(matchConfig, matchState, event);
   return gold;
 }
 // Output the gold rewards for each side, according to the match config.
@@ -113,10 +113,8 @@ function computeGoldRewards(
   matchConfig: MatchConfig,
   matchState: MatchState
 ): [GoldRewardEvent, GoldRewardEvent] {
-  const baseGoldProduction = (level: number) =>
-    level === 1 ? 100 : level === 2 ? 200 : level === 3 ? 400 : 0; // ...
-  const defenderBaseGold = baseGoldProduction(matchState.defenderBase.level);
-  const attackerBaseGold = baseGoldProduction(matchState.attackerBase.level);
+  const defenderBaseGold = baseGoldProduction[matchState.defenderBase.level] ?? 0;
+  const attackerBaseGold = baseGoldProduction[matchState.attackerBase.level] ?? 0;
   const attackerReward = attackerBaseGold + matchConfig.baseAttackerGoldRate;
   const defenderReward = defenderBaseGold + matchConfig.baseDefenderGoldRate;
   const events: [GoldRewardEvent, GoldRewardEvent] = [
@@ -263,7 +261,7 @@ function spawnEvents(
   // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
   // Only state mutation that happens in the event production flow.
   if (currentTick === 2) {
-    for (let c of crypts) {
+    for (const c of crypts) {
       const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
       if (old) matchState.finishedSpawning.push(c.id);
     }
@@ -284,8 +282,8 @@ function spawnEvents(
       return newUnit;
     } else return null;
   });
-  const eventTypeGuard = (e: UnitSpawnedEvent | null): e is UnitSpawnedEvent => !!e;
-  return events.filter(eventTypeGuard);
+  const isNotNull = (e: UnitSpawnedEvent | null): e is UnitSpawnedEvent => !!e;
+  return events.filter(isNotNull);
 }
 // Function to generate a single spawn event.
 function spawn(
@@ -303,7 +301,7 @@ function spawn(
     cryptID: crypt.id,
     actorID: matchState.actorCount + 1, // increment
     coordinates: path,
-    unitType: crypt.structure.replace('Crypt', '') as UnitType,
+    unitType: attackerUnitMap[crypt.structure],
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
     unitAttack: config[crypt.structure][crypt.upgrades].attackDamage,
@@ -322,31 +320,32 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     .filter((n: number | null): n is number => !!n)
     .filter(n => {
       const tile = matchState.mapState[n];
-      return tile.type === "path" && tile.faction === "attacker" 
-    })
+      return tile.type === 'path' && tile.faction === 'attacker';
+    });
 }
-function choosePath(paths: number[], mapWidth: number): number{
+function choosePath(paths: number[], mapWidth: number): number {
   const pick = paths.reduce((prev, curr) => {
-    const a = indexToCoords(prev, mapWidth)
-    const b = indexToCoords(curr, mapWidth)
+    const a = indexToCoords(prev, mapWidth);
+    const b = indexToCoords(curr, mapWidth);
     // whoever is further to the left
-    if (a.x < b.x) return prev
-    else if (b.x < a.x) return curr
+    if (a.x < b.x) return prev;
+    else if (b.x < a.x) return curr;
     // else whoever is more centered in the y axis
-    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr
-  })
-  return pick
+    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
+  });
+  return pick;
 }
 // Function to find an available path next to a crypt to place a newly spawned unit.
 // If there is more than one candidate then randomness is used to select one.
 function findClosebyPath(matchState: MatchState, coords: number, range = 1): number {
   const adjacentPaths = closeByPaths(coords, matchState);
-  if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width)
+  if (adjacentPaths.length > 0) return choosePath(adjacentPaths, matchState.width);
   else {
-    const morePaths = getSurroundingCells(coords, matchState, range + 1)
-    .filter(n => matchState.mapState[n].type === "path");
-    if (morePaths.length > 0) return choosePath(morePaths, matchState.width)
-    else return findClosebyPath(matchState, coords, range + 1)
+    const morePaths = getSurroundingCells(coords, matchState, range + 1).filter(
+      n => matchState.mapState[n].type === 'path'
+    );
+    if (morePaths.length > 0) return choosePath(morePaths, matchState.width);
+    else return findClosebyPath(matchState, coords, range + 1);
   }
 }
 
@@ -354,7 +353,7 @@ function findClosebyPath(matchState: MatchState, coords: number, range = 1): num
 function movementEvents(
   matchConfig: MatchConfig,
   matchState: MatchState
-): Array<StatusEffectAppliedEvent | UnitMovementEvent | StatusEffectAppliedEvent> {
+): Array<UnitMovementEvent | StatusEffectAppliedEvent> {
   const attackers = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
@@ -363,17 +362,17 @@ function movementEvents(
     if (busyAttacking) return null;
     else {
       // Generate movement events
-      const event = move(matchConfig, a);
+      const moveEvent = move(matchConfig, a);
       // See if unit moved next to a friendly crypt and got a status buff from it
-      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(matchConfig, matchState, event);
-      return [event, ...buffStatusEvents];
+      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(matchConfig, matchState, moveEvent);
+      return [moveEvent, ...buffStatusEvents];
     }
   });
-  const eventTypeGuard = (
+  const isNotNull = (
     e: UnitMovementEvent | StatusEffectAppliedEvent | null
-  ): e is UnitMovementEvent => !!e;
-  const ret = events.flat().filter(eventTypeGuard);
-  for (let event of ret) applyEvent(matchConfig, matchState, event);
+  ): e is UnitMovementEvent | StatusEffectAppliedEvent => !!e;
+  const ret = events.flat().filter(isNotNull);
+  for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
   // .filter(e => e.completion === 100);dd
   // We had agreed with cat-astrophe that we'd only send movement events when the movement
@@ -415,9 +414,8 @@ function buff(
   if (event.completion === 100) {
     const crypts = findClosebyCrypts(matchState, event.nextCoordinates, 1);
     const events = crypts.map(c => buffEvent(matchConfig, c, event.actorID));
-    const eventTypeGuard = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent =>
-      !!e;
-    return events.filter(eventTypeGuard);
+    const isNotNull = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent => !!e;
+    return events.filter(isNotNull);
   } else return [];
 }
 
@@ -478,7 +476,7 @@ function computeDamageToUnit(
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
   const events = damageByTower(matchConfig, tower, unitsNearby, randomnessGenerator);
-  for (let event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event);
   return events;
 }
 
@@ -595,19 +593,10 @@ function unitAttackEvents(
 ): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
-    const damageToTower =
-      a.subType === 'macaw'
-        ? computeDamageToTower(matchConfig, matchState, a, currentTick, rng)
-        : [];
-    const damageToBase: UnitAttack[] = computeDamageToBase(
-      matchConfig,
-      matchState,
-      a,
-      currentTick,
-      rng
-    );
-    const eventTypeGuard = (e: UnitAttack | null): e is DamageEvent => !!e;
-    return [...damageToTower, ...damageToBase].filter(eventTypeGuard);
+    const damageToTower = computeDamageToTower(matchConfig, matchState, a, currentTick, rng);
+    const damageToBase = computeDamageToBase(matchConfig, matchState, a, currentTick, rng);
+    const isNotNull = (e: UnitAttack | null): e is UnitAttack => !!e;
+    return [...damageToTower, ...damageToBase].filter(isNotNull);
   });
   return events.flat();
 }
@@ -619,6 +608,8 @@ function computeDamageToTower(
   currentTick: number,
   randomnessGenerator: Prando
 ): (DamageEvent | ActorDeletedEvent)[] {
+  if (attacker.subType !== 'macaw') return [];
+
   const cooldown = 10;
   if ((currentTick - 2) % cooldown !== 0) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
@@ -644,7 +635,7 @@ function computeDamageToTower(
   const events: (DamageEvent | ActorDeletedEvent)[] = dying
     ? [damageEvent, killEvent]
     : [damageEvent];
-  for (let event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event);
   return events;
 }
 // Damage of units to defender base
@@ -674,7 +665,7 @@ function computeDamageToBase(
       id: attackerUnit.id,
     };
     const events: [DefenderBaseUpdateEvent, ActorDeletedEvent] = [baseEvent, deathEvent];
-    for (let event of events) applyEvent(matchConfig, matchState, event);
+    for (const event of events) applyEvent(matchConfig, matchState, event);
     return events;
   }
 }
@@ -714,7 +705,7 @@ export function validateCoords(coords: Coordinates, matchState: MatchState): num
 }
 function getSurroundingCells(index: number, matchState: MatchState, range: number): number[] {
   const center = indexToCoords(index, matchState.width);
-  let surroundingCells: Coordinates[] = [];
+  const surroundingCells: Coordinates[] = [];
   for (let x = center.x - range; x <= center.x + range; x++) {
     for (let y = center.y - range; y <= center.y + range; y++) {
       // Exclude the center cell itself
@@ -722,8 +713,8 @@ function getSurroundingCells(index: number, matchState: MatchState, range: numbe
         continue;
       }
       // Calculate the distance from the center cell
-      let dx = Math.abs(x - center.x);
-      let dy = Math.abs(y - center.y);
+      const dx = Math.abs(x - center.x);
+      const dy = Math.abs(y - center.y);
 
       // Exclude diagonals for each range
       if (dx + dy <= range) {

@@ -1,45 +1,36 @@
-import pkg from 'web3-utils';
-const { numberToHex, utf8ToHex } = pkg;
-
-import { NFT_CONTRACT, Structure, TurnAction, UserAddress } from '@tower-defense/utils';
-import { LobbyWebserverQuery, UserNft } from '../types';
-import { getTxTemplate } from 'paima-engine/paima-tx';
-import { buildEndpointErrorFxn, CatapultMiddlewareErrorCode } from '../errors';
-import { getDeployment, getFee, getStorageAddress } from '../state';
+import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
+import type { Structure, StructureConcise, TurnAction } from '@tower-defense/utils';
+import { GameENV } from '@tower-defense/utils';
+import type { LobbyWebserverQuery, UserNft } from '../types';
+import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
-  BatchedSubunit,
   IndexerNftOwnership,
   LobbyState,
-  MatchMove,
-  NFT,
-  NftId,
   NftScore,
   NftScoreSnake,
   PackedLobbyState,
   RoundEnd,
-  SignFunction,
-  StatefulNftId,
 } from '../types';
-import { getBlockTime } from './general';
-import { pushLog } from './logging';
+import { getBlockTime } from 'paima-engine/paima-utils';
 
-export function batchedToJsonString(b: BatchedSubunit): string {
-  return JSON.stringify({
-    user_address: b.userAddress,
-    user_signature: b.userSignature,
-    game_input: b.gameInput,
-    timestamp: b.millisecondTimestamp,
-  });
-}
-
-export function batchedToString(b: BatchedSubunit): string {
-  return [b.userAddress, b.userSignature, b.gameInput, b.millisecondTimestamp].join('/');
-}
+const conciseMap: Record<Structure, StructureConcise> = {
+  anacondaTower: 'at',
+  piranhaTower: 'pt',
+  slothTower: 'st',
+  gorillaCrypt: 'gc',
+  jaguarCrypt: 'jc',
+  macawCrypt: 'mc',
+};
 
 export function moveToString(move: TurnAction): string {
   switch (move.action) {
     case 'build':
-      return `b${move.coordinates},${conciseStructure(move.structure)}`;
+      const conciseStructure = conciseMap[move.structure];
+      if (!conciseStructure) {
+        pushLog('[moveToString] found move with invalid structure:', move.structure);
+        throw new Error(`Invalid move submitted: ${move}`);
+      }
+      return `b${move.coordinates},${conciseStructure}`;
     case 'repair':
       return `r${move.id}`;
     case 'upgrade':
@@ -50,19 +41,6 @@ export function moveToString(move: TurnAction): string {
       pushLog('[moveToString] found move with invalid type:', move);
       throw new Error(`Invalid move submitted: ${move}`);
   }
-}
-function conciseStructure(s: Structure): string {
-  if (s === 'anacondaTower') return 'at';
-  else if (s === 'piranhaTower') return 'pt';
-  else if (s === 'slothTower') return 'st';
-  else if (s === 'gorillaCrypt') return 'gc';
-  else if (s === 'jaguarCrypt') return 'jc';
-  else if (s === 'macawCrypt') return 'mc';
-  else return 'mc'; // error message?
-}
-
-export function nftToStrings(nft: NFT): string[] {
-  return [nft.title, nft.imageUrl, nft.nftAddress, `${nft.tokenId}`];
 }
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {
@@ -104,38 +82,6 @@ export function lobbyWasClosed(lobby: PackedLobbyState): boolean {
   return lobbyState.lobby_state === 'closed';
 }
 
-export function buildDirectTx(
-  userAddress: string,
-  methodName: 'paimaSubmitGameInput',
-  dataUtf8: string
-): Record<string, any> {
-  const hexData = utf8ToHex(dataUtf8);
-  const txTemplate = getTxTemplate(getStorageAddress(), methodName, hexData);
-  const tx = {
-    ...txTemplate,
-    from: userAddress,
-    value: numberToHex(getFee()),
-  };
-
-  return tx;
-}
-
-export async function buildBatchedSubunit(
-  signFunction: SignFunction,
-  userAddress: string,
-  gameInput: string
-): Promise<BatchedSubunit> {
-  const millisecondTimestamp: string = new Date().getTime().toString(10);
-  const message: string = gameInput + millisecondTimestamp;
-  const userSignature = await signFunction(userAddress, message);
-  return {
-    userAddress,
-    userSignature,
-    gameInput,
-    millisecondTimestamp,
-  };
-}
-
 export function calculateRoundEnd(
   roundStart: number,
   roundLength: number,
@@ -145,7 +91,7 @@ export function calculateRoundEnd(
 
   let roundEnd = roundStart + roundLength;
   if (roundEnd < current) {
-    errorFxn(CatapultMiddlewareErrorCode.CALCULATED_ROUND_END_IN_PAST);
+    errorFxn(MiddlewareErrorCode.CALCULATED_ROUND_END_IN_PAST);
     roundEnd = current;
   }
 
@@ -158,7 +104,7 @@ export function calculateRoundEnd(
       seconds: secondsToEnd,
     };
   } catch (err) {
-    errorFxn(CatapultMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
+    errorFxn(MiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
     return {
       blocks: 0,
       seconds: 0,
@@ -190,7 +136,7 @@ export function lobbiesToTokenIdSet(lobbies: LobbyWebserverQuery[]): number[] {
   const s = new Set<number>([]);
   // NOTE: All NFTs are expected to be of the same contract
   for (const lobby of lobbies) {
-    if (lobby.nft.nftContract === NFT_CONTRACT && lobby.nft.tokenId) {
+    if (lobby.nft.nftContract === GameENV.NFT_CONTRACT && lobby.nft.tokenId) {
       s.add(lobby.nft.tokenId);
     }
   }
