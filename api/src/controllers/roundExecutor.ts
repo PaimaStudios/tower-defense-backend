@@ -1,18 +1,20 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
+import type {
+  IGetBlockHeightResult,
+  IGetLobbyByIdResult,
+  IGetMovesByLobbyResult,
+  IGetRoundDataResult,
+} from '@tower-defense/db';
 import {
   requirePool,
   getBlockHeight,
   getLobbyById,
   getRoundData,
   getRoundMoves,
-  IGetBlockHeightResult,
-  IGetLobbyByIdResult,
-  IGetMovesByLobbyResult,
-  IGetRoundDataResult,
 } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
-import { MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import type { MatchState, Structure, TurnAction } from '@tower-defense/utils';
 
 type Response = RoundData | Error;
 

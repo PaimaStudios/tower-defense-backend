@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import './App.css';
+import type { MiddlewareConfig, PostingModeSwitchResult } from 'mw';
 import mw, {
-  MiddlewareConfig,
-  PostingModeSwitchResult,
   getMiddlewareConfig,
   postConciselyEncodedData,
   getRemoteBackendVersion,

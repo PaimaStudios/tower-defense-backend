@@ -1,8 +1,10 @@
 import type {
   MapByNameResponse,
+  MatchExecutorData,
   MatchWinnerResponse,
   PackedCurrentRound,
   PackedLobbyConfig,
+  RoundExecutorData,
 } from '../types';
 
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
@@ -35,20 +37,19 @@ import type {
   AccountNftsResult,
   LobbyState,
   LobbyStates,
-  MatchExecutorData,
   NewLobbies,
   NFT,
   NftId,
   NftScore,
   PackedLobbyState,
   PackedUserStats,
-  RoundExecutorData,
   SuccessfulResult,
   UserStats,
 } from '../types';
 import type { MapName, MatchConfig } from '@tower-defense/utils';
-import { FailedResult, getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
-import { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
+import type { FailedResult } from 'paima-engine/paima-mw-core';
+import { getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
+import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');

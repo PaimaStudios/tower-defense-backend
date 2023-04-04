@@ -1,9 +1,8 @@
 import processTick, { parseConfig } from '@tower-defense/game-logic';
 import type { MatchConfig, MatchState } from '@tower-defense/utils';
+import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 import {
-  MatchExecutor,
   matchExecutor as matchExecutorConstructor,
-  RoundExecutor,
   roundExecutor as roundExecutorConstructor,
 } from 'paima-engine/paima-executors';
 import { pushLog } from 'paima-engine/paima-mw-core';

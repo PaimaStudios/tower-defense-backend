@@ -1,8 +1,9 @@
 import type { Pool } from 'pg';
-import Prando from 'paima-engine/paima-prando';
-import { SCHEDULED_DATA_ADDRESS, SubmittedChainData } from 'paima-engine/paima-utils';
+import type Prando from 'paima-engine/paima-prando';
+import type { SubmittedChainData } from 'paima-engine/paima-utils';
+import { SCHEDULED_DATA_ADDRESS } from 'paima-engine/paima-utils';
 
-import { SQLUpdate } from 'paima-engine/paima-db';
+import type { SQLUpdate } from 'paima-engine/paima-db';
 import parseInput from './parser.js';
 import {
   processCreateLobby,

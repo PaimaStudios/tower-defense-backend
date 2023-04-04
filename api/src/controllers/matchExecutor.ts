@@ -1,13 +1,7 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import {
-  requirePool,
-  getLobbyById,
-  getMatchSeeds,
-  getMovesByLobby,
-  IGetLobbyByIdResult,
-  IGetMovesByLobbyResult,
-} from '@tower-defense/db';
-import { MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import type { IGetLobbyByIdResult, IGetMovesByLobbyResult } from '@tower-defense/db';
+import { requirePool, getLobbyById, getMatchSeeds, getMovesByLobby } from '@tower-defense/db';
+import type { MatchState, Structure, TurnAction } from '@tower-defense/utils';
 
 type Response = MatchData | null;
 

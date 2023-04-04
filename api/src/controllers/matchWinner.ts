@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
-import { requirePool, getLobbyById, getFinalState, IGetFinalStateResult } from '@tower-defense/db';
-import { LobbyStatus } from '@tower-defense/utils';
+import type { IGetFinalStateResult } from '@tower-defense/db';
+import { requirePool, getLobbyById, getFinalState } from '@tower-defense/db';
+import type { LobbyStatus } from '@tower-defense/utils';
 
 interface MatchWinnerResponse {
   match_status: LobbyStatus;

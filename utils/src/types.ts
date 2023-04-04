@@ -1,4 +1,4 @@
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export type Hash = string;
 export type URI = string;

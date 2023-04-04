@@ -1,7 +1,7 @@
 import type { ParserRecord } from 'paima-engine/paima-utils-backend';
 import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
-import {
+import type {
   BuildStructureAction,
   RepairStructureAction,
   RoleSettingConcise,
@@ -9,10 +9,10 @@ import {
   Structure,
   TurnAction,
   UpgradeStructureAction,
-  maps,
 } from '@tower-defense/utils';
+import { maps } from '@tower-defense/utils';
 
-import {
+import type {
   ClosedLobbyInput,
   ConciseResult,
   CreatedLobbyInput,
@@ -24,7 +24,8 @@ import {
   ZombieRound,
 } from './types';
 import { conciseFactionMap } from '@tower-defense/game-logic';
-import { ConciseConsumer, ConciseValue, consumer } from 'paima-engine/paima-concise';
+import type { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise';
+import { consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `

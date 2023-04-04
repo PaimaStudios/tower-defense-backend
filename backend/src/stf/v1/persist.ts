@@ -1,21 +1,20 @@
-import { SQLUpdate } from 'paima-engine/paima-db';
-import { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult } from './types.js';
-import Prando from 'paima-engine/paima-prando';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { SQLUpdate } from 'paima-engine/paima-db';
+import type { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult } from './types.js';
+import type Prando from 'paima-engine/paima-prando';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
-import {
+import type {
   MatchConfig,
   MatchState,
-  PRACTICE_BOT_ADDRESS,
   RawMap,
   RoleSetting,
   Structure,
   TileNumber,
   TurnAction,
 } from '@tower-defense/utils';
-import {
-  createLobby,
+import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
+import type {
   ICreateLobbyParams,
   IGetLobbyByIdResult,
   IGetMapLayoutResult,
@@ -27,23 +26,26 @@ import {
   INewScheduledDataParams,
   IStartMatchParams,
   ICloseLobbyParams,
+  IUpdateCurrentMatchStateParams,
+  IExecuteRoundParams,
+  IUpdateStatsParams,
+  INewNftParams,
+  INewStatsParams,
+} from '@tower-defense/db';
+import {
+  createLobby,
   closeLobby,
   newMatchMove,
   newRound,
   newScheduledData,
   startMatch,
-  IUpdateCurrentMatchStateParams,
   executeRound,
   updateCurrentMatchState,
   removeScheduledData,
-  IExecuteRoundParams,
   endMatch,
-  IUpdateStatsParams,
   updateStats,
-  INewNftParams,
   newNft,
   newFinalState,
-  INewStatsParams,
   newStats,
 } from '@tower-defense/db';
 

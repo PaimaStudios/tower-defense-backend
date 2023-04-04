@@ -1,7 +1,7 @@
 import type { Pool } from 'pg';
-import Prando from 'paima-engine/paima-prando';
-import { SQLUpdate } from 'paima-engine/paima-db';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type Prando from 'paima-engine/paima-prando';
+import type { SQLUpdate } from 'paima-engine/paima-db';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 import {
   getLobbyById,
@@ -20,7 +20,7 @@ import {
   persistNFT,
   persistStatsUpdate,
 } from './persist.js';
-import {
+import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
   JoinedLobbyInput,
@@ -29,10 +29,9 @@ import {
   SubmittedTurnInput,
   UserStats,
   ZombieRound,
-  isUserStats,
-  isZombieRound,
 } from './types.js';
-import { MatchState } from '@tower-defense/utils';
+import { isUserStats, isZombieRound } from './types.js';
+import type { MatchState } from '@tower-defense/utils';
 import { parseConfig, validateMoves } from '@tower-defense/game-logic';
 
 export const processCreateLobby = async (
