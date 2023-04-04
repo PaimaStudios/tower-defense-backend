@@ -3,7 +3,6 @@ import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
 import {
   BuildStructureAction,
-  MapName,
   RepairStructureAction,
   RoleSettingConcise,
   SalvageStructureAction,
@@ -24,7 +23,7 @@ import {
   UserStats,
   ZombieRound,
 } from './types';
-import { conciseFactionMap } from '@tower-defense/game-logic/src/config';
+import { conciseFactionMap } from '@tower-defense/game-logic';
 import { ConciseConsumer, ConciseValue, consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
