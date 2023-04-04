@@ -1,20 +1,10 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import type { IGetLobbyByIdResult, IGetMovesByLobbyResult } from '@tower-defense/db';
+import type { IGetMovesByLobbyResult } from '@tower-defense/db';
 import { requirePool, getLobbyById, getMatchSeeds, getMovesByLobby } from '@tower-defense/db';
-import type { MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import type { MatchExecutorData, MatchState, Structure, TurnAction } from '@tower-defense/utils';
 
-type Response = MatchData | null;
+type Response = MatchExecutorData | null;
 
-interface MatchData {
-  lobby: IGetLobbyByIdResult;
-  moves: TurnAction[];
-  seeds: {
-    seed: string;
-    block_height: number;
-    round: number;
-  }[];
-  initialState: MatchState;
-}
 @Route('match_executor')
 export class matchExecutorController extends Controller {
   @Get()

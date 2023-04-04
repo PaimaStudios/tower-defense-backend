@@ -1,10 +1,5 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
-import type {
-  IGetBlockHeightResult,
-  IGetLobbyByIdResult,
-  IGetMovesByLobbyResult,
-  IGetRoundDataResult,
-} from '@tower-defense/db';
+import type { IGetMovesByLobbyResult } from '@tower-defense/db';
 import {
   requirePool,
   getBlockHeight,
@@ -14,19 +9,12 @@ import {
 } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
-import type { MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import type { MatchState, RoundExecutorData, Structure, TurnAction } from '@tower-defense/utils';
 
-type Response = RoundData | Error;
+type Response = RoundExecutorData | Error;
 
 interface Error {
   error: 'lobby not found' | 'bad round number' | 'round not found';
-}
-
-interface RoundData {
-  lobby: IGetLobbyByIdResult;
-  moves: TurnAction[];
-  round_data: IGetRoundDataResult;
-  block_height: IGetBlockHeightResult;
 }
 
 @Route('round_executor')
@@ -35,16 +23,9 @@ export class roundExecutorController extends Controller {
   public async get(@Query() lobbyID: string, @Query() round: number): Promise<Response> {
     const pool = requirePool();
     const valRound = psqlNum.decode(round);
-    if (isLeft(valRound))
-      throw new ValidateError(
-        {
-          round: {
-            message: 'invalid number',
-          },
-        },
-        ''
-      );
-    else {
+    if (isLeft(valRound)) {
+      throw new ValidateError({ round: { message: 'invalid number' } }, '');
+    } else {
       const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
       if (!lobby) return { error: 'lobby not found' };
       else {

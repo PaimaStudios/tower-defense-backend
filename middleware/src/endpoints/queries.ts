@@ -1,10 +1,8 @@
 import type {
   MapByNameResponse,
-  MatchExecutorData,
   MatchWinnerResponse,
   PackedCurrentRound,
   PackedLobbyConfig,
-  RoundExecutorData,
 } from '../types';
 
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
@@ -46,7 +44,12 @@ import type {
   SuccessfulResult,
   UserStats,
 } from '../types';
-import type { MapName, MatchConfig } from '@tower-defense/utils';
+import type {
+  MapName,
+  MatchConfig,
+  MatchExecutorData,
+  RoundExecutorData,
+} from '@tower-defense/utils';
 import type { FailedResult } from 'paima-engine/paima-mw-core';
 import { getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
 import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
