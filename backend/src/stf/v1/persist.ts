@@ -277,7 +277,7 @@ function activateLobby(
     creator_faction,
   };
   const newMatchTuple: SQLUpdate = [startMatch, smParams];
-  const newRoundTuples = incrementRound(
+  const newRoundTuples = persistNewRound(
     lobbyState.lobby_id,
     0,
     lobbyState.round_length,
@@ -290,7 +290,7 @@ function activateLobby(
 
 // This function inserts a new empty round in the database.
 // We schedule rounds here for future automatic execution as zombie rounds in this function.
-function incrementRound(
+function persistNewRound(
   lobbyID: string,
   round: number,
   roundLength: number,
@@ -427,14 +427,14 @@ function execute(
   }
   // Create a new round and update match state if not at final round
   else {
-    const incrementRoundTuples = incrementRound(
+    const newRoundTuples = persistNewRound(
       lobby.lobby_id,
       lobby.current_round,
       lobby.round_length,
       matchState,
       blockHeight
     );
-    return [lobbyUpdate, ...executedRoundUpdate, ...incrementRoundTuples];
+    return [lobbyUpdate, ...executedRoundUpdate, ...newRoundTuples];
   }
 }
 function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
