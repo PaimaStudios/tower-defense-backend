@@ -1,5 +1,4 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
-import type { IGetMovesByLobbyResult } from '@tower-defense/db';
 import {
   requirePool,
   getBlockHeight,
@@ -9,7 +8,8 @@ import {
 } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
-import type { MatchState, RoundExecutorData, Structure, TurnAction } from '@tower-defense/utils';
+import type { MatchState, RoundExecutorData } from '@tower-defense/utils';
+import { moveToAction } from '@tower-defense/utils';
 
 type Response = RoundExecutorData | Error;
 
@@ -43,31 +43,11 @@ export class roundExecutorController extends Controller {
             );
             const matchState = round_data.match_state as unknown as MatchState;
             const dbMoves = await getRoundMoves.run({ lobby_id: lobbyID, round: round }, pool);
-            const moves = dbMoves.map(m => moveToAction(m, matchState.attacker));
+            const moves = dbMoves.map(move => moveToAction(move, matchState.attacker));
             return { lobby, round_data, moves, block_height };
           }
         }
       }
     }
-  }
-}
-
-function moveToAction(m: IGetMovesByLobbyResult, attacker: string): TurnAction {
-  if (m.move_type === 'build') {
-    const [structure, coordinates] = m.move_target.split('--');
-    return {
-      round: m.round,
-      action: m.move_type,
-      faction: m.wallet === attacker ? 'attacker' : 'defender',
-      structure: structure as Structure,
-      coordinates: parseInt(coordinates),
-    };
-  } else {
-    return {
-      round: m.round,
-      action: m.move_type,
-      faction: m.wallet === attacker ? 'attacker' : 'defender',
-      id: parseInt(m.move_target),
-    };
   }
 }

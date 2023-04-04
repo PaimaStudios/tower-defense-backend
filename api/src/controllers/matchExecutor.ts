@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import type { IGetMovesByLobbyResult } from '@tower-defense/db';
 import { requirePool, getLobbyById, getMatchSeeds, getMovesByLobby } from '@tower-defense/db';
-import type { MatchExecutorData, MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import type { MatchExecutorData, MatchState } from '@tower-defense/utils';
+import { moveToAction } from '@tower-defense/utils';
 
 type Response = MatchExecutorData | null;
 
@@ -27,25 +27,5 @@ export class matchExecutorController extends Controller {
       const moves = dbMoves.map(m => moveToAction(m, initialState.attacker));
       return { lobby, seeds, initialState, moves };
     }
-  }
-}
-
-function moveToAction(m: IGetMovesByLobbyResult, attacker: string): TurnAction {
-  if (m.move_type === 'build') {
-    const [structure, coordinates] = m.move_target.split('--');
-    return {
-      round: m.round,
-      action: m.move_type,
-      faction: m.wallet === attacker ? 'attacker' : 'defender',
-      structure: structure as Structure,
-      coordinates: parseInt(coordinates),
-    };
-  } else {
-    return {
-      round: m.round,
-      action: m.move_type,
-      faction: m.wallet === attacker ? 'attacker' : 'defender',
-      id: parseInt(m.move_target),
-    };
   }
 }
