@@ -3,12 +3,11 @@ import type { SetNFTInput, SubmittedTurnInput } from './types.js';
 import type Prando from 'paima-engine/paima-prando';
 import type { WalletAddress } from 'paima-engine/paima-utils';
 import { generateRandomMoves } from '@tower-defense/game-logic';
-import type { MatchConfig, MatchState, Structure, TurnAction } from '@tower-defense/utils';
+import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import type {
   IGetLobbyByIdResult,
   IGetRoundDataResult,
-  IGetRoundMovesResult,
   INewMatchMoveParams,
   INewNftParams,
 } from '@tower-defense/db';
@@ -102,44 +101,6 @@ function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUp
     },
   };
   return [newMatchMove, mmParams];
-}
-function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
-  const faction = databaseMove.wallet === matchState.attacker ? 'attacker' : 'defender';
-  if (databaseMove.move_type === 'build') {
-    const [structure, coords] = databaseMove.move_target.split('--');
-    return {
-      round: databaseMove.round,
-      action: databaseMove.move_type,
-      structure: structure as Structure,
-      // TODO validation here...?
-      faction,
-      coordinates: parseInt(coords),
-    };
-  } else
-    return {
-      round: databaseMove.round,
-      action: databaseMove.move_type,
-      faction,
-      id: parseInt(databaseMove.move_target),
-    };
-}
-
-// This function executes 'zombie rounds', rounds where both users haven't submitted input, but which have reached the specified timeout time per round.
-// We just call the 'execute' function passing the unexecuted moves from the database, if any.
-export function executeZombieRound(
-  blockHeight: number,
-  lobbyState: IGetLobbyByIdResult,
-  matchConfig: MatchConfig,
-  cachedMoves: IGetRoundMovesResult[],
-  roundData: IGetRoundDataResult,
-  randomnessGenerator: Prando
-) {
-  console.log(
-    `Executing zombie round (#${lobbyState.current_round}) for lobby ${lobbyState.lobby_id}`
-  );
-  const matchState = lobbyState.current_match_state as unknown as MatchState;
-  const moves = cachedMoves.map(m => expandMove(m, matchState));
-  return executeRound(blockHeight, lobbyState, matchConfig, moves, roundData, randomnessGenerator);
 }
 
 // Persists the submitted data from a `Set NFT` game input

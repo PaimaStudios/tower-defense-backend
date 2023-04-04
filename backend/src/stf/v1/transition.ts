@@ -12,7 +12,7 @@ import {
   getMatchConfig,
   endMatch,
 } from '@tower-defense/db';
-import { executeZombieRound, persistMoveSubmission, persistNFT } from './persist.js';
+import { persistMoveSubmission, persistNFT } from './persist.js';
 import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
@@ -193,7 +193,10 @@ export async function processZombieEffect(
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
-  return executeZombieRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
+
+  console.log(`Executing zombie round (#${lobby.current_round}) for lobby ${lobby.lobby_id}`);
+  //Simply proceed to the next round, without any moves (1 player per round).
+  return executeRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
 }
 
 export async function processStatsEffect(input: UserStats, dbConn: Pool): Promise<SQLUpdate[]> {
