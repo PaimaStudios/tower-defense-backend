@@ -3,6 +3,7 @@ import type Prando from 'paima-engine/paima-prando';
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import type { WalletAddress } from 'paima-engine/paima-utils';
 
+import type { IGetLobbyByIdResult, IGetRoundDataResult } from '@tower-defense/db';
 import {
   getLobbyById,
   getRoundData,
@@ -19,6 +20,7 @@ import {
   persistMoveSubmission,
   persistNFT,
   persistStatsUpdate,
+  finalizeMatch,
 } from './persist.js';
 import type {
   ClosedLobbyInput,
@@ -31,8 +33,10 @@ import type {
   ZombieRound,
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import type { MatchState } from '@tower-defense/utils';
-import { parseConfig, validateMoves } from '@tower-defense/game-logic';
+import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
+import processTick, { parseConfig, validateMoves } from '@tower-defense/game-logic';
+import { roundExecutor } from 'paima-engine/paima-executors';
+import { persistExecutedRound, persistNewRound, persistUpdateMatchState } from './persist/match.js';
 
 export const processCreateLobby = async (
   user: WalletAddress,
@@ -194,4 +198,50 @@ export async function processStatsEffect(input: UserStats, dbConn: Pool): Promis
   if (!stats) return [];
   const query = persistStatsUpdate(input.user, input.result, stats);
   return [query];
+}
+
+// Runs the 'round executor' and produces the necessary SQL updates as a result
+export function executeRound(
+  blockHeight: number,
+  lobby: IGetLobbyByIdResult,
+  matchConfig: MatchConfig,
+  moves: TurnAction[],
+  roundData: IGetRoundDataResult,
+  randomnessGenerator: Prando
+): SQLUpdate[] {
+  const matchState = roundData.match_state as unknown as MatchState;
+  const executor = roundExecutor.initialize(
+    matchConfig,
+    matchState,
+    moves,
+    randomnessGenerator,
+    processTick
+  );
+  console.log('calling round executor from backend');
+  // We get the new matchState from the round executor
+  const newState = executor.endState();
+
+  // We generate updates to the lobby to apply the new match state
+  const lobbyUpdate = persistUpdateMatchState(lobby.lobby_id, newState);
+
+  // We generate updates for the executed round
+  const executedRoundUpdate = persistExecutedRound(roundData, lobby, blockHeight);
+
+  // Finalize match if defender dies or we've reached the final round
+  if (newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds) {
+    console.log(newState.defenderBase.health, 'match ended, finalizing');
+    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);
+    return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
+  }
+  // Create a new round and update match state if not at final round
+  else {
+    const newRoundTuples = persistNewRound(
+      lobby.lobby_id,
+      lobby.current_round,
+      lobby.round_length,
+      matchState,
+      blockHeight
+    );
+    return [lobbyUpdate, ...executedRoundUpdate, ...newRoundTuples];
+  }
 }

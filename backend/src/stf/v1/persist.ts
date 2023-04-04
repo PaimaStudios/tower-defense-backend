@@ -2,8 +2,7 @@ import type { SQLUpdate } from 'paima-engine/paima-db';
 import type { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult } from './types.js';
 import type Prando from 'paima-engine/paima-prando';
 import type { WalletAddress } from 'paima-engine/paima-utils';
-import { roundExecutor } from 'paima-engine/paima-executors';
-import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
+import { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
 import type {
   MatchConfig,
   MatchState,
@@ -22,7 +21,6 @@ import type {
   IGetRoundMovesResult,
   IGetUserStatsResult,
   INewMatchMoveParams,
-  INewRoundParams,
   INewScheduledDataParams,
   IStartMatchParams,
   ICloseLobbyParams,
@@ -34,7 +32,6 @@ import {
   createLobby,
   closeLobby,
   newMatchMove,
-  newRound,
   newScheduledData,
   startMatch,
   endMatch,
@@ -43,8 +40,8 @@ import {
   newFinalState,
   newStats,
 } from '@tower-defense/db';
-import { persistExecutedRound, persistUpdateMatchState } from './persist/match.js';
-import { scheduleZombieRound } from './persist/zombie.js';
+import { persistNewRound } from './persist/match.js';
+import { executeRound } from './transition.js';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -288,29 +285,6 @@ function activateLobby(
   return [newMatchTuple, ...newRoundTuples];
 }
 
-// This function inserts a new empty round in the database.
-// We schedule rounds here for future automatic execution as zombie rounds in this function.
-function persistNewRound(
-  lobbyID: string,
-  round: number,
-  roundLength: number,
-  matchState: MatchState,
-  blockHeight: number
-): SQLUpdate[] {
-  const nrParams: INewRoundParams = {
-    lobby_id: lobbyID,
-    round_within_match: round + 1,
-    starting_block_height: blockHeight,
-    execution_block_height: null,
-    match_state: matchState as any,
-  };
-  const newRoundTuple: SQLUpdate = [newRound, nrParams];
-  // Scheduling of the zombie round execution in the future
-  const zombie_block_height = blockHeight + roundLength;
-  const zombieRoundUpdate: SQLUpdate = scheduleZombieRound(lobbyID, zombie_block_height);
-  return [newRoundTuple, zombieRoundUpdate];
-}
-
 export function persistMoveSubmission(
   blockHeight: number,
   user: WalletAddress,
@@ -330,7 +304,7 @@ export function persistMoveSubmission(
   // Save the moves to the database;
   const movesTuples = inputData.actions.map(a => persistMove(lobbyState.lobby_id, user, a));
   // Execute the round after moves come in. Pass the moves in database params format to the round executor.
-  const roundExecutionTuples = execute(
+  const roundExecutionTuples = executeRound(
     blockHeight,
     lobbyState,
     matchConfig,
@@ -367,7 +341,7 @@ function practiceRound(
     roundData.round_within_match + 1
   );
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
-  const roundExecutionTuples = execute(
+  const roundExecutionTuples = executeRound(
     blockHeight,
     lobbyState,
     matchConfig,
@@ -392,51 +366,6 @@ function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUp
   };
   return [newMatchMove, mmParams];
 }
-// Runs the 'round executor' and produces the necessary SQL updates as a result
-function execute(
-  blockHeight: number,
-  lobby: IGetLobbyByIdResult,
-  matchConfig: MatchConfig,
-  moves: TurnAction[],
-  roundData: IGetRoundDataResult,
-  randomnessGenerator: Prando
-): SQLUpdate[] {
-  const matchState = roundData.match_state as unknown as MatchState;
-  const executor = roundExecutor.initialize(
-    matchConfig,
-    matchState,
-    moves,
-    randomnessGenerator,
-    processTick
-  );
-  console.log('calling round executor from backend');
-  // We get the new matchState from the round executor
-  const newState = executor.endState();
-
-  // We generate updates to the lobby to apply the new match state
-  const lobbyUpdate = persistUpdateMatchState(lobby.lobby_id, newState);
-
-  // We generate updates for the executed round
-  const executedRoundUpdate = persistExecutedRound(roundData, lobby, blockHeight);
-
-  // Finalize match if defender dies or we've reached the final round
-  if (newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds) {
-    console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);
-    return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
-  }
-  // Create a new round and update match state if not at final round
-  else {
-    const newRoundTuples = persistNewRound(
-      lobby.lobby_id,
-      lobby.current_round,
-      lobby.round_length,
-      matchState,
-      blockHeight
-    );
-    return [lobbyUpdate, ...executedRoundUpdate, ...newRoundTuples];
-  }
-}
 function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
   const faction = databaseMove.wallet === matchState.attacker ? 'attacker' : 'defender';
   if (databaseMove.move_type === 'build') {
@@ -458,7 +387,7 @@ function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState):
     };
 }
 // Finalizes the match and updates user statistics according to final score of the match
-function finalizeMatch(
+export function finalizeMatch(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
   matchState: MatchState
@@ -547,7 +476,7 @@ export function executeZombieRound(
   );
   const matchState = lobbyState.current_match_state as unknown as MatchState;
   const moves = cachedMoves.map(m => expandMove(m, matchState));
-  return execute(blockHeight, lobbyState, matchConfig, moves, roundData, randomnessGenerator);
+  return executeRound(blockHeight, lobbyState, matchConfig, moves, roundData, randomnessGenerator);
 }
 
 // Persists the submitted data from a `Set NFT` game input
