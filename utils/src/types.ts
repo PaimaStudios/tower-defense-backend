@@ -2,6 +2,7 @@ import type {
   IGetLobbyByIdResult,
   IGetRoundDataResult,
   IGetBlockHeightResult,
+  match_result,
 } from '@tower-defense/db';
 import type { WalletAddress } from 'paima-engine/paima-utils';
 
@@ -373,6 +374,16 @@ export type MapName = (typeof maps)[number];
 export type RoleSetting = 'attacker' | 'defender' | 'random';
 export type RoleSettingConcise = 'a' | 'd' | 'r';
 export type StructureConcise = 'at' | 'pt' | 'st' | 'gc' | 'jc' | 'mc';
+
+export type Result = match_result;
+export type ResultConcise = 'w' | 'l';
+
+type MatchResult = {
+  gold: number;
+  wallet: WalletAddress;
+  result: Result;
+};
+export type MatchResults = [MatchResult, MatchResult];
 
 export interface RoundExecutorData {
   block_height: IGetBlockHeightResult;

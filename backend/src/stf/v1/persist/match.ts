@@ -2,15 +2,17 @@ import type {
   IExecuteRoundParams,
   IGetLobbyByIdResult,
   IGetRoundDataResult,
+  INewFinalStateParams,
   INewRoundParams,
   IUpdateCurrentMatchStateParams,
 } from '@tower-defense/db';
+import { newFinalState } from '@tower-defense/db';
 import { newRound } from '@tower-defense/db';
 import { updateCurrentMatchState } from '@tower-defense/db';
 import { executeRound } from '@tower-defense/db';
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import { deleteZombieRound, scheduleZombieRound } from './zombie';
-import type { MatchState } from '@tower-defense/utils';
+import type { MatchResults, MatchState } from '@tower-defense/utils';
 
 // This function inserts a new empty round in the database.
 // We schedule rounds here for future automatic execution as zombie rounds in this function.
@@ -54,7 +56,27 @@ export function persistExecutedRound(
   return [executedRoundTuple, deleteZombieRound(lobby.lobby_id, block_height)];
 }
 
-// Update Lobby state with the updated board
+export function persistMatchResults(
+  lobbyId: string,
+  results: MatchResults,
+  matchState: MatchState
+): SQLUpdate {
+  const params: INewFinalStateParams = {
+    final_state: {
+      lobby_id: lobbyId,
+      player_one_wallet: results[0].wallet,
+      player_one_result: results[0].result,
+      player_one_gold: results[0].gold,
+      player_two_wallet: results[1].wallet,
+      player_two_result: results[1].result,
+      player_two_gold: results[1].gold,
+      final_health: matchState.defenderBase.health,
+    },
+  };
+  return [newFinalState, params];
+}
+
+// Update Lobby state with the updated match state
 export function persistUpdateMatchState(lobbyId: string, newMatchState: MatchState): SQLUpdate {
   const params: IUpdateCurrentMatchStateParams = {
     lobby_id: lobbyId,

@@ -11,17 +11,7 @@ import {
   getMapLayout,
   getMatchConfig,
 } from '@tower-defense/db';
-import {
-  executeZombieRound,
-  persistCloseLobby,
-  persistLobbyCreation,
-  persistPracticeLobbyCreation,
-  persistLobbyJoin,
-  persistMoveSubmission,
-  persistNFT,
-  persistStatsUpdate,
-  finalizeMatch,
-} from './persist.js';
+import { executeZombieRound, persistMoveSubmission, persistNFT, finalizeMatch } from './persist.js';
 import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
@@ -37,6 +27,13 @@ import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import processTick, { parseConfig, validateMoves } from '@tower-defense/game-logic';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import { persistExecutedRound, persistNewRound, persistUpdateMatchState } from './persist/match.js';
+import {
+  persistCloseLobby,
+  persistLobbyCreation,
+  persistLobbyJoin,
+  persistPracticeLobbyCreation,
+} from './persist/lobby.js';
+import { persistStatsUpdate } from './persist/stats.js';
 
 export const processCreateLobby = async (
   user: WalletAddress,

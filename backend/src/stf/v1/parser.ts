@@ -4,6 +4,7 @@ import P from 'parsimmon';
 import type {
   BuildStructureAction,
   RepairStructureAction,
+  ResultConcise,
   RoleSettingConcise,
   SalvageStructureAction,
   Structure,
@@ -14,7 +15,6 @@ import { maps } from '@tower-defense/utils';
 
 import type {
   ClosedLobbyInput,
-  ConciseResult,
   CreatedLobbyInput,
   JoinedLobbyInput,
   ParsedSubmittedInput,
@@ -65,7 +65,7 @@ const zombieScheduledData: ParserRecord<ZombieRound> = {
   effect: 'zombie',
   lobbyID: PaimaParser.NCharsParser(12, 12),
 };
-const results: ConciseResult[] = ['w', 'l'];
+const results: ResultConcise[] = ['w', 'l'];
 const userScheduledData: ParserRecord<UserStats> = {
   renameCommand: 'scheduledData',
   effect: 'stats',
