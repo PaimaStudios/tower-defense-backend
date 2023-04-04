@@ -2,7 +2,7 @@ import type { SQLUpdate } from 'paima-engine/paima-db';
 import type { SetNFTInput, SubmittedTurnInput } from './types.js';
 import type Prando from 'paima-engine/paima-prando';
 import type { WalletAddress } from 'paima-engine/paima-utils';
-import { generateRandomMoves, matchResults } from '@tower-defense/game-logic';
+import { generateRandomMoves } from '@tower-defense/game-logic';
 import type { MatchConfig, MatchState, Structure, TurnAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import type {
@@ -12,10 +12,8 @@ import type {
   INewMatchMoveParams,
   INewNftParams,
 } from '@tower-defense/db';
-import { newMatchMove, endMatch, newNft } from '@tower-defense/db';
-import { persistMatchResults } from './persist/match.js';
+import { newMatchMove, newNft } from '@tower-defense/db';
 import { executeRound } from './transition.js';
-import { scheduleStatsUpdate } from './persist/stats.js';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -124,30 +122,6 @@ function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState):
       faction,
       id: parseInt(databaseMove.move_target),
     };
-}
-
-// Finalizes the match and updates user statistics according to final score of the match
-export function finalizeMatch(
-  blockHeight: number,
-  lobby: IGetLobbyByIdResult,
-  matchState: MatchState
-): SQLUpdate[] {
-  const endMatchTuple: SQLUpdate = [
-    endMatch,
-    { lobby_id: lobby.lobby_id, current_match_state: matchState },
-  ];
-  if (lobby.practice) {
-    console.log(`Practice match ended, ignoring results`);
-    return [endMatchTuple];
-  }
-  const results = matchResults(lobby, matchState);
-  const resultsUpdate = persistMatchResults(lobby.lobby_id, results, matchState);
-
-  // Create the new scheduled data for updating user stats
-  const statsUpdate1 = scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1);
-  const statsUpdate2 = scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1);
-  console.log('persisting match finalizing');
-  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2];
 }
 
 // This function executes 'zombie rounds', rounds where both users haven't submitted input, but which have reached the specified timeout time per round.

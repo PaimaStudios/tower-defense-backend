@@ -10,8 +10,9 @@ import {
   getUserStats,
   getMapLayout,
   getMatchConfig,
+  endMatch,
 } from '@tower-defense/db';
-import { executeZombieRound, persistMoveSubmission, persistNFT, finalizeMatch } from './persist.js';
+import { executeZombieRound, persistMoveSubmission, persistNFT } from './persist.js';
 import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
@@ -24,16 +25,21 @@ import type {
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
 import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
-import processTick, { parseConfig, validateMoves } from '@tower-defense/game-logic';
+import processTick, { matchResults, parseConfig, validateMoves } from '@tower-defense/game-logic';
 import { roundExecutor } from 'paima-engine/paima-executors';
-import { persistExecutedRound, persistNewRound, persistUpdateMatchState } from './persist/match.js';
+import {
+  persistExecutedRound,
+  persistMatchResults,
+  persistNewRound,
+  persistUpdateMatchState,
+} from './persist/match.js';
 import {
   persistCloseLobby,
   persistLobbyCreation,
   persistLobbyJoin,
   persistPracticeLobbyCreation,
 } from './persist/lobby.js';
-import { persistStatsUpdate } from './persist/stats.js';
+import { persistStatsUpdate, scheduleStatsUpdate } from './persist/stats.js';
 
 export const processCreateLobby = async (
   user: WalletAddress,
@@ -241,4 +247,28 @@ export function executeRound(
     );
     return [lobbyUpdate, ...executedRoundUpdate, ...newRoundTuples];
   }
+}
+
+// Finalizes the match and updates user statistics according to final score of the match
+function finalizeMatch(
+  blockHeight: number,
+  lobby: IGetLobbyByIdResult,
+  matchState: MatchState
+): SQLUpdate[] {
+  const endMatchTuple: SQLUpdate = [
+    endMatch,
+    { lobby_id: lobby.lobby_id, current_match_state: matchState },
+  ];
+  if (lobby.practice) {
+    console.log(`Practice match ended, ignoring results`);
+    return [endMatchTuple];
+  }
+  const results = matchResults(lobby, matchState);
+  const resultsUpdate = persistMatchResults(lobby.lobby_id, results, matchState);
+
+  // Create the new scheduled data for updating user stats
+  const statsUpdate1 = scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1);
+  const statsUpdate2 = scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1);
+  console.log('persisting match finalizing');
+  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2];
 }
