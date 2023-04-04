@@ -14,7 +14,7 @@ import {
   verifyNft,
   getNftStats as getNftStatsInternal,
 } from '../helpers/auxiliary-queries';
-import { calculateRoundEnd } from '../helpers/data-processing';
+import { calculateRoundEnd } from '../helpers/utility-functions';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
 import {
   backendQueryCurrentRound,

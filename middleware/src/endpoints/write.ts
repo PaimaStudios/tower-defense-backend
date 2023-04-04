@@ -9,7 +9,7 @@ import {
   moveToString,
   userCreatedLobby,
   userJoinedLobby,
-} from '../helpers/data-processing';
+} from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
 import type { Faction, MapName, TurnAction } from '@tower-defense/utils';
 import {

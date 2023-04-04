@@ -13,7 +13,7 @@ import type {
   PackedLobbyState,
   SuccessfulResult,
 } from '../types';
-import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './data-processing';
+import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './utility-functions';
 import {
   backendQueryLobbyState,
   backendQueryUserLobbiesBlockheight,

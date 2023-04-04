@@ -26,8 +26,6 @@ import type {
   INewScheduledDataParams,
   IStartMatchParams,
   ICloseLobbyParams,
-  IUpdateCurrentMatchStateParams,
-  IExecuteRoundParams,
   IUpdateStatsParams,
   INewNftParams,
   INewStatsParams,
@@ -39,15 +37,14 @@ import {
   newRound,
   newScheduledData,
   startMatch,
-  executeRound,
-  updateCurrentMatchState,
-  removeScheduledData,
   endMatch,
   updateStats,
   newNft,
   newFinalState,
   newStats,
 } from '@tower-defense/db';
+import { persistExecutedRound, persistUpdateMatchState } from './persist/match.js';
+import { scheduleZombieRound } from './persist/zombie.js';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -296,7 +293,7 @@ function activateLobby(
 function incrementRound(
   lobbyID: string,
   round: number,
-  round_length: number,
+  roundLength: number,
   matchState: MatchState,
   blockHeight: number
 ): SQLUpdate[] {
@@ -309,12 +306,9 @@ function incrementRound(
   };
   const newRoundTuple: SQLUpdate = [newRound, nrParams];
   // Scheduling of the zombie round execution in the future
-  const nsdParams: INewScheduledDataParams = {
-    block_height: blockHeight + round_length,
-    input_data: `z|*${lobbyID}`,
-  };
-  const newScheduledDataTuple: SQLUpdate = [newScheduledData, nsdParams];
-  return [newRoundTuple, newScheduledDataTuple];
+  const zombie_block_height = blockHeight + roundLength;
+  const zombieRoundUpdate: SQLUpdate = scheduleZombieRound(lobbyID, zombie_block_height);
+  return [newRoundTuple, zombieRoundUpdate];
 }
 
 export function persistMoveSubmission(
@@ -398,10 +392,10 @@ function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUp
   };
   return [newMatchMove, mmParams];
 }
-// Calls the 'round executor' and produces the necessary SQL updates which result
+// Runs the 'round executor' and produces the necessary SQL updates as a result
 function execute(
   blockHeight: number,
-  lobbyState: IGetLobbyByIdResult,
+  lobby: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   moves: TurnAction[],
   roundData: IGetRoundDataResult,
@@ -418,43 +412,29 @@ function execute(
   console.log('calling round executor from backend');
   // We get the new matchState from the round executor
   const newState = executor.endState();
-  // We close the round by updating it with the execution blockHeight
-  const exParams: IExecuteRoundParams = {
-    lobby_id: lobbyState.lobby_id,
-    round: lobbyState.current_round,
-    execution_block_height: blockHeight,
-  };
-  const executeRoundTuple: SQLUpdate = [executeRound, exParams];
-  // We also remove it from scheduled_data as it's not a zombie anymore
-  const removeScheduledDataTuple: SQLUpdate = [
-    removeScheduledData,
-    {
-      block_height: roundData.starting_block_height + lobbyState.round_length,
-      input_data: `z|*${lobbyState.lobby_id}`,
-    },
-  ];
-  // We update the lobby row with the new json state
-  const stateParams: IUpdateCurrentMatchStateParams = {
-    current_match_state: newState as any,
-    lobby_id: lobbyState.lobby_id,
-  };
-  const updateStateTuple: SQLUpdate = [updateCurrentMatchState, stateParams];
+
+  // We generate updates to the lobby to apply the new match state
+  const lobbyUpdate = persistUpdateMatchState(lobby.lobby_id, newState);
+
+  // We generate updates for the executed round
+  const executedRoundUpdate = persistExecutedRound(roundData, lobby, blockHeight);
+
   // Finalize match if defender dies or we've reached the final round
-  if (newState.defenderBase.health <= 0 || lobbyState.current_round === lobbyState.num_of_rounds) {
+  if (newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobbyState, newState);
-    return [executeRoundTuple, removeScheduledDataTuple, updateStateTuple, ...finalizeMatchTuples];
+    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);
+    return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
-  // Increment round and update match state if not at final round
+  // Create a new round and update match state if not at final round
   else {
     const incrementRoundTuples = incrementRound(
-      lobbyState.lobby_id,
-      lobbyState.current_round,
-      lobbyState.round_length,
+      lobby.lobby_id,
+      lobby.current_round,
+      lobby.round_length,
       matchState,
       blockHeight
     );
-    return [executeRoundTuple, removeScheduledDataTuple, ...incrementRoundTuples, updateStateTuple];
+    return [lobbyUpdate, ...executedRoundUpdate, ...incrementRoundTuples];
   }
 }
 function expandMove(databaseMove: IGetRoundMovesResult, matchState: MatchState): TurnAction {
