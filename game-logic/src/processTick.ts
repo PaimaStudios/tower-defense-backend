@@ -21,7 +21,6 @@ import type {
   TowerAttack,
   UnitAttack,
   BuildStructureAction,
-  Faction,
   UpgradeTier,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
@@ -41,8 +40,7 @@ function processTick(
   // Return null, i.e. move to next round iff the matchState shows the round has ended
   if (matchState.roundEnded) return incrementRound(matchState);
   // End round if the base health is 0
-  if (matchState.defenderBase.health === 0)
-    return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
+  if (matchState.defenderBase.health === 0) return endRound(matchConfig, matchState);
   // Else let's play
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomnessGenerator.next();
@@ -54,15 +52,14 @@ function processTick(
     // ticks 2+
     // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
     if (matchState.currentRound === 1 || matchState.currentRound === 2)
-      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
+      return endRound(matchConfig, matchState);
     // Else we do start a battle phase
     // subsequent ticks follow deterministically from a given match state after the structure updates have been processed.
     const events =
       eventsFromMatchState(matchConfig, matchState, currentTick, randomnessGenerator) || [];
     // Other events are processed one by one, as they affect global match state
     // End round if defender base health is 0
-    if (matchState.defenderBase.health === 0)
-      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
+    if (matchState.defenderBase.health === 0) return endRound(matchConfig, matchState);
     // We check if all crypts have finished spawning by checking the key on the match state tracking that
     const allSpawned = Object.keys(matchState.actors.crypts).every(c =>
       matchState.finishedSpawning.includes(parseInt(c))
@@ -71,7 +68,7 @@ function processTick(
     const remainingUnits = Object.values(matchState.actors.units);
     // End the round when no events and all crypts stopped spawning
     if (events.length === 0 && allSpawned && remainingUnits.length === 0)
-      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
+      return endRound(matchConfig, matchState);
     else {
       return events;
     }
@@ -99,9 +96,7 @@ function incrementRound(matchState: MatchState): null {
 // This then triggers the calling of incrementRound().
 function endRound(
   matchConfig: MatchConfig,
-  matchState: MatchState,
-  currentTick: number,
-  randomnessGenerator: Prando
+  matchState: MatchState
 ): [GoldRewardEvent, GoldRewardEvent] {
   matchState.roundEnded = true;
   const gold = computeGoldRewards(matchConfig, matchState);
@@ -238,10 +233,10 @@ function eventsFromMatchState(
   // check if base is alive
   if (matchState.defenderBase.health <= 0) return null;
   else {
-    const spawn = spawnEvents(matchConfig, matchState, currentTick, rng);
+    const spawn = spawnEvents(matchConfig, matchState, currentTick);
     const movement = movementEvents(matchConfig, matchState);
     const towerAttacks = towerAttackEvents(matchConfig, matchState, currentTick, rng);
-    const unitAttacks = unitAttackEvents(matchConfig, matchState, currentTick, rng);
+    const unitAttacks = unitAttackEvents(matchConfig, matchState, currentTick);
     return [...spawn, ...movement, ...towerAttacks, ...unitAttacks];
   }
 }
@@ -250,8 +245,7 @@ function eventsFromMatchState(
 function spawnEvents(
   config: MatchConfig,
   matchState: MatchState,
-  currentTick: number,
-  rng: Prando
+  currentTick: number
 ): UnitSpawnedEvent[] {
   // Crypts are stored in an ordered map in the map state, we extract an array, filter active ones, and iterate.
   const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts).filter(
@@ -277,7 +271,7 @@ function spawnEvents(
     // tick 1 is reserved for structures. Spawning happens from tick 2.
     const aboutTime = (currentTick - 2) % spawnRate === 0;
     if (hasCapacity && aboutTime) {
-      const newUnit = spawn(config, matchState, ss, rng);
+      const newUnit = spawn(config, matchState, ss);
       applyEvent(config, matchState, newUnit); // one by one now
       return newUnit;
     } else return null;
@@ -289,8 +283,7 @@ function spawnEvents(
 function spawn(
   config: MatchConfig,
   matchState: MatchState,
-  crypt: AttackerStructure,
-  rng: Prando
+  crypt: AttackerStructure
 ): UnitSpawnedEvent {
   // First we look up the unit stats with the Match Config
   // Then we compute the path tile in the map where the units will spawn at.
@@ -316,10 +309,10 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     { x, y: y + 1 },
     { x: x - 1, y },
   ]
-    .map(c => validateCoords(c, matchState))
-    .filter((n: number | null): n is number => !!n)
-    .filter(n => {
-      const tile = matchState.mapState[n];
+    .map(coordinates => validateCoords(coordinates, matchState))
+    .filter((index): index is number => {
+      if (index == null) return false;
+      const tile = matchState.mapState[index];
       return tile.type === 'path' && tile.faction === 'attacker';
     });
 }
@@ -588,13 +581,12 @@ function slothDamage(
 function unitAttackEvents(
   matchConfig: MatchConfig,
   matchState: MatchState,
-  currentTick: number,
-  rng: Prando
+  currentTick: number
 ): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
-    const damageToTower = computeDamageToTower(matchConfig, matchState, a, currentTick, rng);
-    const damageToBase = computeDamageToBase(matchConfig, matchState, a, currentTick, rng);
+    const damageToTower = computeDamageToTower(matchConfig, matchState, a, currentTick);
+    const damageToBase = computeDamageToBase(matchConfig, matchState, a);
     const isNotNull = (e: UnitAttack | null): e is UnitAttack => !!e;
     return [...damageToTower, ...damageToBase].filter(isNotNull);
   });
@@ -605,8 +597,7 @@ function computeDamageToTower(
   matchConfig: MatchConfig,
   matchState: MatchState,
   attacker: AttackerUnit,
-  currentTick: number,
-  randomnessGenerator: Prando
+  currentTick: number
 ): (DamageEvent | ActorDeletedEvent)[] {
   if (attacker.subType !== 'macaw') return [];
 
@@ -642,9 +633,7 @@ function computeDamageToTower(
 function computeDamageToBase(
   matchConfig: MatchConfig,
   matchState: MatchState,
-  attackerUnit: AttackerUnit,
-  currentTick: number,
-  randomnessGenerator: Prando
+  attackerUnit: AttackerUnit
 ): [DefenderBaseUpdateEvent, ActorDeletedEvent] | [] {
   // Check the tile the unit is at;
   const t: Tile = matchState.mapState[attackerUnit.coordinates];
@@ -723,8 +712,8 @@ function getSurroundingCells(index: number, matchState: MatchState, range: numbe
     }
   }
   return surroundingCells
-    .map(c => validateCoords(c, matchState))
-    .filter((n: number | null): n is number => !!n);
+    .map(coordinates => validateCoords(coordinates, matchState))
+    .filter((index: number | null): index is number => index != null);
 }
 
 function findClosebyTowers(
@@ -747,7 +736,7 @@ function findClosebyCrypts(
   range: number,
   radius = 1
 ): AttackerStructure[] {
-  if (!coords) return [];
+  if (coords == null) return [];
   if (radius > range) return [];
   const inRange = getSurroundingCells(coords, matchState, radius);
   const structures = Object.values(matchState.actors.crypts).filter(tw =>
