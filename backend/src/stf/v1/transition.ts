@@ -46,6 +46,7 @@ import {
   persistUpdateMatchState,
   scheduleStatsUpdate,
 } from './persist/index.js';
+import type { IEndMatchParams } from '@tower-defense/db/src/update.queries.js';
 
 export const processCreateLobby = async (
   user: WalletAddress,
@@ -311,10 +312,11 @@ function finalizeMatch(
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
 ): SQLUpdate[] {
-  const endMatchTuple: SQLUpdate = [
-    endMatch,
-    { lobby_id: lobby.lobby_id, current_match_state: matchState },
-  ];
+  const params: IEndMatchParams = {
+    lobby_id: lobby.lobby_id,
+    current_match_state: matchState as any,
+  };
+  const endMatchTuple: SQLUpdate = [endMatch, params];
   if (lobby.practice) {
     console.log(`Practice match ended, ignoring results`);
     return [endMatchTuple];
