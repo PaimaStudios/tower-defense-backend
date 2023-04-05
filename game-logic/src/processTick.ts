@@ -316,10 +316,10 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     { x, y: y + 1 },
     { x: x - 1, y },
   ]
-    .map(c => validateCoords(c, matchState))
-    .filter((n: number | null): n is number => !!n)
-    .filter(n => {
-      const tile = matchState.mapState[n];
+    .map(coordinates => validateCoords(coordinates, matchState))
+    .filter((index): index is number => {
+      if (index == null) return false;
+      const tile = matchState.mapState[index];
       return tile.type === 'path' && tile.faction === 'attacker';
     });
 }
@@ -723,8 +723,8 @@ function getSurroundingCells(index: number, matchState: MatchState, range: numbe
     }
   }
   return surroundingCells
-    .map(c => validateCoords(c, matchState))
-    .filter((n: number | null): n is number => !!n);
+    .map(coordinates => validateCoords(coordinates, matchState))
+    .filter((index: number | null): index is number => index != null);
 }
 
 function findClosebyTowers(
@@ -747,7 +747,7 @@ function findClosebyCrypts(
   range: number,
   radius = 1
 ): AttackerStructure[] {
-  if (!coords) return [];
+  if (coords == null) return [];
   if (radius > range) return [];
   const inRange = getSurroundingCells(coords, matchState, radius);
   const structures = Object.values(matchState.actors.crypts).filter(tw =>
