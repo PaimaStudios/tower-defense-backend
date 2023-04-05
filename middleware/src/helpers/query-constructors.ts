@@ -54,12 +54,6 @@ export function indexerQueryTitleImage(contract: string, tokenId: number): strin
   return buildIndexerQuery(endpoint, options);
 }
 
-export function indexerQueryHistoricalOwnerMultiple(): string {
-  const endpoint = 'historical-owner-multiple';
-  const options = {};
-  return buildIndexerQuery(endpoint, options);
-}
-
 export function backendQueryLobbyState(lobbyID: string): string {
   const endpoint = 'lobby_state';
   const options = {
@@ -214,11 +208,5 @@ export function statefulQueryNftScore(nftContract: string, tokenId: number): str
     nft_contract: nftContract,
     token_id: tokenId,
   };
-  return buildStatefulQuery(endpoint, options);
-}
-
-export function statefulQueryMultipleNftScores(): string {
-  const endpoint = 'multiple-nft-scores';
-  const options = {};
   return buildStatefulQuery(endpoint, options);
 }

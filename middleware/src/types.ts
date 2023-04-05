@@ -109,11 +109,6 @@ export interface PackedCurrentRound {
   };
 }
 
-export interface RichOpenLobbyStates {
-  success: true;
-  lobbies: RichOpenLobbyState[];
-}
-
 export interface LobbyStates {
   success: true;
   lobbies: LobbyState[];
@@ -204,51 +199,10 @@ export type NftScoreSnake = {
   score: number;
 };
 
-export interface StatefulNftId {
-  nft_contract: string;
-  token_id: number;
-}
-
-export interface IndexerNftOwnership {
-  tokenId: number;
-  contract: string;
-  owner: string;
-}
-
 export interface MatchWinnerResponse {
   match_status: LobbyStatus;
   winner_address: string;
 }
 export interface MapByNameResponse {
   map_layout: string;
-}
-export interface LobbyDbQuery {
-  created_at: Date;
-  creation_block_height: number;
-  current_round: number;
-  grid_size: number;
-  health: number;
-  hidden: boolean;
-  lobby_creator: string;
-  lobby_creator_animal: string | null;
-  lobby_id: string;
-  lobby_state: LobbyStatus;
-  map: string;
-  num_of_rounds: number;
-  round_length: number;
-}
-export interface UserNft {
-  wallet: WalletAddress;
-  nftContract: ContractAddress | null;
-  tokenId: number | null;
-}
-
-export interface LobbyWebserverQuery {
-  lobby: LobbyDbQuery;
-  nft: UserNft;
-}
-
-export interface RichOpenLobbyState extends LobbyDbQuery {
-  wins: number;
-  losses: number;
 }
