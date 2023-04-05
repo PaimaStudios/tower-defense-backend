@@ -320,6 +320,7 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     .filter((n: number | null): n is number => !!n)
     .filter(n => {
       const tile = matchState.mapState[n];
+      if (index === 285) console.log(matchState, "match state")
       return tile.type === 'path' && tile.faction === 'attacker';
     });
 }
@@ -699,8 +700,8 @@ export function indexToCoords(i: number, width: number): Coordinates {
 }
 // Validate that coords don't overflow the map.
 export function validateCoords(coords: Coordinates, matchState: MatchState): number | null {
-  if (coords.x < 0 || coords.x > matchState.width) return null;
-  if (coords.y < 0 || coords.y > matchState.height) return null;
+  if (coords.x < 0 || coords.x >= matchState.width) return null;
+  if (coords.y < 0 || coords.y >= matchState.height) return null;
   else return coordsToIndex(coords, matchState.width);
 }
 function getSurroundingCells(index: number, matchState: MatchState, range: number): number[] {
