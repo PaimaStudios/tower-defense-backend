@@ -111,44 +111,6 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
   return [query];
 }
 
-export function persistMoveSubmission(
-  blockHeight: number,
-  user: WalletAddress,
-  input: SubmittedTurnInput,
-  lobby: IGetLobbyByIdResult,
-  matchConfig: MatchConfig,
-  round: IGetRoundDataResult,
-  randomnessGenerator: Prando
-): SQLUpdate[] {
-  // Only one player submits moves per round.
-  // First turn for each player is just for building.
-  // After that, each round triggers a battle phase.
-  // i.e. Defender submits moves -> Battle phase
-  // then Attacker submits moves -> Annother battle phase.
-  // We'll assume the moves are valid at this stage, invalid moves shouldn't have got this far.
-  // Save the moves to the database;
-  const movesTuples = input.actions.map(action => persistMove(lobby.lobby_id, user, action));
-  // Execute the round after moves come in. Pass the moves in database params format to the round executor.
-  const roundExecutionTuples = executeRound(
-    blockHeight,
-    lobby,
-    matchConfig,
-    input.actions,
-    round,
-    randomnessGenerator
-  );
-  const practiceTuples = lobby.practice
-    ? practiceRound(
-        blockHeight,
-        { ...lobby, current_round: lobby.current_round + 1 },
-        matchConfig,
-        round, // match state here should have been mutated by the previous round execution...
-        randomnessGenerator
-      )
-    : [];
-  return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
-}
-
 export function practiceRound(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
@@ -225,15 +187,34 @@ export async function processSubmittedTurn(
   if (!round) return [];
 
   const matchConfig = parseConfig(configString.content);
-  return persistMoveSubmission(
+
+  // Only one player submits moves per round.
+  // First turn for each player is just for building.
+  // After that, each round triggers a battle phase.
+  // i.e. Defender submits moves -> Battle phase
+  // then Attacker submits moves -> Annother battle phase.
+  // Save the moves to the database;
+  const movesTuples = input.actions.map(action => persistMove(lobby.lobby_id, user, action));
+  // Execute the round after moves come in. Pass the moves in database params format to the round executor.
+  const roundExecutionTuples = executeRound(
     blockHeight,
-    user,
-    input,
     lobby,
     matchConfig,
+    input.actions,
     round,
     randomnessGenerator
   );
+  if (lobby.practice) {
+    const practiceTuples = practiceRound(
+      blockHeight,
+      { ...lobby, current_round: lobby.current_round + 1 },
+      matchConfig,
+      round, // match state here should have been mutated by the previous round execution...
+      randomnessGenerator
+    );
+    return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
+  }
+  return [...movesTuples, ...roundExecutionTuples];
 }
 
 export async function processScheduledData(
