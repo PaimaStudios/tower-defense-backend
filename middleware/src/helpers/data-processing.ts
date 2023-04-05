@@ -1,16 +1,7 @@
 import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
 import type { Structure, StructureConcise, TurnAction } from '@tower-defense/utils';
-import { GameENV } from '@tower-defense/utils';
-import type { LobbyWebserverQuery, UserNft } from '../types';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
-import type {
-  IndexerNftOwnership,
-  LobbyState,
-  NftScore,
-  NftScoreSnake,
-  PackedLobbyState,
-  RoundEnd,
-} from '../types';
+import type { LobbyState, NftScore, NftScoreSnake, PackedLobbyState, RoundEnd } from '../types';
 import { getBlockTime } from 'paima-engine/paima-utils';
 
 const conciseMap: Record<Structure, StructureConcise> = {
@@ -122,23 +113,4 @@ export function nftScoreSnakeToCamel(nftScore: NftScoreSnake): NftScore {
     losses: nftScore.losses,
     score: nftScore.score,
   };
-}
-
-export function userNftIndexerToMiddleware(nft: IndexerNftOwnership): UserNft {
-  return {
-    wallet: nft.owner,
-    nftContract: nft.contract,
-    tokenId: nft.tokenId,
-  };
-}
-
-export function lobbiesToTokenIdSet(lobbies: LobbyWebserverQuery[]): number[] {
-  const s = new Set<number>([]);
-  // NOTE: All NFTs are expected to be of the same contract
-  for (const lobby of lobbies) {
-    if (lobby.nft.nftContract === GameENV.NFT_CONTRACT && lobby.nft.tokenId) {
-      s.add(lobby.nft.tokenId);
-    }
-  }
-  return Array.from(s);
 }

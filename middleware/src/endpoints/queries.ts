@@ -13,7 +13,6 @@ import {
   getRawNewLobbies,
   verifyNft,
   getNftStats as getNftStatsInternal,
-  addLobbyCreatorNftStats,
 } from '../helpers/auxiliary-queries';
 import { calculateRoundEnd } from '../helpers/data-processing';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
@@ -43,7 +42,6 @@ import type {
   NftScore,
   PackedLobbyState,
   PackedUserStats,
-  RichOpenLobbyStates,
   RoundExecutorData,
   SuccessfulResult,
   UserStats,
@@ -101,7 +99,7 @@ async function getLobbySearch(
   searchQuery: string,
   page: number,
   count?: number
-): Promise<RichOpenLobbyStates | FailedResult> {
+): Promise<LobbyStates | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbySearch');
 
   let response: Response;
@@ -114,12 +112,11 @@ async function getLobbySearch(
   }
 
   try {
-    const j = await response.json();
-    const richLobbies = await addLobbyCreatorNftStats(j.lobbies, latestBlockHeight);
+    const j = (await response.json()) as { lobbies: LobbyState[] };
     // TODO: properly typecheck
     return {
       success: true,
-      lobbies: richLobbies,
+      lobbies: j.lobbies,
     };
   } catch (err) {
     return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
@@ -320,24 +317,21 @@ async function getOpenLobbies(
   wallet: string,
   page: number,
   count?: number
-): Promise<RichOpenLobbyStates | FailedResult> {
+): Promise<LobbyStates | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getOpenLobbies');
 
   let res: Response;
-  let latestBlockHeight: number;
 
   try {
     const query = backendQueryOpenLobbies(wallet, count, page);
-    [res, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
+    res = await fetch(query);
   } catch (err) {
     return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
-    const j = await res.json();
+    const j = (await res.json()) as { lobbies: LobbyState[] };
     console.log(j, 'open lobbies');
-    // TODO mmm this is a weird flow
-    // const richLobbies = await addLobbyCreatorNftStats(j.lobbies, latestBlockHeight);
     return {
       success: true,
       lobbies: j.lobbies,
