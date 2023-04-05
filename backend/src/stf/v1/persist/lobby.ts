@@ -107,7 +107,6 @@ export function persistLobbyCreation(
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
-  // In case of a practice lobby join with a predetermined opponent right away and use the same animal as user
   return [createLobbyTuple, blankStatsTuple];
 }
 export function persistPracticeLobbyCreation(
@@ -140,7 +139,6 @@ export function persistPracticeLobbyCreation(
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
-  // In case of a practice lobby join with a predetermined opponent right away and use the same animal as user
   const practiceLobbyTuples = persistLobbyJoin(
     blockHeight,
     PRACTICE_BOT_ADDRESS,
