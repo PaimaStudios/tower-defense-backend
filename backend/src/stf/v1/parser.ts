@@ -1,20 +1,20 @@
 import type { ParserRecord } from 'paima-engine/paima-utils-backend';
 import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
-import {
+import type {
   BuildStructureAction,
   RepairStructureAction,
+  ResultConcise,
   RoleSettingConcise,
   SalvageStructureAction,
   Structure,
   TurnAction,
   UpgradeStructureAction,
-  maps,
 } from '@tower-defense/utils';
+import { maps } from '@tower-defense/utils';
 
-import {
+import type {
   ClosedLobbyInput,
-  ConciseResult,
   CreatedLobbyInput,
   JoinedLobbyInput,
   ParsedSubmittedInput,
@@ -24,7 +24,8 @@ import {
   ZombieRound,
 } from './types';
 import { conciseFactionMap } from '@tower-defense/game-logic';
-import { ConciseConsumer, ConciseValue, consumer } from 'paima-engine/paima-concise';
+import type { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise';
+import { consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `
@@ -64,7 +65,7 @@ const zombieScheduledData: ParserRecord<ZombieRound> = {
   effect: 'zombie',
   lobbyID: PaimaParser.NCharsParser(12, 12),
 };
-const results: ConciseResult[] = ['w', 'l'];
+const results: ResultConcise[] = ['w', 'l'];
 const userScheduledData: ParserRecord<UserStats> = {
   renameCommand: 'scheduledData',
   effect: 'stats',

@@ -14,8 +14,8 @@ import {
   verifyNft,
   getNftStats as getNftStatsInternal,
 } from '../helpers/auxiliary-queries';
-import { calculateRoundEnd } from '../helpers/data-processing';
-import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executor-internals';
+import { calculateRoundEnd } from '../helpers/utility-functions';
+import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executors';
 import {
   backendQueryCurrentRound,
   backendQueryLobbyConfig,
@@ -35,20 +35,24 @@ import type {
   AccountNftsResult,
   LobbyState,
   LobbyStates,
-  MatchExecutorData,
   NewLobbies,
   NFT,
   NftId,
   NftScore,
   PackedLobbyState,
   PackedUserStats,
-  RoundExecutorData,
   SuccessfulResult,
   UserStats,
 } from '../types';
-import type { MapName, MatchConfig } from '@tower-defense/utils';
-import { FailedResult, getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
-import { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
+import type {
+  MapName,
+  MatchConfig,
+  MatchExecutorData,
+  RoundExecutorData,
+} from '@tower-defense/utils';
+import type { FailedResult } from 'paima-engine/paima-mw-core';
+import { getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
+import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');

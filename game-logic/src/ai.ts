@@ -1,13 +1,10 @@
-import {
-  AttackerStructure,
+import type {
   AttackerStructureType,
   BuildStructureAction,
-  DefenderStructure,
   DefenderStructureType,
   Faction,
   MatchConfig,
   MatchState,
-  RepairStructureAction,
   Structure,
   Tile,
   TurnAction,

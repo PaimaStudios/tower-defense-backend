@@ -1,9 +1,6 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
-import {
-  requirePool,
-  getPaginatedOpenLobbies,
-  IGetPaginatedOpenLobbiesResult,
-} from '@tower-defense/db';
+import type { IGetPaginatedOpenLobbiesResult } from '@tower-defense/db';
+import { requirePool, getPaginatedOpenLobbies } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
 

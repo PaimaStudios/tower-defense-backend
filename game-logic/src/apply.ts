@@ -1,4 +1,4 @@
-import Prando from 'paima-engine/paima-prando';
+import type Prando from 'paima-engine/paima-prando';
 import type {
   MatchConfig,
   MatchState,

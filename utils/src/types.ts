@@ -1,4 +1,10 @@
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type {
+  IGetLobbyByIdResult,
+  IGetRoundDataResult,
+  IGetBlockHeightResult,
+  match_result,
+} from '@tower-defense/db';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export type Hash = string;
 export type URI = string;
@@ -368,3 +374,33 @@ export type MapName = (typeof maps)[number];
 export type RoleSetting = 'attacker' | 'defender' | 'random';
 export type RoleSettingConcise = 'a' | 'd' | 'r';
 export type StructureConcise = 'at' | 'pt' | 'st' | 'gc' | 'jc' | 'mc';
+
+export type Result = match_result;
+export type ResultConcise = 'w' | 'l';
+
+type MatchResult = {
+  gold: number;
+  wallet: WalletAddress;
+  result: Result;
+};
+export type MatchResults = [MatchResult, MatchResult];
+
+export interface RoundExecutorData {
+  block_height: IGetBlockHeightResult;
+  lobby: IGetLobbyByIdResult;
+  moves: TurnAction[];
+  round_data: IGetRoundDataResult;
+}
+
+interface ExecutorDataSeed {
+  seed: string;
+  block_height: number;
+  round: number;
+}
+
+export interface MatchExecutorData {
+  lobby: IGetLobbyByIdResult;
+  seeds: ExecutorDataSeed[];
+  moves: TurnAction[];
+  initialState: MatchState;
+}

@@ -1,15 +1,15 @@
 import { consumer } from 'paima-engine/paima-concise';
-import {
+import type {
   MatchConfig,
   TowerConfig,
   CryptConfig,
-  tryParseConfig,
   Level,
   UnitType,
   RoleSetting,
   RoleSettingConcise,
   AttackerStructureType,
 } from '@tower-defense/utils';
+import { tryParseConfig } from '@tower-defense/utils';
 
 const baseAnacondaTowerConfig1: TowerConfig = {
   price: 50,

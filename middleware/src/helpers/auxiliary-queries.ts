@@ -1,4 +1,5 @@
-import { FailedResult, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
+import type { FailedResult } from 'paima-engine/paima-mw-core';
+import { PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
 import { pushLog } from 'paima-engine/paima-mw-core';
 import type { ContractAddress } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
@@ -12,7 +13,7 @@ import type {
   PackedLobbyState,
   SuccessfulResult,
 } from '../types';
-import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './data-processing';
+import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './utility-functions';
 import {
   backendQueryLobbyState,
   backendQueryUserLobbiesBlockheight,
@@ -21,7 +22,7 @@ import {
   indexerQueryTitleImage,
   statefulQueryNftScore,
 } from './query-constructors';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getRawLobbyState');
