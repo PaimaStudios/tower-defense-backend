@@ -11,12 +11,12 @@ import type {
 } from '@tower-defense/db';
 import { closeLobby, startMatch } from '@tower-defense/db';
 import { createLobby } from '@tower-defense/db';
-import { blankStats } from './stats';
 import type { MatchState, RawMap, RoleSetting, TileNumber } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
-import { persistNewRound } from './match';
 import { getMap, parseConfig } from '@tower-defense/game-logic';
-import { practiceRound } from '../persist';
+import { blankStats } from './stats';
+import { practiceRound } from '../transition';
+import { persistNewRound } from './match';
 
 // TODO PLAYER TURNS / ROUNDS ???
 function generateMatchState(
@@ -155,19 +155,15 @@ export function persistPracticeLobbyCreation(
 export function persistLobbyJoin(
   blockHeight: number,
   user: WalletAddress,
-  lobbyState: IGetLobbyByIdResult,
+  lobby: IGetLobbyByIdResult,
   map: IGetMapLayoutResult,
   configString: string,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
-  if (
-    !lobbyState.player_two &&
-    lobbyState.lobby_state === 'open' &&
-    lobbyState.lobby_creator !== user
-  ) {
+  if (!lobby.player_two && lobby.lobby_state === 'open' && lobby.lobby_creator !== user) {
     // We initialize the match state on lobby joining
     const matchState = generateMatchState(
-      lobbyState,
+      lobby,
       user,
       map.layout,
       configString,
@@ -175,22 +171,22 @@ export function persistLobbyJoin(
     );
     // We update the Lobby table with the new state, and determine the creator role if it was random
     const creator_role =
-      lobbyState.creator_faction === 'random'
-        ? matchState.attacker === lobbyState.lobby_creator
+      lobby.creator_faction === 'random'
+        ? matchState.attacker === lobby.lobby_creator
           ? 'attacker'
           : 'defender'
-        : lobbyState.creator_faction;
+        : lobby.creator_faction;
     // If it's a practice lobby and it's the bot's turn first we run that turn too.
     // We have to pass it fake round data as the round hasn't been persisted yet.
     const firstRound =
-      lobbyState.practice && creator_role === 'attacker'
+      lobby.practice && creator_role === 'attacker'
         ? practiceRound(
             blockHeight,
-            { ...lobbyState, current_round: 1 },
+            { ...lobby, current_round: 1 },
             parseConfig(configString),
             {
               round_within_match: 0,
-              lobby_id: lobbyState.lobby_id,
+              lobby_id: lobby.lobby_id,
               starting_block_height: blockHeight,
               execution_block_height: null,
               id: 0,
@@ -199,7 +195,7 @@ export function persistLobbyJoin(
             randomnessGenerator
           )
         : [];
-    const updateLobbyTuple = activateLobby(user, lobbyState, creator_role, matchState, blockHeight);
+    const updateLobbyTuple = activateLobby(user, lobby, creator_role, matchState, blockHeight);
     const blankStatsTuple: SQLUpdate = blankStats(user);
     return [...updateLobbyTuple, blankStatsTuple, ...firstRound];
   } else return [];

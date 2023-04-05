@@ -3,16 +3,19 @@ import type {
   IGetLobbyByIdResult,
   IGetRoundDataResult,
   INewFinalStateParams,
+  INewMatchMoveParams,
   INewRoundParams,
   IUpdateCurrentMatchStateParams,
 } from '@tower-defense/db';
+import { newMatchMove } from '@tower-defense/db';
 import { newFinalState } from '@tower-defense/db';
 import { newRound } from '@tower-defense/db';
 import { updateCurrentMatchState } from '@tower-defense/db';
 import { executeRound } from '@tower-defense/db';
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import { deleteZombieRound, scheduleZombieRound } from './zombie';
-import type { MatchResults, MatchState } from '@tower-defense/utils';
+import type { MatchResults, MatchState, TurnAction } from '@tower-defense/utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 // This function inserts a new empty round in the database.
 // We schedule rounds here for future automatic execution as zombie rounds in this function.
@@ -35,6 +38,21 @@ export function persistNewRound(
   const zombie_block_height = blockHeight + roundLength;
   const zombieRoundUpdate: SQLUpdate = scheduleZombieRound(lobbyID, zombie_block_height);
   return [newRoundTuple, zombieRoundUpdate];
+}
+
+// Persist submitted move to database
+export function persistMove(matchId: string, user: WalletAddress, a: TurnAction): SQLUpdate {
+  const move_target = a.action === 'build' ? `${a.structure}--${a.coordinates}` : `${a.id}`;
+  const mmParams: INewMatchMoveParams = {
+    new_move: {
+      lobby_id: matchId,
+      wallet: user,
+      round: a.round,
+      move_type: a.action,
+      move_target,
+    },
+  };
+  return [newMatchMove, mmParams];
 }
 
 // Persist an executed round (and delete scheduled zombie round input)

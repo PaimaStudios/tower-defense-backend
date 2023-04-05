@@ -12,7 +12,6 @@ import {
   getMatchConfig,
   endMatch,
 } from '@tower-defense/db';
-import { persistMoveSubmission, persistNFT } from './persist.js';
 import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
@@ -25,21 +24,28 @@ import type {
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
 import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
-import processTick, { matchResults, parseConfig, validateMoves } from '@tower-defense/game-logic';
+import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
+import processTick, {
+  generateRandomMoves,
+  matchResults,
+  parseConfig,
+  validateMoves,
+} from '@tower-defense/game-logic';
 import { roundExecutor } from 'paima-engine/paima-executors';
 import {
-  persistExecutedRound,
-  persistMatchResults,
-  persistNewRound,
-  persistUpdateMatchState,
-} from './persist/match.js';
-import {
   persistCloseLobby,
+  persistExecutedRound,
   persistLobbyCreation,
   persistLobbyJoin,
+  persistMatchResults,
+  persistMove,
+  persistNFT,
+  persistNewRound,
   persistPracticeLobbyCreation,
-} from './persist/lobby.js';
-import { persistStatsUpdate, scheduleStatsUpdate } from './persist/stats.js';
+  persistStatsUpdate,
+  persistUpdateMatchState,
+  scheduleStatsUpdate,
+} from './persist/index.js';
 
 export const processCreateLobby = async (
   user: WalletAddress,
@@ -103,6 +109,72 @@ export async function processCloseLobby(
 export function processSetNFT(user: WalletAddress, blockHeight: number, expanded: SetNFTInput) {
   const query = persistNFT(user, blockHeight, expanded);
   return [query];
+}
+
+export function persistMoveSubmission(
+  blockHeight: number,
+  user: WalletAddress,
+  input: SubmittedTurnInput,
+  lobby: IGetLobbyByIdResult,
+  matchConfig: MatchConfig,
+  round: IGetRoundDataResult,
+  randomnessGenerator: Prando
+): SQLUpdate[] {
+  // Only one player submits moves per round.
+  // First turn for each player is just for building.
+  // After that, each round triggers a battle phase.
+  // i.e. Defender submits moves -> Battle phase
+  // then Attacker submits moves -> Annother battle phase.
+  // We'll assume the moves are valid at this stage, invalid moves shouldn't have got this far.
+  // Save the moves to the database;
+  const movesTuples = input.actions.map(action => persistMove(lobby.lobby_id, user, action));
+  // Execute the round after moves come in. Pass the moves in database params format to the round executor.
+  const roundExecutionTuples = executeRound(
+    blockHeight,
+    lobby,
+    matchConfig,
+    input.actions,
+    round,
+    randomnessGenerator
+  );
+  const practiceTuples = lobby.practice
+    ? practiceRound(
+        blockHeight,
+        { ...lobby, current_round: lobby.current_round + 1 },
+        matchConfig,
+        round, // match state here should have been mutated by the previous round execution...
+        randomnessGenerator
+      )
+    : [];
+  return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
+}
+
+export function practiceRound(
+  blockHeight: number,
+  lobbyState: IGetLobbyByIdResult,
+  matchConfig: MatchConfig,
+  roundData: IGetRoundDataResult,
+  randomnessGenerator: Prando
+): SQLUpdate[] {
+  const matchState = roundData.match_state as unknown as MatchState;
+  const user = PRACTICE_BOT_ADDRESS;
+  const faction = user === matchState.defender ? 'defender' : 'attacker';
+  const moves = generateRandomMoves(
+    matchConfig,
+    matchState,
+    faction,
+    roundData.round_within_match + 1
+  );
+  const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
+  const roundExecutionTuples = executeRound(
+    blockHeight,
+    lobbyState,
+    matchConfig,
+    moves,
+    { ...roundData, round_within_match: roundData.round_within_match + 1 },
+    randomnessGenerator
+  );
+  return [...movesTuples, ...roundExecutionTuples];
 }
 
 export async function processSubmittedTurn(
