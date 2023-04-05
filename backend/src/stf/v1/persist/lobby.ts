@@ -7,6 +7,7 @@ import type {
   ICreateLobbyParams,
   IGetLobbyByIdResult,
   IGetMapLayoutResult,
+  IGetRoundDataResult,
   IStartMatchParams,
 } from '@tower-defense/db';
 import { closeLobby, startMatch } from '@tower-defense/db';
@@ -160,46 +161,47 @@ export function persistLobbyJoin(
   configString: string,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
-  if (!lobby.player_two && lobby.lobby_state === 'open' && lobby.lobby_creator !== user) {
-    // We initialize the match state on lobby joining
-    const matchState = generateMatchState(
-      lobby,
-      user,
-      map.layout,
-      configString,
-      randomnessGenerator
-    );
-    // We update the Lobby table with the new state, and determine the creator role if it was random
-    const creator_role =
-      lobby.creator_faction === 'random'
-        ? matchState.attacker === lobby.lobby_creator
-          ? 'attacker'
-          : 'defender'
-        : lobby.creator_faction;
-    // If it's a practice lobby and it's the bot's turn first we run that turn too.
-    // We have to pass it fake round data as the round hasn't been persisted yet.
-    const firstRound =
-      lobby.practice && creator_role === 'attacker'
-        ? practiceRound(
-            blockHeight,
-            { ...lobby, current_round: 1 },
-            parseConfig(configString),
-            {
-              round_within_match: 0,
-              lobby_id: lobby.lobby_id,
-              starting_block_height: blockHeight,
-              execution_block_height: null,
-              id: 0,
-              match_state: matchState as any,
-            },
-            randomnessGenerator
-          )
-        : [];
-    const updateLobbyTuple = activateLobby(user, lobby, creator_role, matchState, blockHeight);
-    const blankStatsTuple: SQLUpdate = blankStats(user);
-    return [...updateLobbyTuple, blankStatsTuple, ...firstRound];
-  } else return [];
+  if (lobby.player_two || lobby.lobby_state !== 'open' || lobby.lobby_creator === user) {
+    return [];
+  }
+  // We initialize the match state on lobby joining
+  const matchState = generateMatchState(lobby, user, map.layout, configString, randomnessGenerator);
+  // We update the Lobby table with the new state, and determine the creator role if it was random
+  const creator_role =
+    lobby.creator_faction === 'random'
+      ? matchState.attacker === lobby.lobby_creator
+        ? 'attacker'
+        : 'defender'
+      : lobby.creator_faction;
+  // If it's a practice lobby and it's the bot's turn first we run that turn too.
+  const firstRound =
+    lobby.practice && creator_role === 'attacker'
+      ? practiceRound(
+          blockHeight,
+          { ...lobby, current_round: 1 },
+          parseConfig(configString),
+          // We have to pass it fake round data as the round hasn't been persisted yet.
+          constructRoundData(lobby.lobby_id, blockHeight, matchState),
+          randomnessGenerator
+        )
+      : [];
+  const updateLobbyTuples = activateLobby(user, lobby, creator_role, matchState, blockHeight);
+  const blankStatsTuple: SQLUpdate = blankStats(user);
+  return [...updateLobbyTuples, blankStatsTuple, ...firstRound];
 }
+
+const constructRoundData = (
+  lobbyId: string,
+  blockHeight: number,
+  matchState: MatchState
+): IGetRoundDataResult => ({
+  round_within_match: 0,
+  lobby_id: lobbyId,
+  starting_block_height: blockHeight,
+  execution_block_height: null,
+  id: 0,
+  match_state: matchState as any,
+});
 
 // Convert lobby from `open` to `close`
 export function persistCloseLobby(
