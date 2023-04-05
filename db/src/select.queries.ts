@@ -532,7 +532,9 @@ export interface IGetMatchConfigParams {
 /** 'GetMatchConfig' return type */
 export interface IGetMatchConfigResult {
   content: string;
+  creator: string;
   id: string;
+  version: number;
 }
 
 /** 'GetMatchConfig' query type */

@@ -48,8 +48,8 @@ timestamp = EXCLUDED.timestamp;
 /*  Configs  */
 
 /* @name createConfig */
-INSERT INTO configs(id, content)
-VALUES(:id!, :content!)
+INSERT INTO configs(id, creator, version, content)
+VALUES(:id!, :creator!, :version!, :content!)
 ON CONFLICT(id)
 DO NOTHING;
 
