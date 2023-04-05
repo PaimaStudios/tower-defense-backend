@@ -320,7 +320,6 @@ function closeByPaths(index: number, matchState: MatchState): number[] {
     .filter((n: number | null): n is number => !!n)
     .filter(n => {
       const tile = matchState.mapState[n];
-      if (index === 285) console.log(matchState, "match state")
       return tile.type === 'path' && tile.faction === 'attacker';
     });
 }
