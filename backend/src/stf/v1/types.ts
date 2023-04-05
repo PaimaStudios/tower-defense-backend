@@ -8,6 +8,7 @@ export type ParsedSubmittedInput =
   | SubmittedTurnInput
   | ScheduledDataInput
   | SetNFTInput
+  | RegisteredConfigInput
   | InvalidInput;
 
 export interface InvalidInput {
@@ -61,6 +62,12 @@ export interface UserStats extends ScheduledDataInput {
   effect: 'stats';
   user: WalletAddress;
   result: ConciseResult;
+}
+
+export interface RegisteredConfigInput{
+  input: 'registeredConfig';
+  version: number;
+  content: string;
 }
 
 export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {

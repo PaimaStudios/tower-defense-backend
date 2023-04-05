@@ -1,5 +1,5 @@
 import { SQLUpdate } from 'paima-engine/paima-db';
-import { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult } from './types.js';
+import { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult, RegisteredConfigInput } from './types.js';
 import Prando from 'paima-engine/paima-prando';
 import { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
@@ -45,7 +45,10 @@ import {
   newFinalState,
   INewStatsParams,
   newStats,
+  ICreateConfigParams,
+  createConfig,
 } from '@tower-defense/db';
+import { copyFile } from 'fs';
 
 // this file deals with receiving blockchain data input and outputting SQL updates (imported from pgTyped output of our SQL files)
 // PGTyped SQL updates are a tuple of the function calling the database and the params sent to it.
@@ -185,6 +188,8 @@ function randomizeRoles(
 // separated by \r\n .
 function processMapLayout(mapName: string, mapString: string): RawMap {
   const rows = mapString.split('\\r\\n');
+  console.log(rows, mapName)
+  console.log(rows.length)
   return {
     name: mapName,
     width: rows[0].length,
@@ -582,4 +587,19 @@ export function persistNFT(
     timestamp: new Date(),
   };
   return [newNft, params];
+}
+
+export function persistConfigRegistration(
+  user: WalletAddress,
+  inputData: RegisteredConfigInput,
+  randomnessGenerator: Prando
+): SQLUpdate{
+  const config_id = randomnessGenerator.nextString(14);
+  const params: ICreateConfigParams = {
+    id: config_id,
+    creator: user,
+    content: inputData.content,
+    version: inputData.version
+  }
+  return [createConfig, params]
 }

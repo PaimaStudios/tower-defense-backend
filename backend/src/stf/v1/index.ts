@@ -11,6 +11,7 @@ import {
   processScheduledData,
   processSetNFT,
   processSubmittedTurn,
+  processConfig,
 } from './transition.js';
 
 export default async function (
@@ -39,6 +40,8 @@ export default async function (
     case 'scheduledData':
       if (user !== SCHEDULED_DATA_ADDRESS) return [];
       return processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
+    case 'registeredConfig':
+      return processConfig(user, blockHeight, parsed)
     case 'invalidString':
       return [];
     default:

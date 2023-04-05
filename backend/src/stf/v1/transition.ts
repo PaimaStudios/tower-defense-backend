@@ -19,6 +19,7 @@ import {
   persistMoveSubmission,
   persistNFT,
   persistStatsUpdate,
+  persistConfigRegistration,
 } from './persist.js';
 import {
   ClosedLobbyInput,
@@ -31,6 +32,7 @@ import {
   ZombieRound,
   isUserStats,
   isZombieRound,
+  RegisteredConfigInput,
 } from './types.js';
 import { MatchState } from '@tower-defense/utils';
 import { parseConfig, validateMoves } from '@tower-defense/game-logic';
@@ -195,4 +197,8 @@ export async function processStatsEffect(input: UserStats, dbConn: Pool): Promis
   if (!stats) return [];
   const query = persistStatsUpdate(input.user, input.result, stats);
   return [query];
+}
+
+export async function processConfig(user: WalletAddress, blockHeight: number, input: RegisteredConfigInput, randomnessGenerator: Prando): Promise<SQLUpdate[]>{
+  return persistConfigRegistration(user, blockHeight, input, randomnessGenerator)
 }
