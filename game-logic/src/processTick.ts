@@ -46,9 +46,15 @@ function processTick(
   // Else let's play
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomnessGenerator.next();
-  // First tick is reserved to processing the user actions, i.e. events related to structures.
-  // Gold is also rewarded at the first tick of the round
   if (currentTick === 1) {
+  // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
+  // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
+  // Only state mutation that happens in the event production flow.
+    for (const c of Object.values(matchState.actors.crypts)) {
+      const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
+      if (old) matchState.finishedSpawning.push(c.id);
+    }
+  // First tick is reserved to processing the user actions, i.e. events related to structures.
     return structureEvents(matchConfig, matchState, moves);
   } else {
     // ticks 2+
@@ -257,15 +263,6 @@ function spawnEvents(
   const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts).filter(
     c => !matchState.finishedSpawning.includes(c.id)
   );
-  // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
-  // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
-  // Only state mutation that happens in the event production flow.
-  if (currentTick === 2) {
-    for (const c of crypts) {
-      const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
-      if (old) matchState.finishedSpawning.push(c.id);
-    }
-  }
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
     const { spawnCapacity, spawnRate } = config[ss.structure][ss.upgrades];
