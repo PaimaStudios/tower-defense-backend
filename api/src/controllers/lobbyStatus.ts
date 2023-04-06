@@ -8,7 +8,7 @@ import {
   IGetPaginatedOpenLobbiesResult,
   requirePool,
 } from '@tower-defense/db';
-import { LobbyStatus } from '@tower-defense/utils';
+import type { LobbyStatus } from '@tower-defense/utils';
 
 interface Response {
   lobbyStatus: LobbyStatus | null;

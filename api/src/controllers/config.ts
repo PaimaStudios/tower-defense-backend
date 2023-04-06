@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Route } from 'tsoa';
 import { requirePool, getLobbyById, getRoundData, getMatchConfig } from '@tower-defense/db';
 import { parseConfig } from '@tower-defense/game-logic';
-import { MatchConfig } from '@tower-defense/utils';
+import type { MatchConfig } from '@tower-defense/utils';
 type Response = Config | Error;
 
 interface Config {

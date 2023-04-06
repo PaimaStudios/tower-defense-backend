@@ -1,10 +1,6 @@
 import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
-import {
-  requirePool,
-  getRandomLobby,
-  IGetRandomLobbyResult,
-  getPaginatedOpenLobbies,
-} from '@tower-defense/db';
+import type { IGetRandomLobbyResult } from '@tower-defense/db';
+import { requirePool, getRandomLobby, getPaginatedOpenLobbies } from '@tower-defense/db';
 
 interface RandomLobbyResponse {
   lobby: IGetRandomLobbyResult | null;

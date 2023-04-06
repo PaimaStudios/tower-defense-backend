@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import { requirePool, getLatestUserNft, IGetUserNfTsResult } from '@tower-defense/db';
+import type { IGetUserNfTsResult } from '@tower-defense/db';
+import { requirePool, getLatestUserNft } from '@tower-defense/db';
 
 interface Response {
   nft: IGetUserNfTsResult;

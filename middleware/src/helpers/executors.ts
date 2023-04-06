@@ -1,23 +1,28 @@
 import processTick, { parseConfig } from '@tower-defense/game-logic';
-import type { MatchConfig, MatchState } from '@tower-defense/utils';
+import type {
+  MatchConfig,
+  MatchExecutorData,
+  MatchState,
+  RoundExecutorData,
+  TickEvent,
+} from '@tower-defense/utils';
+import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 import {
-  MatchExecutor,
   matchExecutor as matchExecutorConstructor,
-  RoundExecutor,
   roundExecutor as roundExecutorConstructor,
 } from 'paima-engine/paima-executors';
 import { pushLog } from 'paima-engine/paima-mw-core';
 import Prando from 'paima-engine/paima-prando';
 
-import type { MatchExecutorData, RoundExecutorData } from '../types';
-
 // executor
-export async function buildRoundExecutor(data: RoundExecutorData): Promise<RoundExecutor> {
+export async function buildRoundExecutor(
+  data: RoundExecutorData
+): Promise<RoundExecutor<MatchState, TickEvent>> {
   console.log(data, 'data');
   const { seed } = data.block_height;
   pushLog(seed, 'seed used for the round executor at the middleware');
   const matchConfig: MatchConfig = parseConfig(data.lobby.config_id);
-  const matchState = data.round_data.match_state;
+  const matchState = data.round_data.match_state as unknown as MatchState;
   const rng = new Prando(seed);
   const executor = roundExecutorConstructor.initialize(
     matchConfig,
@@ -43,7 +48,9 @@ function newActors(m: MatchState): any {
   };
 }
 
-export async function buildMatchExecutor(data: MatchExecutorData): Promise<MatchExecutor> {
+export async function buildMatchExecutor(
+  data: MatchExecutorData
+): Promise<MatchExecutor<MatchState, TickEvent>> {
   const { lobby, seeds, initialState, moves } = data;
   console.log(data, 'data');
   const matchConfig: MatchConfig = parseConfig(data.lobby.config_id);

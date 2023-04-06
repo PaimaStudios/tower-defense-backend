@@ -1,13 +1,10 @@
-import {
-  AttackerStructure,
+import type {
   AttackerStructureType,
   BuildStructureAction,
-  DefenderStructure,
   DefenderStructureType,
   Faction,
   MatchConfig,
   MatchState,
-  RepairStructureAction,
   Structure,
   Tile,
   TurnAction,
@@ -24,14 +21,7 @@ export function generateRandomMoves(
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
   const structures = faction === 'defender' ? towers : crypts;
   console.log(gold, 'generating moves');
-  const toBuild = chooseStructures(
-    matchConfig,
-    matchState.mapState,
-    faction,
-    round,
-    gold,
-    structures
-  );
+  const toBuild = chooseStructures(matchConfig, matchState.map, faction, round, gold, structures);
   return toBuild;
 }
 // Repairs. Only do if tower health below 50%

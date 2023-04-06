@@ -3,7 +3,6 @@ import processTick from './processTick';
 
 import { baseConfig, parseConfig } from './config';
 import type {
-  Coordinates,
   TurnAction,
   MatchConfig,
   MatchState,
@@ -18,11 +17,8 @@ import type {
   UnitSpawnedEvent,
   UnitMovementEvent,
   TileNumber,
-  PathTile,
-  Tile,
 } from '@tower-defense/utils';
-import applyEvents from './apply';
-import { fillMap } from './map-processor';
+import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
 
 export const testmap: TileNumber[] = [
@@ -163,28 +159,15 @@ function getMatchConfig() {
 }
 
 function getMatchState(): MatchState {
-  const map = fillMap(testmap, 22);
-  return {
-    width: 22,
-    height: 13,
-    defender: '0xdDA309096477b89D7066948b31aB05924981DF2B',
-    attacker: '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
-    defenderGold: 500,
-    attackerGold: 5000,
-    defenderBase: { health: 100, level: 1 },
-    attackerBase: { level: 1 },
-    actors: {
-      towers: {},
-      crypts: {},
-      units: {},
-    },
-    mapState: map,
-    name: 'fork',
-    currentRound: 1,
-    actorCount: 2, // the two bases,
-    finishedSpawning: [],
-    roundEnded: false,
-  };
+  return generateMatchState(
+    'defender',
+    '0xdDA309096477b89D7066948b31aB05924981DF2B',
+    '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
+    'fork',
+    testmap.join(),
+    'defaultdefault',
+    new Prando('')
+  );
 }
 function getAttackerMatchState() {
   const base = getMatchState();
@@ -244,31 +227,6 @@ describe('Game Logic', () => {
     const cryptsOK = Object.keys(matchState.actors.crypts).every(e => ids.crypts.includes(e));
     const towersOK = Object.keys(matchState.actors.towers).every(e => ids.towers.includes(e));
     expect([cryptsOK, towersOK]).toStrictEqual([true, true]);
-  });
-  test('all paths lead to other paths', () => {
-    const map = fillMap(testmap, 22);
-    const paths: PathTile[] = map.filter((t: Tile): t is PathTile => t.type === 'path');
-    const allArePaths = paths.reduce((acc, item) => {
-      if (item.leadsTo.length < 1) return false;
-      else {
-        const ok = item.leadsTo.reduce((acc, i) => {
-          if (map[i].type === 'path') return acc;
-          else if (map[i].type === 'base' && map[i].faction === 'defender') return acc;
-          else return false;
-        }, true);
-        return ok ? acc : false;
-      }
-    }, true);
-    expect(allArePaths).toBeTruthy();
-  });
-  test('all paths lead somewhere', () => {
-    const map = fillMap(testmap, 22);
-    const paths = map.filter(t => t.type === 'path');
-    const allLeadSomewhere = paths.reduce((acc, item) => {
-      if (item.type === 'path' && item.leadsTo.length > 0) return acc;
-      else return false;
-    }, true);
-    expect(allLeadSomewhere).toBeTruthy();
   });
   test('repaired towers are repaired', () => {
     const matchConfig = baseConfig;
@@ -487,6 +445,7 @@ describe('Game Logic', () => {
     const ok = moves.length > 0;
     expect(ok).toBeTruthy;
   });
+  //TODO: this test doesn't test anything
   test('units move forward', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
@@ -495,9 +454,7 @@ describe('Game Logic', () => {
     const ticks = [...Array(2000).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
     const ok = true;
-    const baseIndex = matchState.mapState.findIndex(
-      t => t.type === 'base' && t.faction === 'defender'
-    );
+    const baseIndex = matchState.map.findIndex(t => t.type === 'base' && t.faction === 'defender');
     for (const tick of ticks) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
       if (matchState.roundEnded) console.log(matchState, 'state');

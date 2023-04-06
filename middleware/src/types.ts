@@ -5,11 +5,9 @@ import type {
   LobbyStatus,
   MapName,
   MatchConfig,
-  MatchState,
-  TurnAction,
   URI,
 } from '@tower-defense/utils';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export interface MiddlewareConnectionDetails {
   storageAddress: ContractAddress;
@@ -138,45 +136,6 @@ export interface AccountNftsData {
   pages: number;
   totalItems: number;
   result: AccountNftsResult[];
-}
-
-interface PlayerState {
-  wallet: string;
-  health: number;
-  position: number;
-}
-
-export interface ExecutorDataPlayerState extends PlayerState {
-  id: number;
-  lobby_id: string;
-  round: number;
-}
-
-interface ExecutorDataBlockHeight {
-  block_height: number;
-  seed: string;
-  done: boolean;
-}
-
-interface ExecutorDataSeed {
-  block_height: number;
-  seed: string;
-  round: number;
-}
-
-export interface RoundExecutorData {
-  block_height: ExecutorDataBlockHeight;
-  lobby: any;
-  moves: TurnAction[];
-  round_data: any;
-}
-
-export interface MatchExecutorData {
-  lobby: any;
-  states: ExecutorDataPlayerState[];
-  seeds: ExecutorDataSeed[];
-  moves: TurnAction[];
-  initialState: MatchState;
 }
 
 export type NftScore = {
