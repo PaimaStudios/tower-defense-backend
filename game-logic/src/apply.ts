@@ -1,4 +1,3 @@
-import type Prando from 'paima-engine/paima-prando';
 import type {
   MatchConfig,
   MatchState,
@@ -7,15 +6,15 @@ import type {
   Faction,
   AttackerStructureType,
   DefenderStructureType,
-  PathTile,
-  DamageEvent,
   AttackerUnit,
   AttackerStructure,
   DefenderStructure,
   UpgradeTier,
-  Tile,
   Coordinates,
 } from '@tower-defense/utils';
+import { AStarFinder } from 'astar-typescript';
+import { coordsToIndex } from './processTick';
+
 // function to mutate the match state after events are processed.
 export default function applyEvent(config: MatchConfig, matchState: MatchState, event: TickEvent) {
   // let's find who's side is doing thing
@@ -27,7 +26,7 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
       break;
     case 'build':
       // mutate map with new actor
-      applyBuild(config, matchState, event, faction as Faction, event.id);
+      applyBuild(config, matchState, event, faction, event.id);
       matchState.actorCount++;
       break;
     case 'repair':
@@ -59,10 +58,9 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
         damage: event.unitAttack,
         upgradeTier: event.tier,
         status: [],
-        previousCoordinates: null,
         coordinates: event.coordinates,
-        nextCoordinates: findDestination(matchState, event.coordinates, null),
         movementCompletion: 0,
+        path: calculatePath(event.coordinates, matchState),
       };
       const crypt = matchState.actors.crypts[event.cryptID];
       // add unit to unit graph
@@ -82,24 +80,17 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
       const unitMoving = matchState.actors.units[event.actorID];
       // if movement complete, switch coordinates
       if (event.completion >= 100) {
-        unitMoving.previousCoordinates = unitMoving.coordinates;
-        unitMoving.coordinates = event.nextCoordinates as number;
-        unitMoving.nextCoordinates = findDestination(
-          matchState,
-          unitMoving.coordinates,
-          unitMoving.previousCoordinates
-        );
+        unitMoving.coordinates = event.nextCoordinates;
         unitMoving.movementCompletion = 0;
       } else unitMoving.movementCompletion = event.completion;
       break;
     case 'damage':
-      const damageEvent = event as DamageEvent;
       // find the affected unit
       const damagedUnit =
         faction === 'attacker'
-          ? matchState.actors.towers[damageEvent.targetID]
-          : matchState.actors.units[damageEvent.targetID];
-      if (damagedUnit && damageEvent.damageType === 'neutral')
+          ? matchState.actors.towers[event.targetID]
+          : matchState.actors.units[event.targetID];
+      if (damagedUnit && event.damageType === 'neutral')
         damagedUnit.health = damagedUnit.health - event.damageAmount;
       break;
     case 'actorDeleted':
@@ -131,90 +122,24 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
   }
 }
 
-const isBase = (t: Tile) => t.type === 'base' && t.faction === 'defender';
-// Function to find the path which a unit will move towards.
-function findDestination(
-  matchState: MatchState,
-  coordinates: number,
-  previousCoordinates: number | null
-): number | null {
-  const tile = matchState.mapState[coordinates];
-  // if the unit is already at the defender base, they don't move anymore, time to die
-  if (isBase(tile)) return null;
-  else {
-    const t = tile as PathTile;
-    const baseIndex = matchState.mapState.findIndex(
-      t => t.type === 'base' && t.faction === 'defender'
-    );
-    const baseCoords = indexToCoords(baseIndex, matchState.width);
-    // filter available paths for distance to base, make sure you're not going the wrong path
-    // If only one available path just go right there
-    if (t['leadsTo'].length === 1) return t['leadsTo'][0];
-    // If more than one path available, find the fastest path to the base
-    const ret = t['leadsTo']
-      // Filter out the previous coordinates so the unit doesn't go backwards
-      .filter(p => p !== previousCoordinates)
-      // Then compare distance to base of the second next tile, not the immediately next one.
-      .reduce((prev, curr) => {
-        const a = distanceToBase(prev, baseCoords, matchState.width);
-        const b = distanceToBase(curr, baseCoords, matchState.width);
-        const closest = a < b ? prev : curr;
-        const nextA = naiveNext(prev, previousCoordinates || coordinates, baseCoords, matchState);
-        const nextB = naiveNext(curr, previousCoordinates || coordinates, baseCoords, matchState);
-        // Mostly just a type check, shouldn't happen
-        if (!nextA || !nextB) return closest;
-        else {
-          const distA = distanceToBase(nextA, baseCoords, matchState.width);
-          const distB = distanceToBase(nextB, baseCoords, matchState.width);
-          const ret = distA < distB ? prev : distA === distB ? closest : curr;
-          return ret;
-        }
-      });
-    return ret;
-  }
+function calculatePath(unitLocation: number, matchState: MatchState): number[] {
+  const baseLocation = matchState.defenderBase.coordinates;
+  const baseCoords = indexToCoords(baseLocation, matchState.width);
+  const starting = indexToCoords(unitLocation, matchState.width);
+  const pathFinder = new AStarFinder({
+    grid: {
+      matrix: matchState.pathMap,
+    },
+    diagonalAllowed: false,
+  });
+  const path = pathFinder.findPath(starting, baseCoords);
+  return path.map(tuple => coordsToIndex({ x: tuple[0], y: tuple[1] }, matchState.width));
 }
-// Function to find the next tile a unit will move to according to a simple distance calculation
-function naiveNext(
-  coord: number,
-  previousCoords: number,
-  baseCoords: Coordinates,
-  matchState: MatchState
-): number | null {
-  const tile = matchState.mapState[coord];
-  if (isBase(tile)) return coord;
-  if (tile.type !== 'path') return null;
-  else
-    return tile.leadsTo
-      .filter(p => p !== previousCoords)
-      .reduce((prev, curr) => {
-        const a = distanceToBase(prev, baseCoords, matchState.width);
-        const b = distanceToBase(curr, baseCoords, matchState.width);
-        return a < b ? prev : curr;
-      });
-}
+
 function indexToCoords(i: number, width: number): Coordinates {
   const y = Math.floor(i / width);
   const x = i - y * width;
   return { x, y };
-}
-function distanceToBase(path: number, baseCoords: Coordinates, mapWidth: number) {
-  const myCoords = indexToCoords(path, mapWidth);
-  const distanceToBase = Math.abs(baseCoords.x - myCoords.x) + Math.abs(baseCoords.y - myCoords.y);
-  return distanceToBase;
-}
-// Simple helper function to select a random path with the randomness generator.
-function randomizePath(
-  paths: number[],
-  randomnessGenerator: Prando,
-  presentCoordinates: number,
-  fresh: boolean
-): number {
-  const randomness = randomnessGenerator.next();
-  let forwardPaths = paths;
-  // If freshly spawned, make sure the unit moves preferrable towards the left
-  if (fresh) forwardPaths = paths.filter(p => p < presentCoordinates);
-  const index = Math.floor(randomness * forwardPaths.length);
-  return forwardPaths[index] || Math.min(...paths);
 }
 
 function applyBuild(

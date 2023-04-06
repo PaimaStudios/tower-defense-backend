@@ -2,7 +2,7 @@ import type { MatchResults, MatchState, Result } from '@tower-defense/utils';
 import processTick from './processTick';
 import type { IGetLobbyByIdResult } from '@tower-defense/db';
 export default processTick;
-export { getMap } from './map-processor';
+export { getMap, generateMatchState } from './map-processor';
 export { baseConfig, parseConfig, conciseFactionMap } from './config';
 export { validateMoves } from './validation';
 export { generateRandomMoves } from './ai';

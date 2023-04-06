@@ -1,60 +1,106 @@
-import type { AnnotatedMap, RawMap, Tile, TileNumber } from '@tower-defense/utils';
+import type Prando from 'paima-engine/paima-prando';
+import type { WalletAddress } from 'paima-engine/paima-utils';
+import type {
+  AnnotatedMap,
+  MatchState,
+  RawMap,
+  Tile,
+  TileNumber,
+  RoleSetting,
+} from '@tower-defense/utils';
+import { parseConfig } from './config';
 
+export function generateMatchState(
+  creatorFaction: RoleSetting,
+  lobbyCreator: WalletAddress,
+  playerTwo: WalletAddress,
+  mapName: string,
+  mapLayout: string,
+  configString: string,
+  randomnessGenerator: Prando
+): MatchState {
+  const [attacker, defender] =
+    creatorFaction === 'attacker'
+      ? [lobbyCreator, playerTwo]
+      : creatorFaction === 'defender'
+      ? [playerTwo, lobbyCreator]
+      : randomizeRoles(lobbyCreator, playerTwo, randomnessGenerator);
+  const matchConfig = parseConfig(configString);
+  // TODO are all maps going to be the same width?
+  const rawMap = processMapLayout(mapName, mapLayout);
+  const annotatedMap = getMap(rawMap);
+  const baseIndex = annotatedMap.map.findIndex(t => t.type === 'base' && t.faction === 'defender');
+  return {
+    ...annotatedMap,
+    attacker,
+    defender,
+    attackerGold: matchConfig.baseAttackerGoldRate,
+    defenderGold: matchConfig.baseDefenderGoldRate,
+    attackerBase: { level: 1 },
+    defenderBase: { level: 1, health: matchConfig.defenderBaseHealth, coordinates: baseIndex },
+    actorCount: 2,
+    actors: { crypts: {}, towers: {}, units: {} },
+    currentRound: 1,
+    finishedSpawning: [],
+    roundEnded: false,
+  };
+}
+function randomizeRoles(
+  creator: WalletAddress,
+  joiner: WalletAddress,
+  randomnessGenerator: Prando
+): [WalletAddress, WalletAddress] {
+  const number = randomnessGenerator.next();
+  if (number < 0.5) return [creator, joiner];
+  else return [joiner, creator];
+}
+// Layouts as given by catastrophe are a long string, with rows of numbers
+// separated by \r\n .
+function processMapLayout(mapName: string, mapString: string): RawMap {
+  const rows = mapString.split('\\r\\n');
+  return {
+    name: mapName,
+    width: rows[0].length,
+    height: rows.length,
+    contents: rows
+      .reverse()
+      .join('')
+      .split('')
+      .map(s => parseInt(s) as TileNumber),
+  };
+}
 export function getMap(m: RawMap): AnnotatedMap {
   return {
     name: m.name,
     width: m.width,
     height: m.height,
-    mapState: fillMap(m.contents, m.width),
+    map: fillMap(m.contents),
+    pathMap: mapToMatrix(m.contents, m.width),
   };
 }
-
-export function fillMap(contents: TileNumber[], mapWidth: number): Tile[] {
-  return contents.map((n, i) => {
-    const tile = findTile(n);
-    if (tile.type === 'path') return { ...tile, leadsTo: fillPath(i, contents, mapWidth) };
-    else return tile;
-  });
+function mapToMatrix(map: TileNumber[], width: number): Array<0 | 1>[] {
+  const matrix = [];
+  const walkableTiles: TileNumber[] = [3, 5, 6];
+  for (let i = 0; i < map.length; i += width) {
+    const row = map.slice(i, i + width).map(tile => (walkableTiles.includes(tile) ? 0 : 1));
+    matrix.push(row);
+  }
+  return matrix;
 }
-function fillPath(index: number, rawMap: TileNumber[], mapWidth: number): number[] {
-  const leftIndex = index - 1;
-  const rightIndex = index + 1;
-  const upIndex = index - mapWidth;
-  const downIndex = index + mapWidth;
-  const left = rawMap[leftIndex];
-  const right = rawMap[rightIndex];
-  const up = rawMap[upIndex];
-  const down = rawMap[downIndex];
-  // is defender base is nearby, make that the single path destination
-  if (left === 3) return [leftIndex];
-  if (right === 3) return [rightIndex];
-  if (up === 3) return [upIndex];
-  if (down === 3) return [downIndex];
-  const paths: number[] = [];
-  // Else find all paths available
-  if (left === 5 || left === 6) paths.push(leftIndex);
-  if (right === 5 || right === 6) paths.push(rightIndex);
-  if (up === 5 || up === 6) paths.push(upIndex);
-  if (down === 5 || down === 6) paths.push(downIndex);
-  return paths;
+
+export function fillMap(contents: TileNumber[]): Tile[] {
+  return contents.map(tile => tileMap[tile]);
 }
 
 export function annotateMap(contents: TileNumber[], width: number): Tile[][] {
-  const tiles = contents.map(c => findTile(c));
-  const accBunt: Tile[][] = [];
+  const tiles = contents.map(tile => tileMap[tile]);
   const reduced = tiles.reduce((acc, tile, index) => {
     const row = Math.floor(index / width);
     const existing = acc[row] || [];
     acc[row] = [...existing, tile];
     return acc;
-  }, accBunt);
+  }, [] as Tile[][]);
   return reduced;
-}
-function isPath(tile: Tile) {
-  return tile?.type === 'path';
-}
-function isBase(tile: Tile) {
-  return tile?.type === 'base' && tile?.faction === 'defender';
 }
 
 const tileMap: Record<TileNumber, Tile> = {
@@ -62,12 +108,11 @@ const tileMap: Record<TileNumber, Tile> = {
   2: { type: 'open', faction: 'attacker' },
   3: { type: 'base', faction: 'defender' },
   4: { type: 'base', faction: 'attacker' },
-  5: { type: 'path', faction: 'defender', leadsTo: [] },
-  6: { type: 'path', faction: 'attacker', leadsTo: [] },
+  5: { type: 'path', faction: 'defender' },
+  6: { type: 'path', faction: 'attacker' },
   7: { type: 'unbuildable', faction: 'defender' },
   8: { type: 'unbuildable', faction: 'attacker' },
+  9: { type: 'blockedPath', faction: 'attacker' },
+  0: { type: 'blockedPath', faction: 'defender' },
   // ...
 };
-function findTile(c: TileNumber): Tile {
-  return tileMap[c];
-}
