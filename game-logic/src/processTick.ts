@@ -61,8 +61,6 @@ function processTick(
       eventsFromMatchState(matchConfig, matchState, currentTick, randomnessGenerator) || [];
     // Other events are processed one by one, as they affect global match state
     // End round if defender base health is 0
-    if (matchState.defenderBase.health === 0)
-      return endRound(matchConfig, matchState, currentTick, randomnessGenerator);
     // We check if all crypts have finished spawning by checking the key on the match state tracking that
     const allSpawned = Object.keys(matchState.actors.crypts).every(c =>
       matchState.finishedSpawning.includes(parseInt(c))
@@ -257,15 +255,6 @@ function spawnEvents(
   const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts).filter(
     c => !matchState.finishedSpawning.includes(c.id)
   );
-  // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
-  // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
-  // Only state mutation that happens in the event production flow.
-  if (currentTick === 2) {
-    for (const c of crypts) {
-      const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
-      if (old) matchState.finishedSpawning.push(c.id);
-    }
-  }
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
     const { spawnCapacity, spawnRate } = config[ss.structure][ss.upgrades];
@@ -363,14 +352,12 @@ function movementEvents(
     else {
       // Generate movement events
       const moveEvent = move(matchConfig, a);
-      // See if unit moved next to a friendly crypt and got a status buff from it
-      const buffStatusEvents: StatusEffectAppliedEvent[] = buff(matchConfig, matchState, moveEvent);
-      return [moveEvent, ...buffStatusEvents];
+      return [moveEvent];
     }
   });
   const isNotNull = (
-    e: UnitMovementEvent | StatusEffectAppliedEvent | null
-  ): e is UnitMovementEvent | StatusEffectAppliedEvent => !!e;
+    e: UnitMovementEvent | null
+  ): e is UnitMovementEvent => !!e;
   const ret = events.flat().filter(isNotNull);
   for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
@@ -382,9 +369,7 @@ function movementEvents(
 
 // Function to generate individual movement events
 function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
-  // First we lookup the unit speed given the match config and possible status debuffs.
-  const unitSpeed = getCurrentSpeed(config, a);
-  const completion = (a.movementCompletion += unitSpeed);
+  const completion = (a.movementCompletion += a.speed);
   return {
     eventType: 'movement',
     faction: 'attacker',
@@ -393,58 +378,11 @@ function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
     nextCoordinates: a.nextCoordinates,
     // if movement reaches 100% then movement is finalized
     completion: completion > 100 ? 100 : completion,
-    movementSpeed: unitSpeed,
+    movementSpeed: a.speed,
   };
 }
-// Simple function to lookup the unit speed on the match config and check for speed debuff status.
-function getCurrentSpeed(config: MatchConfig, a: AttackerUnit): number {
-  return a.status.reduce((acc, item) => {
-    if (item === 'speedDebuff') return acc - Math.ceil(acc * 0.2); // TODO stack on the current speed or the base speed?
-    if (item === 'speedBuff') return acc + Math.ceil(acc * 0.2); //  exponential sounds more fun
-    else return acc;
-  }, a.speed);
-}
 
-// Buff events, status events which happen as units pass next to friendly crypts.
-function buff(
-  matchConfig: MatchConfig,
-  matchState: MatchState,
-  event: UnitMovementEvent
-): StatusEffectAppliedEvent[] {
-  if (event.completion === 100) {
-    const crypts = findClosebyCrypts(matchState, event.nextCoordinates, 1);
-    const events = crypts.map(c => buffEvent(matchConfig, c, event.actorID));
-    const isNotNull = (e: StatusEffectAppliedEvent | null): e is StatusEffectAppliedEvent => !!e;
-    return events.filter(isNotNull);
-  } else return [];
-}
 
-// helper function to emit buff events according to cryptType
-function buffEvent(
-  matchConfig: MatchConfig,
-  crypt: AttackerStructure,
-  unitId: number
-): StatusEffectAppliedEvent | null {
-  if (crypt.structure === 'gorillaCrypt' && crypt.upgrades === 2)
-    return {
-      eventType: 'statusApply',
-      faction: 'attacker',
-      sourceID: crypt.id,
-      targetID: unitId,
-      statusType: 'healthBuff',
-      statusAmount: matchConfig.healthBuffAmount,
-    };
-  else if (crypt.structure === 'jaguarCrypt' && crypt.upgrades === 2)
-    return {
-      eventType: 'statusApply',
-      faction: 'attacker',
-      sourceID: crypt.id,
-      targetID: unitId,
-      statusType: 'speedBuff',
-      statusAmount: matchConfig.speedBuffAmount,
-    };
-  else return null;
-}
 // Tower Attack Events, where defender towers try to destroy nearby units
 function towerAttackEvents(
   config: MatchConfig,
@@ -566,19 +504,8 @@ function slothDamage(
   units: AttackerUnit[],
   randomnessGenerator: Prando
 ): TowerAttack[] {
-  // Sloth towers are special in that they impose speed debuff statuses on affected units, and attack the whole range.
   const damageEvents: TowerAttack[][] = units.map(unit => {
     const events = towerShot(matchConfig, tower, unit, randomnessGenerator);
-    const statusEvent: StatusEffectAppliedEvent = {
-      eventType: 'statusApply',
-      faction: 'attacker',
-      sourceID: tower.id,
-      targetID: unit.id,
-      statusType: 'speedDebuff',
-      statusAmount: unit.speed / 2, // 50% speed reduction
-    };
-    const buffing = tower.upgrades === 2;
-    if (buffing) events.push(statusEvent);
     return events;
   });
   return damageEvents.flat();
