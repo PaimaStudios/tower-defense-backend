@@ -71,7 +71,7 @@ export interface RawMap {
   height: number;
   contents: TileNumber[];
 }
-export type TileNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type TileNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0;
 export interface AnnotatedMap {
   name: string;
   width: number;
@@ -159,64 +159,49 @@ interface AttackerBase {
 
 export type Tile =
   | PathTile
-  | DefenderBaseTile
-  | AttackerBaseTile
-  | DefenderOpenTile
-  | AttackerOpenTile
-  | DefenderStructureTile
-  | AttackerStructureTile
-  | DefenderUnbuildableTile
-  | AttackerUnbuildableTile;
+  | BlockedPathTile
+  | BaseTile
+  | OpenTile
+  | StructureTile
+  | UnbuildableTile;
 
 export interface PathTile {
   type: 'path';
   faction: Faction;
 }
+
+export interface BlockedPathTile {
+  type: 'blockedPath';
+  faction: Faction;
+}
+
+export interface StructureTile {
+  type: 'structure';
+  id: number;
+  faction: Faction;
+}
+
+export interface BaseTile {
+  type: 'base';
+  faction: Faction;
+}
+export interface OpenTile {
+  type: 'open';
+  faction: Faction;
+}
+export interface UnbuildableTile {
+  type: 'unbuildable';
+  faction: Faction;
+}
+
 export interface Coordinates {
   x: number;
   y: number;
 }
 
 export type AttackerStructureType = 'macawCrypt' | 'gorillaCrypt' | 'jaguarCrypt';
-
-export interface AttackerStructureTile {
-  type: 'structure';
-  id: number;
-  faction: 'attacker';
-}
 export type DefenderStructureType = 'anacondaTower' | 'slothTower' | 'piranhaTower';
-
-export interface DefenderStructureTile {
-  type: 'structure';
-  id: number;
-  faction: 'defender';
-  // "structure": DefenderStructureType
-}
 export type Level = 1 | 2 | 3;
-export interface DefenderBaseTile {
-  type: 'base';
-  faction: 'defender';
-}
-export interface AttackerBaseTile {
-  type: 'base';
-  faction: 'attacker';
-}
-export interface DefenderOpenTile {
-  type: 'open';
-  faction: 'defender';
-}
-export interface AttackerOpenTile {
-  type: 'open';
-  faction: 'attacker';
-}
-export interface DefenderUnbuildableTile {
-  type: 'unbuildable';
-  faction: 'defender';
-}
-export interface AttackerUnbuildableTile {
-  type: 'unbuildable';
-  faction: 'attacker';
-}
 
 export type TurnAction =
   | BuildStructureAction

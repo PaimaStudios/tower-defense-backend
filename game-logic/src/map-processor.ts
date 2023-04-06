@@ -112,5 +112,7 @@ const tileMap: Record<TileNumber, Tile> = {
   6: { type: 'path', faction: 'attacker' },
   7: { type: 'unbuildable', faction: 'defender' },
   8: { type: 'unbuildable', faction: 'attacker' },
+  9: { type: 'blockedPath', faction: 'attacker' },
+  0: { type: 'blockedPath', faction: 'defender' },
   // ...
 };

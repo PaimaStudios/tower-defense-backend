@@ -3,7 +3,6 @@ import processTick from './processTick';
 
 import { baseConfig, parseConfig } from './config';
 import type {
-  Coordinates,
   TurnAction,
   MatchConfig,
   MatchState,
@@ -18,11 +17,8 @@ import type {
   UnitSpawnedEvent,
   UnitMovementEvent,
   TileNumber,
-  PathTile,
-  Tile,
 } from '@tower-defense/utils';
-import applyEvents from './apply';
-import { fillMap, generateMatchState } from './map-processor';
+import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
 
 export const testmap: TileNumber[] = [
