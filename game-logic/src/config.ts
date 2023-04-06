@@ -3,7 +3,7 @@ import {
   MatchConfig,
   TowerConfig,
   CryptConfig,
-  tryParseConfig,
+  configParser,
   Level,
   UnitType,
   RoleSetting,
@@ -269,50 +269,8 @@ export const baseConfig: MatchConfig = {
   gorillaCrypt: baseGorillaCryptConfig,
   jaguarCrypt: baseJaguarCryptConfig,
 };
-//TODO: add config parser later
-export function parseConfig(s: string | null): MatchConfig {
-  if (!s) return baseConfig;
-  if (s === 'default') return baseConfig;
-  else return baseConfig;
-  // else {
-  //   const c = consumer.initialize(s);
-  //   const version = c.nextValue();
-  //   const definitions = c.remainingValues();
-  //   const parsed = definitions.map(d => tryParseConfig(d.value));
-  //   for (const p of parsed) {
-  //     if (!('error' in p))
-  //       switch (p.name) {
-  //         case 'baseGoldRate':
-  //           p.faction === 'defender'
-  //             ? (baseConfig.baseDefenderGoldRate = p.value)
-  //             : (baseConfig.baseAttackerGoldRate = p.value);
-  //           break;
-  //         case 'anacondaTower1':
-  //           baseConfig.anacondaTower[1] = { ...baseConfig.anacondaTower[1], ...p };
-  //           break;
-  //         case 'anacondaTower2':
-  //           baseConfig.anacondaTower[2] = { ...baseConfig.anacondaTower[2], ...p };
-  //           break;
-  //         case 'anacondaTower3':
-  //           baseConfig.anacondaTower[3] = { ...baseConfig.anacondaTower[3], ...p };
-  //           break;
-  //         case 'piranhaTower1':
-  //           baseConfig.piranhaTower[1] = { ...baseConfig.piranhaTower[1], ...p };
-  //           break;
-  //         case 'slothTower1':
-  //           baseConfig.slothTower[1] = { ...baseConfig.slothTower[1], ...p };
-  //           break;
-  //         case 'gorillaCrypt1':
-  //           baseConfig.gorillaCrypt[1] = { ...baseConfig.gorillaCrypt[1], ...p };
-  //           break;
-  //         case 'jaguarCrypt1':
-  //           baseConfig.jaguarCrypt[1] = { ...baseConfig.jaguarCrypt[1], ...p };
-  //           break;
-  //         case 'macawCrypt1':
-  //           baseConfig.macawCrypt[1] = { ...baseConfig.macawCrypt[1], ...p };
-  //           break;
-  //       }
-  // }
-  // } else
-  // return { ...baseConfig };
+export function parseConfig(s: string): MatchConfig {
+  const config =  configParser(s);
+  if ("error" in config) return baseConfig
+  else return config
 }
