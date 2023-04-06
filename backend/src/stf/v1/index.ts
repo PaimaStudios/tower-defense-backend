@@ -41,7 +41,7 @@ export default async function (
       if (user !== SCHEDULED_DATA_ADDRESS) return [];
       return processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
     case 'registeredConfig':
-      return processConfig(user, blockHeight, parsed)
+      return processConfig(user, parsed, randomnessGenerator)
     case 'invalidString':
       return [];
     default:
