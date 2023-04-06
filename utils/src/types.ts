@@ -17,7 +17,7 @@ export interface MatchConfig {
   gorillaCrypt: CryptConfigGraph;
   jaguarCrypt: CryptConfigGraph;
   baseSpeed: number;
-  repairValue: number;
+  towerRepairValue: number;
   repairCost: number;
   recoupAmount: number; // cash we get on salvaging towers
   healthBuffAmount: number;

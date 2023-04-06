@@ -6,7 +6,7 @@ describe('Input parsing', () => {
     defenderBaseHealth: Math.floor(Math.random() * 100),
     baseAttackerGoldRate: Math.floor(Math.random() * 150),
     baseDefenderGoldRate: Math.floor(Math.random() * 150),
-    repairValue: Math.floor(Math.random() * 50),
+    towerRepairValue: Math.floor(Math.random() * 50),
     repairCost: Math.floor(Math.random() * 150),
     recoupAmount: Math.floor(Math.random() * 50),
     baseSpeed: Math.floor(Math.random() * 20),

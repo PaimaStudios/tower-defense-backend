@@ -62,7 +62,7 @@ function builder(c: MatchConfig): string {
     `bh${c.defenderBaseHealth}`,
     `gd${c.baseDefenderGoldRate}`,
     `ga${c.baseAttackerGoldRate}`,
-    `rv${c.repairValue}`,
+    `rv${c.towerRepairValue}`,
     `rc${c.repairCost}`,
     `ra${c.recoupAmount}`,
     `hb${c.healthBuffAmount}`,
@@ -79,20 +79,20 @@ function builder(c: MatchConfig): string {
 // Parser for Match Config Definitions
 const semicolon = P.string(';');
 interface GameSpeed {
-  gameSpeed: number;
+  baseSpeed: number;
 }
 export const gameSpeed = P.seqObj<GameSpeed>(
   P.string('gs'),
-  ['gameSpeed', P.digits.map(Number)],
+  ['baseSpeed', P.digits.map(Number)],
   semicolon
 );
 
 interface BaseHealth {
-  baseHealth: number;
+  defenderBaseHealth: number;
 }
 export const baseHealth = P.seqObj<BaseHealth>(
   P.string('bh'),
-  ['baseHealth', P.digits.map(Number)],
+  ['defenderBaseHealth', P.digits.map(Number)],
   semicolon
 );
 
@@ -141,20 +141,20 @@ export const repairValue = P.seqObj<RepairValue>(
 );
 
 interface HealthBuff {
-  healthBuff: number;
+  healthBuffAmount: number;
 }
 export const healthBuff = P.seqObj<HealthBuff>(
   P.string('hb'),
-  ['healthBuff', P.digits.map(Number)],
+  ['healthBuffAmount', P.digits.map(Number)],
   semicolon
 );
 
 interface SpeedBuff {
-  speedBuff: number;
+  speedBuffAmount: number;
 }
 export const speedBuff = P.seqObj<SpeedBuff>(
   P.string('sb'),
-  ['speedBuff', P.digits.map(Number)],
+  ['speedBuffAmount', P.digits.map(Number)],
   semicolon
 );
 
