@@ -3,7 +3,7 @@ import processTick from './processTick';
 import type { IGetLobbyByIdResult } from '@tower-defense/db';
 export default processTick;
 export { getMap } from './map-processor';
-export { parseConfig, conciseFactionMap } from './config';
+export { baseConfig, parseConfig, conciseFactionMap } from './config';
 export { validateMoves } from './validation';
 export { generateRandomMoves } from './ai';
 
