@@ -22,6 +22,7 @@ import {
   SubmittedTurnInput,
   UserStats,
   ZombieRound,
+  RegisteredConfigInput
 } from './types';
 import { conciseFactionMap } from '@tower-defense/game-logic';
 import { ConciseConsumer, ConciseValue, consumer } from 'paima-engine/paima-concise';
@@ -78,7 +79,7 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   closedLobby,
   setNFT,
   zombieScheduledData,
-  userScheduledData,
+  userScheduledData
 };
 
 // Special parser for move submition
@@ -147,6 +148,15 @@ function parseSubmitTurn(c: ConciseConsumer): SubmittedTurnInput {
     actions,
   };
 }
+function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput{
+  const version = tryParse(c.nextValue(), pRoundNumber);
+  const content = tryParse(c.nextValue(), P.all);
+  return {
+    input: 'registeredConfig',
+    version,
+    content
+  }
+}
 
 const myParser = new PaimaParser(myGrammar, parserCommands);
 
@@ -156,6 +166,8 @@ function parse(input: string): ParsedSubmittedInput {
     // custom parser for submit moves since paima parser isn't that generic (yet)
     if (cConsumer.prefix() === 's') {
       return parseSubmitTurn(cConsumer);
+    } else if (cConsumer.prefix() === 'r'){
+      return parseRegisterConfig(cConsumer)
     } else {
       const parsed = myParser.start(input);
       return { input: parsed.command, ...parsed.args } as any;
