@@ -1,9 +1,10 @@
-import { SQLUpdate } from 'paima-engine/paima-db';
+// import { SQLUpdate } from 'paima-engine/paima-db';
+type SQLUpdate = any;
 import { CreatedLobbyInput, SetNFTInput, SubmittedTurnInput, ConciseResult, RegisteredConfigInput } from './types.js';
 import Prando from 'paima-engine/paima-prando';
 import { WalletAddress } from 'paima-engine/paima-utils';
 import { roundExecutor } from 'paima-engine/paima-executors';
-import processTick, { generateRandomMoves, getMap, parseConfig } from '@tower-defense/game-logic';
+import processTick, { generateRandomMoves, getMap } from '@tower-defense/game-logic';
 import {
   MatchConfig,
   MatchState,
@@ -106,7 +107,7 @@ export function persistPracticeLobbyCreation(
   user: WalletAddress,
   inputData: CreatedLobbyInput,
   map: IGetMapLayoutResult,
-  configContent: string,
+  matchConfig: MatchConfig,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
@@ -137,7 +138,7 @@ export function persistPracticeLobbyCreation(
     PRACTICE_BOT_ADDRESS,
     params,
     map,
-    configContent,
+    matchConfig,
     randomnessGenerator
   );
   return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
@@ -147,7 +148,7 @@ function generateMatchState(
   lobbyState: IGetLobbyByIdResult,
   playerTwo: WalletAddress,
   mapLayout: string,
-  configString: string,
+  matchConfig: MatchConfig,
   randomnessGenerator: Prando
 ): MatchState {
   const [attacker, defender] =
@@ -156,7 +157,6 @@ function generateMatchState(
       : lobbyState.creator_faction === 'defender'
       ? [playerTwo, lobbyState.lobby_creator]
       : randomizeRoles(lobbyState.lobby_creator, playerTwo, randomnessGenerator);
-  const matchConfig = parseConfig(configString);
   // TODO are all maps going to be the same width?
   const rawMap = processMapLayout(lobbyState.map, mapLayout);
   const annotatedMap = getMap(rawMap);
@@ -188,8 +188,6 @@ function randomizeRoles(
 // separated by \r\n .
 function processMapLayout(mapName: string, mapString: string): RawMap {
   const rows = mapString.split('\\r\\n');
-  console.log(rows, mapName)
-  console.log(rows.length)
   return {
     name: mapName,
     width: rows[0].length,
@@ -208,7 +206,7 @@ export function persistLobbyJoin(
   user: WalletAddress,
   lobbyState: IGetLobbyByIdResult,
   map: IGetMapLayoutResult,
-  configString: string,
+  matchConfig: MatchConfig,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   if (
@@ -221,7 +219,7 @@ export function persistLobbyJoin(
       lobbyState,
       user,
       map.layout,
-      configString,
+      matchConfig,
       randomnessGenerator
     );
     // We update the Lobby table with the new state, and determine the creator role if it was random
@@ -238,7 +236,7 @@ export function persistLobbyJoin(
         ? practiceRound(
             blockHeight,
             { ...lobbyState, current_round: 1 },
-            parseConfig(configString),
+            matchConfig,
             {
               round_within_match: 0,
               lobby_id: lobbyState.lobby_id,
