@@ -27,4 +27,4 @@ export const PRACTICE_BOT_ADDRESS = '0x0101';
 
 export * from './types.js';
 
-export { tryParseConfig } from './config-parser';
+export { parser as configParser } from './config-parser';

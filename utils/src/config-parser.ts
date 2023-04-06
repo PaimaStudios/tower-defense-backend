@@ -1,5 +1,80 @@
 import P from 'parsimmon';
-import { MatchConfig } from './types';
+import { CryptConfigGraph, MatchConfig, TowerConfigGraph } from './types';
+
+function towerToConcise(t: TowerConfigGraph, top: string): string {
+  return [
+    top,
+    '1',
+    `p${t[1].price}`,
+    `h${t[1].health}`,
+    `c${t[1].cooldown}`,
+    `d${t[1].damage}`,
+    `r${t[1].range}`,
+    '2',
+    `p${t[2].price}`,
+    `h${t[2].health}`,
+    `c${t[2].cooldown}`,
+    `d${t[2].damage}`,
+    `r${t[2].range}`,
+    '3',
+    `p${t[3].price}`,
+    `h${t[3].health}`,
+    `c${t[3].cooldown}`,
+    `d${t[3].damage}`,
+    `r${t[3].range}`,
+  ].join(';');
+}
+function cryptToConcise(c: CryptConfigGraph, top: 'gc' | 'jc' | 'mc'): string {
+  return [
+    top,
+    '1',
+    `p${c[1].price}`,
+    `h${c[1].unitHealth}`,
+    `r${c[1].spawnRate}`,
+    `c${c[1].spawnCapacity}`,
+    `d${c[1].attackDamage}`,
+    `br${c[1].buffRange}`,
+    `bc${c[1].buffCooldown}`,
+    top === 'mc' ? `s${c[1].unitSpeed};ac${c[1].attackCooldown}` : `s${c[1].unitSpeed}`,
+    '2',
+    `p${c[2].price}`,
+    `h${c[2].unitHealth}`,
+    `r${c[2].spawnRate}`,
+    `c${c[2].spawnCapacity}`,
+    `d${c[2].attackDamage}`,
+    `br${c[2].buffRange}`,
+    `bc${c[2].buffCooldown}`,
+    top === 'mc' ? `s${c[2].unitSpeed};ac${c[2].attackCooldown}` : `s${c[2].unitSpeed}`,
+    '3',
+    `p${c[3].price}`,
+    `h${c[3].unitHealth}`,
+    `r${c[3].spawnRate}`,
+    `c${c[3].spawnCapacity}`,
+    `d${c[3].attackDamage}`,
+    `br${c[3].buffRange}`,
+    `bc${c[3].buffCooldown}`,
+    top === 'mc' ? `s${c[3].unitSpeed};ac${c[3].attackCooldown}` : `s${c[3].unitSpeed}`,
+  ].join(';');
+}
+function builder(c: MatchConfig): string {
+  return [
+    `gs${c.baseSpeed}`,
+    `bh${c.defenderBaseHealth}`,
+    `gd${c.baseDefenderGoldRate}`,
+    `ga${c.baseAttackerGoldRate}`,
+    `rv${c.repairValue}`,
+    `rc${c.repairCost}`,
+    `ra${c.recoupAmount}`,
+    `hb${c.healthBuffAmount}`,
+    `sb${c.speedBuffAmount}`,
+    towerToConcise(c.anacondaTower, 'at'),
+    towerToConcise(c.piranhaTower, 'pt'),
+    towerToConcise(c.slothTower, 'st'),
+    cryptToConcise(c.gorillaCrypt, 'gc'),
+    cryptToConcise(c.jaguarCrypt, 'jc'),
+    cryptToConcise(c.macawCrypt, 'mc'),
+  ].join(';');
+}
 
 // Parser for Match Config Definitions
 const semicolon = P.string(';');
@@ -137,19 +212,8 @@ interface VersionedTower {
   2: Tower;
   3: Tower;
 }
-interface AnacondaTower extends VersionedTower {
-  name: 'anacondaTower';
-}
 const at = P.seqMap(P.string('at'), semicolon, _ => ({ name: 'anacondaTower' }));
-
-interface PiranhaTower extends VersionedTower {
-  name: 'piranhaTower';
-}
 const pt = P.seqMap(P.string('pt'), semicolon, _ => ({ name: 'piranhaTower' }));
-
-interface SlothTower extends VersionedTower {
-  name: 'slothTower';
-}
 const st = P.seqMap(P.string('st'), semicolon, _ => ({ name: 'slothTower' }));
 
 export const tower: P.Parser<Tower> = P.seqMap(
@@ -214,18 +278,10 @@ interface VersionedCrypt {
   2: Crypt;
   3: Crypt;
 }
-interface GorillaCrypt extends VersionedCrypt {
-  name: 'gorillaCrypt';
-}
 const gc = P.seqMap(P.string('gc'), semicolon, _ => ({ name: 'gorillaCrypt' }));
-interface JaguarCrypt extends VersionedCrypt {
-  name: 'jaguarCrypt';
-}
 const jc = P.seqMap(P.string('jc'), semicolon, _ => ({ name: 'jaguarCrypt' }));
-interface MacawCrypt extends VersionedCrypt {
-  name: 'macawCrypt';
-}
 const mc = P.seqMap(P.string('mc'), semicolon, _ => ({ name: 'macawCrypt' }));
+
 interface UnitHealth {
   unitHealth: number;
 }
@@ -266,17 +322,16 @@ export const spawnCapacity = P.seqObj<SpawnCapacity>(
 export const unitSpeed = P.seqObj<UnitSpeed>(
   P.string('s'),
   ['unitSpeed', P.digits.map(Number)],
-  semicolon
 );
 export const buffRange = P.seqObj<BuffRange>(
-  P.string('s'),
+  P.string('br'),
   ['buffRange', P.digits.map(Number)],
   semicolon
 );
 export const buffCooldown = P.seqObj<BuffCooldown>(
-  P.string('s'),
-  ['buffCooldown', P.digits.map(Number)]
-  // no semicolon, this is the last piece
+  P.string('bc'),
+  ['buffCooldown', P.digits.map(Number)],
+  semicolon
 );
 
 export const attackCooldown = P.seqObj<AttackCooldown>(
@@ -291,11 +346,11 @@ export const crypt = P.seqMap(
   spawnRate,
   spawnCapacity,
   damage,
-  unitSpeed,
   buffRange,
   buffCooldown,
-  function (p, h, r, c, d, s, br, bc) {
-    return { ...p, ...h, ...r, ...c, ...d, ...s, ...br, ...bc };
+  unitSpeed,
+  function (p, h, r, c, d, br, bc, s) {
+    return { ...p, ...h, ...r, ...c, ...d, ...br, ...bc, ...s };
   }
 );
 export const mcrypt = P.seqMap(
@@ -304,12 +359,12 @@ export const mcrypt = P.seqMap(
   spawnRate,
   spawnCapacity,
   damage,
-  unitSpeed,
   buffRange,
   buffCooldown,
+  unitSpeed,
   attackCooldown,
-  function (p, h, r, c, d, s, br, bc, ac) {
-    return { ...p, ...h, ...r, ...c, ...d, ...s, ...br, ...bc, ...ac };
+  function (p, h, r, c, d, br, bc, s, ac) {
+    return { ...p, ...h, ...r, ...c, ...d, ...br, ...bc, ...s, ...ac };
   }
 );
 
@@ -376,7 +431,7 @@ interface InvalidConfig {
 
 export type ConfigDefinition = MatchConfig | InvalidConfig;
 
-const parser = P.seq<any>(
+const configParser = P.seq<any>(
   gameSpeed,
   baseHealth,
   defenderGoldRate,
@@ -390,9 +445,9 @@ const parser = P.seq<any>(
   crypts
 );
 
-export default function (s: string): ConfigDefinition {
+function parser(s: string): ConfigDefinition {
   try {
-    const res = parser.tryParse(s);
+    const res = configParser.tryParse(s);
     return res.reduce((acc, item) => ({ ...acc, ...item }), {});
   } catch (e) {
     console.log(e, 'parsing failure');
@@ -401,3 +456,5 @@ export default function (s: string): ConfigDefinition {
     };
   }
 }
+
+export { builder, parser };
