@@ -74,63 +74,33 @@ export function getMap(m: RawMap): AnnotatedMap {
     name: m.name,
     width: m.width,
     height: m.height,
-    map: fillMap(m.contents, m.width),
+    map: fillMap(m.contents),
     pathMap: mapToMatrix(m.contents, m.width),
   };
 }
 function mapToMatrix(map: TileNumber[], width: number): Array<0 | 1>[] {
   const matrix = [];
+  const walkableTiles: TileNumber[] = [3, 5, 6];
   for (let i = 0; i < map.length; i += width) {
-    const row = map.slice(i, i + width).map(t => (t === 3 || t === 5 || t === 6 ? 0 : 1));
+    const row = map.slice(i, i + width).map(tile => (walkableTiles.includes(tile) ? 0 : 1));
     matrix.push(row);
   }
   return matrix;
 }
 
-export function fillMap(contents: TileNumber[], mapWidth: number): Tile[] {
-  return contents.map((n, i) => {
-    return findTile(n);
-  });
-}
-function fillPath(index: number, rawMap: TileNumber[], mapWidth: number): number[] {
-  const leftIndex = index - 1;
-  const rightIndex = index + 1;
-  const upIndex = index - mapWidth;
-  const downIndex = index + mapWidth;
-  const left = rawMap[leftIndex];
-  const right = rawMap[rightIndex];
-  const up = rawMap[upIndex];
-  const down = rawMap[downIndex];
-  // is defender base is nearby, make that the single path destination
-  if (left === 3) return [leftIndex];
-  if (right === 3) return [rightIndex];
-  if (up === 3) return [upIndex];
-  if (down === 3) return [downIndex];
-  const paths: number[] = [];
-  // Else find all paths available
-  if (left === 5 || left === 6) paths.push(leftIndex);
-  if (right === 5 || right === 6) paths.push(rightIndex);
-  if (up === 5 || up === 6) paths.push(upIndex);
-  if (down === 5 || down === 6) paths.push(downIndex);
-  return paths;
+export function fillMap(contents: TileNumber[]): Tile[] {
+  return contents.map(tile => tileMap[tile]);
 }
 
 export function annotateMap(contents: TileNumber[], width: number): Tile[][] {
-  const tiles = contents.map(c => findTile(c));
-  const accBunt: Tile[][] = [];
+  const tiles = contents.map(tile => tileMap[tile]);
   const reduced = tiles.reduce((acc, tile, index) => {
     const row = Math.floor(index / width);
     const existing = acc[row] || [];
     acc[row] = [...existing, tile];
     return acc;
-  }, accBunt);
+  }, [] as Tile[][]);
   return reduced;
-}
-function isPath(tile: Tile) {
-  return tile?.type === 'path';
-}
-function isBase(tile: Tile) {
-  return tile?.type === 'base' && tile?.faction === 'defender';
 }
 
 const tileMap: Record<TileNumber, Tile> = {
@@ -144,6 +114,3 @@ const tileMap: Record<TileNumber, Tile> = {
   8: { type: 'unbuildable', faction: 'attacker' },
   // ...
 };
-function findTile(c: TileNumber): Tile {
-  return tileMap[c];
-}
