@@ -678,13 +678,12 @@ function findCloseByUnits(
 ): AttackerUnit[] {
   if (radius > range) return [];
   // Get all surrounding tile indexes;
-  const surrounding = getSurroundingCells(coords, matchState, radius);
+  const surrounding = getSurroundingCells(coords, matchState, range);
   // Get all units present on the map
   const units: AttackerUnit[] = Object.values(matchState.actors.units).filter(u =>
     surrounding.includes(u.coordinates)
   );
-  if (units.length > 0) return units;
-  else return findCloseByUnits(matchState, coords, range, radius + 1);
+  return units
 }
 
 // Converts coord notation ({x: number, y: number}) to a single number, index of the flat map array.
