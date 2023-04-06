@@ -34,7 +34,7 @@ import {
   isZombieRound,
   RegisteredConfigInput,
 } from './types.js';
-import { MatchState } from '@tower-defense/utils';
+import { configParser, MatchState } from '@tower-defense/utils';
 import { parseConfig, validateMoves } from '@tower-defense/game-logic';
 
 export const processCreateLobby = async (
@@ -46,13 +46,14 @@ export const processCreateLobby = async (
 ): Promise<SQLUpdate[]> => {
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
-    const [configContent] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
+    const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
+    const matchConfig = parseConfig(configString.content);
     return persistPracticeLobbyCreation(
       blockHeight,
       user,
       input,
       map,
-      configContent.content,
+      matchConfig,
       randomnessGenerator
     );
   }
@@ -72,13 +73,14 @@ export const processJoinLobby = async (
   const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
   // if match config is not in the database, bail
   const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
+  const matchConfig = parseConfig(configString.content);
   if (!configString) return [];
   return persistLobbyJoin(
     blockHeight,
     user,
     lobbyState,
     map,
-    configString.content,
+    matchConfig,
     randomnessGenerator
   );
 };
@@ -199,6 +201,12 @@ export async function processStatsEffect(input: UserStats, dbConn: Pool): Promis
   return [query];
 }
 
-export async function processConfig(user: WalletAddress, blockHeight: number, input: RegisteredConfigInput, randomnessGenerator: Prando): Promise<SQLUpdate[]>{
-  return persistConfigRegistration(user, blockHeight, input, randomnessGenerator)
+export async function processConfig(
+  user: WalletAddress,
+  input: RegisteredConfigInput,
+  randomnessGenerator: Prando
+): Promise<SQLUpdate[]> {
+  const parsedConfig = configParser(input.content);
+  if ('error' in parseConfig) return [];
+  else return persistConfigRegistration(user, input, randomnessGenerator);
 }
