@@ -207,6 +207,6 @@ export async function processConfig(
   randomnessGenerator: Prando
 ): Promise<SQLUpdate[]> {
   const parsedConfig = configParser(input.content);
-  if ('error' in parseConfig) return [];
+  if ('error' in parsedConfig) return [];
   else return persistConfigRegistration(user, input, randomnessGenerator);
 }
