@@ -524,8 +524,7 @@ function computeDamageToTower(
   currentTick: number
 ): (DamageEvent | ActorDeletedEvent)[] {
   if (attacker.subType !== 'macaw') return [];
-
-  const cooldown = 10;
+  const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
   if ((currentTick - 2) % cooldown !== 0) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
