@@ -37,6 +37,7 @@ function processTick(
   currentTick: number,
   randomnessGenerator: Prando
 ): TickEvent[] | null {
+  console.log(currentTick, "current tick")
   // Return null, i.e. move to next round iff the matchState shows the round has ended
   if (matchState.roundEnded) return incrementRound(matchState);
   // End round if the base health is 0
@@ -44,17 +45,10 @@ function processTick(
   // Else let's play
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomnessGenerator.next();
-  if (currentTick === 1) {
-    // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
-    // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
-    // Only state mutation that happens in the event production flow.
-    for (const c of Object.values(matchState.actors.crypts)) {
-      const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
-      if (old) matchState.finishedSpawning.push(c.id);
-    }
+  if (currentTick === 1)
     // First tick is reserved to processing the user actions, i.e. events related to structures.
     return structureEvents(matchConfig, matchState, moves);
-  } else {
+  else {
     // ticks 2+
     // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
     if (matchState.currentRound === 1 || matchState.currentRound === 2)
@@ -69,8 +63,13 @@ function processTick(
     const allSpawned = Object.keys(matchState.actors.crypts).every(c =>
       matchState.finishedSpawning.includes(parseInt(c))
     );
+    console.log(Object.keys(matchState.actors.crypts), "crypts")
+    console.log(matchState.finishedSpawning, "done spawning")
     // We check if there are no more units running around
     const remainingUnits = Object.values(matchState.actors.units);
+    console.log(events.length, "events")
+    console.log(allSpawned, "all spawned")
+    console.log(remainingUnits.length, "remaining units")
     // End the round when no events and all crypts stopped spawning
     if (events.length === 0 && allSpawned && remainingUnits.length === 0)
       return endRound(matchConfig, matchState);
