@@ -7,6 +7,7 @@ import type {
   Tile,
   TileNumber,
   RoleSetting,
+  MatchConfig,
 } from '@tower-defense/utils';
 import { parseConfig } from './config';
 
@@ -16,7 +17,7 @@ export function generateMatchState(
   playerTwo: WalletAddress,
   mapName: string,
   mapLayout: string,
-  configString: string,
+  matchConfig: MatchConfig,
   randomnessGenerator: Prando
 ): MatchState {
   const [attacker, defender] =
@@ -25,7 +26,6 @@ export function generateMatchState(
       : creatorFaction === 'defender'
       ? [playerTwo, lobbyCreator]
       : randomizeRoles(lobbyCreator, playerTwo, randomnessGenerator);
-  const matchConfig = parseConfig(configString);
   // TODO are all maps going to be the same width?
   const rawMap = processMapLayout(mapName, mapLayout);
   const annotatedMap = getMap(rawMap);
