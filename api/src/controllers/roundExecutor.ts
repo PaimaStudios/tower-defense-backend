@@ -5,6 +5,7 @@ import {
   getLobbyById,
   getRoundData,
   getRoundMoves,
+  getMatchConfig,
 } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
@@ -27,6 +28,8 @@ export class roundExecutorController extends Controller {
       throw new ValidateError({ round: { message: 'invalid number' } }, '');
     } else {
       const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
+      const [config] = await getMatchConfig.run({id: lobby.config_id}, pool);
+      const configString = config.content;
       if (!lobby) return { error: 'lobby not found' };
       else {
         if (!(round > 0)) return { error: 'bad round number' };
@@ -44,7 +47,7 @@ export class roundExecutorController extends Controller {
             const matchState = round_data.match_state as unknown as MatchState;
             const dbMoves = await getRoundMoves.run({ lobby_id: lobbyID, round: round }, pool);
             const moves = dbMoves.map(move => moveToAction(move, matchState.attacker));
-            return { lobby, round_data, moves, block_height };
+            return { lobby, configString, round_data, moves, block_height };
           }
         }
       }

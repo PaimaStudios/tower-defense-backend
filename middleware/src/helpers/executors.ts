@@ -21,7 +21,7 @@ export async function buildRoundExecutor(
   console.log(data, 'data');
   const { seed } = data.block_height;
   pushLog(seed, 'seed used for the round executor at the middleware');
-  const matchConfig: MatchConfig = parseConfig(data.lobby.config_id);
+  const matchConfig: MatchConfig = parseConfig(data.configString);
   const matchState = data.round_data.match_state as unknown as MatchState;
   const rng = new Prando(seed);
   const executor = roundExecutorConstructor.initialize(
@@ -53,7 +53,7 @@ export async function buildMatchExecutor(
 ): Promise<MatchExecutor<MatchState, TickEvent>> {
   const { lobby, seeds, initialState, moves } = data;
   console.log(data, 'data');
-  const matchConfig: MatchConfig = parseConfig(data.lobby.config_id);
+  const matchConfig: MatchConfig = parseConfig(data.configString);
   pushLog(seeds, 'seeds used for the match executor at the middleware');
   return matchExecutorConstructor.initialize(
     matchConfig,

@@ -16,6 +16,7 @@ import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
   JoinedLobbyInput,
+  RegisteredConfigInput,
   ScheduledDataInput,
   SetNFTInput,
   SubmittedTurnInput,
@@ -23,7 +24,7 @@ import type {
   ZombieRound,
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
+import { configParser, MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   generateRandomMoves,
@@ -45,6 +46,7 @@ import {
   persistStatsUpdate,
   persistUpdateMatchState,
   scheduleStatsUpdate,
+  persistConfigRegistration,
 } from './persist/index.js';
 import type { IEndMatchParams } from '@tower-defense/db/src/update.queries.js';
 

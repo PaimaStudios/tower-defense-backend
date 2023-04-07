@@ -373,6 +373,8 @@ function movementEvents(
 // Function to generate individual movement events
 function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
   const completion = (a.movementCompletion += a.speed);
+  const nextIndex = a.path.indexOf(a.coordinates) + 1;
+  const nextCoordinates = a.path[nextIndex];
   return {
     eventType: 'movement',
     faction: 'attacker',
