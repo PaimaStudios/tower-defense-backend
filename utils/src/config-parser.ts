@@ -319,6 +319,11 @@ export const spawnCapacity = P.seqObj<SpawnCapacity>(
   ['spawnCapacity', P.digits.map(Number)],
   semicolon
 );
+
+interface Damage {
+  attackDamage: number;
+}
+export const attackDamage = P.seqObj<Damage>(P.string('d'), ['attackDamage', P.digits.map(Number)], semicolon);
 export const unitSpeed = P.seqObj<UnitSpeed>(
   P.string('s'),
   ['unitSpeed', P.digits.map(Number)],
@@ -345,7 +350,7 @@ export const crypt = P.seqMap(
   unitHealth,
   spawnRate,
   spawnCapacity,
-  damage,
+  attackDamage,
   buffRange,
   buffCooldown,
   unitSpeed,
@@ -358,7 +363,7 @@ export const mcrypt = P.seqMap(
   unitHealth,
   spawnRate,
   spawnCapacity,
-  damage,
+  attackDamage,
   buffRange,
   buffCooldown,
   unitSpeed,
