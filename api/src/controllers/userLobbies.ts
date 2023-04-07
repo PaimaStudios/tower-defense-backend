@@ -9,16 +9,8 @@ import {
   SuccessResponse,
   ValidateError,
 } from 'tsoa';
-import {
-  requirePool,
-  getNewLobbiesByUserAndBlockHeight,
-  getPaginatedUserLobbies,
-  getRandomLobby,
-  getRoundMoves,
-  IGetNewLobbiesByUserAndBlockHeightResult,
-  IGetPaginatedUserLobbiesResult,
-  IGetRandomLobbyResult,
-} from '@tower-defense/db';
+import type { IGetPaginatedUserLobbiesResult } from '@tower-defense/db';
+import { requirePool, getPaginatedUserLobbies, getRoundMoves } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
 

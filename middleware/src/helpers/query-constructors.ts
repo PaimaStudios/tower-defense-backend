@@ -1,7 +1,7 @@
-import { MapName } from '@tower-defense/utils';
+import type { MapName } from '@tower-defense/utils';
 import type { QueryOptions } from 'paima-engine/paima-mw-core';
 import { buildBackendQuery, buildQuery } from 'paima-engine/paima-mw-core';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 import { getIndexerUri, getStatefulUri } from '../state';
 
@@ -51,12 +51,6 @@ export function indexerQueryTitleImage(contract: string, tokenId: number): strin
     tokenId,
     contract,
   };
-  return buildIndexerQuery(endpoint, options);
-}
-
-export function indexerQueryHistoricalOwnerMultiple(): string {
-  const endpoint = 'historical-owner-multiple';
-  const options = {};
   return buildIndexerQuery(endpoint, options);
 }
 
@@ -214,11 +208,5 @@ export function statefulQueryNftScore(nftContract: string, tokenId: number): str
     nft_contract: nftContract,
     token_id: tokenId,
   };
-  return buildStatefulQuery(endpoint, options);
-}
-
-export function statefulQueryMultipleNftScores(): string {
-  const endpoint = 'multiple-nft-scores';
-  const options = {};
   return buildStatefulQuery(endpoint, options);
 }

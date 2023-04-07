@@ -1,5 +1,5 @@
-import { MapName, RoleSetting, TurnAction } from '@tower-defense/utils';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { MapName, ResultConcise, RoleSetting, TurnAction } from '@tower-defense/utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export type ParsedSubmittedInput =
   | CreatedLobbyInput
@@ -47,7 +47,6 @@ export interface SetNFTInput {
   address: string;
   tokenID: number;
 }
-export type ConciseResult = 'w' | 'l';
 
 export interface ScheduledDataInput {
   input: 'scheduledData';
@@ -61,7 +60,7 @@ export interface ZombieRound extends ScheduledDataInput {
 export interface UserStats extends ScheduledDataInput {
   effect: 'stats';
   user: WalletAddress;
-  result: ConciseResult;
+  result: ResultConcise;
 }
 
 export interface RegisteredConfigInput{

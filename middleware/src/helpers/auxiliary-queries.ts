@@ -1,8 +1,7 @@
-import { FailedResult, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
-import { postDataToEndpoint, pushLog } from 'paima-engine/paima-mw-core';
+import type { FailedResult } from 'paima-engine/paima-mw-core';
+import { PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
+import { pushLog } from 'paima-engine/paima-mw-core';
 import type { ContractAddress } from '@tower-defense/utils';
-import { GameENV } from '@tower-defense/utils';
-import type { LobbyWebserverQuery, RichOpenLobbyState, UserNft } from '../types';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
   LobbyState,
@@ -12,27 +11,18 @@ import type {
   NftId,
   NftScore,
   PackedLobbyState,
-  StatefulNftId,
   SuccessfulResult,
 } from '../types';
-import {
-  lobbiesToTokenIdSet,
-  nftScoreSnakeToCamel,
-  userCreatedLobby,
-  userJoinedLobby,
-  userNftIndexerToMiddleware,
-} from './data-processing';
+import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './utility-functions';
 import {
   backendQueryLobbyState,
   backendQueryUserLobbiesBlockheight,
   backendQueryUserNft,
   indexerQueryHistoricalOwner,
-  indexerQueryHistoricalOwnerMultiple,
   indexerQueryTitleImage,
-  statefulQueryMultipleNftScores,
   statefulQueryNftScore,
 } from './query-constructors';
-import { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getRawLobbyState');
@@ -260,116 +250,4 @@ export async function getNftStats(
   } catch (err) {
     return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
   }
-}
-
-async function fetchMultipleNftScores(
-  nftIds: StatefulNftId[]
-): Promise<SuccessfulResult<NftScore[]> | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('fetchMultipleNftScores');
-
-  let res: Response;
-  try {
-    const query = statefulQueryMultipleNftScores();
-    const body = JSON.stringify({ nfts: nftIds });
-    res = await postDataToEndpoint(query, body);
-  } catch (err) {
-    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_STATEFUL_ENDPOINT, err);
-  }
-
-  try {
-    const j = await res.json();
-    const nftScores: NftScore[] = j.data.map(nftScoreSnakeToCamel);
-    return {
-      success: true,
-      result: nftScores,
-    };
-  } catch (err) {
-    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
-  }
-}
-
-async function fetchMultipleNftOwners(
-  tokenIds: number[],
-  blockHeight: number
-): Promise<SuccessfulResult<UserNft[]> | FailedResult> {
-  const errorFxn = buildEndpointErrorFxn('fetchMultipleNftOwners');
-
-  let res: Response;
-  try {
-    const query = indexerQueryHistoricalOwnerMultiple();
-    const body = JSON.stringify({
-      contract: GameENV.NFT_CONTRACT,
-      blockHeight,
-      tokenIds,
-    });
-    res = await postDataToEndpoint(query, body);
-  } catch (err) {
-    return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
-  }
-
-  try {
-    const j = await res.json();
-    if (!j.success) {
-      return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER);
-    }
-    const nfts: UserNft[] = j.result.map(userNftIndexerToMiddleware);
-    return {
-      success: true,
-      result: nfts,
-    };
-  } catch (err) {
-    return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_INDEXER, err);
-  }
-}
-
-export async function addLobbyCreatorNftStats(
-  lobbies: LobbyWebserverQuery[],
-  blockHeight: number
-): Promise<RichOpenLobbyState[]> {
-  // NOTE: All NFTs are expected to be of the same contract
-  const tokenIds = lobbiesToTokenIdSet(lobbies);
-  const resVerification = await fetchMultipleNftOwners(tokenIds, blockHeight);
-  if (!resVerification.success) {
-    throw new Error('Error while verifying lobby creator NFT ownership');
-  }
-
-  const nftIds: StatefulNftId[] = resVerification.result.map(nft => ({
-    nft_contract: nft.nftContract || GameENV.NFT_CONTRACT,
-    token_id: nft.tokenId || 0,
-  }));
-  const resScores = await fetchMultipleNftScores(nftIds);
-  if (!resScores.success) {
-    throw new Error('Error while retrieving lobby creator NFT scores');
-  }
-  if (resVerification.result.length !== resScores.result.length) {
-    throw new Error('Invalid response from stateful indexer');
-  }
-
-  const zippedResults = resVerification.result.map((nft, index) => ({
-    nft,
-    score: resScores.result[index],
-  }));
-
-  const nftContract = GameENV.NFT_CONTRACT.toLowerCase();
-
-  return lobbies.map(lobby => {
-    if (lobby.nft.nftContract?.toLowerCase() === nftContract) {
-      const result = zippedResults.find(res => res.nft.tokenId === lobby.nft.tokenId);
-      if (result && lobby.nft.wallet.toLowerCase() === result.nft.wallet.toLowerCase()) {
-        return {
-          ...lobby.lobby,
-          wins: result.score.wins,
-          ties: result.score.draws,
-          losses: result.score.losses,
-        };
-      }
-    }
-
-    return {
-      ...lobby.lobby,
-      wins: 0,
-      ties: 0,
-      losses: 0,
-    };
-  });
 }

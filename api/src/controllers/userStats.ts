@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import { requirePool, getUserStats, IGetUserStatsResult } from '@tower-defense/db';
+import type { IGetUserStatsResult } from '@tower-defense/db';
+import { requirePool, getUserStats } from '@tower-defense/db';
 
 interface Response {
   stats: IGetUserStatsResult;

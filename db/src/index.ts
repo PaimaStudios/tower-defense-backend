@@ -22,6 +22,8 @@ export {
   newStats,
   createConfig,
   ICreateConfigParams,
+  INewFinalStateParams,
+  match_result,
 } from './insert.queries.js';
 export {
   getPaginatedOpenLobbies,
