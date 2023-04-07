@@ -426,7 +426,7 @@ const crypts = P.seqMap(
   (g, _, c, _2, m) => ({
     gorillaCrypt: g,
     jaguarCrypt: c,
-    macawCryptConfig: m,
+    macawCrypt: m,
   })
 );
 
