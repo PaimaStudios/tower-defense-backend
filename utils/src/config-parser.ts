@@ -35,7 +35,9 @@ function cryptToConcise(c: CryptConfigGraph, top: 'gc' | 'jc' | 'mc'): string {
     `d${c[1].attackDamage}`,
     `br${c[1].buffRange}`,
     `bc${c[1].buffCooldown}`,
-    top === 'mc' ? `s${c[1].unitSpeed};ac${c[1].attackCooldown}` : `s${c[1].unitSpeed}`,
+    top === 'mc'
+      ? `s${c[1].unitSpeed};ac${c[1].attackCooldown};ar${c[1].attackRange}`
+      : `s${c[1].unitSpeed}`,
     '2',
     `p${c[2].price}`,
     `h${c[2].unitHealth}`,
@@ -44,7 +46,9 @@ function cryptToConcise(c: CryptConfigGraph, top: 'gc' | 'jc' | 'mc'): string {
     `d${c[2].attackDamage}`,
     `br${c[2].buffRange}`,
     `bc${c[2].buffCooldown}`,
-    top === 'mc' ? `s${c[2].unitSpeed};ac${c[2].attackCooldown}` : `s${c[2].unitSpeed}`,
+    top === 'mc'
+      ? `s${c[2].unitSpeed};ac${c[2].attackCooldown};ar${c[2].attackRange}`
+      : `s${c[2].unitSpeed}`,
     '3',
     `p${c[3].price}`,
     `h${c[3].unitHealth}`,
@@ -53,7 +57,9 @@ function cryptToConcise(c: CryptConfigGraph, top: 'gc' | 'jc' | 'mc'): string {
     `d${c[3].attackDamage}`,
     `br${c[3].buffRange}`,
     `bc${c[3].buffCooldown}`,
-    top === 'mc' ? `s${c[3].unitSpeed};ac${c[3].attackCooldown}` : `s${c[3].unitSpeed}`,
+    top === 'mc'
+      ? `s${c[3].unitSpeed};ac${c[3].attackCooldown};ar${c[3].attackRange}`
+      : `s${c[3].unitSpeed}`,
   ].join(';');
 }
 function builder(c: MatchConfig): string {
@@ -320,14 +326,16 @@ export const spawnCapacity = P.seqObj<SpawnCapacity>(
   semicolon
 );
 
-interface Damage {
+interface attackDamage {
   attackDamage: number;
 }
-export const attackDamage = P.seqObj<Damage>(P.string('d'), ['attackDamage', P.digits.map(Number)], semicolon);
-export const unitSpeed = P.seqObj<UnitSpeed>(
-  P.string('s'),
-  ['unitSpeed', P.digits.map(Number)],
+export const attackDamage = P.seqObj<attackDamage>(
+  P.string('d'),
+  ['attackDamage', P.digits.map(Number)],
+  semicolon
 );
+
+export const unitSpeed = P.seqObj<UnitSpeed>(P.string('s'), ['unitSpeed', P.digits.map(Number)]);
 export const buffRange = P.seqObj<BuffRange>(
   P.string('br'),
   ['buffRange', P.digits.map(Number)],
@@ -342,9 +350,16 @@ export const buffCooldown = P.seqObj<BuffCooldown>(
 export const attackCooldown = P.seqObj<AttackCooldown>(
   semicolon,
   P.string('ac'),
-  ['attackCooldown', P.digits.map(Number)]
-  // no semicolon, this is the last piece
+  ['attackCooldown', P.digits.map(Number)],
+  semicolon
 );
+interface attackRange {
+  attackRange: number;
+}
+export const attackRange = P.seqObj<attackRange>(P.string('ar'), [
+  'attackRange',
+  P.digits.map(Number),
+]);
 export const crypt = P.seqMap(
   price,
   unitHealth,
@@ -355,7 +370,7 @@ export const crypt = P.seqMap(
   buffCooldown,
   unitSpeed,
   function (p, h, r, c, d, br, bc, s) {
-    return { ...p, ...h, ...r, ...c, ...d, ...br, ...bc, ...s };
+    return { ...p, ...h, ...r, ...c, ...d, ...br, ...bc, ...s, attackRange: 1, attackCooldown: 1 };
   }
 );
 export const mcrypt = P.seqMap(
@@ -368,8 +383,9 @@ export const mcrypt = P.seqMap(
   buffCooldown,
   unitSpeed,
   attackCooldown,
-  function (p, h, r, c, d, br, bc, s, ac) {
-    return { ...p, ...h, ...r, ...c, ...d, ...br, ...bc, ...s, ...ac };
+  attackRange,
+  function (p, h, r, c, d, br, bc, s, ac, ar) {
+    return { ...p, ...h, ...r, ...c, ...d, ...br, ...bc, ...s, ...ac, ...ar };
   }
 );
 
@@ -423,9 +439,9 @@ const crypts = P.seqMap(
   jaguarCryptConfig,
   semicolon,
   macawCryptConfig,
-  (g, _, c, _2, m) => ({
+  (g, _, j, _2, m) => ({
     gorillaCrypt: g,
-    jaguarCrypt: c,
+    jaguarCrypt: j,
     macawCrypt: m,
   })
 );
