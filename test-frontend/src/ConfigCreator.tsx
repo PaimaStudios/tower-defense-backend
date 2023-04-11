@@ -1,10 +1,17 @@
 import { baseConfig } from '@tower-defense/game-logic';
 import { useState } from 'react';
+import mw from 'mw';
 export default function () {
   const [config, setConfig] = useState(baseConfig);
+  async function submit() {
+    console.log(config, "config")
+    const l = await mw.userWalletLogin("metamask")
+    mw.registerConfig(config);
+  }
 
   return (
     <div id="config-creator">
+      <button onClick={submit}>SEND</button>
       <div className="input">
         <span>Game Speed</span>
         <input
