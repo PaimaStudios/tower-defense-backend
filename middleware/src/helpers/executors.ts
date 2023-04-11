@@ -6,6 +6,7 @@ import type {
   RoundExecutorData,
   TickEvent,
 } from '@tower-defense/utils';
+import { AttackerStructure } from '@tower-defense/utils';
 import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 import {
   matchExecutor as matchExecutorConstructor,
@@ -33,8 +34,12 @@ export async function buildRoundExecutor(
   );
   //TODO: check with santiago
   //@ts-ignore
-  return { ...executor, altCurrentState: newActors(executor.currentState) };
+  return { ...executor, altCurrentState: () => newActors(executor.currentState) };
   // return executor
+}
+
+function changeCrypts(c: AttackerStructure): any{
+  return {...c, health: 1}
 }
 
 function newActors(m: MatchState): any {
@@ -42,7 +47,7 @@ function newActors(m: MatchState): any {
     ...m,
     actors: {
       units: Object.values(m.actors.units),
-      crypts: Object.values(m.actors.crypts),
+      crypts: Object.values(m.actors.crypts).map(c => changeCrypts(c)),
       towers: Object.values(m.actors.towers),
     },
   };

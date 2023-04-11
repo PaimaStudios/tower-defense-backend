@@ -1,7 +1,7 @@
 import type { FailedResult } from 'paima-engine/paima-mw-core';
 import { PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
 import { pushLog } from 'paima-engine/paima-mw-core';
-import type { ContractAddress } from '@tower-defense/utils';
+import type { ContractAddress, MatchConfig } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
   LobbyState,
@@ -16,6 +16,7 @@ import type {
 import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './utility-functions';
 import {
   backendQueryLobbyState,
+  backendQueryUserConfigs,
   backendQueryUserLobbiesBlockheight,
   backendQueryUserNft,
   indexerQueryHistoricalOwner,
@@ -249,5 +250,51 @@ export async function getNftStats(
     };
   } catch (err) {
     return errorFxn(MiddlewareErrorCode.INVALID_RESPONSE_FROM_STATEFUL, err);
+  }
+}
+type UserConfigs = {
+  success: boolean;
+  configs: DBConfigs[]
+}
+type DBConfigs = {
+  content: string;
+  creator: string;
+  id: string;
+  version: number;
+}
+export async function getRawUserConfigs(
+  wallet: string,
+): Promise<UserConfigs| FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getRawNewLobbies');
+
+  let res: Response;
+  try {
+    const query = backendQueryUserConfigs(wallet);
+    res = await fetch(query);
+  } catch (err) {
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = (await res.json()) as { configs: DBConfigs[] };
+    // TODO: properly typecheck
+    return {
+      success: true,
+      configs: j.configs,
+    };
+  } catch (err) {
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
+export async function getUserConfigs(
+  address: string
+): Promise<UserConfigs> {
+  const configs = await getRawUserConfigs(address);
+  if (!configs.success) {
+    throw new Error('Failed to get user configs');
+  } else if (configs.configs.length > 0) {
+    return configs;
+  } else {
+    throw new Error('User is not in the lobby');
   }
 }

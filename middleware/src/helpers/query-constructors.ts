@@ -202,6 +202,13 @@ export function backendQueryMapByName(mapName: MapName): string {
   return buildBackendQuery(endpoint, options);
 }
 
+export function backendQueryUserConfigs(wallet: WalletAddress): string {
+  const endpoint = 'user_configs';
+  const options = {
+    creator: wallet,
+  };
+  return buildBackendQuery(endpoint, options);
+}
 export function statefulQueryNftScore(nftContract: string, tokenId: number): string {
   const endpoint = 'nft-score';
   const options = {
