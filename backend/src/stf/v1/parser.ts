@@ -33,7 +33,7 @@ const myGrammar = `
 createdLobby        = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?
 joinedLobby         = j|*lobbyID
 closedLobby         = cs|*lobbyID
-setNFT              = n|address|nftID
+setNFT              = n|address|tokenID
 zombieScheduledData = z|*lobbyID
 userScheduledData   = u|*user|result
 `;
