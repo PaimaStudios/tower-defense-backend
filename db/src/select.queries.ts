@@ -1195,3 +1195,62 @@ const getFinalStateIR: any = {"usedParamSet":{"lobby_id":true},"params":[{"name"
 export const getFinalState = new PreparedQuery<IGetFinalStateParams,IGetFinalStateResult>(getFinalStateIR);
 
 
+/** 'GetUserConfigs' parameters type */
+export interface IGetUserConfigsParams {
+  creator: string | null | void;
+}
+
+/** 'GetUserConfigs' return type */
+export interface IGetUserConfigsResult {
+  content: string;
+  creator: string;
+  id: string;
+  version: number;
+}
+
+/** 'GetUserConfigs' query type */
+export interface IGetUserConfigsQuery {
+  params: IGetUserConfigsParams;
+  result: IGetUserConfigsResult;
+}
+
+const getUserConfigsIR: any = {"usedParamSet":{"creator":true},"params":[{"name":"creator","required":false,"transform":{"type":"scalar"},"locs":[{"a":38,"b":45}]}],"statement":"SELECT * FROM configs\nWHERE creator = :creator"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM configs
+ * WHERE creator = :creator
+ * ```
+ */
+export const getUserConfigs = new PreparedQuery<IGetUserConfigsParams,IGetUserConfigsResult>(getUserConfigsIR);
+
+
+/** 'GetAllConfigs' parameters type */
+export type IGetAllConfigsParams = void;
+
+/** 'GetAllConfigs' return type */
+export interface IGetAllConfigsResult {
+  content: string;
+  creator: string;
+  id: string;
+  version: number;
+}
+
+/** 'GetAllConfigs' query type */
+export interface IGetAllConfigsQuery {
+  params: IGetAllConfigsParams;
+  result: IGetAllConfigsResult;
+}
+
+const getAllConfigsIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT * FROM configs"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM configs
+ * ```
+ */
+export const getAllConfigs = new PreparedQuery<IGetAllConfigsParams,IGetAllConfigsResult>(getAllConfigsIR);
+
+
