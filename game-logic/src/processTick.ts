@@ -358,9 +358,7 @@ function movementEvents(
       return [moveEvent];
     }
   });
-  const isNotNull = (
-    e: UnitMovementEvent | null
-  ): e is UnitMovementEvent => !!e;
+  const isNotNull = (e: UnitMovementEvent | null): e is UnitMovementEvent => !!e;
   const ret = events.flat().filter(isNotNull);
   for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
@@ -373,6 +371,8 @@ function movementEvents(
 // Function to generate individual movement events
 function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
   const completion = (a.movementCompletion += a.speed);
+  const nextIndex = a.path.indexOf(a.coordinates) + 1;
+  const nextCoordinates = a.path[nextIndex];
   return {
     eventType: 'movement',
     faction: 'attacker',
@@ -384,7 +384,6 @@ function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
     movementSpeed: a.speed,
   };
 }
-
 
 // Tower Attack Events, where defender towers try to destroy nearby units
 function towerAttackEvents(
