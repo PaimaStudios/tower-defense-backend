@@ -53,4 +53,4 @@ export function moveToAction(move: IGetMovesByLobbyResult, attacker: string): Tu
   }
 }
 
-export { parser as configParser } from './config-parser';
+export { parser as configParser, builder as configToConcise } from './config-parser';

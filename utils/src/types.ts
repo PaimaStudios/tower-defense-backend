@@ -384,8 +384,8 @@ interface ExecutorDataSeed {
 
 export interface MatchExecutorData {
   lobby: IGetLobbyByIdResult;
-  configString: string;
   seeds: ExecutorDataSeed[];
   moves: TurnAction[];
   initialState: MatchState;
+  configString: string;
 }
