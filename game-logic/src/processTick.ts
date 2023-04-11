@@ -347,20 +347,19 @@ function movementEvents(
   matchState: MatchState
 ): Array<UnitMovementEvent | StatusEffectAppliedEvent> {
   const attackers = Object.values(matchState.actors.units);
-  const events = attackers.map(a => {
+  const events = attackers.map(attacker => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
     const busyAttacking =
-      a.subType === 'macaw' && findClosebyTowers(matchState, a.coordinates, 1).length > 0;
+      attacker.subType === 'macaw' &&
+      findClosebyTowers(matchState, attacker.coordinates, 1).length > 0;
     if (busyAttacking) return null;
     else {
       // Generate movement events
-      const moveEvent = move(matchConfig, a);
+      const moveEvent = move(attacker);
       return [moveEvent];
     }
   });
-  const isNotNull = (
-    e: UnitMovementEvent | null
-  ): e is UnitMovementEvent => !!e;
+  const isNotNull = (e: UnitMovementEvent | null): e is UnitMovementEvent => !!e;
   const ret = events.flat().filter(isNotNull);
   for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
@@ -371,20 +370,21 @@ function movementEvents(
 }
 
 // Function to generate individual movement events
-function move(config: MatchConfig, a: AttackerUnit): UnitMovementEvent {
-  const completion = (a.movementCompletion += a.speed);
+function move(attacker: AttackerUnit): UnitMovementEvent {
+  const completion = (attacker.movementCompletion += attacker.speed);
+  const nextIndex = attacker.path.indexOf(attacker.coordinates) + 1;
+  const nextCoordinates = attacker.path[nextIndex];
   return {
     eventType: 'movement',
     faction: 'attacker',
-    actorID: a.id,
-    coordinates: a.coordinates,
+    actorID: attacker.id,
+    coordinates: attacker.coordinates,
     nextCoordinates,
     // if movement reaches 100% then movement is finalized
     completion: completion > 100 ? 100 : completion,
-    movementSpeed: a.speed,
+    movementSpeed: attacker.speed,
   };
 }
-
 
 // Tower Attack Events, where defender towers try to destroy nearby units
 function towerAttackEvents(
@@ -665,21 +665,6 @@ function findClosebyTowers(
   );
   if (structures.length) return structures;
   else return findClosebyTowers(matchState, coords, range, radius + 1);
-}
-function findClosebyCrypts(
-  matchState: MatchState,
-  coords: number | null,
-  range: number,
-  radius = 1
-): AttackerStructure[] {
-  if (coords == null) return [];
-  if (radius > range) return [];
-  const inRange = getSurroundingCells(coords, matchState, radius);
-  const structures = Object.values(matchState.actors.crypts).filter(tw =>
-    inRange.includes(tw.coordinates)
-  );
-  if (structures.length) return structures;
-  else return findClosebyCrypts(matchState, coords, range, radius + 1);
 }
 
 export default processTick;
