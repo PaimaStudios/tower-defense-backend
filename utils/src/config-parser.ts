@@ -89,7 +89,10 @@ interface GameSpeed {
 }
 export const gameSpeed = P.seqObj<GameSpeed>(
   P.string('gs'),
-  ['baseSpeed', P.digits.map(Number)],
+  [
+    'baseSpeed',
+    P.digits.map(Number).assert(s => s > 0 && s < 101, 'game speed should be between 1 and 100'),
+  ],
   semicolon
 );
 
@@ -98,7 +101,12 @@ interface BaseHealth {
 }
 export const baseHealth = P.seqObj<BaseHealth>(
   P.string('bh'),
-  ['defenderBaseHealth', P.digits.map(Number)],
+  [
+    'defenderBaseHealth',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 1001, 'defender base health should be between 1 and 1000'),
+  ],
   semicolon
 );
 
@@ -107,7 +115,12 @@ interface DefenderGoldRate {
 }
 export const defenderGoldRate = P.seqObj<DefenderGoldRate>(
   P.string('gd'),
-  ['baseDefenderGoldRate', P.digits.map(Number)],
+  [
+    'baseDefenderGoldRate',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 1001, 'defender gold rate should be between 1 and 1000'),
+  ],
   semicolon
 );
 
@@ -116,7 +129,12 @@ interface AttackerGoldRate {
 }
 export const attackerGoldRate = P.seqObj<AttackerGoldRate>(
   P.string('ga'),
-  ['baseAttackerGoldRate', P.digits.map(Number)],
+  [
+    'baseAttackerGoldRate',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 1001, 'attacker gold rate should be between 1 and 1000'),
+  ],
   semicolon
 );
 
@@ -125,7 +143,10 @@ interface RecoupAmount {
 }
 export const recoupAmount = P.seqObj<RecoupAmount>(
   P.string('ra'),
-  ['recoupAmount', P.digits.map(Number)],
+  [
+    'recoupAmount',
+    P.digits.map(Number).assert(s => s > 0 && s < 301, 'recoup amount should be between 1 and 300'),
+  ],
   semicolon
 );
 
@@ -134,7 +155,10 @@ interface RepairCost {
 }
 export const repairCost = P.seqObj<RepairCost>(
   P.string('rc'),
-  ['repairCost', P.digits.map(Number)],
+  [
+    'repairCost',
+    P.digits.map(Number).assert(s => s > 0 && s < 301, 'repair cost should be between 1 and 300'),
+  ],
   semicolon
 );
 interface RepairValue {
@@ -142,7 +166,10 @@ interface RepairValue {
 }
 export const repairValue = P.seqObj<RepairValue>(
   P.string('rv'),
-  ['towerRepairValue', P.digits.map(Number)],
+  [
+    'towerRepairValue',
+    P.digits.map(Number).assert(s => s > 0 && s < 301, 'repair value should be between 1 and 300'),
+  ],
   semicolon
 );
 
@@ -151,7 +178,10 @@ interface HealthBuff {
 }
 export const healthBuff = P.seqObj<HealthBuff>(
   P.string('hb'),
-  ['healthBuffAmount', P.digits.map(Number)],
+  [
+    'healthBuffAmount',
+    P.digits.map(Number).assert(s => s > 0 && s < 21, 'health bufffs should be between 1 and 20'),
+  ],
   semicolon
 );
 
@@ -160,7 +190,10 @@ interface SpeedBuff {
 }
 export const speedBuff = P.seqObj<SpeedBuff>(
   P.string('sb'),
-  ['speedBuffAmount', P.digits.map(Number)],
+  [
+    'speedBuffAmount',
+    P.digits.map(Number).assert(s => s > 0 && s < 21, 'speed buffs should be between 1 and 20'),
+  ],
   semicolon
 );
 
@@ -168,41 +201,69 @@ export const speedBuff = P.seqObj<SpeedBuff>(
 interface Price {
   price: number;
 }
-export const price = P.seqObj<Price>(P.string('p'), ['price', P.digits.map(Number)], semicolon);
+export const price = P.seqObj<Price>(
+  P.string('p'),
+  [
+    'price',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 301, 'structure prices should be between 1 and 300'),
+  ],
+  semicolon
+);
 interface Health {
   health: number;
 }
-export const health = P.seqObj<Health>(P.string('h'), ['health', P.digits.map(Number)], semicolon);
+export const health = P.seqObj<Health>(
+  P.string('h'),
+  [
+    'health',
+    P.digits.map(Number).assert(s => s > 0 && s < 101, 'tower health should be between 1 and 100'),
+  ],
+  semicolon
+);
 
 interface Cooldown {
   cooldown: number;
 }
 export const cooldown = P.seqObj<Cooldown>(
   P.string('c'),
-  ['cooldown', P.digits.map(Number)],
+  [
+    'cooldown',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 101, 'tower cooldown should be between 1 and 100'),
+  ],
   semicolon
 );
 
 interface Damage {
   damage: number;
 }
-export const damage = P.seqObj<Damage>(P.string('d'), ['damage', P.digits.map(Number)], semicolon);
+export const damage = P.seqObj<Damage>(
+  P.string('d'),
+  [
+    'damage',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 21, 'tower attack damage should be between 1 and 20'),
+  ],
+  semicolon
+);
 interface Range {
   range: number;
 }
 export const range = P.seqObj<Range>(
   P.string('r'),
-  ['range', P.digits.map(Number)]
+  [
+    'range',
+    P.digits.map(Number).assert(s => s > 0 && s < 10, 'attack range should be between 1 and 9'),
+  ]
   // no semicolon, it ends here
 );
 type UpgradeTier = 1 | 2 | 3;
 export const tier = P.seqMap(
-  P.regexp(/[1-3]/).map(n => {
-    if (n === '1') return 1;
-    else if (n === '2') return 2;
-    else if (n === '3') return 3;
-    else return 1;
-  }),
+  P.digit.map(Number).assert(s => s > 0 && s < 4, 'only tiers 1, 2 and 3 exist'),
   semicolon,
   (t, _) => t
 );
@@ -312,17 +373,28 @@ interface AttackCooldown {
 
 export const unitHealth = P.seqObj<UnitHealth>(
   P.string('h'),
-  ['unitHealth', P.digits.map(Number)],
+  [
+    'unitHealth',
+    P.digits.map(Number).assert(s => s > 0 && s < 101, 'unit health should be between 1 and 100'),
+  ],
   semicolon
 );
 export const spawnRate = P.seqObj<SpawnRate>(
   P.string('r'),
-  ['spawnRate', P.digits.map(Number)],
+  [
+    'spawnRate',
+    P.digits.map(Number).assert(s => s > 0 && s < 31, 'unit spawn rate should be between 1 and 30'),
+  ],
   semicolon
 );
 export const spawnCapacity = P.seqObj<SpawnCapacity>(
   P.string('c'),
-  ['spawnCapacity', P.digits.map(Number)],
+  [
+    'spawnCapacity',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 51, 'crypt spawn capacity should be between 1 and 50'),
+  ],
   semicolon
 );
 
@@ -331,26 +403,43 @@ interface attackDamage {
 }
 export const attackDamage = P.seqObj<attackDamage>(
   P.string('d'),
-  ['attackDamage', P.digits.map(Number)],
+  [
+    'attackDamage',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 11, 'unit attack damage should be between 1 and 10'),
+  ],
   semicolon
 );
 
-export const unitSpeed = P.seqObj<UnitSpeed>(P.string('s'), ['unitSpeed', P.digits.map(Number)]);
+export const unitSpeed = P.seqObj<UnitSpeed>(P.string('s'), [
+  'unitSpeed',
+  P.digits.map(Number).assert(s => s > 0 && s < 101, 'unit speed should be between 1 and 100'),
+]);
 export const buffRange = P.seqObj<BuffRange>(
   P.string('br'),
-  ['buffRange', P.digits.map(Number)],
+  [
+    'buffRange',
+    P.digits.map(Number).assert(s => s > 0 && s < 6, 'buff range should be between 1 and 5'),
+  ],
   semicolon
 );
 export const buffCooldown = P.seqObj<BuffCooldown>(
   P.string('bc'),
-  ['buffCooldown', P.digits.map(Number)],
+  [
+    'buffCooldown',
+    P.digits.map(Number).assert(s => s > 0 && s < 21, 'buff cooldown should be between 1 and 20'),
+  ],
   semicolon
 );
 
 export const attackCooldown = P.seqObj<AttackCooldown>(
   semicolon,
   P.string('ac'),
-  ['attackCooldown', P.digits.map(Number)],
+  [
+    'attackCooldown',
+    P.digits.map(Number).assert(s => s > 0 && s < 101, 'macaw attack cooldown should be between 1 and 100'),
+  ],
   semicolon
 );
 interface attackRange {
@@ -358,7 +447,7 @@ interface attackRange {
 }
 export const attackRange = P.seqObj<attackRange>(P.string('ar'), [
   'attackRange',
-  P.digits.map(Number),
+  P.digits.map(Number).assert(s => s > 0 && s < 6, 'macaw attack range should be between 1 and 5'),
 ]);
 export const crypt = P.seqMap(
   price,
