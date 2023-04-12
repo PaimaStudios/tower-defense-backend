@@ -468,10 +468,10 @@ function towerShot(
     faction: 'attacker',
     sourceID: unit.id,
     targetID: tower.id,
-    damageAmount,
+    damageAmount: unit.damage,
     damageType: 'neutral',
   };
-  if (superMacaw) events.push(deflectingDamageEvent);
+  if (superMacaw && !dying) events.push(deflectingDamageEvent);
   return events;
 }
 // Calculate the damage caused by a tower attack. Upgraded Anaconda Towers have a 50% instakill chance.
