@@ -1,5 +1,5 @@
 import { builder, parser } from './config-parser';
-import { MatchConfig } from './types';
+import { MatchConfig, TowerConfig, CryptConfig } from './types';
 
 describe('Input parsing', () => {
   const randomTower = () => ({
@@ -23,7 +23,7 @@ describe('Input parsing', () => {
         unitSpeed: Math.ceil(1 + Math.random() * 49),
         unitHealth: Math.ceil(1 + Math.random() * 90),
   });
-  const randomRightConfig: MatchConfig = {
+  const randomRightConfig= () =>  ({
     defenderBaseHealth: Math.ceil(1 + Math.random() * 900),
     baseAttackerGoldRate: Math.ceil(1 + Math.random() * 950),
     baseDefenderGoldRate: Math.ceil(1 + Math.random() * 950),
@@ -50,16 +50,16 @@ describe('Input parsing', () => {
     },
     macawCrypt: {
       1: randomCrypt(), 2: randomCrypt(), 3: randomCrypt()
-    },
-  };
+    }
+  });
   const wrongConfig = {};
   test('conf', () => {
     let ok = true;
-    for (let i = 0; i < 1; i++) {
-      const built = builder(randomRightConfig);
+    for (let i = 0; i < 5; i++) {
+      const built = builder(randomRightConfig());
       const parsed = parser(built);
-      console.log(built, "built")
-      console.log(parsed, "parsed")
+      // console.log(built, "built")
+      // console.log(parsed, "parsed")
       if ("error" in parsed) ok = false;
     }
     expect(ok).toBeTruthy();

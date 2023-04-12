@@ -218,7 +218,7 @@ export const health = P.seqObj<Health>(
   P.string('h'),
   [
     'health',
-    P.digits.map(Number).assert(s => s > 0 && s < 101, 'tower health should be between 1 and 100'),
+    P.digits.map(Number).assert(s => s > 0 && s < 501, 'tower health should be between 1 and 500'),
   ],
   semicolon
 );
@@ -428,7 +428,7 @@ export const buffCooldown = P.seqObj<BuffCooldown>(
   P.string('bc'),
   [
     'buffCooldown',
-    P.digits.map(Number).assert(s => s > 0 && s < 21, 'buff cooldown should be between 1 and 20'),
+    P.digits.map(Number).assert(s => s > 0 && s < 101, 'buff cooldown should be between 1 and 100'),
   ],
   semicolon
 );
@@ -560,7 +560,7 @@ function parser(s: string): ConfigDefinition {
     const res = configParser.tryParse(s);
     return res.reduce((acc, item) => ({ ...acc, ...item }), {});
   } catch (e) {
-    console.log(e, 'parsing failure');
+    // console.log(e, 'parsing failure');
     return {
       error: 'invalidString',
     };
