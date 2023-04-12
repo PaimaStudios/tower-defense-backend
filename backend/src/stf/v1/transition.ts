@@ -342,5 +342,5 @@ export async function processConfig(
 ): Promise<SQLUpdate[]> {
   const parsedConfig = configParser(input.content);
   if ('error' in parsedConfig) return [];
-  else return persistConfigRegistration(user, input, randomnessGenerator);
+  else return [persistConfigRegistration(user, input, randomnessGenerator)];
 }
