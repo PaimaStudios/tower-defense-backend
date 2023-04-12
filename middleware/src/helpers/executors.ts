@@ -32,6 +32,7 @@ export async function buildRoundExecutor(
     processTick
   );
   //TODO: check with santiago
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   //@ts-ignore
   return { ...executor, altCurrentState: newActors(executor.currentState) };
   // return executor

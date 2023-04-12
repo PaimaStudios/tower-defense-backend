@@ -35,11 +35,11 @@ jobs:
         node: [16, 18]
 
     steps:
-      - name: Checkout catapult (self) - PaimaStudios/tower-defense
+      - name: Checkout tower-defense (self) - PaimaStudios/tower-defense
         uses: actions/checkout@v3
         with:
           repository: "${{ github.repository }}"
-          path: catapult
+          path: tower-defense
       - name: Checkout engine - PaimaStudios/paima-engine
         uses: actions/checkout@v3
         with:
@@ -68,14 +68,14 @@ jobs:
           npm run --if-present lint
           cd $GITHUB_WORKSPACE
       # -
-      #   name: Work on catapult - test-frontend
+      #   name: Work on tower-defense - test-frontend
       #   shell: bash -e -l {0}
       #   run: |
       #     pkgs='["test-frontend"]'
       #     for package in $(echo $pkgs | jq -c '.[]' | jq -r);
       #     do
-      #       echo catapult/$package
-      #       cd catapult/$package
+      #       echo tower-defense/$package
+      #       cd tower-defense/$package
       #       npm ci --prefer-offline --no-audit
       #       npm run --if-present lint
       #       npm run --if-present build

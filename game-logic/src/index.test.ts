@@ -21,7 +21,7 @@ import type {
 import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
 
-export const testmap: TileNumber[] = [
+const testmap: TileNumber[] = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
   5, 1, 2, 6, 6, 6, 2, 6, 6, 6, 2, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 2, 6, 2, 6, 2, 6, 2, 6, 2,
   1, 5, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5, 6, 6, 2, 6, 6, 6, 2, 6, 2, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -37,7 +37,7 @@ const forkmap: TileNumber[] =
     .split('')
     .map(Number)
     .map(a => a as TileNumber);
-export function build(towerCount: number, cryptCount: number): TurnAction[] {
+function build(towerCount: number, cryptCount: number): TurnAction[] {
   const available = availableForBuilding(testmap);
   const towers: TurnAction[] = available.towers
     .sort(() => 0.5 - Math.random())
@@ -145,20 +145,20 @@ function availableForBuilding(map: TileNumber[]): { towers: number[]; crypts: nu
   const towers: number[] = [];
   const crypts: number[] = [];
   const accumulator = { towers, crypts };
-  return map.reduce((acc, item, index) => {
-    if (item === 1) return { ...acc, towers: [...acc.towers, index] };
-    else if (item === 2) return { ...acc, crypts: [...acc.crypts, index] };
+  return map.reduce((acc, tile, index) => {
+    if (tile === 1) return { ...acc, towers: [...acc.towers, index] };
+    else if (tile === 2) return { ...acc, crypts: [...acc.crypts, index] };
     else return acc;
   }, accumulator);
 }
 
-function getMatchConfig() {
+function getMockMatchConfig() {
   const configString = 'r|1|gr;d;105|st1;p40;h150;c10;d5;r2';
   const matchConfig: MatchConfig = parseConfig(configString);
   return matchConfig;
 }
 
-function getMatchState(): MatchState {
+function getMockMatchState(): MatchState {
   return generateMatchState(
     'defender',
     '0xdDA309096477b89D7066948b31aB05924981DF2B',
@@ -166,18 +166,18 @@ function getMatchState(): MatchState {
     'fork',
     testmap.join(),
     'defaultdefault',
-    new Prando('')
+    new Prando(1)
   );
 }
 function getAttackerMatchState() {
-  const base = getMatchState();
+  const base = getMockMatchState();
   return { ...base, currentRound: 4 };
 }
 
 describe('Game Logic', () => {
   const getTestData = () => {
-    const matchConfig = getMatchConfig();
-    const matchState = getMatchState();
+    const matchConfig = getMockMatchConfig();
+    const matchState = getMockMatchState();
     const moves = build(10, 10);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -194,8 +194,8 @@ describe('Game Logic', () => {
   // });
   // structure tests
   test('built structures show up in the match state', () => {
-    const matchConfig = getMatchConfig();
-    const matchState = getMatchState();
+    const matchConfig = getMockMatchConfig();
+    const matchState = getMockMatchState();
     const moves = build(5, 5);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -209,8 +209,8 @@ describe('Game Logic', () => {
     expect(counts).toStrictEqual(numbers);
   });
   test('built structures show up in the match state with their respective ids', () => {
-    const matchConfig = getMatchConfig();
-    const matchState = getMatchState();
+    const matchConfig = getMockMatchConfig();
+    const matchState = getMockMatchState();
     const moves = build(5, 5);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -230,7 +230,7 @@ describe('Game Logic', () => {
   });
   test('repaired towers are repaired', () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const moves = build(3, 0);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -273,7 +273,7 @@ describe('Game Logic', () => {
   });
   test('upgraded structures are upgraded', () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const moves = build(1, 1);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
@@ -295,7 +295,7 @@ describe('Game Logic', () => {
   });
   test('salvaged structures are destroyed', () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const moves = build(3, 3);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
@@ -309,7 +309,7 @@ describe('Game Logic', () => {
   // // // gold
   test("gold doesn't go below 0", () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const randomnessGenerator = new Prando(1);
     const moves = build(50, 50);
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
@@ -318,7 +318,7 @@ describe('Game Logic', () => {
   });
   test("built crypts drain user's gold", () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const randomnessGenerator = new Prando(1);
     const initialGold = structuredClone(matchState.attackerGold);
     console.log(initialGold, 'initial gold');
@@ -336,7 +336,7 @@ describe('Game Logic', () => {
   });
   test("built towers drain user's gold", () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const randomnessGenerator = new Prando(1);
     const initialGold = structuredClone(matchState.defenderGold);
     const moves = build(3, 0);
@@ -403,7 +403,7 @@ describe('Game Logic', () => {
   // // // movement
   test('spawned units show up in the actors graph', () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const moves = build(1, 3);
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
@@ -439,8 +439,8 @@ describe('Game Logic', () => {
     expect(ok).toBeTruthy();
   });
   test('AI creates moves', () => {
-    const matchConfig = getMatchConfig();
-    const matchState = getMatchState();
+    const matchConfig = getMockMatchConfig();
+    const matchState = getMockMatchState();
     const moves = generateRandomMoves(matchConfig, matchState, 'defender', 1);
     const ok = moves.length > 0;
     expect(ok).toBeTruthy;
@@ -473,7 +473,7 @@ describe('Game Logic', () => {
   // // // damage
   test('macaws attacks to towers are registered', () => {
     const matchConfig = baseConfig;
-    const matchState = getMatchState();
+    const matchState = getMockMatchState();
     const moves = build(1, 3);
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(10).keys()].map(i => i + 1); // [0..10]
