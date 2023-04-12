@@ -180,7 +180,9 @@ export const newNft = new PreparedQuery<INewNftParams,INewNftResult>(newNftIR);
 /** 'CreateConfig' parameters type */
 export interface ICreateConfigParams {
   content: string;
+  creator: string;
   id: string;
+  version: number;
 }
 
 /** 'CreateConfig' return type */
@@ -192,13 +194,13 @@ export interface ICreateConfigQuery {
   result: ICreateConfigResult;
 }
 
-const createConfigIR: any = {"usedParamSet":{"id":true,"content":true},"params":[{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":40,"b":43}]},{"name":"content","required":true,"transform":{"type":"scalar"},"locs":[{"a":46,"b":54}]}],"statement":"INSERT INTO configs(id, content)\nVALUES(:id!, :content!)\nON CONFLICT(id)\nDO NOTHING               "};
+const createConfigIR: any = {"usedParamSet":{"id":true,"creator":true,"version":true,"content":true},"params":[{"name":"id","required":true,"transform":{"type":"scalar"},"locs":[{"a":58,"b":61}]},{"name":"creator","required":true,"transform":{"type":"scalar"},"locs":[{"a":64,"b":72}]},{"name":"version","required":true,"transform":{"type":"scalar"},"locs":[{"a":75,"b":83}]},{"name":"content","required":true,"transform":{"type":"scalar"},"locs":[{"a":86,"b":94}]}],"statement":"INSERT INTO configs(id, creator, version, content)\nVALUES(:id!, :creator!, :version!, :content!)\nON CONFLICT(id)\nDO NOTHING               "};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO configs(id, content)
- * VALUES(:id!, :content!)
+ * INSERT INTO configs(id, creator, version, content)
+ * VALUES(:id!, :creator!, :version!, :content!)
  * ON CONFLICT(id)
  * DO NOTHING               
  * ```

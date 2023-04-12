@@ -3,7 +3,7 @@ import { builder } from 'paima-engine/paima-concise';
 
 import type { EndpointErrorFxn } from '../errors';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
-import { getLobbyStateWithUser, getNonemptyNewLobbies } from '../helpers/auxiliary-queries';
+import { getLobbyStateWithUser, getNonemptyNewLobbies, getUserConfigs } from '../helpers/auxiliary-queries';
 import {
   lobbyWasClosed,
   moveToString,
@@ -11,13 +11,14 @@ import {
   userJoinedLobby,
 } from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
-import type { Faction, MapName, TurnAction } from '@tower-defense/utils';
+import { configToConcise, Faction, MapName, TurnAction } from '@tower-defense/utils';
 import {
   awaitBlock,
   getActiveAddress,
   PaimaMiddlewareErrorCode,
   postConciselyEncodedData,
 } from 'paima-engine/paima-mw-core';
+import { MatchConfig } from '@tower-defense/utils';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
@@ -281,10 +282,65 @@ async function setNft(nftAddress: string, nftId: number): Promise<OldResult> {
   }
 }
 
+async function registerConfig(config: MatchConfig): Promise<any> {
+  const errorFxn = buildEndpointErrorFxn('joinLobby');
+
+  const query = getUserWallet(errorFxn);
+  if (!query.success) return query;
+  const userWalletAddress = query.result;
+
+  const conciseBuilder = builder.initialize();
+  conciseBuilder.setPrefix('r');
+  conciseBuilder.addValue({ value: "1", isStateIdentifier: false });
+  const configString = configToConcise(config);
+  conciseBuilder.addValue({ value: configString, isStateIdentifier: false });
+  const finalString = conciseBuilder.build();
+  console.log(finalString, "final string")
+
+  let currentBlockVar: number;
+  try {
+    const result = await postConciselyEncodedData(finalString);
+    if (!result.success) {
+      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
+    }
+    currentBlockVar = result.result;
+
+    if (currentBlockVar < 0) {
+      return errorFxn(
+        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
+        `Received block height: ${currentBlockVar}`
+      );
+    }
+  } catch (err) {
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
+  }
+  const currentBlock = currentBlockVar;
+
+  try {
+    await awaitBlock(currentBlock);
+    const userConfigs = await retryPromise(
+      () => getUserConfigs(userWalletAddress),
+      RETRY_PERIOD,
+      RETRIES_COUNT
+    );
+    const registeredConfig = userConfigs.configs.find(c => c.content === finalString);
+    if (registeredConfig) {
+      return {
+        success: true,
+        message: `config registered as ${registeredConfig?.id}`,
+      };
+    } else {
+      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
+    }
+  } catch (err) {
+    return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
+  }
+}
 export const writeEndpoints = {
   createLobby,
   joinLobby,
   closeLobby,
   submitMoves,
   setNft,
+  registerConfig,
 };

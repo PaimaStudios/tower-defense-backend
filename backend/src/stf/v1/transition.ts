@@ -16,6 +16,7 @@ import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
   JoinedLobbyInput,
+  RegisteredConfigInput,
   ScheduledDataInput,
   SetNFTInput,
   SubmittedTurnInput,
@@ -23,7 +24,7 @@ import type {
   ZombieRound,
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
+import { configParser, MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   generateRandomMoves,
@@ -45,6 +46,7 @@ import {
   persistStatsUpdate,
   persistUpdateMatchState,
   scheduleStatsUpdate,
+  persistConfigRegistration,
 } from './persist/index.js';
 import type { IEndMatchParams } from '@tower-defense/db/src/update.queries.js';
 
@@ -57,13 +59,14 @@ export const processCreateLobby = async (
 ): Promise<SQLUpdate[]> => {
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
-    const [configContent] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
+    const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
+    const matchConfig = parseConfig(configString.content);
     return persistPracticeLobbyCreation(
       blockHeight,
       user,
       input,
       map,
-      configContent.content,
+      matchConfig,
       randomnessGenerator
     );
   }
@@ -83,13 +86,14 @@ export const processJoinLobby = async (
   const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
   // if match config is not in the database, bail
   const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
+  const matchConfig = parseConfig(configString.content);
   if (!configString) return [];
   return persistLobbyJoin(
     blockHeight,
     user,
     lobbyState,
     map,
-    configString.content,
+    matchConfig,
     randomnessGenerator
   );
 };
@@ -329,4 +333,14 @@ function finalizeMatch(
   const statsUpdate2 = scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1);
   console.log('persisting match finalizing');
   return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2];
+}
+
+export async function processConfig(
+  user: WalletAddress,
+  input: RegisteredConfigInput,
+  randomnessGenerator: Prando
+): Promise<SQLUpdate[]> {
+  const parsedConfig = configParser(input.content);
+  if ('error' in parsedConfig) return [];
+  else return [persistConfigRegistration(user, input, randomnessGenerator)];
 }

@@ -371,6 +371,7 @@ export type MatchResults = [MatchResult, MatchResult];
 export interface RoundExecutorData {
   block_height: IGetBlockHeightResult;
   lobby: IGetLobbyByIdResult;
+  configString: string;
   moves: TurnAction[];
   round_data: IGetRoundDataResult;
 }
@@ -386,4 +387,5 @@ export interface MatchExecutorData {
   seeds: ExecutorDataSeed[];
   moves: TurnAction[];
   initialState: MatchState;
+  configString: string;
 }

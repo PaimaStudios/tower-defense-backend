@@ -12,3 +12,4 @@ export * from './match.js';
 export * from './nft.js';
 export * from './stats.js';
 export * from './zombie.js';
+export * from './config.js';

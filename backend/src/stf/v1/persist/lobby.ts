@@ -12,13 +12,14 @@ import type {
 } from '@tower-defense/db';
 import { closeLobby, startMatch } from '@tower-defense/db';
 import { createLobby } from '@tower-defense/db';
-import type { MatchState, RoleSetting } from '@tower-defense/utils';
+import type { MatchConfig, MatchState, RoleSetting } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import { parseConfig } from '@tower-defense/game-logic';
 import { blankStats } from './stats';
 import { practiceRound } from '../transition';
 import { persistNewRound } from './match';
 import { generateMatchState } from '@tower-defense/game-logic';
+import { match } from 'assert';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
@@ -56,7 +57,7 @@ export function persistPracticeLobbyCreation(
   user: WalletAddress,
   inputData: CreatedLobbyInput,
   map: IGetMapLayoutResult,
-  configContent: string,
+  matchConfig: MatchConfig,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   const lobby_id = randomnessGenerator.nextString(12);
@@ -86,7 +87,7 @@ export function persistPracticeLobbyCreation(
     PRACTICE_BOT_ADDRESS,
     params,
     map,
-    configContent,
+    matchConfig,
     randomnessGenerator
   );
   return [createLobbyTuple, blankStatsTuple, ...practiceLobbyTuples];
@@ -98,7 +99,7 @@ export function persistLobbyJoin(
   user: WalletAddress,
   lobby: IGetLobbyByIdResult,
   map: IGetMapLayoutResult,
-  configString: string,
+  matchConfig: MatchConfig,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
   if (lobby.player_two || lobby.lobby_state !== 'open' || lobby.lobby_creator === user) {
@@ -111,7 +112,7 @@ export function persistLobbyJoin(
     user,
     lobby.map,
     map.layout,
-    configString,
+    matchConfig,
     randomnessGenerator
   );
   // We update the Lobby table with the new state, and determine the creator role if it was random
@@ -127,7 +128,7 @@ export function persistLobbyJoin(
       ? practiceRound(
           blockHeight,
           { ...lobby, current_round: 1 },
-          parseConfig(configString),
+          matchConfig,
           // We have to pass it fake round data as the round hasn't been persisted yet.
           constructRoundData(lobby.lobby_id, blockHeight, matchState),
           randomnessGenerator

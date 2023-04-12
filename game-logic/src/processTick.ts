@@ -44,17 +44,10 @@ function processTick(
   // Else let's play
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomnessGenerator.next();
-  if (currentTick === 1) {
-    // Old crypts can't spawn if old, i.e. 3 rounds after being build. Unless upgraded/repaired.
-    // We disable them, once at the beginning of the round, by adding them to the finishedSpawned list. Else backend loops forever.
-    // Only state mutation that happens in the event production flow.
-    for (const c of Object.values(matchState.actors.crypts)) {
-      const old = matchState.currentRound - c.builtOnRound >= 3 * (c.upgrades + 1);
-      if (old) matchState.finishedSpawning.push(c.id);
-    }
+  if (currentTick === 1)
     // First tick is reserved to processing the user actions, i.e. events related to structures.
     return structureEvents(matchConfig, matchState, moves);
-  } else {
+  else {
     // ticks 2+
     // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
     if (matchState.currentRound === 1 || matchState.currentRound === 2)
@@ -85,7 +78,6 @@ function processTick(
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
   for (const crypt of Object.keys(matchState.actors.crypts)) {
-    // annoying that Object.values stripes the types
     const c = matchState.actors.crypts[parseInt(crypt)];
     c.spawned = [];
   }
@@ -233,17 +225,14 @@ function eventsFromMatchState(
   matchState: MatchState,
   currentTick: number,
   rng: Prando
-): TickEvent[] | null {
+): TickEvent[] {
   // compute all spawn, movement, damage, statusDamage events for a tick given a certain map state
   // check if base is alive
-  if (matchState.defenderBase.health <= 0) return null;
-  else {
-    const spawn = spawnEvents(matchConfig, matchState, currentTick);
-    const movement = movementEvents(matchConfig, matchState);
-    const towerAttacks = towerAttackEvents(matchConfig, matchState, currentTick, rng);
-    const unitAttacks = unitAttackEvents(matchConfig, matchState, currentTick);
-    return [...spawn, ...movement, ...towerAttacks, ...unitAttacks];
-  }
+  const spawn = spawnEvents(matchConfig, matchState, currentTick);
+  const movement = movementEvents(matchConfig, matchState);
+  const towerAttacks = towerAttackEvents(matchConfig, matchState, currentTick, rng);
+  const unitAttacks = unitAttackEvents(matchConfig, matchState, currentTick);
+  return [...spawn, ...movement, ...towerAttacks, ...unitAttacks];
 }
 
 // Spawn events, derive from the Crypts present at the map.
@@ -259,11 +248,10 @@ function spawnEvents(
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
     const { spawnCapacity, spawnRate } = config[ss.structure][ss.upgrades];
-    // Crypts spawn units if three conditions are met:
-    // 1.- They're not old, see above
-    // 2.- They have remaining spawn capacity
+    // Crypts spawn units if two conditions are met:
+    // 1.- They have remaining spawn capacity
     const hasCapacity = ss.spawned.length < spawnCapacity;
-    // 3.- The spawn rate fits the current tick.
+    // 2.- The spawn rate fits the current tick.
     // tick 1 is reserved for structures. Spawning happens from tick 2.
     const aboutTime = (currentTick - 2) % spawnRate === 0;
     if (hasCapacity && aboutTime) {
@@ -537,8 +525,7 @@ function computeDamageToTower(
   currentTick: number
 ): (DamageEvent | ActorDeletedEvent)[] {
   if (attacker.subType !== 'macaw') return [];
-
-  const cooldown = 10;
+  const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
   if ((currentTick - 2) % cooldown !== 0) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);

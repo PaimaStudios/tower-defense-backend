@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import ConfigCreator from './ConfigCreator';
 import './index.css';
 
 const appRoot = document.getElementById('root');
@@ -11,6 +12,7 @@ if (!appRoot) {
 
 ReactDOM.createRoot(appRoot).render(
   <React.StrictMode>
-    <App />
+    {/* <App /> */}
+    <ConfigCreator />
   </React.StrictMode>
 );

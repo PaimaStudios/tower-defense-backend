@@ -222,3 +222,10 @@ WHERE match_moves.lobby_id = :lobby_id;
 /* @name getFinalState */
 SELECT * FROM final_match_state
 WHERE lobby_id = :lobby_id;
+
+/* @name getUserConfigs */
+SELECT * FROM configs
+WHERE creator = :creator;
+
+/* @name getAllConfigs */
+SELECT * FROM configs;

@@ -64,6 +64,9 @@ export {
   getMatchConfig,
   getAllMaps,
   getActiveLobbies,
+  getUserConfigs,
+  IGetUserConfigsParams,
+  IGetUserConfigsResult
 } from './select.queries.js';
 export {
   IStartMatchParams,

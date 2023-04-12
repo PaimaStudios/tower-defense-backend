@@ -165,7 +165,7 @@ function getMatchState(): MatchState {
     '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
     'fork',
     testmap.join(),
-    'defaultdefault',
+    baseConfig,
     new Prando('')
   );
 }
