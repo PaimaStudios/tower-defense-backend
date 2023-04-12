@@ -1,8 +1,10 @@
 import type { ParserRecord } from 'paima-engine/paima-utils-backend';
 import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
-import type {
+import {
   BuildStructureAction,
+  configParser,
+  maps,
   RepairStructureAction,
   ResultConcise,
   RoleSettingConcise,
@@ -11,7 +13,6 @@ import type {
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
-import { maps } from '@tower-defense/utils';
 
 import type {
   ClosedLobbyInput,
@@ -22,7 +23,7 @@ import type {
   SubmittedTurnInput,
   UserStats,
   ZombieRound,
-  RegisteredConfigInput
+  RegisteredConfigInput,
 } from './types';
 import { conciseFactionMap } from '@tower-defense/game-logic';
 import type { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise';
@@ -80,7 +81,7 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   closedLobby,
   setNFT,
   zombieScheduledData,
-  userScheduledData
+  userScheduledData,
 };
 
 // Special parser for move submition
@@ -149,14 +150,16 @@ function parseSubmitTurn(c: ConciseConsumer): SubmittedTurnInput {
     actions,
   };
 }
-function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput{
+function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput {
   const version = tryParse(c.nextValue(), pRoundNumber);
   const content = tryParse(c.nextValue(), P.all);
+  const config = configParser(content);
+  if ("error" in config) throw("parsing error in config")
   return {
     input: 'registeredConfig',
     version,
-    content
-  }
+    content,
+  };
 }
 
 const myParser = new PaimaParser(myGrammar, parserCommands);
@@ -167,8 +170,8 @@ function parse(input: string): ParsedSubmittedInput {
     // custom parser for submit moves since paima parser isn't that generic (yet)
     if (cConsumer.prefix() === 's') {
       return parseSubmitTurn(cConsumer);
-    } else if (cConsumer.prefix() === 'r'){
-      return parseRegisterConfig(cConsumer)
+    } else if (cConsumer.prefix() === 'r') {
+      return parseRegisterConfig(cConsumer);
     } else {
       const parsed = myParser.start(input);
       return { input: parsed.command, ...parsed.args } as any;
