@@ -6,7 +6,9 @@ export default function () {
   async function submit() {
     console.log(config, "config")
     const l = await mw.userWalletLogin("metamask")
-    mw.registerConfig(config);
+    console.log(l, "l")
+    const r = await mw.registerConfig(config);
+    console.log(r, "r")
   }
 
   return (
@@ -149,7 +151,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.anacondaTower[1].price}
+              value={config.anacondaTower[1].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -157,7 +159,7 @@ export default function () {
                     ...config.anacondaTower,
                     1: {
                       ...config.anacondaTower[1],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -168,7 +170,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.anacondaTower[1].price}
+              value={config.anacondaTower[1].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -176,7 +178,7 @@ export default function () {
                     ...config.anacondaTower,
                     1: {
                       ...config.anacondaTower[1],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
@@ -209,7 +211,7 @@ export default function () {
             <span>Health</span>
             <input
               type="number"
-              value={config.anacondaTower[2].price}
+              value={config.anacondaTower[2].health}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -217,7 +219,7 @@ export default function () {
                     ...config.anacondaTower,
                     2: {
                       ...config.anacondaTower[2],
-                      price: parseInt(e.target.value),
+                      health: parseInt(e.target.value),
                     },
                   },
                 })
@@ -228,7 +230,7 @@ export default function () {
             <span>Attack Cooldown</span>
             <input
               type="number"
-              value={config.anacondaTower[2].price}
+              value={config.anacondaTower[2].cooldown}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -236,7 +238,7 @@ export default function () {
                     ...config.anacondaTower,
                     2: {
                       ...config.anacondaTower[2],
-                      price: parseInt(e.target.value),
+                      cooldown: parseInt(e.target.value),
                     },
                   },
                 })
@@ -446,7 +448,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.piranhaTower[1].price}
+              value={config.piranhaTower[1].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -454,7 +456,7 @@ export default function () {
                     ...config.piranhaTower,
                     1: {
                       ...config.piranhaTower[1],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -465,7 +467,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.piranhaTower[1].price}
+              value={config.piranhaTower[1].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -473,7 +475,7 @@ export default function () {
                     ...config.piranhaTower,
                     1: {
                       ...config.piranhaTower[1],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
@@ -544,7 +546,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.piranhaTower[2].price}
+              value={config.piranhaTower[2].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -552,7 +554,7 @@ export default function () {
                     ...config.piranhaTower,
                     2: {
                       ...config.piranhaTower[2],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -563,7 +565,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.piranhaTower[2].price}
+              value={config.piranhaTower[2].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -571,7 +573,7 @@ export default function () {
                     ...config.piranhaTower,
                     2: {
                       ...config.piranhaTower[2],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
@@ -642,7 +644,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.piranhaTower[3].price}
+              value={config.piranhaTower[3].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -650,7 +652,7 @@ export default function () {
                     ...config.piranhaTower,
                     3: {
                       ...config.piranhaTower[3],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -661,7 +663,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.piranhaTower[3].price}
+              value={config.piranhaTower[3].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -669,7 +671,7 @@ export default function () {
                     ...config.piranhaTower,
                     3: {
                       ...config.piranhaTower[3],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
@@ -743,7 +745,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.slothTower[1].price}
+              value={config.slothTower[1].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -751,7 +753,7 @@ export default function () {
                     ...config.slothTower,
                     1: {
                       ...config.slothTower[1],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -762,7 +764,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.slothTower[1].price}
+              value={config.slothTower[1].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -770,7 +772,7 @@ export default function () {
                     ...config.slothTower,
                     1: {
                       ...config.slothTower[1],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
@@ -841,7 +843,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.slothTower[2].price}
+              value={config.slothTower[2].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -849,7 +851,7 @@ export default function () {
                     ...config.slothTower,
                     2: {
                       ...config.slothTower[2],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -860,7 +862,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.slothTower[2].price}
+              value={config.slothTower[2].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -868,7 +870,7 @@ export default function () {
                     ...config.slothTower,
                     2: {
                       ...config.slothTower[2],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
@@ -939,7 +941,7 @@ export default function () {
             <span>Attack Damage</span>
             <input
               type="number"
-              value={config.slothTower[3].price}
+              value={config.slothTower[3].damage}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -947,7 +949,7 @@ export default function () {
                     ...config.slothTower,
                     3: {
                       ...config.slothTower[3],
-                      price: parseInt(e.target.value),
+                      damage: parseInt(e.target.value),
                     },
                   },
                 })
@@ -958,7 +960,7 @@ export default function () {
             <span>Attack Range</span>
             <input
               type="number"
-              value={config.slothTower[3].price}
+              value={config.slothTower[3].range}
               onChange={e =>
                 setConfig({
                   ...config,
@@ -966,7 +968,7 @@ export default function () {
                     ...config.slothTower,
                     3: {
                       ...config.slothTower[3],
-                      price: parseInt(e.target.value),
+                      range: parseInt(e.target.value),
                     },
                   },
                 })
