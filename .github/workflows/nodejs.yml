@@ -1,0 +1,84 @@
+name: NodeJS Continuous Health Check
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - "assets/**"
+      - "documentation/**"
+      - "README.md"
+      - ".DS_Store"
+      - ".vscode/**"
+      - "docker/**"
+      - "test-frontend"
+
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - "assets/**"
+      - "documentation/**"
+      - "README.md"
+      - ".DS_Store"
+      - ".vscode/**"
+      - "docker/**"
+      - "test-frontend"
+
+  workflow_dispatch:
+
+jobs:
+  node-ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [16, 18]
+
+    steps:
+      - name: Checkout tower-defense (self) - PaimaStudios/tower-defense
+        uses: actions/checkout@v3
+        with:
+          repository: "${{ github.repository }}"
+          path: tower-defense
+      - name: Checkout engine - PaimaStudios/paima-engine
+        uses: actions/checkout@v3
+        with:
+          repository: "PaimaStudios/paima-engine"
+          ref: master # tmp branch - switch it back
+          ssh-key: "${{ secrets.PAIMA_ENGINE_SSH_SECRET_KEY }}"
+          path: paima-engine
+      - name: Work on paima-engine
+        shell: bash -e -l {0}
+        run: |
+          cd paima-engine
+          npm ci --prefer-offline --no-audit
+          npm run --if-present build
+          cd $GITHUB_WORKSPACE
+      - name: Work on tower-defense - workspace
+        shell: bash -e -l {0}
+        run: |
+          cd tower-defense
+          npm ci --prefer-offline --no-audit
+          cd node_modules
+          rm -rf paima-engine
+          ln -s ../../paima-engine paima-engine
+          cd ..
+          npm run --if-present build
+          npm run --if-present test
+          npm run --if-present lint
+          cd $GITHUB_WORKSPACE
+      # -
+      #   name: Work on tower-defense - test-frontend
+      #   shell: bash -e -l {0}
+      #   run: |
+      #     pkgs='["test-frontend"]'
+      #     for package in $(echo $pkgs | jq -c '.[]' | jq -r);
+      #     do
+      #       echo tower-defense/$package
+      #       cd tower-defense/$package
+      #       npm ci --prefer-offline --no-audit
+      #       npm run --if-present lint
+      #       npm run --if-present build
+      #       npx tsc
+      #       cd $GITHUB_WORKSPACE
+      #     done
