@@ -127,28 +127,28 @@ function computeGoldRewards(
 // Function to check if the user has enough money to spend in structures. Mutates state if true, returns the boolean result of the check.
 function canSpend(matchConfig: MatchConfig, matchState: MatchState, action: TurnAction): boolean {
   if (action.action === 'salvage') return true;
+
+  let cost = 0;
+  if (action.action === 'build') cost = matchConfig[action.structure][1].price;
+  else if (action.action === 'repair') cost = matchConfig.repairCost;
   else {
-    let cost = 0;
-    if (action.action === 'build') cost = matchConfig[action.structure][1].price;
-    else if (action.action === 'repair') cost = matchConfig.repairCost;
-    else {
-      const toUpgrade =
-        action.faction === 'attacker'
-          ? matchState.actors.crypts[action.id]
-          : matchState.actors.towers[action.id];
-      if (!toUpgrade) return false;
-      const currentTier = toUpgrade.upgrades;
-      if (currentTier >= 3) return false;
-      cost = matchConfig[toUpgrade.structure][(currentTier + 1) as UpgradeTier].price;
-    }
-    if (action.faction === 'attacker' && matchState.attackerGold - cost >= 0) {
-      // matchState.attackerGold -= amount;
-      return true;
-    } else if (action.faction === 'defender' && matchState.defenderGold - cost >= 0) {
-      // matchState.defenderGold -= amount;
-      return true;
-    } else return false;
+    const toUpgrade =
+      action.faction === 'attacker'
+        ? matchState.actors.crypts[action.id]
+        : matchState.actors.towers[action.id];
+    if (!toUpgrade) return false;
+    const currentTier = toUpgrade.upgrades;
+    if (currentTier >= 3) return false;
+    cost = matchConfig[toUpgrade.structure][(currentTier + 1) as UpgradeTier].price;
   }
+
+  if (action.faction === 'attacker' && matchState.attackerGold - cost >= 0) {
+    return true;
+  }
+  if (action.faction === 'defender' && matchState.defenderGold - cost >= 0) {
+    return true;
+  }
+  return false;
 }
 // Outputs the events from the first tick, a function of the moves sent by the players.
 function structureEvents(
