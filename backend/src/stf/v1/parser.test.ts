@@ -22,6 +22,10 @@ describe('Input parsing', () => {
     const parsed = parse('cs|*Xs6Q9GAqZVwe');
     expect(parsed.input).toBe('closedLobby');
   });
+  test('parses setNFT', () => {
+    const parsed = parse('n|0xc02aeafdca98755a2bfbcdf5f68364aacef67d3c|12');
+    expect(parsed.input).toBe('setNFT');
+  });
   test('parses registerConfig', () => {
     // right
     const goodConfigs = [
