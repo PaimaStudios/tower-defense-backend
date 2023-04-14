@@ -14,6 +14,7 @@ import type {
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
 import { coordsToIndex } from './processTick';
+import { calculateRecoupGold } from './utils';
 
 // function to mutate the match state after events are processed.
 export default function applyEvent(config: MatchConfig, matchState: MatchState, event: TickEvent) {
@@ -40,11 +41,17 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
       break;
     case 'salvage':
       if (faction === 'attacker') {
-        matchState.attackerGold += event.gold;
-        if (matchState.actors.crypts[event.id]) delete matchState.actors.crypts[event.id];
+        const structure = matchState.actors.crypts[event.id];
+        if (structure) {
+          matchState.attackerGold += calculateRecoupGold(structure, config);
+          delete matchState.actors.crypts[event.id];
+        }
       } else if (faction === 'defender') {
-        matchState.defenderGold += event.gold;
-        delete matchState.actors.towers[event.id];
+        const structure = matchState.actors.towers[event.id];
+        if (structure) {
+          matchState.defenderGold += calculateRecoupGold(structure, config);
+          delete matchState.actors.towers[event.id];
+        }
       }
       break;
     case 'spawn':

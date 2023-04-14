@@ -22,6 +22,12 @@ import type {
   UnitAttack,
   BuildStructureAction,
   UpgradeTier,
+  RepairStructureEvent,
+  UpgradeStructureEvent,
+  SalvageStructureEvent,
+  RepairStructureAction,
+  SalvageStructureAction,
+  UpgradeStructureAction,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { baseGoldProduction, attackerUnitMap } from './config';
@@ -167,8 +173,11 @@ function structureEvents(
       const newCount = acc[1] + 1;
       return [events, newCount];
     } else {
-      const events = [...acc[0], structureEvent(matchConfig, matchState, item)];
-      return [events, acc[1]];
+      const newEvent = getStructureEvent(item);
+      console.log({ newEvent });
+      applyEvent(matchConfig, matchState, newEvent);
+      acc[0].push(newEvent);
+      return acc;
     }
   }, accumulator);
   return structuralTick[0];
@@ -190,35 +199,17 @@ function buildEvent(
   return event;
 }
 
-function structureEvent(
-  matchConfig: MatchConfig,
-  matchState: MatchState,
-  a: TurnAction
+function getStructureEvent(
+  action: RepairStructureAction | SalvageStructureAction | UpgradeStructureAction
 ): StructureEvent {
-  let event: StructureEvent;
-  if (a.action === 'repair')
-    event = {
-      eventType: 'repair',
-      faction: a.faction,
-      id: a.id,
-    };
-  else if (a.action === 'upgrade')
-    event = {
-      eventType: 'upgrade',
-      faction: a.faction,
-      id: a.id,
-    };
-  else if (a.action === 'salvage')
-    event = {
-      eventType: 'salvage',
-      faction: a.faction,
-      id: a.id,
-      gold: matchConfig.recoupAmount,
-    };
-  else event = { eventType: 'repair', faction: a.faction, id: 0 };
-  applyEvent(matchConfig, matchState, event);
-  return event;
+  const structureEvent: RepairStructureEvent | UpgradeStructureEvent | SalvageStructureEvent = {
+    eventType: action.action,
+    faction: action.faction,
+    id: action.id,
+  };
+  return structureEvent;
 }
+
 // Events produced from Tick 2 forward, follow deterministically from match state.
 function eventsFromMatchState(
   matchConfig: MatchConfig,

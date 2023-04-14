@@ -1,5 +1,5 @@
 import { builder, parser } from './config-parser';
-import { MatchConfig, TowerConfig, CryptConfig } from './types';
+import type { MatchConfig } from './types';
 
 describe('Input parsing', () => {
   const randomTower = () => ({
@@ -23,13 +23,13 @@ describe('Input parsing', () => {
     unitSpeed: Math.ceil(1 + Math.random() * 49),
     unitHealth: Math.ceil(1 + Math.random() * 90),
   });
-  const randomRightConfig = () => ({
+  const randomRightConfig = (): MatchConfig => ({
     defenderBaseHealth: Math.ceil(1 + Math.random() * 900),
     baseAttackerGoldRate: Math.ceil(1 + Math.random() * 950),
     baseDefenderGoldRate: Math.ceil(1 + Math.random() * 950),
     towerRepairValue: Math.ceil(1 + Math.random() * 50),
     repairCost: Math.ceil(1 + Math.random() * 150),
-    recoupAmount: Math.ceil(1 + Math.random() * 250),
+    recoupPercentage: Math.ceil(1 + Math.random() * 99),
     baseSpeed: Math.ceil(1 + Math.random() * 20),
     healthBuffAmount: Math.ceil(1 + Math.random() * 10), // see on gorilla crypt balance docs
     speedBuffAmount: Math.ceil(1 + Math.random() * 10), // see on jaguar crypt balance docs

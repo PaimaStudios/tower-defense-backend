@@ -257,7 +257,7 @@ export const baseConfig: MatchConfig = {
   baseDefenderGoldRate: 150,
   towerRepairValue: 25,
   repairCost: 10,
-  recoupAmount: 20,
+  recoupPercentage: 50,
   baseSpeed: 10,
   healthBuffAmount: 5, // see on gorilla crypt balance docs
   speedBuffAmount: 10, // see on jaguar crypt balance docs
