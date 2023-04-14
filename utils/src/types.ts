@@ -351,6 +351,7 @@ export const maps = [
   'wavy',
   'fork',
   'islands',
+  'line',
 ] as const;
 export type MapName = (typeof maps)[number];
 
