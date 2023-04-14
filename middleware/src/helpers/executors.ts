@@ -6,7 +6,7 @@ import type {
   RoundExecutorData,
   TickEvent,
 } from '@tower-defense/utils';
-import { AttackerStructure } from '@tower-defense/utils';
+import type { AttackerStructure } from '@tower-defense/utils';
 import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
 import {
   matchExecutor as matchExecutorConstructor,
@@ -32,14 +32,14 @@ export async function buildRoundExecutor(
     rng,
     processTick
   );
-  //TODO: check with santiago
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   //@ts-ignore
   return { ...executor, altCurrentState: () => newActors(executor.currentState) };
   // return executor
 }
 
-function changeCrypts(c: AttackerStructure): any{
-  return {...c, health: 1}
+function changeCrypts(c: AttackerStructure): any {
+  return { ...c, health: 1 };
 }
 
 function newActors(m: MatchState): any {

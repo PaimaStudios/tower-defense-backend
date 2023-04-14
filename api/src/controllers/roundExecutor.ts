@@ -28,7 +28,7 @@ export class roundExecutorController extends Controller {
       throw new ValidateError({ round: { message: 'invalid number' } }, '');
     } else {
       const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
-      const [config] = await getMatchConfig.run({id: lobby.config_id}, pool);
+      const [config] = await getMatchConfig.run({ id: lobby.config_id }, pool);
       const configString = config.content;
       if (!lobby) return { error: 'lobby not found' };
       else {

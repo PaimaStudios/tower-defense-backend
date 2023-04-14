@@ -24,7 +24,8 @@ import type {
   ZombieRound,
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import { configParser, MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
+import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
+import { configParser } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   generateRandomMoves,
@@ -88,14 +89,7 @@ export const processJoinLobby = async (
   const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
   const matchConfig = parseConfig(configString.content);
   if (!configString) return [];
-  return persistLobbyJoin(
-    blockHeight,
-    user,
-    lobbyState,
-    map,
-    matchConfig,
-    randomnessGenerator
-  );
+  return persistLobbyJoin(blockHeight, user, lobbyState, map, matchConfig, randomnessGenerator);
 };
 
 export async function processCloseLobby(

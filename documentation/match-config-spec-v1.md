@@ -31,7 +31,7 @@ A match config json will follow this schema:
       baseSpeed: number;
       towerRepairValue: number;
       repairCost: number;
-      recoupAmount: number;
+      recoupPercentage: number;
       healthBuffAmount: number;
       speedBuffAmount: number;
       defenderBaseHealth: number;

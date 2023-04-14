@@ -25,7 +25,7 @@ export interface MatchConfig {
   baseSpeed: number;
   towerRepairValue: number;
   repairCost: number;
-  recoupAmount: number; // cash we get on salvaging towers
+  recoupPercentage: number; // cash we get on salvaging towers
   healthBuffAmount: number;
   speedBuffAmount: number;
 }
@@ -36,17 +36,10 @@ export interface TowerConfig {
   damage: number;
   range: number;
 }
-export type StructureUpgradetier = 1 | 2 | 3;
-export interface TowerConfigGraph {
-  1: TowerConfig;
-  2: TowerConfig;
-  3: TowerConfig;
-}
-export interface CryptConfigGraph {
-  1: CryptConfig;
-  2: CryptConfig;
-  3: CryptConfig;
-}
+export type StructureUpgradeTier = 1 | 2 | 3;
+export type TowerConfigGraph = Record<StructureUpgradeTier, TowerConfig>;
+export type CryptConfigGraph = Record<StructureUpgradeTier, CryptConfig>;
+
 export interface CryptConfig {
   // crypt stats
   price: number;
@@ -253,7 +246,6 @@ export interface SalvageStructureEvent {
   eventType: 'salvage';
   faction: Faction;
   id: number;
-  gold: number;
 }
 export interface UpgradeStructureEvent {
   eventType: 'upgrade';

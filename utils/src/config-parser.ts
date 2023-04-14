@@ -1,5 +1,5 @@
 import P from 'parsimmon';
-import { CryptConfigGraph, MatchConfig, TowerConfigGraph } from './types';
+import type { CryptConfigGraph, MatchConfig, TowerConfigGraph } from './types';
 
 function towerToConcise(t: TowerConfigGraph, top: string): string {
   return [
@@ -70,7 +70,7 @@ function builder(c: MatchConfig): string {
     `ga${c.baseAttackerGoldRate}`,
     `rv${c.towerRepairValue}`,
     `rc${c.repairCost}`,
-    `ra${c.recoupAmount}`,
+    `rp${c.recoupPercentage}`,
     `hb${c.healthBuffAmount}`,
     `sb${c.speedBuffAmount}`,
     towerToConcise(c.anacondaTower, 'at'),
@@ -138,14 +138,16 @@ export const attackerGoldRate = P.seqObj<AttackerGoldRate>(
   semicolon
 );
 
-interface RecoupAmount {
-  recoupAmount: number;
+interface RecoupPercentage {
+  recoupPercentage: number;
 }
-export const recoupAmount = P.seqObj<RecoupAmount>(
-  P.string('ra'),
+export const recoupPercentage = P.seqObj<RecoupPercentage>(
+  P.string('rp'),
   [
-    'recoupAmount',
-    P.digits.map(Number).assert(s => s > 0 && s < 301, 'recoup amount should be between 1 and 300'),
+    'recoupPercentage',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s <= 100, 'recoup percentage should be between 1 and 100'),
   ],
   semicolon
 );
@@ -438,7 +440,9 @@ export const attackCooldown = P.seqObj<AttackCooldown>(
   P.string('ac'),
   [
     'attackCooldown',
-    P.digits.map(Number).assert(s => s > 0 && s < 101, 'macaw attack cooldown should be between 1 and 100'),
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 101, 'macaw attack cooldown should be between 1 and 100'),
   ],
   semicolon
 );
@@ -548,7 +552,7 @@ const configParser = P.seq<any>(
   attackerGoldRate,
   repairValue,
   repairCost,
-  recoupAmount,
+  recoupPercentage,
   healthBuff,
   speedBuff,
   towers,

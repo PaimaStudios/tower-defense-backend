@@ -104,24 +104,24 @@ function upgrade(m: MatchState) {
   });
   return [...towers, ...crypts];
 }
-function salvage(c: MatchConfig, m: MatchState) {
-  const towers: SalvageStructureAction[] = Object.values(m.actors.towers).map(a => {
-    return {
+function mockSalvageAll({ actors }: MatchState) {
+  const towers = Object.values(actors.towers).map(tower => {
+    const salvageAction: SalvageStructureAction = {
       round: 2,
       action: 'salvage',
       faction: 'defender',
-      gold: c.recoupAmount,
-      id: a.id,
+      id: tower.id,
     };
+    return salvageAction;
   });
-  const crypts: SalvageStructureAction[] = Object.values(m.actors.crypts).map(a => {
-    return {
+  const crypts = Object.values(actors.crypts).map(crypt => {
+    const salvageAction: SalvageStructureAction = {
       round: 2,
       action: 'salvage',
       faction: 'attacker',
-      gold: c.recoupAmount,
-      id: a.id,
+      id: crypt.id,
     };
+    return salvageAction;
   });
   return [...towers, ...crypts];
 }
@@ -164,9 +164,9 @@ function getMatchState(): MatchState {
     '0xdDA309096477b89D7066948b31aB05924981DF2B',
     '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
     'fork',
-    testmap.join(),
+    testmap.join(''),
     baseConfig,
-    new Prando('')
+    new Prando(1)
   );
 }
 function getAttackerMatchState() {
@@ -299,7 +299,7 @@ describe('Game Logic', () => {
     const moves = build(3, 3);
     const randomnessGenerator = new Prando(1);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-    const moves2 = salvage(matchConfig, matchState);
+    const moves2 = mockSalvageAll(matchState);
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const extantTowers = Object.values(matchState.actors.towers);
     const extantCrypts = Object.values(matchState.actors.crypts);
@@ -393,10 +393,10 @@ describe('Game Logic', () => {
   //   const moves = build(0, 3);
   //   const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
   //   const initialGold = structuredClone(matchState.attackerGold);
-  //   const moves2 = salvage(matchConfig, matchState);
+  //   const moves2 = mockSalvageAll(matchState);
   //   const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
-  //   const moneyGained = moves2.reduce((acc, item) => {
-  //     return acc + matchConfig.recoupAmount;
+  //   const moneyGained = Object.values(matchState.actors.crypts).reduce((acc, item) => {
+  //     return acc + 0.5 * matchConfig[item.structure][1].price;
   //   }, 0);
   //   expect(matchState.attackerGold).toBe(initialGold + moneyGained);
   // });

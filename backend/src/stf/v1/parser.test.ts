@@ -22,6 +22,10 @@ describe('Input parsing', () => {
     const parsed = parse('cs|*Xs6Q9GAqZVwe');
     expect(parsed.input).toBe('closedLobby');
   });
+  test('parses setNFT', () => {
+    const parsed = parse('n|0xc02aeafdca98755a2bfbcdf5f68364aacef67d3c|12');
+    expect(parsed.input).toBe('setNFT');
+  });
   test('parses registerConfig', () => {
     // right
     const goodConfigs = [
@@ -39,7 +43,8 @@ describe('Input parsing', () => {
       ),
       parse(
         'r|1|gs9;bh856;gd719;ga539;rv31;rc63;ra200;hb2;sb9;at;1;p100;h50;c30;d18;r5;2;p99;h51;c12;d8;r5;3;p32;h35;c24;d6;r6;pt;1;p97;h51;c16;d7;r2;2;p40;h66;c9;d11;r6;3;p71;h85;c27;d16;r2;st;1;p68;h89;c7;d5;r5;2;p84;h32;c31;d5;r3;3;p12;h78;c14;d14;r6;gc;1;p31;h61;r10;c15;d7;br4;bc11;s40;2;p60;h36;r12;c2;d8;br2;bc15;s13;3;p60;h62;r17;c3;d5;br2;bc3;s29;jc;1;p52;h3;r5;c12;d3;br5;bc19;s40;2;p99;h45;r6;c10;d3;br3;bc4;s30;3;p56;h67;r7;c2;d4;br3;bc13;s33;mc;1;p39;h62;r20;c16;d10;br2;bc11;s5;ac25;ar4;2;p29;h42;r3;c15;d7;br5;bc3;s38;ac29;ar5;3;p52;h82;r14;c8;d8;br5;bc18;s24;ac19;ar3'
-      )]
+      ),
+    ];
     const badConfigs = [
       // wrong
       parse(
@@ -59,13 +64,13 @@ describe('Input parsing', () => {
       ),
     ];
     const ok = goodConfigs.reduce((acc, item) => {
-      console.log(item.input, "ok1")
-      return item.input === "registeredConfig" ? acc : false
-    }, true)
+      console.log(item.input, 'ok1');
+      return item.input === 'registeredConfig' ? acc : false;
+    }, true);
     const ok2 = badConfigs.reduce((acc, item) => {
-      console.log(item.input, "ok2")
-      return item.input !== "registeredConfig" ? acc : false
-    }, ok)
+      console.log(item.input, 'ok2');
+      return item.input !== 'registeredConfig' ? acc : false;
+    }, ok);
     expect(ok2).toBeTruthy();
   });
 

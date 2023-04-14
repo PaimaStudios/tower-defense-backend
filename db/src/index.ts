@@ -66,7 +66,7 @@ export {
   getActiveLobbies,
   getUserConfigs,
   IGetUserConfigsParams,
-  IGetUserConfigsResult
+  IGetUserConfigsResult,
 } from './select.queries.js';
 export {
   IStartMatchParams,

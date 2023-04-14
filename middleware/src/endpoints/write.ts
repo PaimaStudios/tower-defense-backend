@@ -3,7 +3,11 @@ import { builder } from 'paima-engine/paima-concise';
 
 import type { EndpointErrorFxn } from '../errors';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
-import { getLobbyStateWithUser, getNonemptyNewLobbies, getUserConfigs } from '../helpers/auxiliary-queries';
+import {
+  getLobbyStateWithUser,
+  getNonemptyNewLobbies,
+  getUserConfigs,
+} from '../helpers/auxiliary-queries';
 import {
   lobbyWasClosed,
   moveToString,
@@ -11,14 +15,15 @@ import {
   userJoinedLobby,
 } from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
-import { configToConcise, Faction, MapName, TurnAction } from '@tower-defense/utils';
+import type { Faction, MapName, TurnAction } from '@tower-defense/utils';
+import { configToConcise } from '@tower-defense/utils';
 import {
   awaitBlock,
   getActiveAddress,
   PaimaMiddlewareErrorCode,
   postConciselyEncodedData,
 } from 'paima-engine/paima-mw-core';
-import { MatchConfig } from '@tower-defense/utils';
+import type { MatchConfig } from '@tower-defense/utils';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
@@ -291,11 +296,11 @@ async function registerConfig(config: MatchConfig): Promise<any> {
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('r');
-  conciseBuilder.addValue({ value: "1", isStateIdentifier: false });
+  conciseBuilder.addValue({ value: '1', isStateIdentifier: false });
   const configString = configToConcise(config);
   conciseBuilder.addValue({ value: configString, isStateIdentifier: false });
   const finalString = conciseBuilder.build();
-  console.log(finalString, "final string")
+  console.log(finalString, 'final string');
 
   let currentBlockVar: number;
   try {

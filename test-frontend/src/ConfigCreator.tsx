@@ -4,11 +4,11 @@ import mw from 'mw';
 export default function () {
   const [config, setConfig] = useState(baseConfig);
   async function submit() {
-    console.log(config, "config")
-    const l = await mw.userWalletLogin("metamask")
-    console.log(l, "l")
+    console.log(config, 'config');
+    const l = await mw.userWalletLogin('metamask');
+    console.log(l, 'l');
     const r = await mw.registerConfig(config);
-    console.log(r, "r")
+    console.log(r, 'r');
   }
 
   return (
@@ -66,8 +66,8 @@ export default function () {
         <span>Money recouped when salvaging structures</span>
         <input
           type="number"
-          value={config.recoupAmount}
-          onChange={e => setConfig({ ...config, recoupAmount: parseInt(e.target.value) })}
+          value={config.recoupPercentage}
+          onChange={e => setConfig({ ...config, recoupPercentage: parseInt(e.target.value) })}
         />
       </div>
       <div className="input">
