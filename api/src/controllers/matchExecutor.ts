@@ -1,5 +1,11 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import { requirePool, getLobbyById, getMatchSeeds, getMovesByLobby, getMatchConfig } from '@tower-defense/db';
+import {
+  requirePool,
+  getLobbyById,
+  getMatchSeeds,
+  getMovesByLobby,
+  getMatchConfig,
+} from '@tower-defense/db';
 import type { MatchExecutorData, MatchState } from '@tower-defense/utils';
 import { moveToAction } from '@tower-defense/utils';
 
@@ -11,7 +17,7 @@ export class matchExecutorController extends Controller {
   public async get(@Query() lobbyID: string): Promise<Response> {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
-    const [config] = await getMatchConfig.run({id: lobby.config_id}, pool);
+    const [config] = await getMatchConfig.run({ id: lobby.config_id }, pool);
     const configString = config.content;
     if (!lobby) return null;
     else {

@@ -269,7 +269,7 @@ export const baseConfig: MatchConfig = {
   jaguarCrypt: baseJaguarCryptConfig,
 };
 export function parseConfig(s: string): MatchConfig {
-  const config =  configParser(s);
-  if ("error" in config) return baseConfig
-  else return config
+  const config = configParser(s);
+  if ('error' in config) return baseConfig;
+  else return config;
 }

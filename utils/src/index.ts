@@ -29,7 +29,6 @@ export const PRACTICE_BOT_ADDRESS = '0x0101';
 
 export * from './types.js';
 
-
 /**
  * Converts DB data into a @type {TurnAction} object used throughout the codebase
  */

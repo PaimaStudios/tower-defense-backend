@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
-import { getUserConfigs, IGetUserConfigsResult } from '@tower-defense/db';
+import type { IGetUserConfigsResult } from '@tower-defense/db';
+import { getUserConfigs } from '@tower-defense/db';
 import { requirePool } from '@tower-defense/db';
 
 interface Response {

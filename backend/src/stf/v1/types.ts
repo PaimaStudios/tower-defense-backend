@@ -63,7 +63,7 @@ export interface UserStats extends ScheduledDataInput {
   result: ResultConcise;
 }
 
-export interface RegisteredConfigInput{
+export interface RegisteredConfigInput {
   input: 'registeredConfig';
   version: number;
   content: string;

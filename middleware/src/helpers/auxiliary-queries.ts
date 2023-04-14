@@ -254,17 +254,15 @@ export async function getNftStats(
 }
 type UserConfigs = {
   success: boolean;
-  configs: DBConfigs[]
-}
+  configs: DBConfigs[];
+};
 type DBConfigs = {
   content: string;
   creator: string;
   id: string;
   version: number;
-}
-export async function getRawUserConfigs(
-  wallet: string,
-): Promise<UserConfigs| FailedResult> {
+};
+export async function getRawUserConfigs(wallet: string): Promise<UserConfigs | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getRawNewLobbies');
 
   let res: Response;
@@ -286,9 +284,7 @@ export async function getRawUserConfigs(
     return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
-export async function getUserConfigs(
-  address: string
-): Promise<UserConfigs> {
+export async function getUserConfigs(address: string): Promise<UserConfigs> {
   const configs = await getRawUserConfigs(address);
   if (!configs.success) {
     throw new Error('Failed to get user configs');

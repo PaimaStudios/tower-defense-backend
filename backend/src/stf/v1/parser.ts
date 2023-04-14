@@ -1,10 +1,8 @@
 import type { ParserRecord } from 'paima-engine/paima-utils-backend';
 import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
-import {
+import type {
   BuildStructureAction,
-  configParser,
-  maps,
   RepairStructureAction,
   ResultConcise,
   RoleSettingConcise,
@@ -13,6 +11,7 @@ import {
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
+import { configParser, maps } from '@tower-defense/utils';
 
 import type {
   ClosedLobbyInput,
@@ -154,7 +153,7 @@ function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput {
   const version = tryParse(c.nextValue(), pRoundNumber);
   const content = tryParse(c.nextValue(), P.all);
   const config = configParser(content);
-  if ("error" in config) throw("parsing error in config")
+  if ('error' in config) throw 'parsing error in config';
   return {
     input: 'registeredConfig',
     version,

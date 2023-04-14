@@ -1,5 +1,5 @@
 import P from 'parsimmon';
-import { CryptConfigGraph, MatchConfig, TowerConfigGraph } from './types';
+import type { CryptConfigGraph, MatchConfig, TowerConfigGraph } from './types';
 
 function towerToConcise(t: TowerConfigGraph, top: string): string {
   return [
@@ -438,7 +438,9 @@ export const attackCooldown = P.seqObj<AttackCooldown>(
   P.string('ac'),
   [
     'attackCooldown',
-    P.digits.map(Number).assert(s => s > 0 && s < 101, 'macaw attack cooldown should be between 1 and 100'),
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 101, 'macaw attack cooldown should be between 1 and 100'),
   ],
   semicolon
 );
