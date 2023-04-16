@@ -1,8 +1,6 @@
 import { baseConfig } from '@tower-defense/game-logic';
 import { useState } from 'react';
 import mw from 'mw';
-import './ConfigCreator.css';
-
 export default function () {
   const [config, setConfig] = useState(baseConfig);
   async function submit() {
@@ -15,23 +13,6 @@ export default function () {
 
   return (
     <div id="config-creator">
-      <h2>Configuration</h2>
-      <form onSubmit={submit} className="config-form">
-        {/* ... other input groups with similar improvements */}
-        <div className="form-group">
-          <label htmlFor="speedBuffAmount">Speed buff given by Upgraded Jaguar Crypts</label>
-          <input
-            type="number"
-            id="speedBuffAmount"
-            value={config.speedBuffAmount}
-            onChange={e => setConfig({ ...config, speedBuffAmount: parseInt(e.target.value) })}
-          />
-        </div>
-        <button type="submit" className="submit-button">
-          SEND
-        </button>
-      </form>
-
       <button onClick={submit}>SEND</button>
       <div className="input">
         <span>Game Speed</span>
