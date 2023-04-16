@@ -37,7 +37,7 @@ export default function () {
     console.log('responseHasmap: ', responseHashMap);
     // const updatedConfigValue = responseHashMap[configKey];
 
-    const configObj = responseHashMap.configs.find(config => config.id === configKey);
+    const configObj = responseHashMap.configs.find((config: any) => config.id === configKey);
     console.log('config found: ', configObj);
 
     if (configObj) {
