@@ -69,6 +69,13 @@ input {
   margin: 20px 0;
 }
 
+.small-separation-line {
+  width: 30%;
+  height: 2px;
+  background-color: #ccc;
+  margin: 20px auto;
+}
+
 .update-config input,
 .update-config button {
   margin-right: 10px;
@@ -77,15 +84,15 @@ input {
 .send-button-container {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin-top: 60px;
+  margin-bottom: 60px;
 }
 
 .send-button {
   background-color: #4CAF50;
   color: white;
-  font-size: 16px;
-  padding: 10px 24px;
+  font-size: 18px;
+  padding: 15px 36px;
   border: none;
   cursor: pointer;
   text-decoration: none;
@@ -96,4 +103,47 @@ input {
 
 .send-button:hover {
   background-color: #45a049;
+}
+
+.tower, .crypt {
+  max-width: 100%;
+}
+
+.columns {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.general {
+  display: flex;
+  justify-content: space-between;
+  max-width: 100%;
+}
+
+.tier {
+  flex: 1;
+  margin: 0 10px;
+}
+
+.simulate-button {
+  background-color: #FFE066; /* Beautiful yellow-ish color */
+  color: white;
+  font-size: 18px; /* Match the font-size of send-button */
+  padding: 15px 36px; /* Match the padding of send-button */
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 5px;
+  outline: none;
+  transition: background-color 0.3s;
+  margin-right: 10px; /* Add some spacing between the buttons */
+}
+
+.input span {
+  margin-right: 8px; /* Adjust the value to increase or decrease the space */
+}
+
+.game-interpretation {
+  margin-top: 20px;
 }
