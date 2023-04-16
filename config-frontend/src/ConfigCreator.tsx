@@ -1,10 +1,16 @@
-import { baseConfig } from '@tower-defense/game-logic';
+import { baseConfig, parseConfig } from '@tower-defense/game-logic';
 import { useState } from 'react';
 import mw from 'mw';
 import './ConfigCreator.css';
 
 export default function () {
   const [config, setConfig] = useState(baseConfig);
+  const [configKey, setConfigKey] = useState('');
+  const configEndpoint = 'https://td-backend-testnet-c1.paimastudios.com/user_configs';
+  const creator = '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
+
+  console.log('baseConfig: ', config);
+
   async function submit() {
     console.log(config, 'config');
     const l = await mw.userWalletLogin('metamask');
@@ -13,26 +19,59 @@ export default function () {
     console.log(r, 'r');
   }
 
+  async function getLatest() {
+    const response = await fetch(configEndpoint + '?' + new URLSearchParams({ creator }));
+    const responseHashMap = await response.json();
+    const configs: [any] = responseHashMap.configs;
+    // get the last element of the array
+    const latestConfig = configs[configs.length - 1];
+    // update config input field with the config id
+    setConfigKey(latestConfig.id);
+    // update the config object with the latest config
+    // setConfig(latestConfig.content);
+  }
+
+  async function updateConfig() {
+    const response = await fetch(configEndpoint + '?' + new URLSearchParams({ creator }));
+    const responseHashMap = await response.json();
+    console.log('responseHasmap: ', responseHashMap);
+    // const updatedConfigValue = responseHashMap[configKey];
+
+    const configObj = responseHashMap.configs.find(config => config.id === configKey);
+    console.log('config found: ', configObj);
+
+    if (configObj) {
+      const content = configObj.content;
+      const parsedConfig = parseConfig(content);
+
+      console.log('parsedConfig: ', parsedConfig);
+      setConfig(parsedConfig);
+    } else {
+      console.error('Config not found for the given config key');
+    }
+  }
+
   return (
     <div id="config-creator">
       <h2>Configuration</h2>
-      <form onSubmit={submit} className="config-form">
-        {/* ... other input groups with similar improvements */}
-        <div className="form-group">
-          <label htmlFor="speedBuffAmount">Speed buff given by Upgraded Jaguar Crypts</label>
-          <input
-            type="number"
-            id="speedBuffAmount"
-            value={config.speedBuffAmount}
-            onChange={e => setConfig({ ...config, speedBuffAmount: parseInt(e.target.value) })}
-          />
-        </div>
-        <button type="submit" className="submit-button">
+      <div className="update-config">
+        <input
+          type="text"
+          value={configKey}
+          onChange={e => setConfigKey(e.target.value)}
+          placeholder="Enter config key"
+        />
+        <button onClick={updateConfig}>Update UI</button>
+        <button onClick={getLatest}>Get Latest</button>
+      </div>
+      <div className="separation-line"></div>
+
+      <div className="send-button-container">
+        <button className="send-button" onClick={submit}>
           SEND
         </button>
-      </form>
+      </div>
 
-      <button onClick={submit}>SEND</button>
       <div className="input">
         <span>Game Speed</span>
         <input
@@ -85,8 +124,8 @@ export default function () {
         <span>Money recouped when salvaging structures</span>
         <input
           type="number"
-          value={config.recoupPercentage}
-          onChange={e => setConfig({ ...config, recoupPercentage: parseInt(e.target.value) })}
+          value={config.recoupAmount}
+          onChange={e => setConfig({ ...config, recoupAmount: parseInt(e.target.value) })}
         />
       </div>
       <div className="input">
