@@ -135,7 +135,9 @@ export default function () {
             />
           </div>
           <div className="input">
-            <span>Health buff given by Upgraded Gorilla Crypts</span>
+            <span>
+              <del>Health buff given by Upgraded Gorilla Crypts</del>
+            </span>
             <input
               type="number"
               value={config.healthBuffAmount}
@@ -143,7 +145,9 @@ export default function () {
             />
           </div>
           <div className="input">
-            <span>Speed buff given by Upgraded Jaguar Crypts</span>
+            <span>
+              <del>Speed buff given by Upgraded Jaguar Crypts</del>
+            </span>
             <input
               type="number"
               value={config.speedBuffAmount}
@@ -1178,7 +1182,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.gorillaCrypt[1].buffRange}
@@ -1197,7 +1203,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.gorillaCrypt[1].buffCooldown}
@@ -1333,7 +1341,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.gorillaCrypt[2].buffRange}
@@ -1352,7 +1362,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.gorillaCrypt[2].buffCooldown}
@@ -1488,7 +1500,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.gorillaCrypt[3].buffRange}
@@ -1507,7 +1521,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.gorillaCrypt[3].buffCooldown}
@@ -1649,7 +1665,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.jaguarCrypt[1].buffRange}
@@ -1668,7 +1686,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.jaguarCrypt[1].buffCooldown}
@@ -1804,7 +1824,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.jaguarCrypt[2].buffRange}
@@ -1823,7 +1845,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.jaguarCrypt[2].buffCooldown}
@@ -1959,7 +1983,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.jaguarCrypt[3].buffRange}
@@ -1978,7 +2004,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.jaguarCrypt[3].buffCooldown}
@@ -2120,7 +2148,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.macawCrypt[1].buffRange}
@@ -2139,7 +2169,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.macawCrypt[1].buffCooldown}
@@ -2275,7 +2307,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.macawCrypt[2].buffRange}
@@ -2294,7 +2328,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.macawCrypt[2].buffCooldown}
@@ -2430,7 +2466,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Range</span>
+              <span>
+                <del>Buff Range</del>
+              </span>
               <input
                 type="number"
                 value={config.macawCrypt[3].buffRange}
@@ -2449,7 +2487,9 @@ export default function () {
               />
             </div>
             <div className="input">
-              <span>Buff Cooldown</span>
+              <span>
+                <del>Buff Cooldown</del>
+              </span>
               <input
                 type="number"
                 value={config.macawCrypt[3].buffCooldown}
