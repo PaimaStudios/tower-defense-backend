@@ -108,6 +108,8 @@ export default function () {
               }
             />
           </div>
+        </div>
+        <div className="column">
           <div className="input">
             <span>Cost of Repairing structures</span>
             <input
@@ -116,8 +118,6 @@ export default function () {
               onChange={e => setConfig({ ...config, repairCost: parseInt(e.target.value) })}
             />
           </div>
-        </div>
-        <div className="column">
           <div className="input">
             <span>Tower health regained by repairing</span>
             <input
