@@ -20,7 +20,6 @@ export function generateRandomMoves(
   const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
   const structures = faction === 'defender' ? towers : crypts;
-  console.log(gold, 'generating moves');
   const toBuild = chooseStructures(matchConfig, matchState.map, faction, round, gold, structures);
   return toBuild;
 }
@@ -63,6 +62,7 @@ function chooseStructures(
   chosen: BuildStructureAction[] = []
 ): BuildStructureAction[] {
   const structure = choices[Math.floor(Math.random() * choices.length)];
+  console.log(faction, "choosing tiles to build on for")
   const price = matchConfig[structure][1].price;
   if (budget >= price) {
     const usableTileIndices = map.reduce(
@@ -70,7 +70,7 @@ function chooseStructures(
         item.type === 'open' && item.faction === faction ? [...acc, index] : acc,
       []
     );
-    const coordinates = Math.floor(Math.random() * usableTileIndices.length);
+    const coordinates = usableTileIndices[Math.floor(Math.random() * usableTileIndices.length)];
     const newMap: Tile[] = [
       ...map.slice(0, coordinates),
       { type: 'unbuildable', faction },
