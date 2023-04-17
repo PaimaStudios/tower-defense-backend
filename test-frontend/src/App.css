@@ -1,3 +1,7 @@
+.App button {
+  font-size: calc(10px + 2vmin);
+}
+
 .App-header {
   text-align: center;
   background-color: #282c34;
@@ -36,6 +40,3 @@
   color: red;
 }
 
-button {
-  font-size: calc(10px + 2vmin);
-}
