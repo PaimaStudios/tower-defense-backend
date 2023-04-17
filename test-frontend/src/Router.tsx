@@ -3,7 +3,7 @@ import ConfigCreator from './ConfigCreator';
 import App from './App';
 
 export default function () {
-  const [displayConfig, setDisplayConfig] = useState(false);
+  const [displayConfig, setDisplayConfig] = useState(true);
 
   return (
     <>
