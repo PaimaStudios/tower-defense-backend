@@ -11,13 +11,19 @@ import type {
   DefenderStructure,
   UpgradeTier,
   Coordinates,
+  Macaw,
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
 import { coordsToIndex } from './processTick';
 import { calculateRecoupGold } from './utils';
 
 // function to mutate the match state after events are processed.
-export default function applyEvent(config: MatchConfig, matchState: MatchState, event: TickEvent) {
+export default function applyEvent(
+  config: MatchConfig,
+  matchState: MatchState,
+  event: TickEvent,
+  currentTick = 0
+) {
   // let's find who's side is doing thing
   const faction = event.faction;
   switch (event.eventType) {
@@ -71,7 +77,9 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
       };
       const crypt = matchState.actors.crypts[event.cryptID];
       // add unit to unit graph
-      matchState.actors.units[event.actorID] = spawnedUnit;
+      const finalUnit =
+        event.unitType === 'macaw' ? ({ ...spawnedUnit, lastShot: 0 } as Macaw) : spawnedUnit;
+      matchState.actors.units[event.actorID] = finalUnit;
       // add unit to spawned list of its crypt
       crypt.spawned = [...crypt.spawned, event.actorID];
       // add crypt to Finished Spawned List if it reached its spawn limit
@@ -93,12 +101,18 @@ export default function applyEvent(config: MatchConfig, matchState: MatchState, 
       break;
     case 'damage':
       // find the affected unit
-      const damagedUnit =
+      const [damagedUnit, attacker] =
         faction === 'attacker'
-          ? matchState.actors.towers[event.targetID]
-          : matchState.actors.units[event.targetID];
+          ? [
+              matchState.actors.towers[event.targetID],
+              matchState.actors.units[event.sourceID] as Macaw,
+            ]
+          : [matchState.actors.units[event.targetID], matchState.actors.towers[event.sourceID]];
+      // if affected unit exists (which it should) reduce its health
       if (damagedUnit && event.damageType === 'neutral')
         damagedUnit.health = damagedUnit.health - event.damageAmount;
+      // set last shot
+      attacker.lastShot = currentTick;
       break;
     case 'actorDeleted':
       // it may happen that several actorDeleted events are issued about one single unit
@@ -180,6 +194,7 @@ function applyBuild(
       health: config[eventType.structure as DefenderStructureType][1].health,
       upgrades: 1,
       coordinates: eventType.coordinates,
+      lastShot: 0,
     };
     matchState.actors.towers[unit.id] = unit;
     matchState.defenderGold -= cost;

@@ -116,6 +116,10 @@ export interface AttackerUnit {
   upgradeTier: UpgradeTier;
   status: StatusType[];
 }
+export interface Macaw extends AttackerUnit{
+  subType: "macaw";
+  lastShot: number;
+}
 
 export interface Coordinates {
   x: number;
@@ -140,6 +144,7 @@ export interface DefenderStructure {
   health: number;
   coordinates: number;
   upgrades: UpgradeTier;
+  lastShot: number;
 }
 interface DefenderBase {
   coordinates: number;

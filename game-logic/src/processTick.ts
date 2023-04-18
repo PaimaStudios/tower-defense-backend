@@ -28,6 +28,7 @@ import type {
   RepairStructureAction,
   SalvageStructureAction,
   UpgradeStructureAction,
+  Macaw,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { baseGoldProduction, attackerUnitMap } from './config';
@@ -393,7 +394,7 @@ function computeDamageToUnit(
   //  Towers attack once every n ticks, the number being their "shot delay" or "cooldown" in this config.
   //  If not cooled down yet, return an empty array
   const cooldown = matchConfig[tower.structure][tower.upgrades].cooldown;
-  const cool = (currentTick - 2) % cooldown === 0;
+  const cool = tower.lastShot === 0 || (currentTick - tower.lastShot) > cooldown;
   if (!cool) return [];
   //  Check the attack range of the tower with the Match Config
   const range = matchConfig[tower.structure][tower.upgrades].range;
@@ -402,7 +403,7 @@ function computeDamageToUnit(
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
   const events = damageByTower(matchConfig, tower, unitsNearby, randomnessGenerator);
-  for (const event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
 
@@ -507,7 +508,8 @@ function unitAttackEvents(
 ): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
-    const damageToTower = computeDamageToTower(matchConfig, matchState, a, currentTick);
+    if (a.subType !== 'macaw') return [];
+    const damageToTower = computeDamageToTower(matchConfig, matchState, a as Macaw, currentTick);
     const damageToBase = computeDamageToBase(matchConfig, matchState, a);
     const isNotNull = (e: UnitAttack | null): e is UnitAttack => !!e;
     return [...damageToTower, ...damageToBase].filter(isNotNull);
@@ -518,12 +520,11 @@ function unitAttackEvents(
 function computeDamageToTower(
   matchConfig: MatchConfig,
   matchState: MatchState,
-  attacker: AttackerUnit,
+  attacker: Macaw,
   currentTick: number
 ): (DamageEvent | ActorDeletedEvent)[] {
-  if (attacker.subType !== 'macaw') return [];
   const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
-  if ((currentTick - 2) % cooldown !== 0) return [];
+  if (currentTick - attacker.lastShot > cooldown) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
@@ -547,7 +548,7 @@ function computeDamageToTower(
   const events: (DamageEvent | ActorDeletedEvent)[] = dying
     ? [damageEvent, killEvent]
     : [damageEvent];
-  for (const event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
 // Damage of units to defender base
