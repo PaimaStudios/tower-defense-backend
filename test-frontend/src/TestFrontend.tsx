@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './App.css';
+import './TestFrontend.css';
 import type { MiddlewareConfig, PostingModeSwitchResult } from 'mw';
 import mw, {
   getMiddlewareConfig,
@@ -22,7 +22,7 @@ type PostingModeString =
   | 'batched-polkadot'
   | 'automatic';
 
-function App() {
+function TestFrontend() {
   const [wallet, setWallet] = useState('');
   const [lobby, setLobby] = useState('');
   const [hiddenLobby, setHiddenLobby] = useState(false);
@@ -341,4 +341,4 @@ function App() {
   );
 }
 
-export default App;
+export default TestFrontend;
