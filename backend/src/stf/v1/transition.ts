@@ -117,7 +117,8 @@ export function practiceRound(
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
-  const matchState = roundData.match_state as unknown as MatchState;
+  // structuredClone would be better but it requires node v17.
+  const matchState = JSON.parse(JSON.stringify(roundData.match_state)) as unknown as MatchState;
   const user = PRACTICE_BOT_ADDRESS;
   const faction = user === matchState.defender ? 'defender' : 'attacker';
   const moves = generateRandomMoves(
@@ -132,7 +133,7 @@ export function practiceRound(
     lobbyState,
     matchConfig,
     moves,
-    { ...roundData, round_within_match: roundData.round_within_match + 1 },
+    { ...roundData, match_state: matchState as any, round_within_match: roundData.round_within_match + 1 },
     randomnessGenerator
   );
   return [...movesTuples, ...roundExecutionTuples];
