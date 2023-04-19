@@ -175,7 +175,6 @@ function structureEvents(
       return [events, newCount];
     } else {
       const newEvent = getStructureEvent(item);
-      console.log({ newEvent });
       applyEvent(matchConfig, matchState, newEvent);
       acc[0].push(newEvent);
       return acc;
@@ -394,7 +393,7 @@ function computeDamageToUnit(
   //  Towers attack once every n ticks, the number being their "shot delay" or "cooldown" in this config.
   //  If not cooled down yet, return an empty array
   const cooldown = matchConfig[tower.structure][tower.upgrades].cooldown;
-  const cool = tower.lastShot === 0 || (currentTick - tower.lastShot) > cooldown;
+  const cool = tower.lastShot === 0 || currentTick - tower.lastShot > cooldown;
   if (!cool) return [];
   //  Check the attack range of the tower with the Match Config
   const range = matchConfig[tower.structure][tower.upgrades].range;
@@ -508,8 +507,10 @@ function unitAttackEvents(
 ): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
-    if (a.subType !== 'macaw') return [];
-    const damageToTower = computeDamageToTower(matchConfig, matchState, a as Macaw, currentTick);
+    const damageToTower =
+      a.subType === 'macaw'
+        ? computeDamageToTower(matchConfig, matchState, a as Macaw, currentTick)
+        : [];
     const damageToBase = computeDamageToBase(matchConfig, matchState, a);
     const isNotNull = (e: UnitAttack | null): e is UnitAttack => !!e;
     return [...damageToTower, ...damageToBase].filter(isNotNull);
@@ -524,8 +525,8 @@ function computeDamageToTower(
   currentTick: number
 ): (DamageEvent | ActorDeletedEvent)[] {
   const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
-  const cool = attacker.lastShot === 0 || (currentTick - attacker.lastShot > cooldown)
-  if (!cool) return []
+  const cool = attacker.lastShot === 0 || currentTick - attacker.lastShot > cooldown;
+  if (!cool) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
