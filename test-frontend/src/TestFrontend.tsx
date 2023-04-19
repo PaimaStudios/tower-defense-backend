@@ -34,7 +34,27 @@ function TestFrontend() {
   const [me, setMe] = useState<any>();
   const [re, setRe] = useState<any>();
   const [postingModeStr, setPostingModeStr] = useState<PostingModeString>('unbatched');
-
+  const [eventFilter, setFilter] = useState('all');
+  function fullTick() {
+    let running = true;
+    let events: any[] = [];
+    while (running) {
+      const e = re.tick();
+      if (!e) running = false;
+      else {
+        events = [...events, ...e];
+      }
+    }
+    const f = events.filter((ev: any) => {
+      console.log(eventFilter, 'ef');
+      if (eventFilter === 'macaw') return ev.eventType === 'damage' && ev.faction === 'attacker';
+      else if (eventFilter === 'tower') return ev.eventType === 'damage' && ev.faction === 'defender';
+      else if (eventFilter === 'all') return true
+      else return ev.eventType === eventFilter;
+    });
+    console.log(f, 'events');
+    rExecutor();
+  }
   const logMiddleware = () => {
     console.log(mw, 'mw');
     console.log(lobby, 'lobby');
@@ -301,13 +321,32 @@ function TestFrontend() {
             </button>
           )}
           {re && (
-            <button
-              onClick={() => {
-                console.log('re tick:', re.tick());
-              }}
-            >
-              Tick Round Executor
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  console.log('re tick:', re.tick());
+                }}
+              >
+                Tick Round Executor
+              </button>
+              <p>Filter Events</p>
+              <select name="" id="" onChange={e => setFilter(e.target.value)}>
+                <option value="all">all</option>
+                <option value="spawn">spawn</option>
+                <option value="movement">movement</option>
+                <option value="tower">tower attack</option>
+                <option selected value="macaw">macaw attack</option>
+                <option value="actorDeleted">actorDeleted</option>
+                <option value="defenderBaseUpdate">damage to base</option>
+              </select>
+              <button
+                onClick={() => {
+                  fullTick();
+                }}
+              >
+                Tick to the end
+              </button>
+            </>
           )}
           <p>Internal "endpoints"</p>
           <button onClick={userWalletLoginWithoutChecksWrapper}>
