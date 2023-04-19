@@ -84,9 +84,12 @@ function processTick(
 // Then we return null which signals the end of the round executor
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
-  for (const crypt of Object.keys(matchState.actors.crypts)) {
-    const c = matchState.actors.crypts[parseInt(crypt)];
-    c.spawned = [];
+  for (const crypt of Object.values(matchState.actors.crypts)) {
+    crypt.spawned = [];
+  }
+  // reset the last shot of every tower
+  for (const tower of Object.values(matchState.actors.towers)){
+    tower.lastShot = 0;
   }
   matchState.finishedSpawning = [];
   // increment round
@@ -95,6 +98,7 @@ function incrementRound(matchState: MatchState): null {
   matchState.roundEnded = false;
   return null;
 }
+
 // Function triggered as the final tick of the round .
 // We send the last events, the gold rewards, and mark mutate the match state round as ended
 // This then triggers the calling of incrementRound().
