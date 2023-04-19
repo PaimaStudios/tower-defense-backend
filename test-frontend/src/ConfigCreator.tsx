@@ -1,14 +1,38 @@
-import { baseConfig, parseConfig } from '@tower-defense/game-logic';
+import processTick, { baseConfig, generateMatchState, parseConfig } from '@tower-defense/game-logic';
 import { useState } from 'react';
 import mw from 'mw';
 import './ConfigCreator.css';
+import Prando from 'paima-engine/paima-prando';
 
+const maps: Record<string, string> = {
+  jungle:
+    '1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626664\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222',
+  backwards:
+    '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222',
+  crossing:
+    '1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222',
+  narrow:
+    '1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222',
+  snale:
+    '1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222',
+  straight:
+    '1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222',
+  wavy: '1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222',
+  fork: '1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222',
+  islands:
+    '7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888',
+  line: '1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222',
+};
 export default function () {
   const [config, setConfig] = useState(baseConfig);
+  const [mapName, setMapName] = useState('jungle');
+  const [map, setMap] = useState(maps.jungle);
   const [configKey, setConfigKey] = useState('');
   const configEndpoint = 'https://td-backend-testnet-c1.paimastudios.com/user_configs';
   const creator = '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
-
+  const rng = new Prando('hai');
+  const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
+  const [matchState, setMatchState] = useState(dummyState);
   console.log('baseConfig: ', config);
 
   async function submit() {
@@ -21,6 +45,16 @@ export default function () {
 
   async function simulate() {
     console.log('Simulate');
+    const moves = [];
+    let running = true;
+    let tick = 1;
+    const state = {...dummyState, currentRound: 3}
+    while (running){
+      const events = processTick(config, state, moves, tick, rng)
+      tick ++
+      if (!events) running = false
+    }
+    setMatchState(state);
   }
 
   async function getLatest() {
@@ -54,6 +88,7 @@ export default function () {
       console.error('Config not found for the given config key');
     }
   }
+  console.log(map, 'map');
 
   return (
     <div id="config-creator">
@@ -2129,6 +2164,25 @@ export default function () {
               />
             </div>
             <div className="input">
+              <span>Attack Cooldown</span>
+              <input
+                type="number"
+                value={config.macawCrypt[1].attackCooldown}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    macawCrypt: {
+                      ...config.macawCrypt,
+                      1: {
+                        ...config.macawCrypt[1],
+                        attackCooldown: parseInt(e.target.value),
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="input">
               <span>Unit Speed</span>
               <input
                 type="number"
@@ -2281,6 +2335,25 @@ export default function () {
                       2: {
                         ...config.macawCrypt[2],
                         attackDamage: parseInt(e.target.value),
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="input">
+              <span>Attack Cooldown</span>
+              <input
+                type="number"
+                value={config.macawCrypt[2].attackCooldown}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    macawCrypt: {
+                      ...config.macawCrypt,
+                      2: {
+                        ...config.macawCrypt[2],
+                        attackCooldown: parseInt(e.target.value),
                       },
                     },
                   })
@@ -2447,6 +2520,25 @@ export default function () {
               />
             </div>
             <div className="input">
+              <span>Attack Cooldown</span>
+              <input
+                type="number"
+                value={config.macawCrypt[3].attackCooldown}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    macawCrypt: {
+                      ...config.macawCrypt,
+                      3: {
+                        ...config.macawCrypt[3],
+                        attackCooldown: parseInt(e.target.value),
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="input">
               <span>Unit Speed</span>
               <input
                 type="number"
@@ -2508,6 +2600,29 @@ export default function () {
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="simulation-panel">
+        <h2>Game Simulation</h2>
+        <div className="input">
+          <span>Map</span>
+          <select
+            name=""
+            id=""
+            onChange={e => {
+              setMapName(e.target.value);
+              setMap(maps[e.target.value]);
+            }}
+          >
+            {Object.keys(maps).map(m => (
+              <option value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div className="result">
+          <h2>Results</h2>
+          <p>Final health: {matchState.defenderBase.health}</p>
         </div>
       </div>
 
