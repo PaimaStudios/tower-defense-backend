@@ -28,6 +28,7 @@ import type {
   RepairStructureAction,
   SalvageStructureAction,
   UpgradeStructureAction,
+  Macaw,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { baseGoldProduction, attackerUnitMap } from './config';
@@ -83,9 +84,12 @@ function processTick(
 // Then we return null which signals the end of the round executor
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
-  for (const crypt of Object.keys(matchState.actors.crypts)) {
-    const c = matchState.actors.crypts[parseInt(crypt)];
-    c.spawned = [];
+  for (const crypt of Object.values(matchState.actors.crypts)) {
+    crypt.spawned = [];
+  }
+  // reset the last shot of every tower
+  for (const tower of Object.values(matchState.actors.towers)){
+    tower.lastShot = 0;
   }
   matchState.finishedSpawning = [];
   // increment round
@@ -94,6 +98,7 @@ function incrementRound(matchState: MatchState): null {
   matchState.roundEnded = false;
   return null;
 }
+
 // Function triggered as the final tick of the round .
 // We send the last events, the gold rewards, and mark mutate the match state round as ended
 // This then triggers the calling of incrementRound().
@@ -174,7 +179,6 @@ function structureEvents(
       return [events, newCount];
     } else {
       const newEvent = getStructureEvent(item);
-      console.log({ newEvent });
       applyEvent(matchConfig, matchState, newEvent);
       acc[0].push(newEvent);
       return acc;
@@ -393,7 +397,7 @@ function computeDamageToUnit(
   //  Towers attack once every n ticks, the number being their "shot delay" or "cooldown" in this config.
   //  If not cooled down yet, return an empty array
   const cooldown = matchConfig[tower.structure][tower.upgrades].cooldown;
-  const cool = (currentTick - 2) % cooldown === 0;
+  const cool = tower.lastShot === 0 || currentTick - tower.lastShot > cooldown;
   if (!cool) return [];
   //  Check the attack range of the tower with the Match Config
   const range = matchConfig[tower.structure][tower.upgrades].range;
@@ -402,7 +406,7 @@ function computeDamageToUnit(
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
   const events = damageByTower(matchConfig, tower, unitsNearby, randomnessGenerator);
-  for (const event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
 
@@ -507,7 +511,10 @@ function unitAttackEvents(
 ): UnitAttack[] {
   const attackers: AttackerUnit[] = Object.values(matchState.actors.units);
   const events = attackers.map(a => {
-    const damageToTower = computeDamageToTower(matchConfig, matchState, a, currentTick);
+    const damageToTower =
+      a.subType === 'macaw'
+        ? computeDamageToTower(matchConfig, matchState, a as Macaw, currentTick)
+        : [];
     const damageToBase = computeDamageToBase(matchConfig, matchState, a);
     const isNotNull = (e: UnitAttack | null): e is UnitAttack => !!e;
     return [...damageToTower, ...damageToBase].filter(isNotNull);
@@ -518,12 +525,12 @@ function unitAttackEvents(
 function computeDamageToTower(
   matchConfig: MatchConfig,
   matchState: MatchState,
-  attacker: AttackerUnit,
+  attacker: Macaw,
   currentTick: number
 ): (DamageEvent | ActorDeletedEvent)[] {
-  if (attacker.subType !== 'macaw') return [];
   const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
-  if ((currentTick - 2) % cooldown !== 0) return [];
+  const cool = attacker.lastShot === 0 || currentTick - attacker.lastShot > cooldown;
+  if (!cool) return [];
   const range = matchConfig.macawCrypt[attacker.upgradeTier].attackRange;
   const nearbyStructures = findClosebyTowers(matchState, attacker.coordinates, range);
   if (nearbyStructures.length === 0) return [];
@@ -547,7 +554,7 @@ function computeDamageToTower(
   const events: (DamageEvent | ActorDeletedEvent)[] = dying
     ? [damageEvent, killEvent]
     : [damageEvent];
-  for (const event of events) applyEvent(matchConfig, matchState, event);
+  for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
 // Damage of units to defender base
