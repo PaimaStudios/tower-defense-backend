@@ -61,6 +61,7 @@ export const processCreateLobby = async (
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
     const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
+    if (!configString) return []
     const matchConfig = parseConfig(configString.content);
     return persistPracticeLobbyCreation(
       blockHeight,
@@ -87,8 +88,8 @@ export const processJoinLobby = async (
   const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
   // if match config is not in the database, bail
   const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
-  const matchConfig = parseConfig(configString.content);
   if (!configString) return [];
+  const matchConfig = parseConfig(configString.content);
   return persistLobbyJoin(blockHeight, user, lobbyState, map, matchConfig, randomnessGenerator);
 };
 
