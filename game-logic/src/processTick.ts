@@ -574,7 +574,7 @@ function computeDamageToBase(
     const baseEvent: DefenderBaseUpdateEvent = {
       eventType: 'defenderBaseUpdate',
       faction: 'defender',
-      health,
+      health: 1, // we hardcore 1 here, reserve attack spec to macaw-on-tower attacks
     };
     const deathEvent: ActorDeletedEvent = {
       eventType: 'actorDeleted',
