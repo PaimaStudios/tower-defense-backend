@@ -16,7 +16,7 @@ const calculateResult = (isAttacker: boolean, defenderSurvived: boolean): Result
 };
 
 export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState): MatchResults {
-  const p1isAttacker = matchState.attacker === lobby.creator_faction;
+  const p1isAttacker = matchState.attacker === lobby.lobby_creator;
   const defenderSurvived = matchState.defenderBase.health > 0;
   // Save the final user states in the final state table
   const [p1Gold, p2Gold] = p1isAttacker
