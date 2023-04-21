@@ -61,11 +61,11 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   const { presetName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
   const configName =
     presetName === 'short'
-      ? 'defaultdefault'
+      ? 'fiH6xgZ8P1fFTV' // TODO: extract this to be read from an env variable
       : presetName === 'medium'
-      ? 'defaultdefault'
+      ? 'KkHJHOGtavnHaV' // TODO: extract this to be read from an env variable
       : presetName === 'long'
-      ? 'defaultdefault'
+      ? 'm3A6BbrMf8QPVm' // TODO: extract this to be read from an env variable
       : 'defaultdefault';
   const roleEncoding =
     role === 'attacker' ? 'a' : role === 'defender' ? 'd' : role === 'random' ? 'r' : 'r';
