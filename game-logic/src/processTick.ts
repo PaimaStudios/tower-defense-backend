@@ -116,20 +116,16 @@ function computeGoldRewards(
   matchConfig: MatchConfig,
   matchState: MatchState
 ): [GoldRewardEvent, GoldRewardEvent] {
-  const defenderBaseGold = baseGoldProduction[matchState.defenderBase.level] ?? 0;
-  const attackerBaseGold = baseGoldProduction[matchState.attackerBase.level] ?? 0;
-  const attackerReward = attackerBaseGold + matchConfig.baseAttackerGoldRate;
-  const defenderReward = defenderBaseGold + matchConfig.baseDefenderGoldRate;
   const events: [GoldRewardEvent, GoldRewardEvent] = [
     {
       eventType: 'goldUpdate',
       faction: 'attacker',
-      amount: attackerReward + matchState.attackerGold,
+      amount: matchConfig.baseAttackerGoldRate + matchState.attackerGold,
     },
     {
       eventType: 'goldUpdate',
       faction: 'defender',
-      amount: defenderReward + matchState.defenderGold,
+      amount: matchConfig.baseDefenderGoldRate + matchState.defenderGold,
     },
   ];
   return events;
