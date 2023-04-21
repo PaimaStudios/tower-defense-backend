@@ -569,12 +569,12 @@ function computeDamageToBase(
   if (!(t.type === 'base' && t.faction === 'defender')) return [];
   // If unit is at the defender's base, emit events for base damage and death of unit
   else {
-    const remainingHealth = matchState.defenderBase.health - attackerUnit.damage;
+    const remainingHealth = matchState.defenderBase.health - 1; // we hardcore 1 here, reserve attack spec to macaw-on-tower attacks
     const health = remainingHealth < 0 ? 0 : remainingHealth;
     const baseEvent: DefenderBaseUpdateEvent = {
       eventType: 'defenderBaseUpdate',
       faction: 'defender',
-      health: 1, // we hardcore 1 here, reserve attack spec to macaw-on-tower attacks
+      health
     };
     const deathEvent: ActorDeletedEvent = {
       eventType: 'actorDeleted',
