@@ -127,10 +127,10 @@ export function nftScoreSnakeToCamel(nftScore: NftScoreSnake): NftScore {
 type MatchStats = {
   p1StructuresBuilt: number;
   p2StructuresBuilt: number;
-  p1EnemiesDestroyed: number;
-  p2EnemiesDestroyed: number;
   p1GoldSpent: number;
   p2GoldSpent: number;
+  unitsSpawned: number;
+  unitsDestroyed: number;
 };
 export function calculateMatchStats(data: MatchExecutorData): MatchStats {
   const p1isAttacker =
@@ -154,47 +154,46 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
   const r = {
     defenderStructuresBuilt: 0,
     attackerStructuresBuilt: 0,
-    defenderEnemiesDestroyed: 0,
-    attackerEnemiesDestroyed: 0,
+    unitsDestroyed: 0,
+    unitsSpawned: 0,
     rounds: 1,
   };
-  const rr = events.reduce((acc, e) => {
-    if (e.eventType === 'actorDeleted' && e.faction === 'defender')
-      return { ...acc, defenderEnemiesDestroyed: acc.defenderEnemiesDestroyed + 1 };
-    if (e.eventType === 'actorDeleted' && e.faction === 'attacker')
-      return { ...acc, attackerEnemiesDestroyed: acc.attackerEnemiesDestroyed + 1 };
-    if (e.eventType === 'build' && e.faction === 'defender') {
-      const price = config[e.structure][1].price;
+  const rr = events.reduce((acc, e, i) => {
+    if (e.eventType === 'spawn') return { ...acc, unitsSpawned: acc.unitsSpawned + 1 };
+    if (e.eventType === 'actorDeleted' && e.faction === 'attacker') {
+      const previous = events[i - 1];
+      if (previous.eventType === 'defenderBaseUpdate') return acc;
+      else return { ...acc, unitsDestroyed: acc.unitsDestroyed + 1 };
+    }
+    if (e.eventType === 'build' && e.faction === 'defender')
       return {
         ...acc,
         defenderStructuresBuilt: acc.defenderStructuresBuilt + 1,
       };
-    }
-    if (e.eventType === 'build' && e.faction === 'attacker') {
-      const price = config[e.structure][1].price;
+    if (e.eventType === 'build' && e.faction === 'attacker')
       return {
         ...acc,
         attackerStructuresBuilt: acc.attackerStructuresBuilt + 1,
       };
-    } else if (e.eventType === 'newRound') return { ...acc, rounds: acc.rounds + 1 };
+    else if (e.eventType === 'newRound') return { ...acc, rounds: acc.rounds + 1 };
     else return acc;
   }, r);
   if (p1isAttacker)
     return {
       p1StructuresBuilt: rr.attackerStructuresBuilt,
       p2StructuresBuilt: rr.defenderStructuresBuilt,
-      p1EnemiesDestroyed: rr.attackerEnemiesDestroyed,
-      p2EnemiesDestroyed: rr.defenderEnemiesDestroyed,
       p1GoldSpent: config.baseAttackerGoldRate * rr.rounds - m.currentState.attackerGold,
       p2GoldSpent: config.baseDefenderGoldRate * rr.rounds - m.currentState.defenderGold,
+      unitsDestroyed: rr.unitsDestroyed,
+      unitsSpawned: rr.unitsSpawned,
     };
   else
     return {
       p1StructuresBuilt: rr.defenderStructuresBuilt,
       p2StructuresBuilt: rr.attackerStructuresBuilt,
-      p1EnemiesDestroyed: rr.defenderEnemiesDestroyed,
-      p2EnemiesDestroyed: rr.attackerEnemiesDestroyed,
       p1GoldSpent: config.baseDefenderGoldRate * rr.rounds - m.currentState.defenderGold,
       p2GoldSpent: config.baseAttackerGoldRate * rr.rounds - m.currentState.attackerGold,
+      unitsDestroyed: rr.unitsDestroyed,
+      unitsSpawned: rr.unitsSpawned,
     };
 }

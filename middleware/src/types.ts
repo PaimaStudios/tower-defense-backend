@@ -163,8 +163,8 @@ export interface MatchWinnerResponse {
   winner_address: string;
   p1StructuresBuilt: number;
   p2StructuresBuilt: number;
-  p1EnemiesDestroyed: number;
-  p2EnemiesDestroyed: number;
+  unitsDestroyed: number;
+  unitsSpawned: number;
   p1GoldSpent: number;
   p2GoldSpent: number;
 }

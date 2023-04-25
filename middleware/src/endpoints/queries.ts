@@ -392,8 +392,8 @@ async function getMatchWinner(
     const {
       p1StructuresBuilt,
       p2StructuresBuilt,
-      p1EnemiesDestroyed,
-      p2EnemiesDestroyed,
+      unitsDestroyed,
+      unitsSpawned,
       p1GoldSpent,
       p2GoldSpent,
     } = calculateMatchStats(j2);
@@ -404,8 +404,8 @@ async function getMatchWinner(
         winner_address: j.winner_address,
         p1StructuresBuilt,
         p2StructuresBuilt,
-        p1EnemiesDestroyed,
-        p2EnemiesDestroyed,
+        unitsDestroyed,
+        unitsSpawned,
         p1GoldSpent,
         p2GoldSpent,
       },
