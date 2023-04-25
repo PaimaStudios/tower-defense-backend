@@ -14,7 +14,7 @@ import {
   verifyNft,
   getNftStats as getNftStatsInternal,
 } from '../helpers/auxiliary-queries';
-import { calculateRoundEnd } from '../helpers/utility-functions';
+import { calculateMatchStats, calculateRoundEnd } from '../helpers/utility-functions';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executors';
 import {
   backendQueryCurrentRound,
@@ -376,20 +376,38 @@ async function getMatchWinner(
   const errorFxn = buildEndpointErrorFxn('getMatchWinner');
 
   let res: Response;
+  let res2: Response;
   try {
     const query = backendQueryMatchWinner(lobbyId);
+    const query2 = await backendQueryMatchExecutor(lobbyId);
     res = await fetch(query);
+    res2 = await fetch(query2);
   } catch (err) {
     return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
     const j = await res.json();
+    const j2: MatchExecutorData = await res2.json();
+    const {
+      p1StructuresBuilt,
+      p2StructuresBuilt,
+      p1EnemiesDestroyed,
+      p2EnemiesDestroyed,
+      p1GoldSpent,
+      p2GoldSpent,
+    } = calculateMatchStats(j2);
     return {
       success: true,
       result: {
         match_status: j.match_status,
         winner_address: j.winner_address,
+        p1StructuresBuilt,
+        p2StructuresBuilt,
+        p1EnemiesDestroyed,
+        p2EnemiesDestroyed,
+        p1GoldSpent,
+        p2GoldSpent,
       },
     };
   } catch (err) {
