@@ -25,6 +25,8 @@ In raw encoding each element in contents can be one of the following values:
 - `6`: An attacker path/road square (neither player can place structures here, but units can walk on these squares)
 - `7`: An unbuildable defender tile (no one can build here may have a statue/other graphics displayed on this tile for example)
 - `8`: An unbuildable attacker tile
+- `9`: An unwalkable attacker path/road tile (used to barricade paths that are technically shorter but undesired) see [Blocked paths usage](#blocked-paths-usage)
+- `0`: An unwalkable attacker path/road tile (used to barricade paths that are technically shorter but undesired)
 
 An example map in raw encoding is constructed below:
 
@@ -56,6 +58,8 @@ Contents are a 2d array (thus allowing to easily fetch a given tile by x/y index
 #### Path Tile
 
 Path tiles define all of the directions that they can lead to (up to maximum of 3). We will have to implement a pre-processor that initially reads the raw encoded map, and converts every `3` tile, into a proper `path tile` in the annotated encoding format (by following all path branches from the `5` (attacker base) to the `4` (defender base)).
+
+`@Obsolete (original spec)`
 
 Pre-processing `leads-to` will make it easier for when a unit hits a fork in the path and must decide which direction they take (just use rng to choose from the list of `leads-to` elements).
 
@@ -90,6 +94,8 @@ OR
   ]
 }
 ```
+
+Leads to preprocessing was replaced by a shortest path algorithm computed at spawn.
 
 #### Defender Base Tile
 
@@ -166,3 +172,8 @@ A tile which specifies an attacker structure (crypt). Of note, all crypts will h
   "type": "unbuildable-defender"
 }
 ```
+
+#### Blocked paths usage
+Blocked paths are currently used on 2 maps. Illustrated by the green material on screenshots below.
+![Backwards map](images/backwards.png)
+![Straight map](images/straight.png)
