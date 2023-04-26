@@ -88,7 +88,7 @@ function incrementRound(matchState: MatchState): null {
     crypt.spawned = [];
   }
   // reset the last shot of every tower
-  for (const tower of Object.values(matchState.actors.towers)){
+  for (const tower of Object.values(matchState.actors.towers)) {
     tower.lastShot = 0;
   }
   matchState.finishedSpawning = [];
@@ -220,7 +220,7 @@ function eventsFromMatchState(
   // compute all spawn, movement, damage, statusDamage events for a tick given a certain map state
   // check if base is alive
   const spawn = spawnEvents(matchConfig, matchState, currentTick);
-  const movement = movementEvents(matchConfig, matchState);
+  const movement = movementEvents(matchConfig, matchState, currentTick);
   const towerAttacks = towerAttackEvents(matchConfig, matchState, currentTick, rng);
   const unitAttacks = unitAttackEvents(matchConfig, matchState, currentTick);
   return [...spawn, ...movement, ...towerAttacks, ...unitAttacks];
@@ -329,14 +329,19 @@ function findClosebyPathTile(matchState: MatchState, coords: number, range = 1):
 // Movement events, dervive from the units already on the match sate.
 function movementEvents(
   matchConfig: MatchConfig,
-  matchState: MatchState
+  matchState: MatchState,
+  currentTick: number
 ): Array<UnitMovementEvent | StatusEffectAppliedEvent> {
   const attackers = Object.values(matchState.actors.units);
   const events = attackers.map(attacker => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
-    const busyAttacking =
-      attacker.subType === 'macaw' &&
-      findClosebyTowers(matchState, attacker.coordinates, 1).length > 0;
+    let busyAttacking = false;
+    if (attacker.subType === 'macaw') {
+      const a = attacker as Macaw;
+      const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
+      const cool = a.lastShot === 0 || currentTick - a.lastShot > cooldown;
+      busyAttacking = cool && findClosebyTowers(matchState, attacker.coordinates, 1).length > 0;
+    }
     if (busyAttacking) return null;
     else {
       // Generate movement events
@@ -570,7 +575,7 @@ function computeDamageToBase(
     const baseEvent: DefenderBaseUpdateEvent = {
       eventType: 'defenderBaseUpdate',
       faction: 'defender',
-      health
+      health,
     };
     const deathEvent: ActorDeletedEvent = {
       eventType: 'actorDeleted',
