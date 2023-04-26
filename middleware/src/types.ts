@@ -1,4 +1,4 @@
-import type { FailedResult } from 'paima-engine/paima-mw-core';
+;import type { FailedResult } from 'paima-engine/paima-mw-core';
 import type {
   ContractAddress,
   Hash,
@@ -161,6 +161,12 @@ export type NftScoreSnake = {
 export interface MatchWinnerResponse {
   match_status: LobbyStatus;
   winner_address: string;
+  p1StructuresBuilt: number;
+  p2StructuresBuilt: number;
+  unitsDestroyed: number;
+  unitsSpawned: number;
+  p1GoldSpent: number;
+  p2GoldSpent: number;
 }
 export interface MapByNameResponse {
   map_layout: string;

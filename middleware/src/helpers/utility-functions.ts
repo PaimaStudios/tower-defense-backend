@@ -1,8 +1,18 @@
 import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
-import type { Structure, StructureConcise, TurnAction } from '@tower-defense/utils';
+import type {
+  MatchConfig,
+  MatchExecutorData,
+  MatchState,
+  Structure,
+  StructureConcise,
+  TickEvent,
+  TurnAction,
+} from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type { LobbyState, NftScore, NftScoreSnake, PackedLobbyState, RoundEnd } from '../types';
 import { getBlockTime } from 'paima-engine/paima-utils';
+import { MatchExecutor, matchExecutor } from 'paima-engine/paima-executors';
+import processTick, { parseConfig } from '@tower-defense/game-logic';
 
 const conciseMap: Record<Structure, StructureConcise> = {
   anacondaTower: 'at',
@@ -113,4 +123,77 @@ export function nftScoreSnakeToCamel(nftScore: NftScoreSnake): NftScore {
     losses: nftScore.losses,
     score: nftScore.score,
   };
+}
+type MatchStats = {
+  p1StructuresBuilt: number;
+  p2StructuresBuilt: number;
+  p1GoldSpent: number;
+  p2GoldSpent: number;
+  unitsSpawned: number;
+  unitsDestroyed: number;
+};
+export function calculateMatchStats(data: MatchExecutorData): MatchStats {
+  const p1isAttacker =
+    data.lobby.lobby_creator === (data.lobby.current_match_state as unknown as MatchState).attacker;
+  const config = parseConfig(data.configString);
+  const m = matchExecutor.initialize(
+    config,
+    data.lobby.num_of_rounds,
+    data.initialState,
+    data.seeds,
+    data.moves,
+    processTick
+  );
+  let events: (TickEvent | { eventType: 'newRound' })[] = [];
+  let run = true;
+  while (run) {
+    const tickEvents = m.tick();
+    if (!tickEvents) run = false;
+    else events = [...events, ...tickEvents];
+  }
+  const r = {
+    defenderStructuresBuilt: 0,
+    attackerStructuresBuilt: 0,
+    unitsDestroyed: 0,
+    unitsSpawned: 0,
+    rounds: 1,
+  };
+  const rr = events.reduce((acc, e, i) => {
+    if (e.eventType === 'spawn') return { ...acc, unitsSpawned: acc.unitsSpawned + 1 };
+    if (e.eventType === 'actorDeleted' && e.faction === 'attacker') {
+      const previous = events[i - 1];
+      if (previous.eventType === 'defenderBaseUpdate') return acc;
+      else return { ...acc, unitsDestroyed: acc.unitsDestroyed + 1 };
+    }
+    if (e.eventType === 'build' && e.faction === 'defender')
+      return {
+        ...acc,
+        defenderStructuresBuilt: acc.defenderStructuresBuilt + 1,
+      };
+    if (e.eventType === 'build' && e.faction === 'attacker')
+      return {
+        ...acc,
+        attackerStructuresBuilt: acc.attackerStructuresBuilt + 1,
+      };
+    else if (e.eventType === 'newRound') return { ...acc, rounds: acc.rounds + 1 };
+    else return acc;
+  }, r);
+  if (p1isAttacker)
+    return {
+      p1StructuresBuilt: rr.attackerStructuresBuilt,
+      p2StructuresBuilt: rr.defenderStructuresBuilt,
+      p1GoldSpent: config.baseAttackerGoldRate * rr.rounds - m.currentState.attackerGold,
+      p2GoldSpent: config.baseDefenderGoldRate * rr.rounds - m.currentState.defenderGold,
+      unitsDestroyed: rr.unitsDestroyed,
+      unitsSpawned: rr.unitsSpawned,
+    };
+  else
+    return {
+      p1StructuresBuilt: rr.defenderStructuresBuilt,
+      p2StructuresBuilt: rr.attackerStructuresBuilt,
+      p1GoldSpent: config.baseDefenderGoldRate * rr.rounds - m.currentState.defenderGold,
+      p2GoldSpent: config.baseAttackerGoldRate * rr.rounds - m.currentState.attackerGold,
+      unitsDestroyed: rr.unitsDestroyed,
+      unitsSpawned: rr.unitsSpawned,
+    };
 }
