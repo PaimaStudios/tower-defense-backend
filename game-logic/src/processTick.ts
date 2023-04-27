@@ -33,7 +33,7 @@ import type {
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { attackerUnitMap } from './config';
-import { indexToCoords, isSpawnable, validateCoords } from './utils';
+import { chooseTile, indexToCoords, isSpawnable, validateCoords } from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -270,13 +270,13 @@ function spawn(
   // Then we compute the path tile in the map where the units will spawn at.
   const { height, map, width } = matchState;
   const mapState: MapState = { height, width, map };
-  const pathTile = findClosebyPathTile(mapState, crypt.coordinates);
+  const spawnTile = findClosebySpawnTile(mapState, crypt.coordinates);
   return {
     eventType: 'spawn',
     faction: 'attacker',
     cryptID: crypt.id,
     actorID: matchState.actorCount + 1, // increment
-    coordinates: pathTile,
+    coordinates: spawnTile,
     unitType: attackerUnitMap[crypt.structure],
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
@@ -285,7 +285,7 @@ function spawn(
   };
 }
 
-function adjacentPathTiles(index: number, mapState: MapState): number[] {
+function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
   const { x, y } = indexToCoords(index, mapState.width);
   return [
     { x, y: y - 1 },
@@ -300,37 +300,23 @@ function adjacentPathTiles(index: number, mapState: MapState): number[] {
       return isSpawnable(tile);
     });
 }
-
-function choosePath(paths: number[], mapWidth: number): number {
-  const pick = paths.reduce((prev, curr) => {
-    const a = indexToCoords(prev, mapWidth);
-    const b = indexToCoords(curr, mapWidth);
-    // whoever is further to the left
-    if (a.x < b.x) return prev;
-    else if (b.x < a.x) return curr;
-    // else whoever is more centered in the y axis
-    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
-  });
-  return pick;
-}
-
 /**
  * Function to find an available path next to a crypt to place a newly spawned unit.
  * If there is more than one candidate then @see {choosePath} is used to select one.
  */
-function findClosebyPathTile(mapState: MapState, coords: number, range = 1): number {
-  const adjacentTiles = adjacentPathTiles(coords, mapState);
+function findClosebySpawnTile(mapState: MapState, coords: number, range = 1): number {
+  const adjacentTiles = adjacentSpawnTiles(coords, mapState);
   if (adjacentTiles.length > 0) {
-    return choosePath(adjacentTiles, mapState.width);
+    return chooseTile(adjacentTiles, mapState.width);
   }
-  const morePaths = getSurroundingCells(coords, mapState.width, mapState.height, range + 1).filter(
+  const moreTiles = getSurroundingCells(coords, mapState.width, mapState.height, range + 1).filter(
     n => isSpawnable(mapState.map[n])
   );
-  if (morePaths.length > 0) {
-    return choosePath(morePaths, mapState.width);
+  if (moreTiles.length > 0) {
+    return chooseTile(moreTiles, mapState.width);
   }
 
-  return findClosebyPathTile(mapState, coords, range + 1);
+  return findClosebySpawnTile(mapState, coords, range + 1);
 }
 
 // Movement events, dervive from the units already on the match sate.
