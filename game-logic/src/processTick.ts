@@ -31,12 +31,12 @@ import type {
   Macaw,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
-import { baseGoldProduction, attackerUnitMap } from './config';
+import { attackerUnitMap } from './config';
+import { indexToCoords, validateCoords } from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
 // rounds end when they must.
-
 function processTick(
   matchConfig: MatchConfig,
   matchState: MatchState,
@@ -79,6 +79,7 @@ function processTick(
     }
   }
 }
+
 // We increment the round and mutate the few keys of the match state
 // so the next round is saved clean to the database.
 // Then we return null which signals the end of the round executor
@@ -111,6 +112,7 @@ function endRound(
   for (const event of gold) applyEvent(matchConfig, matchState, event);
   return gold;
 }
+
 // Output the gold rewards for each side, according to the match config.
 function computeGoldRewards(
   matchConfig: MatchConfig,
@@ -157,6 +159,7 @@ function canSpend(matchConfig: MatchConfig, matchState: MatchState, action: Turn
   }
   return false;
 }
+
 // Outputs the events from the first tick, a function of the moves sent by the players.
 function structureEvents(
   matchConfig: MatchConfig,
@@ -182,6 +185,7 @@ function structureEvents(
   }, accumulator);
   return structuralTick[0];
 }
+
 function buildEvent(
   matchConfig: MatchConfig,
   matchState: MatchState,
@@ -254,6 +258,7 @@ function spawnEvents(
   const isNotNull = (e: UnitSpawnedEvent | null): e is UnitSpawnedEvent => !!e;
   return events.filter(isNotNull);
 }
+
 // Function to generate a single spawn event.
 function spawn(
   config: MatchConfig,
@@ -276,6 +281,7 @@ function spawn(
     tier: crypt.upgrades,
   };
 }
+
 function closeByPathTiles(index: number, matchState: MatchState): number[] {
   const { x, y } = indexToCoords(index, matchState.width);
   return [
@@ -291,6 +297,7 @@ function closeByPathTiles(index: number, matchState: MatchState): number[] {
       return tile.type === 'path' && tile.faction === 'attacker';
     });
 }
+
 function choosePath(paths: number[], mapWidth: number): number {
   const pick = paths.reduce((prev, curr) => {
     const a = indexToCoords(prev, mapWidth);
@@ -387,6 +394,7 @@ function towerAttackEvents(
   const events = towers.map(t => computeDamageToUnit(config, t, matchState, currentTick, rng));
   return events.flat();
 }
+
 // damage made by defender towers against units
 function computeDamageToUnit(
   matchConfig: MatchConfig,
@@ -421,6 +429,7 @@ function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure 
   else if (item.id < acc.id) return item;
   else return acc;
 }
+
 // Calculates damage done by the tower according to the tower type
 function damageByTower(
   matchConfig: MatchConfig,
@@ -437,6 +446,7 @@ function damageByTower(
     return towerShot(matchConfig, tower, pickedOne, randomnessGenerator);
   }
 }
+
 function towerShot(
   matchConfig: MatchConfig,
   tower: DefenderStructure,
@@ -476,6 +486,7 @@ function towerShot(
   if (superMacaw && !dying) events.push(deflectingDamageEvent);
   return events;
 }
+
 // Calculate the damage caused by a tower attack. Upgraded Anaconda Towers have a 50% instakill chance.
 function computeDamageByTowerAmount(
   matchConfig: MatchConfig,
@@ -490,6 +501,7 @@ function computeDamageByTowerAmount(
       : matchConfig.anacondaTower[tower.upgrades].damage;
   } else return matchConfig[tower.structure][tower.upgrades].damage;
 }
+
 // Function to calculate damage done by Sloth Towers
 function slothDamage(
   matchConfig: MatchConfig,
@@ -503,6 +515,7 @@ function slothDamage(
   });
   return damageEvents.flat();
 }
+
 // Events where Units attack the defender.
 // Either Macaws attacking Towers, or any unit attacking the Defender Base
 function unitAttackEvents(
@@ -522,6 +535,7 @@ function unitAttackEvents(
   });
   return events.flat();
 }
+
 // Damage made by Macaws to Defender Tower
 function computeDamageToTower(
   matchConfig: MatchConfig,
@@ -558,6 +572,7 @@ function computeDamageToTower(
   for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
+
 // Damage of units to defender base
 function computeDamageToBase(
   matchConfig: MatchConfig,
@@ -587,6 +602,7 @@ function computeDamageToBase(
     return events;
   }
 }
+
 //  Locate nearby units.
 function findCloseByUnits(
   matchState: MatchState,
@@ -604,26 +620,6 @@ function findCloseByUnits(
   return units;
 }
 
-// Converts coord notation ({x: number, y: number}) to a single number, index of the flat map array.
-export function coordsToIndex(coords: Coordinates, width: number): number {
-  return width * coords.y + coords.x;
-}
-// Converts an index of the flat map to to coord notation
-export function indexToCoords(i: number, width: number): Coordinates {
-  const y = Math.floor(i / width);
-  const x = i - y * width;
-  return { x, y };
-}
-// Validate that coords don't overflow the map.
-export function validateCoords(
-  coords: Coordinates,
-  mapWidth: number,
-  mapHeight: number
-): number | null {
-  if (coords.x < 0 || coords.x >= mapWidth) return null;
-  if (coords.y < 0 || coords.y >= mapHeight) return null;
-  else return coordsToIndex(coords, mapWidth);
-}
 export function getSurroundingCells(
   index: number,
   mapWidth: number,
