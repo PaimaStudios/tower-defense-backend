@@ -18,19 +18,24 @@ export class currentRoundController extends Controller {
   public async get(@Query() lobbyID: string): Promise<Response> {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
+    if (!lobby) {
+      return { error: 'lobby not found' };
+    }
+
     const [roundData] = await getRoundData.run(
       { lobby_id: lobbyID, round_number: lobby.current_round },
       pool
     );
-    if (!lobby || !roundData) return { error: 'lobby not found' };
-    else {
-      const currentRound =
-        lobby.lobby_state === 'finished' ? lobby.current_round + 1 : lobby.current_round;
-      const roundStartHeight =
-        lobby.lobby_creator === 'finished'
-          ? (roundData.execution_block_height as number)
-          : roundData.starting_block_height;
-      return { currentRound, roundStartHeight };
+    if (!roundData) {
+      return { error: 'round not found' };
     }
+
+    const currentRound =
+      lobby.lobby_state === 'finished' ? lobby.current_round + 1 : lobby.current_round;
+    const roundStartHeight =
+      lobby.lobby_creator === 'finished'
+        ? (roundData.execution_block_height as number)
+        : roundData.starting_block_height;
+    return { currentRound, roundStartHeight };
   }
 }
