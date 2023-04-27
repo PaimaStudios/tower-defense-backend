@@ -1,5 +1,9 @@
-import processTick, { baseConfig, generateMatchState, parseConfig } from '@tower-defense/game-logic';
-import { useState } from 'react';
+import processTick, {
+  baseConfig,
+  generateMatchState,
+  parseConfig,
+} from '@tower-defense/game-logic';
+import { useEffect, useState } from 'react';
 import mw from 'mw';
 import './ConfigCreator.css';
 import Prando from 'paima-engine/paima-prando';
@@ -33,7 +37,10 @@ export default function () {
   const rng = new Prando('hai');
   const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
   const [matchState, setMatchState] = useState(dummyState);
-  console.log('baseConfig: ', config);
+
+  useEffect(() => {
+    console.log('baseConfig: ', baseConfig);
+  }, []);
 
   async function submit() {
     console.log(config, 'config');
@@ -48,11 +55,11 @@ export default function () {
     const moves = [];
     let running = true;
     let tick = 1;
-    const state = {...dummyState, currentRound: 3}
-    while (running){
-      const events = processTick(config, state, moves, tick, rng)
-      tick ++
-      if (!events) running = false
+    const state = { ...dummyState, currentRound: 3 };
+    while (running) {
+      const events = processTick(config, state, moves, tick, rng);
+      tick++;
+      if (!events) running = false;
     }
     setMatchState(state);
   }
@@ -88,7 +95,6 @@ export default function () {
       console.error('Config not found for the given config key');
     }
   }
-  console.log(map, 'map');
 
   return (
     <div id="config-creator">
@@ -2613,10 +2619,13 @@ export default function () {
             onChange={e => {
               setMapName(e.target.value);
               setMap(maps[e.target.value]);
+              console.log(maps[e.target.value], 'map');
             }}
           >
-            {Object.keys(maps).map(m => (
-              <option value={m}>{m}</option>
+            {Object.keys(maps).map(map => (
+              <option value={map} key={map}>
+                {map}
+              </option>
             ))}
           </select>
         </div>

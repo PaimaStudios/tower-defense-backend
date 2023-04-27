@@ -48,8 +48,9 @@ function TestFrontend() {
     const f = events.filter((ev: any) => {
       console.log(eventFilter, 'ef');
       if (eventFilter === 'macaw') return ev.eventType === 'damage' && ev.faction === 'attacker';
-      else if (eventFilter === 'tower') return ev.eventType === 'damage' && ev.faction === 'defender';
-      else if (eventFilter === 'all') return true
+      else if (eventFilter === 'tower')
+        return ev.eventType === 'damage' && ev.faction === 'defender';
+      else if (eventFilter === 'all') return true;
       else return ev.eventType === eventFilter;
     });
     console.log(f, 'events');
@@ -137,11 +138,15 @@ function TestFrontend() {
     console.log(result, 'loginCheck');
   };
 
-  //TODO: moves submit
-  // async function submitMoves(moves: MatchMove[]) {
-  //   console.log(`Submitting moves to round ${round} in lobby ${lobby}:`, moves);
-  //   mw.submitMoves(/** JSON */).then(console.log).catch(console.error);
-  // }
+  async function submitEmptyMoves() {
+    const moves = {
+      lobbyID: lobby,
+      roundNumber: round,
+      moves: [],
+    };
+    console.log(`Submitting moves to round ${round} in lobby ${lobby}:`, moves);
+    mw.submitMoves(JSON.stringify(moves)).then(console.log).catch(console.error);
+  }
 
   // async function submitRandomMoves() {
   //   const randIndex = () => Math.floor(Math.random() * 3);
@@ -288,7 +293,7 @@ function TestFrontend() {
         <label>
           Round/Page
           <input
-            type="text"
+            type="number"
             value={round}
             onChange={e => setRound(parseInt(e.currentTarget.value))}
           />
@@ -335,17 +340,13 @@ function TestFrontend() {
                 <option value="spawn">spawn</option>
                 <option value="movement">movement</option>
                 <option value="tower">tower attack</option>
-                <option selected value="macaw">macaw attack</option>
+                <option selected value="macaw">
+                  macaw attack
+                </option>
                 <option value="actorDeleted">actorDeleted</option>
                 <option value="defenderBaseUpdate">damage to base</option>
               </select>
-              <button
-                onClick={() => {
-                  fullTick();
-                }}
-              >
-                Tick to the end
-              </button>
+              <button onClick={fullTick}>Tick to the end</button>
             </>
           )}
           <p>Internal "endpoints"</p>
@@ -364,7 +365,7 @@ function TestFrontend() {
           <button onClick={createSpecificLobby}>Create Lobby hardcoded</button>
           <button onClick={joinSpecificLobby}>Join Lobby specified</button>
           <button onClick={closeSpecificLobby}>Close Lobby specified</button>
-          {/* <button onClick={submitRandomMoves}>Submit Moves random</button> */}
+          <button onClick={submitEmptyMoves}>Submit Empty Moves</button>
           {/* <button onClick={submitMurderMoves}>Submit Moves murder</button> */}
           {/* <button onClick={submitInitRiskyMurderMoves}>Submit Moves init risky murder</button> */}
           <button onClick={setAnyNft}>setAnyNft</button>
