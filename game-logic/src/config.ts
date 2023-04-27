@@ -233,12 +233,6 @@ const baseMacawCryptConfig = {
   3: baseMacawCryptConfig3,
 };
 
-export const baseGoldProduction: Record<Level, number> = {
-  1: 100,
-  2: 200,
-  3: 400,
-};
-
 export const attackerUnitMap: Record<AttackerStructureType, UnitType> = {
   macawCrypt: 'macaw',
   jaguarCrypt: 'jaguar',
