@@ -62,7 +62,7 @@ function chooseStructures(
   chosen: BuildStructureAction[] = []
 ): BuildStructureAction[] {
   const structure = choices[Math.floor(Math.random() * choices.length)];
-  console.log(faction, "choosing tiles to build on for")
+  console.log(faction, 'choosing tiles to build on for');
   const price = matchConfig[structure][1].price;
   if (budget >= price) {
     const usableTileIndices = map.reduce(

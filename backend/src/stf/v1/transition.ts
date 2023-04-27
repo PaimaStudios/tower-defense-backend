@@ -61,7 +61,7 @@ export const processCreateLobby = async (
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
     const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
-    if (!configString) return []
+    if (!configString) return [];
     const matchConfig = parseConfig(configString.content);
     return persistPracticeLobbyCreation(
       blockHeight,
@@ -134,7 +134,11 @@ export function practiceRound(
     lobbyState,
     matchConfig,
     moves,
-    { ...roundData, match_state: matchState as any, round_within_match: roundData.round_within_match + 1 },
+    {
+      ...roundData,
+      match_state: matchState as any,
+      round_within_match: roundData.round_within_match + 1,
+    },
     randomnessGenerator
   );
   return [...movesTuples, ...roundExecutionTuples];
