@@ -29,10 +29,11 @@ import type {
   SalvageStructureAction,
   UpgradeStructureAction,
   Macaw,
+  MapState,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { attackerUnitMap } from './config';
-import { indexToCoords, validateCoords } from './utils';
+import { indexToCoords, isSpawnable, validateCoords } from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -267,7 +268,9 @@ function spawn(
 ): UnitSpawnedEvent {
   // First we look up the unit stats with the Match Config
   // Then we compute the path tile in the map where the units will spawn at.
-  const pathTile = findClosebyPathTile(matchState, crypt.coordinates);
+  const { height, map, width } = matchState;
+  const mapState: MapState = { height, width, map };
+  const pathTile = findClosebyPathTile(mapState, crypt.coordinates);
   return {
     eventType: 'spawn',
     faction: 'attacker',
@@ -282,19 +285,19 @@ function spawn(
   };
 }
 
-function closeByPathTiles(index: number, matchState: MatchState): number[] {
-  const { x, y } = indexToCoords(index, matchState.width);
+function adjacentPathTiles(index: number, mapState: MapState): number[] {
+  const { x, y } = indexToCoords(index, mapState.width);
   return [
     { x, y: y - 1 },
     { x: x + 1, y },
     { x, y: y + 1 },
     { x: x - 1, y },
   ]
-    .map(coordinates => validateCoords(coordinates, matchState.width, matchState.height))
+    .map(coordinates => validateCoords(coordinates, mapState.width, mapState.height))
     .filter((index): index is number => {
       if (index == null) return false;
-      const tile = matchState.map[index];
-      return tile.type === 'path' && tile.faction === 'attacker';
+      const tile = mapState.map[index];
+      return isSpawnable(tile);
     });
 }
 
@@ -315,22 +318,19 @@ function choosePath(paths: number[], mapWidth: number): number {
  * Function to find an available path next to a crypt to place a newly spawned unit.
  * If there is more than one candidate then @see {choosePath} is used to select one.
  */
-function findClosebyPathTile(matchState: MatchState, coords: number, range = 1): number {
-  const adjacentPathTiles = closeByPathTiles(coords, matchState);
-  if (adjacentPathTiles.length > 0) {
-    return choosePath(adjacentPathTiles, matchState.width);
+function findClosebyPathTile(mapState: MapState, coords: number, range = 1): number {
+  const adjacentTiles = adjacentPathTiles(coords, mapState);
+  if (adjacentTiles.length > 0) {
+    return choosePath(adjacentTiles, mapState.width);
   }
-  const morePaths = getSurroundingCells(
-    coords,
-    matchState.width,
-    matchState.height,
-    range + 1
-  ).filter(n => matchState.map[n].type === 'path');
+  const morePaths = getSurroundingCells(coords, mapState.width, mapState.height, range + 1).filter(
+    n => isSpawnable(mapState.map[n])
+  );
   if (morePaths.length > 0) {
-    return choosePath(morePaths, matchState.width);
+    return choosePath(morePaths, mapState.width);
   }
 
-  return findClosebyPathTile(matchState, coords, range + 1);
+  return findClosebyPathTile(mapState, coords, range + 1);
 }
 
 // Movement events, dervive from the units already on the match sate.

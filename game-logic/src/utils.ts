@@ -4,6 +4,7 @@ import type {
   DefenderStructure,
   MatchConfig,
   StructureUpgradeTier,
+  Tile,
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
 
@@ -52,13 +53,18 @@ export function validateCoords(
 export function calculatePath(start: number, destination: number, map: Array<0 | 1>[]): number[] {
   const width = map[0].length;
   const startCoords = indexToCoords(start, width);
-  const desctinationCoords = indexToCoords(destination, width);
+  const destinationCoords = indexToCoords(destination, width);
   const pathFinder = new AStarFinder({
     grid: {
       matrix: map,
     },
     diagonalAllowed: false,
   });
-  const path = pathFinder.findPath(startCoords, desctinationCoords);
+  const path = pathFinder.findPath(startCoords, destinationCoords);
   return path.map(tuple => coordsToIndex({ x: tuple[0], y: tuple[1] }, width));
 }
+
+/**
+ * Units always spawn on the attacker side of the map.
+ */
+export const isSpawnable = (tile: Tile) => tile.type === 'path' && tile.faction === 'attacker';

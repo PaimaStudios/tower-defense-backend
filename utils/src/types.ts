@@ -86,6 +86,9 @@ export interface MatchState extends AnnotatedMap {
   finishedSpawning: ActorID[];
   roundEnded: boolean;
 }
+
+export type MapState = Pick<MatchState, 'width' | 'height' | 'map'>;
+
 // ordered maps for stateful units
 export interface ActorsObject {
   towers: Record<ActorID, DefenderStructure>;
@@ -116,8 +119,8 @@ export interface AttackerUnit {
   upgradeTier: UpgradeTier;
   status: StatusType[];
 }
-export interface Macaw extends AttackerUnit{
-  subType: "macaw";
+export interface Macaw extends AttackerUnit {
+  subType: 'macaw';
   lastShot: number;
 }
 
