@@ -202,12 +202,14 @@ function applyBuild(
 }
 
 function applyTowerRepair(config: MatchConfig, matchState: MatchState, tower: DefenderStructure) {
-  tower.health += config.towerRepairValue;
+  const max = config[tower.structure][tower.upgrades].health;
+  const repaired = tower.health + config.towerRepairValue;
+  tower.health = repaired > max ? max : repaired;
   matchState.defenderGold -= config.repairCost;
 }
 
 function applyCryptRepair(config: MatchConfig, matchState: MatchState, crypt: AttackerStructure) {
-  crypt.spawned = crypt.spawned.slice(1); // add one more spawn slot
+  // crypt.spawned = crypt.spawned.slice(1); // deprecated since we don't age crypts anymore
   matchState.attackerGold -= config.repairCost;
 }
 
