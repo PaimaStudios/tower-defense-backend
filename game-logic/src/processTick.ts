@@ -51,10 +51,23 @@ function processTick(
   // Else let's play
   // We generate new randomness for every tick. Seeds vary every round.
   for (const tick of Array(currentTick)) randomnessGenerator.next();
-  if (currentTick === 1)
+  if (currentTick === 1) {
     // First tick is reserved to processing the user actions, i.e. events related to structures.
-    return structureEvents(matchConfig, matchState, moves);
-  else {
+    const structures = structureEvents(matchConfig, matchState, moves);
+    const goldUpdate: GoldRewardEvent[] = [
+      {
+        eventType: 'goldUpdate',
+        faction: 'defender',
+        amount: matchState.defenderGold,
+      },
+      {
+        eventType: 'goldUpdate',
+        faction: "attacker",
+        amount: matchState.attackerGold,
+      }
+    ];
+    return [...structures, ...goldUpdate];
+  } else {
     // ticks 2+
     // if Rounds 1 and 2; we do not have a battle phase, hence round executor ends here
     if (matchState.currentRound === 1 || matchState.currentRound === 2)
