@@ -22,6 +22,15 @@ export class GameENV extends ENV {
   static get NFT_CONTRACT(): string {
     return process.env.NFT_CONTRACT || '';
   }
+  static get SHORT_CONFIG(): string {
+    return process.env.SHORT_CONFIG || 'defaultdefault';
+  }
+  static get MEDIUM_CONFIG(): string {
+    return process.env.MEDIUM_CONFIG || 'defaultdefault';
+  }
+  static get LONG_CONFIG(): string {
+    return process.env.LONG_CONFIG || 'defaultdefault';
+  }
 }
 
 // OTHER CONSTANTS

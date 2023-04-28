@@ -15,15 +15,14 @@ import {
   userJoinedLobby,
 } from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
-import type { Faction, MapName, TurnAction } from '@tower-defense/utils';
-import { configToConcise } from '@tower-defense/utils';
+import { GameENV, configToConcise } from '@tower-defense/utils';
+import type { MatchConfig, Faction, MapName, TurnAction } from '@tower-defense/utils';
 import {
   awaitBlock,
   getActiveAddress,
   PaimaMiddlewareErrorCode,
   postConciselyEncodedData,
 } from 'paima-engine/paima-mw-core';
-import type { MatchConfig } from '@tower-defense/utils';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
@@ -61,11 +60,11 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   const { presetName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
   const configName =
     presetName === 'short'
-      ? 'fiH6xgZ8P1fFTV' // TODO: extract this to be read from an env variable
+      ? GameENV.SHORT_CONFIG
       : presetName === 'medium'
-      ? 'KkHJHOGtavnHaV' // TODO: extract this to be read from an env variable
+      ? GameENV.MEDIUM_CONFIG
       : presetName === 'long'
-      ? 'm3A6BbrMf8QPVm' // TODO: extract this to be read from an env variable
+      ? GameENV.LONG_CONFIG
       : 'defaultdefault';
   const roleEncoding =
     role === 'attacker' ? 'a' : role === 'defender' ? 'd' : role === 'random' ? 'r' : 'r';
