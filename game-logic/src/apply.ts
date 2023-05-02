@@ -10,12 +10,9 @@ import type {
   AttackerStructure,
   DefenderStructure,
   UpgradeTier,
-  Coordinates,
   Macaw,
 } from '@tower-defense/utils';
-import { AStarFinder } from 'astar-typescript';
-import { coordsToIndex } from './processTick';
-import { calculateRecoupGold } from './utils';
+import { calculatePath, calculateRecoupGold } from './utils';
 
 // function to mutate the match state after events are processed.
 export default function applyEvent(
@@ -61,6 +58,7 @@ export default function applyEvent(
       }
       break;
     case 'spawn':
+      const destination = matchState.defenderBase.coordinates;
       const spawnedUnit: AttackerUnit = {
         type: 'unit',
         faction: 'attacker',
@@ -73,7 +71,7 @@ export default function applyEvent(
         status: [],
         coordinates: event.coordinates,
         movementCompletion: 0,
-        path: calculatePath(event.coordinates, matchState),
+        path: calculatePath(event.coordinates, destination, matchState.pathMap),
       };
       const crypt = matchState.actors.crypts[event.cryptID];
       // add unit to unit graph
@@ -141,26 +139,6 @@ export default function applyEvent(
       ];
       break;
   }
-}
-
-function calculatePath(unitLocation: number, matchState: MatchState): number[] {
-  const baseLocation = matchState.defenderBase.coordinates;
-  const baseCoords = indexToCoords(baseLocation, matchState.width);
-  const starting = indexToCoords(unitLocation, matchState.width);
-  const pathFinder = new AStarFinder({
-    grid: {
-      matrix: matchState.pathMap,
-    },
-    diagonalAllowed: false,
-  });
-  const path = pathFinder.findPath(starting, baseCoords);
-  return path.map(tuple => coordsToIndex({ x: tuple[0], y: tuple[1] }, matchState.width));
-}
-
-function indexToCoords(i: number, width: number): Coordinates {
-  const y = Math.floor(i / width);
-  const x = i - y * width;
-  return { x, y };
 }
 
 function applyBuild(

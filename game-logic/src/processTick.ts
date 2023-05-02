@@ -29,14 +29,15 @@ import type {
   SalvageStructureAction,
   UpgradeStructureAction,
   Macaw,
+  MapState,
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { attackerUnitMap } from './config';
+import { chooseTile, indexToCoords, isSpawnable, validateCoords } from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
 // rounds end when they must.
-
 function processTick(
   matchConfig: MatchConfig,
   matchState: MatchState,
@@ -92,6 +93,7 @@ function processTick(
     }
   }
 }
+
 // We increment the round and mutate the few keys of the match state
 // so the next round is saved clean to the database.
 // Then we return null which signals the end of the round executor
@@ -124,6 +126,7 @@ function endRound(
   for (const event of gold) applyEvent(matchConfig, matchState, event);
   return gold;
 }
+
 // Output the gold rewards for each side, according to the match config.
 function computeGoldRewards(
   matchConfig: MatchConfig,
@@ -170,6 +173,7 @@ function canSpend(matchConfig: MatchConfig, matchState: MatchState, action: Turn
   }
   return false;
 }
+
 // Outputs the events from the first tick, a function of the moves sent by the players.
 function structureEvents(
   matchConfig: MatchConfig,
@@ -195,6 +199,7 @@ function structureEvents(
   }, accumulator);
   return structuralTick[0];
 }
+
 function buildEvent(
   matchConfig: MatchConfig,
   matchState: MatchState,
@@ -267,6 +272,7 @@ function spawnEvents(
   const isNotNull = (e: UnitSpawnedEvent | null): e is UnitSpawnedEvent => !!e;
   return events.filter(isNotNull);
 }
+
 // Function to generate a single spawn event.
 function spawn(
   config: MatchConfig,
@@ -275,13 +281,15 @@ function spawn(
 ): UnitSpawnedEvent {
   // First we look up the unit stats with the Match Config
   // Then we compute the path tile in the map where the units will spawn at.
-  const pathTile = findClosebyPathTile(matchState, crypt.coordinates);
+  const { height, map, width } = matchState;
+  const mapState: MapState = { height, width, map };
+  const spawnTile = findClosebySpawnTile(mapState, crypt.coordinates);
   return {
     eventType: 'spawn',
     faction: 'attacker',
     cryptID: crypt.id,
     actorID: matchState.actorCount + 1, // increment
-    coordinates: pathTile,
+    coordinates: spawnTile,
     unitType: attackerUnitMap[crypt.structure],
     unitHealth: config[crypt.structure][crypt.upgrades].unitHealth,
     unitSpeed: config[crypt.structure][crypt.upgrades].unitSpeed,
@@ -289,54 +297,39 @@ function spawn(
     tier: crypt.upgrades,
   };
 }
-function closeByPathTiles(index: number, matchState: MatchState): number[] {
-  const { x, y } = indexToCoords(index, matchState.width);
+
+function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
+  const { x, y } = indexToCoords(index, mapState.width);
   return [
     { x, y: y - 1 },
     { x: x + 1, y },
     { x, y: y + 1 },
     { x: x - 1, y },
   ]
-    .map(coordinates => validateCoords(coordinates, matchState.width, matchState.height))
+    .map(coordinates => validateCoords(coordinates, mapState.width, mapState.height))
     .filter((index): index is number => {
       if (index == null) return false;
-      const tile = matchState.map[index];
-      return tile.type === 'path' && tile.faction === 'attacker';
+      const tile = mapState.map[index];
+      return isSpawnable(tile);
     });
 }
-function choosePath(paths: number[], mapWidth: number): number {
-  const pick = paths.reduce((prev, curr) => {
-    const a = indexToCoords(prev, mapWidth);
-    const b = indexToCoords(curr, mapWidth);
-    // whoever is further to the left
-    if (a.x < b.x) return prev;
-    else if (b.x < a.x) return curr;
-    // else whoever is more centered in the y axis
-    else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
-  });
-  return pick;
-}
-
 /**
  * Function to find an available path next to a crypt to place a newly spawned unit.
  * If there is more than one candidate then @see {choosePath} is used to select one.
  */
-function findClosebyPathTile(matchState: MatchState, coords: number, range = 1): number {
-  const adjacentPathTiles = closeByPathTiles(coords, matchState);
-  if (adjacentPathTiles.length > 0) {
-    return choosePath(adjacentPathTiles, matchState.width);
+function findClosebySpawnTile(mapState: MapState, coords: number, range = 1): number {
+  const adjacentTiles = adjacentSpawnTiles(coords, mapState);
+  if (adjacentTiles.length > 0) {
+    return chooseTile(adjacentTiles, mapState.width);
   }
-  const morePaths = getSurroundingCells(
-    coords,
-    matchState.width,
-    matchState.height,
-    range + 1
-  ).filter(n => matchState.map[n].type === 'path');
-  if (morePaths.length > 0) {
-    return choosePath(morePaths, matchState.width);
+  const moreTiles = getSurroundingCells(coords, mapState.width, mapState.height, range + 1).filter(
+    n => isSpawnable(mapState.map[n])
+  );
+  if (moreTiles.length > 0) {
+    return chooseTile(moreTiles, mapState.width);
   }
 
-  return findClosebyPathTile(matchState, coords, range + 1);
+  return findClosebySpawnTile(mapState, coords, range + 1);
 }
 
 // Movement events, dervive from the units already on the match sate.
@@ -400,6 +393,7 @@ function towerAttackEvents(
   const events = towers.map(t => computeDamageToUnit(config, t, matchState, currentTick, rng));
   return events.flat();
 }
+
 // damage made by defender towers against units
 function computeDamageToUnit(
   matchConfig: MatchConfig,
@@ -434,6 +428,7 @@ function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure 
   else if (item.id < acc.id) return item;
   else return acc;
 }
+
 // Calculates damage done by the tower according to the tower type
 function damageByTower(
   matchConfig: MatchConfig,
@@ -450,6 +445,7 @@ function damageByTower(
     return towerShot(matchConfig, tower, pickedOne, randomnessGenerator);
   }
 }
+
 function towerShot(
   matchConfig: MatchConfig,
   tower: DefenderStructure,
@@ -489,6 +485,7 @@ function towerShot(
   if (superMacaw && !dying) events.push(deflectingDamageEvent);
   return events;
 }
+
 // Calculate the damage caused by a tower attack. Upgraded Anaconda Towers have a 50% instakill chance.
 function computeDamageByTowerAmount(
   matchConfig: MatchConfig,
@@ -503,6 +500,7 @@ function computeDamageByTowerAmount(
       : matchConfig.anacondaTower[tower.upgrades].damage;
   } else return matchConfig[tower.structure][tower.upgrades].damage;
 }
+
 // Function to calculate damage done by Sloth Towers
 function slothDamage(
   matchConfig: MatchConfig,
@@ -516,6 +514,7 @@ function slothDamage(
   });
   return damageEvents.flat();
 }
+
 // Events where Units attack the defender.
 // Either Macaws attacking Towers, or any unit attacking the Defender Base
 function unitAttackEvents(
@@ -535,6 +534,7 @@ function unitAttackEvents(
   });
   return events.flat();
 }
+
 // Damage made by Macaws to Defender Tower
 function computeDamageToTower(
   matchConfig: MatchConfig,
@@ -571,6 +571,7 @@ function computeDamageToTower(
   for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
+
 // Damage of units to defender base
 function computeDamageToBase(
   matchConfig: MatchConfig,
@@ -600,6 +601,7 @@ function computeDamageToBase(
     return events;
   }
 }
+
 //  Locate nearby units.
 function findCloseByUnits(
   matchState: MatchState,
@@ -617,26 +619,6 @@ function findCloseByUnits(
   return units;
 }
 
-// Converts coord notation ({x: number, y: number}) to a single number, index of the flat map array.
-export function coordsToIndex(coords: Coordinates, width: number): number {
-  return width * coords.y + coords.x;
-}
-// Converts an index of the flat map to to coord notation
-export function indexToCoords(i: number, width: number): Coordinates {
-  const y = Math.floor(i / width);
-  const x = i - y * width;
-  return { x, y };
-}
-// Validate that coords don't overflow the map.
-export function validateCoords(
-  coords: Coordinates,
-  mapWidth: number,
-  mapHeight: number
-): number | null {
-  if (coords.x < 0 || coords.x >= mapWidth) return null;
-  if (coords.y < 0 || coords.y >= mapHeight) return null;
-  else return coordsToIndex(coords, mapWidth);
-}
 export function getSurroundingCells(
   index: number,
   mapWidth: number,
