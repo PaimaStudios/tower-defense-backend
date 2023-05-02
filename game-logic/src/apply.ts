@@ -12,7 +12,7 @@ import type {
   UpgradeTier,
   Macaw,
 } from '@tower-defense/utils';
-import { calculatePath, calculateRecoupGold } from './utils';
+import { calculatePath, calculateRecoupGold, isDefenderStructure } from './utils';
 
 // function to mutate the match state after events are processed.
 export default function applyEvent(
@@ -202,8 +202,14 @@ function applyUpgrade(
       ? matchState.actors.crypts[structureID]
       : matchState.actors.towers[structureID];
   // Frontend should disallow this but we don't want the backend to break either
-  const side = faction === 'attacker' ? 'attackerGold' : 'defenderGold';
   const cost = matchConfig[toUpgrade.structure][(toUpgrade.upgrades + 1) as UpgradeTier].price;
+
+  if (isDefenderStructure(toUpgrade)) {
+    const currentConfig = matchConfig[toUpgrade.structure][toUpgrade.upgrades as UpgradeTier];
+    const upgrageConfig = matchConfig[toUpgrade.structure][(toUpgrade.upgrades + 1) as UpgradeTier];
+    // tower gains upgraded health while keeping the current damages (if present)
+    toUpgrade.health += upgrageConfig.health - currentConfig.health;
+  }
   toUpgrade.upgrades++;
-  matchState[side] -= cost;
+  matchState[`${faction}Gold`] -= cost;
 }

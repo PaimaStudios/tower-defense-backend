@@ -2,7 +2,6 @@ import type {
   AttackerStructure,
   Coordinates,
   DefenderStructure,
-  MapState,
   MatchConfig,
   StructureUpgradeTier,
   Tile,
@@ -116,4 +115,10 @@ export function chooseTile(tiles: number[], mapWidth: number): number {
     else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
   });
   return pick;
+}
+
+export function isDefenderStructure(
+  structure: AttackerStructure | DefenderStructure
+): structure is DefenderStructure {
+  return structure.faction === 'defender';
 }
