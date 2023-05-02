@@ -14,12 +14,10 @@ import { closeLobby, startMatch } from '@tower-defense/db';
 import { createLobby } from '@tower-defense/db';
 import type { MatchConfig, MatchState, RoleSetting } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
-import { parseConfig } from '@tower-defense/game-logic';
 import { blankStats } from './stats';
 import { practiceRound } from '../transition';
 import { persistNewRound } from './match';
 import { generateMatchState } from '@tower-defense/game-logic';
-import { match } from 'assert';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
