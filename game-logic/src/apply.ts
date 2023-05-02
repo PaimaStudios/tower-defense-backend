@@ -206,9 +206,9 @@ function applyUpgrade(
 
   if (isDefenderStructure(toUpgrade)) {
     const currentConfig = matchConfig[toUpgrade.structure][toUpgrade.upgrades as UpgradeTier];
-    const upgrageConfig = matchConfig[toUpgrade.structure][(toUpgrade.upgrades + 1) as UpgradeTier];
+    const upgradeConfig = matchConfig[toUpgrade.structure][(toUpgrade.upgrades + 1) as UpgradeTier];
     // tower gains upgraded health while keeping the current damages (if present)
-    toUpgrade.health += upgrageConfig.health - currentConfig.health;
+    toUpgrade.health += upgradeConfig.health - currentConfig.health;
   }
   toUpgrade.upgrades++;
   matchState[`${faction}Gold`] -= cost;
