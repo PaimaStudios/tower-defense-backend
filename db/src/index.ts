@@ -80,6 +80,3 @@ export {
   IExecuteRoundParams,
   endMatch,
 } from './update.queries.js';
-
-import { testPool } from './pool';
-export { testPool };

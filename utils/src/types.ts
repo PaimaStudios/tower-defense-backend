@@ -274,12 +274,6 @@ export type TickEvent =
   | ActorDeletedEvent
   | StatusEffectAppliedEvent;
 export type Faction = 'attacker' | 'defender';
-// export interface GoldRewardEvent {
-//   eventType: "goldReward";
-//   faction: Faction;
-//   amount: number;
-// }
-// cat-astrophe complained about not wanting diffs, they want absolute numbers of gold
 export interface GoldRewardEvent {
   eventType: 'goldUpdate';
   faction: Faction;

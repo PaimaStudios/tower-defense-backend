@@ -1,6 +1,5 @@
 import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
 import type {
-  MatchConfig,
   MatchExecutorData,
   MatchState,
   Structure,
@@ -11,7 +10,7 @@ import type {
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type { LobbyState, NftScore, NftScoreSnake, PackedLobbyState, RoundEnd } from '../types';
 import { getBlockTime } from 'paima-engine/paima-utils';
-import { MatchExecutor, matchExecutor } from 'paima-engine/paima-executors';
+import { matchExecutor } from 'paima-engine/paima-executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
 
 const conciseMap: Record<Structure, StructureConcise> = {

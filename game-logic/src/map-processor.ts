@@ -9,7 +9,6 @@ import type {
   RoleSetting,
   MatchConfig,
 } from '@tower-defense/utils';
-import { parseConfig } from './config';
 
 export function generateMatchState(
   creatorFaction: RoleSetting,

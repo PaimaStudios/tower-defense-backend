@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
+import { Controller, Get, Query, Route } from 'tsoa';
 import type { IGetFinalStateResult } from '@tower-defense/db';
 import { requirePool, getLobbyById, getFinalState } from '@tower-defense/db';
 import type { LobbyStatus } from '@tower-defense/utils';

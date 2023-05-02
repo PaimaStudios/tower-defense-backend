@@ -55,7 +55,6 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   const query = getUserWallet(errorFxn);
   if (!query.success) return query;
   const userWalletAddress = query.result;
-  console.log(JSON.parse(json), 'json parsed');
   const parsed: CreateLobbyParams = JSON.parse(json);
   const { presetName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
   const configName =
@@ -238,8 +237,6 @@ async function submitMoves(json: string): Promise<OldResult> {
 
   const parsed: SubmitMovesParams = JSON.parse(json);
   const { lobbyID, roundNumber, moves } = parsed;
-  console.log(moves, 'moves sent');
-  console.log(moves.map(m => ({ value: moveToString(m) })));
 
   const conciseBuilder = builder.initialize();
   conciseBuilder.setPrefix('s');
@@ -299,7 +296,6 @@ async function registerConfig(config: MatchConfig): Promise<any> {
   const configString = configToConcise(config);
   conciseBuilder.addValue({ value: configString, isStateIdentifier: false });
   const finalString = conciseBuilder.build();
-  console.log(finalString, 'final string');
 
   let currentBlockVar: number;
   try {

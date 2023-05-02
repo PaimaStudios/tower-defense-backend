@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
+import { Controller, Get, Route } from 'tsoa';
 import type { IGetRandomActiveLobbyResult } from '@tower-defense/db';
 import { requirePool, getRandomActiveLobby } from '@tower-defense/db';
 

@@ -359,7 +359,7 @@ function movementEvents(
   const ret = events.flat().filter(isNotNull);
   for (const event of ret) applyEvent(matchConfig, matchState, event);
   return ret;
-  // .filter(e => e.completion === 100);dd
+  // .filter(e => e.completion === 100);
   // We had agreed with cat-astrophe that we'd only send movement events when the movement
   // was complete and they'd run the logic on the frontend, but they haven't yet so as of now
   // we still send them every single movement event. Once they fix that we can just uncomment that line.
@@ -584,7 +584,7 @@ function computeDamageToBase(
   if (!(t.type === 'base' && t.faction === 'defender')) return [];
   // If unit is at the defender's base, emit events for base damage and death of unit
   else {
-    const remainingHealth = matchState.defenderBase.health - 1; // we hardcore 1 here, reserve attack spec to macaw-on-tower attacks
+    const remainingHealth = matchState.defenderBase.health - 1; // we hardcode 1 here, reserve attack spec to macaw-on-tower attacks
     const health = remainingHealth < 0 ? 0 : remainingHealth;
     const baseEvent: DefenderBaseUpdateEvent = {
       eventType: 'defenderBaseUpdate',

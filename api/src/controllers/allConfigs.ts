@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
+import { Controller, Get, Query, Route } from 'tsoa';
 import type { IGetUserConfigsResult } from '@tower-defense/db';
 import { getUserConfigs } from '@tower-defense/db';
 import { requirePool } from '@tower-defense/db';

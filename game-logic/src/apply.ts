@@ -20,7 +20,7 @@ export default function applyEvent(
   matchState: MatchState,
   event: TickEvent,
   currentTick = 0
-) {
+): void {
   // let's find who's side is doing thing
   const faction = event.faction;
   switch (event.eventType) {
@@ -179,14 +179,14 @@ function applyBuild(
   }
 }
 
-function applyTowerRepair(config: MatchConfig, matchState: MatchState, tower: DefenderStructure) {
+function applyTowerRepair(config: MatchConfig, matchState: MatchState, tower: DefenderStructure): void {
   const max = config[tower.structure][tower.upgrades].health;
   const repaired = tower.health + config.towerRepairValue;
   tower.health = repaired > max ? max : repaired;
   matchState.defenderGold -= config.repairCost;
 }
 
-function applyCryptRepair(config: MatchConfig, matchState: MatchState, crypt: AttackerStructure) {
+function applyCryptRepair(config: MatchConfig, matchState: MatchState, crypt: AttackerStructure): void {
   // crypt.spawned = crypt.spawned.slice(1); // deprecated since we don't age crypts anymore
   matchState.attackerGold -= config.repairCost;
 }

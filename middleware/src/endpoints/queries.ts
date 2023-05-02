@@ -335,7 +335,6 @@ async function getOpenLobbies(
 
   try {
     const j = (await res.json()) as { lobbies: LobbyState[] };
-    console.log(j, 'open lobbies');
     return {
       success: true,
       lobbies: j.lobbies,

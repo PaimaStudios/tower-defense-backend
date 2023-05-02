@@ -2,8 +2,9 @@ import PaimaSM from 'paima-engine/paima-sm';
 import { creds } from '@tower-defense/db';
 import gameStateTransitionV1 from './stf/v1';
 import { GameENV } from '@tower-defense/utils';
+import { GameStateTransitionFunction } from 'paima-engine/paima-runtime';
 
-function gameStateTransitionRouter(blockHeight: number) {
+function gameStateTransitionRouter(blockHeight: number): GameStateTransitionFunction {
   if (blockHeight >= 0) return gameStateTransitionV1;
   else return gameStateTransitionV1;
 }
