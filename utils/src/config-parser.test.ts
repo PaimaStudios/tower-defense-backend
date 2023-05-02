@@ -64,14 +64,11 @@ describe('Input parsing', () => {
       3: randomCrypt(),
     },
   });
-  const wrongConfig = {};
   test('conf', () => {
     let ok = true;
     for (let i = 0; i < 5; i++) {
       const built = builder(randomRightConfig());
       const parsed = parser(built);
-      // console.log(built, "built")
-      // console.log(parsed, "parsed")
       if ('error' in parsed) ok = false;
     }
     expect(ok).toBeTruthy();

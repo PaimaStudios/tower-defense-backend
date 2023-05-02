@@ -1,13 +1,5 @@
-import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
-import {
-  getLobbyById,
-  getLobbyStatus,
-  getPaginatedOpenLobbies,
-  getRoundData,
-  IGetLobbyByIdResult,
-  IGetPaginatedOpenLobbiesResult,
-  requirePool,
-} from '@tower-defense/db';
+import { Controller, Get, Query, Route } from 'tsoa';
+import { getLobbyStatus, requirePool } from '@tower-defense/db';
 import type { LobbyStatus } from '@tower-defense/utils';
 
 interface Response {

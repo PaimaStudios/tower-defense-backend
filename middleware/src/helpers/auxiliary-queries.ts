@@ -1,7 +1,7 @@
 import type { FailedResult } from 'paima-engine/paima-mw-core';
 import { PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
 import { pushLog } from 'paima-engine/paima-mw-core';
-import type { ContractAddress, MatchConfig } from '@tower-defense/utils';
+import type { ContractAddress } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
   LobbyState,

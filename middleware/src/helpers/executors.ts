@@ -19,7 +19,6 @@ import Prando from 'paima-engine/paima-prando';
 export async function buildRoundExecutor(
   data: RoundExecutorData
 ): Promise<RoundExecutor<MatchState, TickEvent>> {
-  console.log(data, 'data');
   const { seed } = data.block_height;
   pushLog(seed, 'seed used for the round executor at the middleware');
   const matchConfig: MatchConfig = parseConfig(data.configString);
@@ -57,7 +56,6 @@ export async function buildMatchExecutor(
   data: MatchExecutorData
 ): Promise<MatchExecutor<MatchState, TickEvent>> {
   const { lobby, seeds, initialState, moves } = data;
-  console.log(data, 'data');
   const matchConfig: MatchConfig = parseConfig(data.configString);
   pushLog(seeds, 'seeds used for the match executor at the middleware');
   return matchExecutorConstructor.initialize(

@@ -1,5 +1,5 @@
 import { getMapLayout, requirePool } from '@tower-defense/db';
-import { Body, Controller, Get, Path, Post, Query, Route, SuccessResponse } from 'tsoa';
+import { Controller, Get, Query, Route } from 'tsoa';
 
 interface MapLayoutResponse {
   map_layout: string;

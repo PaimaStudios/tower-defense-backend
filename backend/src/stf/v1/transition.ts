@@ -2,7 +2,6 @@ import type { Pool } from 'pg';
 import type Prando from 'paima-engine/paima-prando';
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import type { WalletAddress } from 'paima-engine/paima-utils';
-
 import type { IGetLobbyByIdResult, IGetRoundDataResult } from '@tower-defense/db';
 import {
   getLobbyById,
@@ -61,7 +60,7 @@ export const processCreateLobby = async (
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
     const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
-    if (!configString) return []
+    if (!configString) return [];
     const matchConfig = parseConfig(configString.content);
     return persistPracticeLobbyCreation(
       blockHeight,
@@ -134,7 +133,11 @@ export function practiceRound(
     lobbyState,
     matchConfig,
     moves,
-    { ...roundData, match_state: matchState as any, round_within_match: roundData.round_within_match + 1 },
+    {
+      ...roundData,
+      match_state: matchState as any,
+      round_within_match: roundData.round_within_match + 1,
+    },
     randomnessGenerator
   );
   return [...movesTuples, ...roundExecutionTuples];
@@ -249,7 +252,7 @@ export async function processZombieEffect(
   const matchConfig = parseConfig(configString.content);
 
   console.log(`Executing zombie round (#${lobby.current_round}) for lobby ${lobby.lobby_id}`);
-  //Simply proceed to the next round, without any moves (1 player per round).
+  // Simply proceed to the next round, without any moves (1 player per round).
   return executeRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
 }
 

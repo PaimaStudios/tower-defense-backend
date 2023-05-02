@@ -1,6 +1,5 @@
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import { createScheduledData } from 'paima-engine/paima-db';
-
 import type { IGetUserStatsResult, INewStatsParams, IUpdateStatsParams } from '@tower-defense/db';
 import { updateStats } from '@tower-defense/db';
 import { newStats } from '@tower-defense/db';
