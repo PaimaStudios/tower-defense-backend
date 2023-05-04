@@ -14,6 +14,8 @@ export type ContractAddress = EthAddress;
 // Match Config
 export interface MatchConfig {
   defenderBaseHealth: number;
+  maxAttackerGold: number;
+  maxDefenderGold: number;
   baseAttackerGoldRate: number;
   baseDefenderGoldRate: number;
   anacondaTower: TowerConfigGraph;
