@@ -68,6 +68,8 @@ function builder(c: MatchConfig): string {
     `bh${c.defenderBaseHealth}`,
     `gd${c.baseDefenderGoldRate}`,
     `ga${c.baseAttackerGoldRate}`,
+    `md${c.maxDefenderGold}`,
+    `ma${c.maxAttackerGold}`,
     `rv${c.towerRepairValue}`,
     `rc${c.repairCost}`,
     `rp${c.recoupPercentage}`,
@@ -134,6 +136,32 @@ export const attackerGoldRate = P.seqObj<AttackerGoldRate>(
     P.digits
       .map(Number)
       .assert(s => s > 0 && s < 1001, 'attacker gold rate should be between 1 and 1000'),
+  ],
+  semicolon
+);
+interface MaxAttackerGold {
+  maxAttackerGold: number;
+}
+export const maxAttackerGold = P.seqObj<MaxAttackerGold>(
+  P.string('ma'),
+  [
+    'maxAttackerGold',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 2001, 'max attacker gold should be between 1 and 2000'),
+  ],
+  semicolon
+);
+interface MaxDefenderGold {
+  maxDefenderGold: number;
+}
+export const maxDefenderGold = P.seqObj<MaxDefenderGold>(
+  P.string('md'),
+  [
+    'maxDefenderGold',
+    P.digits
+      .map(Number)
+      .assert(s => s > 0 && s < 2001, 'max defender gold should be between 1 and 2000'),
   ],
   semicolon
 );
@@ -550,6 +578,8 @@ const configParser = P.seq<any>(
   baseHealth,
   defenderGoldRate,
   attackerGoldRate,
+  maxDefenderGold,
+  maxAttackerGold,
   repairValue,
   repairCost,
   recoupPercentage,
