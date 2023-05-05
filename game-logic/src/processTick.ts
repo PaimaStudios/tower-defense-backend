@@ -63,9 +63,9 @@ function processTick(
       },
       {
         eventType: 'goldUpdate',
-        faction: "attacker",
+        faction: 'attacker',
         amount: matchState.attackerGold,
-      }
+      },
     ];
     return [...structures, ...goldUpdate];
   } else {
@@ -483,6 +483,13 @@ function towerShot(
     damageType: 'neutral',
   };
   if (superMacaw && !dying) events.push(deflectingDamageEvent);
+  const towerDead = unit.damage >= tower.health;
+  const killTowerEvent: ActorDeletedEvent = {
+    eventType: 'actorDeleted',
+    faction: 'defender',
+    id: tower.id,
+  };
+  if (superMacaw && !dying && towerDead) events.push(killTowerEvent);
   return events;
 }
 
