@@ -11,7 +11,7 @@ import {
   getMatchConfig,
   endMatch,
 } from '@tower-defense/db';
-import type {
+import {
   ClosedLobbyInput,
   CreatedLobbyInput,
   JoinedLobbyInput,
@@ -21,6 +21,7 @@ import type {
   SubmittedTurnInput,
   UserStats,
   ZombieRound,
+  isCleanDB,
 } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
 import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
@@ -49,6 +50,7 @@ import {
   persistConfigRegistration,
 } from './persist/index.js';
 import type { IEndMatchParams } from '@tower-defense/db/src/update.queries.js';
+import { wipeOldLobbies } from './persist/wipe.js';
 
 export const processCreateLobby = async (
   user: WalletAddress,
@@ -233,6 +235,7 @@ export async function processScheduledData(
   if (isUserStats(input)) {
     return processStatsEffect(input, dbConn);
   }
+  if (isCleanDB(input)) return [wipeOldLobbies()];
   return [];
 }
 
@@ -243,10 +246,12 @@ export async function processZombieEffect(
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
   const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
+  if (!lobby) return []
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: lobby.current_round },
     dbConn
   );
+  if (!round) return []
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
