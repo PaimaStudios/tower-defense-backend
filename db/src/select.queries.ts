@@ -1254,3 +1254,75 @@ const getAllConfigsIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT 
 export const getAllConfigs = new PreparedQuery<IGetAllConfigsParams,IGetAllConfigsResult>(getAllConfigsIR);
 
 
+/** 'GetOldLobbies' parameters type */
+export interface IGetOldLobbiesParams {
+  date: Date | null | void;
+}
+
+/** 'GetOldLobbies' return type */
+export interface IGetOldLobbiesResult {
+  config_id: string | null;
+  created_at: Date;
+  creation_block_height: number;
+  creator_faction: role_setting;
+  current_match_state: Json;
+  current_round: number;
+  hidden: boolean;
+  lobby_creator: string;
+  lobby_id: string;
+  lobby_state: lobby_status;
+  map: string;
+  num_of_rounds: number;
+  player_two: string | null;
+  practice: boolean;
+  round_length: number;
+}
+
+/** 'GetOldLobbies' query type */
+export interface IGetOldLobbiesQuery {
+  params: IGetOldLobbiesParams;
+  result: IGetOldLobbiesResult;
+}
+
+const getOldLobbiesIR: any = {"usedParamSet":{"date":true},"params":[{"name":"date","required":false,"transform":{"type":"scalar"},"locs":[{"a":70,"b":74}]}],"statement":"SELECT * FROM lobbies\nWHERE lobby_state = 'finished'\nAND created_at < :date"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM lobbies
+ * WHERE lobby_state = 'finished'
+ * AND created_at < :date
+ * ```
+ */
+export const getOldLobbies = new PreparedQuery<IGetOldLobbiesParams,IGetOldLobbiesResult>(getOldLobbiesIR);
+
+
+/** 'GetLastScheduledWiping' parameters type */
+export type IGetLastScheduledWipingParams = void;
+
+/** 'GetLastScheduledWiping' return type */
+export interface IGetLastScheduledWipingResult {
+  block_height: number;
+  id: number;
+  input_data: string;
+}
+
+/** 'GetLastScheduledWiping' query type */
+export interface IGetLastScheduledWipingQuery {
+  params: IGetLastScheduledWipingParams;
+  result: IGetLastScheduledWipingResult;
+}
+
+const getLastScheduledWipingIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT * FROM scheduled_data\nWHERE input_data LIKE 'w%'\nORDER BY id DESC LIMIT 1"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM scheduled_data
+ * WHERE input_data LIKE 'w%'
+ * ORDER BY id DESC LIMIT 1
+ * ```
+ */
+export const getLastScheduledWiping = new PreparedQuery<IGetLastScheduledWipingParams,IGetLastScheduledWipingResult>(getLastScheduledWipingIR);
+
+

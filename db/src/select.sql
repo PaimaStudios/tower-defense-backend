@@ -229,3 +229,13 @@ WHERE creator = :creator;
 
 /* @name getAllConfigs */
 SELECT * FROM configs;
+
+/* @name getOldLobbies */
+SELECT * FROM lobbies
+WHERE lobby_state = 'finished'
+AND created_at < :date;
+
+/* @name getLastScheduledWiping */
+SELECT * FROM scheduled_data
+WHERE input_data LIKE 'w%'
+ORDER BY id DESC LIMIT 1;

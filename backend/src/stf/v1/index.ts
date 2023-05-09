@@ -14,6 +14,7 @@ import {
   processSubmittedTurn,
   processConfig,
 } from './transition.js';
+import { scheduleWipeOldLobbies, wipeSchedule } from './persist/wipe.js';
 
 export default async function (
   inputData: SubmittedChainData,
@@ -26,26 +27,20 @@ export default async function (
   console.log(`Processing input string: ${inputData.inputData}`);
   const parsed = parseInput(inputData.inputData);
   console.log(`Input string parsed as: ${parsed.input}`);
-
-  switch (parsed.input) {
-    case 'createdLobby':
-      return processCreateLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
-    case 'joinedLobby':
-      return processJoinLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
-    case 'closedLobby':
-      return processCloseLobby(user, parsed, dbConn);
-    case 'submittedTurn':
-      return processSubmittedTurn(blockHeight, user, parsed, randomnessGenerator, dbConn);
-    case 'setNFT':
-      return processSetNFT(user, blockHeight, parsed);
-    case 'scheduledData':
-      if (user !== SCHEDULED_DATA_ADDRESS) return [];
-      return processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
-    case 'registeredConfig':
-      return processConfig(user, parsed, randomnessGenerator);
-    case 'invalidString':
-      return [];
-    default:
-      return [];
-  }
+  let queries: SQLUpdate[] = [];
+  if (parsed.input === 'createdLobby')
+    queries = await processCreateLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
+  else if (parsed.input === 'joinedLobby')
+    queries = await processJoinLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
+  else if (parsed.input === 'closedLobby') queries = await processCloseLobby(user, parsed, dbConn);
+  else if (parsed.input === 'submittedTurn')
+    queries = await processSubmittedTurn(blockHeight, user, parsed, randomnessGenerator, dbConn);
+  else if (parsed.input === 'setNFT') queries = await processSetNFT(user, blockHeight, parsed);
+  else if (parsed.input === 'scheduledData' && user === SCHEDULED_DATA_ADDRESS)
+    queries = await processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
+  else if (parsed.input === 'registeredConfig')
+    queries = await processConfig(user, parsed, randomnessGenerator);
+  // add schedule data to wipe old lobbies on set schedule 
+  const wiping = await wipeSchedule(blockHeight, dbConn);
+  return wiping ? [...queries, scheduleWipeOldLobbies(blockHeight)] : queries;
 }
