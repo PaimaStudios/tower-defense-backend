@@ -102,5 +102,9 @@ describe('Input parsing', () => {
     const stats = parse('u|*0xc02aeafdca98755a2bfbcdf5f68364aacef67d3c|w');
     expect(stats.input).toBe('scheduledData');
     expect((stats as UserStats).effect).toBe('stats');
+
+    const wipe = parse('w|7');
+    console.log(wipe, 'wipe');
+    expect(wipe.input).toBe('scheduledData');
   });
 });

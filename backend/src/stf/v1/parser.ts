@@ -22,6 +22,7 @@ import type {
   SubmittedTurnInput,
   UserStats,
   ZombieRound,
+  WipeOldLobbies,
   RegisteredConfigInput,
 } from './types';
 import { conciseFactionMap } from '@tower-defense/game-logic';
@@ -30,12 +31,13 @@ import { consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `
-createdLobby        = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?
-joinedLobby         = j|*lobbyID
-closedLobby         = cs|*lobbyID
-setNFT              = n|address|tokenID
-zombieScheduledData = z|*lobbyID
-userScheduledData   = u|*user|result
+createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?
+joinedLobby          = j|*lobbyID
+closedLobby          = cs|*lobbyID
+setNFT               = n|address|tokenID
+zombieScheduledData  = z|*lobbyID
+userScheduledData    = u|*user|result
+wipeDBScheduledData  = w|days
 `;
 
 const roleSettings: RoleSettingConcise[] = ['a', 'd', 'r'];
@@ -73,6 +75,11 @@ const userScheduledData: ParserRecord<UserStats> = {
   user: PaimaParser.WalletAddress(),
   result: PaimaParser.EnumParser(results),
 };
+const wipeDBScheduledData: ParserRecord<WipeOldLobbies> = {
+  renameCommand: 'scheduledData',
+  effect: 'wipeOldLobbies',
+  days: PaimaParser.NumberParser(1, 100),
+};
 
 const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   createdLobby,
@@ -81,6 +88,7 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   setNFT,
   zombieScheduledData,
   userScheduledData,
+  wipeDBScheduledData,
 };
 
 // Special parser for move submition
