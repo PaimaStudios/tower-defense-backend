@@ -413,7 +413,7 @@ function computeDamageToUnit(
   const unitsNearby = findCloseByUnits(matchState, tower.coordinates, range);
   if (unitsNearby.length === 0) return [];
   // If there are units to attack, choose one, the weakest one to finish it off
-  const events = damageByTower(matchConfig, tower, unitsNearby, randomnessGenerator);
+  const events = damageByTower(matchConfig, matchState, tower, unitsNearby, randomnessGenerator);
   for (const event of events) applyEvent(matchConfig, matchState, event, currentTick);
   return events;
 }
@@ -432,20 +432,22 @@ function pickOne(acc: DefenderStructure | AttackerUnit, item: DefenderStructure 
 // Calculates damage done by the tower according to the tower type
 function damageByTower(
   matchConfig: MatchConfig,
+  matchState: MatchState,
   tower: DefenderStructure,
   units: AttackerUnit[],
   randomnessGenerator: Prando
 ): TowerAttack[] {
   if (tower.structure === 'slothTower')
-    return slothDamage(matchConfig, tower, units, randomnessGenerator);
+    return slothDamage(matchConfig, matchState, tower, units, randomnessGenerator);
   else {
     const pickedOne = units.reduce(pickOne);
-    return towerShot(matchConfig, tower, pickedOne, randomnessGenerator);
+    return towerShot(matchConfig, matchState, tower, pickedOne, randomnessGenerator);
   }
 }
 
 function towerShot(
   matchConfig: MatchConfig,
+  matchState: MatchState,
   tower: DefenderStructure,
   unit: AttackerUnit,
   randomnessGenerator: Prando
@@ -471,16 +473,26 @@ function towerShot(
   // If the shot killed the unit, add the event.
   if (dying) events.push(killEvent);
   // Macaws if upgraded can deflect attacks.
-  const superMacaw = unit.subType === 'macaw' && unit.upgradeTier === 2;
-  const deflectingDamageEvent: DamageEvent = {
+  const superMacaw = unit.subType === 'macaw' && unit.upgradeTier === 3;
+  // Range check
+  const inMacawRange = isInRange(
+    unit.coordinates,
+    tower.coordinates,
+    matchConfig.macawCrypt[unit.upgradeTier].attackRange,
+    matchState.width
+  );
+  const counterAttack: DamageEvent = {
     eventType: 'damage',
     faction: 'attacker',
     sourceID: unit.id,
     targetID: tower.id,
     damageAmount: unit.damage,
-    damageType: 'neutral',
+    damageType: 'counterAttack',
   };
-  if (superMacaw && !dying) events.push(deflectingDamageEvent);
+  if (superMacaw && inMacawRange && !dying) {
+    console.log(counterAttack, 'macaw counter attacking');
+    events.push(counterAttack);
+  }
   const towerDead = unit.damage >= tower.health;
   const killTowerEvent: ActorDeletedEvent = {
     eventType: 'actorDeleted',
@@ -509,15 +521,17 @@ function computeDamageByTowerAmount(
 // Function to calculate damage done by Sloth Towers
 function slothDamage(
   matchConfig: MatchConfig,
+  matchState: MatchState,
   tower: DefenderStructure,
   units: AttackerUnit[],
   randomnessGenerator: Prando
 ): TowerAttack[] {
   const damageEvents = units.reduce((acc, unit) => {
-    const events = towerShot(matchConfig, tower, unit, randomnessGenerator);
-    const gotKilled = events.find(e => e.eventType === "actorDeleted" && e.id === tower.id)
-    if (gotKilled) return [...acc, ...events.filter(e => e.eventType === "damage" && e.faction === "defender")]
-    else return [...acc, ...events]
+    const events = towerShot(matchConfig, matchState, tower, unit, randomnessGenerator);
+    const gotKilled = events.find(e => e.eventType === 'actorDeleted' && e.id === tower.id);
+    if (gotKilled)
+      return [...acc, ...events.filter(e => e.eventType === 'damage' && e.faction === 'defender')];
+    else return [...acc, ...events];
   }, [] as TowerAttack[]);
   return damageEvents;
 }
@@ -626,6 +640,27 @@ function findCloseByUnits(
   return units;
 }
 
+function isInRange(unitA: number, unitB: number, range: number, mapWidth: number): boolean {
+  const coordsA = indexToCoords(unitA, mapWidth);
+  const coordsB = indexToCoords(unitB, mapWidth);
+  //
+  let found = false;
+  for (let x = coordsA.x - range; x <= coordsA.x + range; x++) {
+    for (let y = coordsA.y - range; y <= coordsA.y + range; y++) {
+      // Exclude the center cell itself
+      if (x === coordsA.x && y === coordsA.y) {
+        continue;
+      }
+      // Calculate the distance from the center cell
+      const dx = Math.abs(x - coordsA.x);
+      const dy = Math.abs(y - coordsA.y);
+
+      // Exclude diagonals for each range
+      if (dx + dy <= range && x === coordsB.x && y === coordsB.y) found = true;
+    }
+  }
+  return found;
+}
 export function getSurroundingCells(
   index: number,
   mapWidth: number,
