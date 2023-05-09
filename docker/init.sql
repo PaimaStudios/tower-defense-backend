@@ -66,7 +66,7 @@ CREATE TYPE move_type AS ENUM ('build', 'upgrade', 'repair', 'salvage');
 -- we encode them as text and parse it later. Coordinates will be 'x,y'
 CREATE TABLE match_moves(
   id SERIAL PRIMARY KEY,
-  lobby_id TEXT NOT NULL references lobbies(lobby_id),
+  lobby_id TEXT NOT NULL references lobbies(lobby_id) ON DELETE CASCADE,
   wallet TEXT NOT NULL,
   round INTEGER NOT NULL,
   move_type move_type NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE match_moves(
 );
 CREATE TYPE match_result AS ENUM ('win', 'loss');
 CREATE TABLE final_match_state (
-   lobby_id TEXT NOT NULL references lobbies(lobby_id),
+   lobby_id TEXT NOT NULL,
    player_one_wallet TEXT NOT NULL,
    player_one_result match_result NOT NULL,
    player_one_gold INTEGER NOT NULL,
@@ -107,7 +107,7 @@ VALUES('defaultdefault', '0x0', 1,
 
 CREATE TABLE rounds(
   id SERIAL PRIMARY KEY,
-  lobby_id TEXT NOT NULL references lobbies(lobby_id),
+  lobby_id TEXT NOT NULL references lobbies(lobby_id) ON DELETE CASCADE,
   round_within_match INTEGER NOT NULL,
   match_state JSONB NOT NULL,
   starting_block_height INTEGER NOT NULL references block_heights(block_height),
