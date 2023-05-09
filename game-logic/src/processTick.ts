@@ -513,11 +513,13 @@ function slothDamage(
   units: AttackerUnit[],
   randomnessGenerator: Prando
 ): TowerAttack[] {
-  const damageEvents: TowerAttack[][] = units.map(unit => {
+  const damageEvents = units.reduce((acc, unit) => {
     const events = towerShot(matchConfig, tower, unit, randomnessGenerator);
-    return events;
-  });
-  return damageEvents.flat();
+    const gotKilled = events.find(e => e.eventType === "actorDeleted" && e.id === tower.id)
+    if (gotKilled) return [...acc, ...events.filter(e => e.eventType === "damage" && e.faction === "defender")]
+    else return [...acc, ...events]
+  }, [] as TowerAttack[]);
+  return damageEvents;
 }
 
 // Events where Units attack the defender.
