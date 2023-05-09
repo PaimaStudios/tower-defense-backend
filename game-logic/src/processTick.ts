@@ -438,8 +438,6 @@ function damageByTower(
 ): TowerAttack[] {
   if (tower.structure === 'slothTower')
     return slothDamage(matchConfig, tower, units, randomnessGenerator);
-  else if (tower.structure === 'piranhaTower' && tower.upgrades === 2)
-    return units.map(u => towerShot(matchConfig, tower, u, randomnessGenerator)).flat();
   else {
     const pickedOne = units.reduce(pickOne);
     return towerShot(matchConfig, tower, pickedOne, randomnessGenerator);
