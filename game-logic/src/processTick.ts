@@ -473,33 +473,6 @@ function towerShot(
   // If the shot killed the unit, add the event.
   if (dying) events.push(killEvent);
   // Macaws if upgraded can deflect attacks.
-  const superMacaw = unit.subType === 'macaw' && unit.upgradeTier === 3;
-  // Range check
-  const inMacawRange = isInRange(
-    unit.coordinates,
-    tower.coordinates,
-    matchConfig.macawCrypt[unit.upgradeTier].attackRange,
-    matchState.width
-  );
-  const counterAttack: DamageEvent = {
-    eventType: 'damage',
-    faction: 'attacker',
-    sourceID: unit.id,
-    targetID: tower.id,
-    damageAmount: unit.damage,
-    damageType: 'counterAttack',
-  };
-  if (superMacaw && inMacawRange && !dying) {
-    console.log(counterAttack, 'macaw counter attacking');
-    events.push(counterAttack);
-  }
-  const towerDead = unit.damage >= tower.health;
-  const killTowerEvent: ActorDeletedEvent = {
-    eventType: 'actorDeleted',
-    faction: 'defender',
-    id: tower.id,
-  };
-  if (superMacaw && !dying && towerDead) events.push(killTowerEvent);
   return events;
 }
 
@@ -510,12 +483,7 @@ function computeDamageByTowerAmount(
   unit: AttackerUnit,
   randomnessGenerator: Prando
 ): number {
-  if (tower.structure === 'anacondaTower') {
-    const killChance = tower.upgrades === 2 ? 0.5 : 0; // 50/50 chance of instakill if upgraded twice
-    return randomnessGenerator.next() < killChance
-      ? unit.health
-      : matchConfig.anacondaTower[tower.upgrades].damage;
-  } else return matchConfig[tower.structure][tower.upgrades].damage;
+  return matchConfig[tower.structure][tower.upgrades].damage;
 }
 
 // Function to calculate damage done by Sloth Towers
