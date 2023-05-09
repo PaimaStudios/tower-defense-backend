@@ -247,8 +247,10 @@ export const conciseFactionMap: Record<RoleSettingConcise, RoleSetting> = {
 
 export const baseConfig: MatchConfig = {
   defenderBaseHealth: 100,
+  maxAttackerGold: 300,
   baseAttackerGoldRate: 150,
   baseDefenderGoldRate: 150,
+  maxDefenderGold: 300,
   towerRepairValue: 25,
   repairCost: 10,
   recoupPercentage: 50,

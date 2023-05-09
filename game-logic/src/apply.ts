@@ -25,8 +25,14 @@ export default function applyEvent(
   const faction = event.faction;
   switch (event.eventType) {
     case 'goldUpdate':
-      if (faction === 'attacker') matchState.attackerGold = event.amount;
-      else if (faction === 'defender') matchState.defenderGold = event.amount;
+      if (faction === 'attacker') {
+        const amount = event.amount > config.maxAttackerGold ? config.maxAttackerGold : event.amount;
+        matchState.attackerGold = amount;
+      }
+      else if (faction === 'defender') {
+        const amount = event.amount > config.maxDefenderGold ? config.maxDefenderGold : event.amount;
+        matchState.defenderGold = amount;
+      }
       break;
     case 'build':
       // mutate map with new actor
