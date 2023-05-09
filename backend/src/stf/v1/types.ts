@@ -62,6 +62,10 @@ export interface UserStats extends ScheduledDataInput {
   user: WalletAddress;
   result: ResultConcise;
 }
+export interface WipeOldLobbies extends ScheduledDataInput{
+  effect: "wipeOldLobbies",
+  days: number;
+}
 
 export interface RegisteredConfigInput {
   input: 'registeredConfig';
@@ -75,4 +79,7 @@ export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {
 
 export function isUserStats(input: ScheduledDataInput): input is UserStats {
   return (input as UserStats).effect === 'stats';
+}
+export function isCleanDB(input: ScheduledDataInput): input is UserStats {
+  return (input as WipeOldLobbies).effect === 'wipeOldLobbies';
 }
