@@ -287,3 +287,30 @@ const endMatchIR: any = {"usedParamSet":{"current_match_state":true,"lobby_id":t
 export const endMatch = new PreparedQuery<IEndMatchParams,IEndMatchResult>(endMatchIR);
 
 
+/** 'WipeOldlobbies' parameters type */
+export interface IWipeOldlobbiesParams {
+  date: Date | null | void;
+}
+
+/** 'WipeOldlobbies' return type */
+export type IWipeOldlobbiesResult = void;
+
+/** 'WipeOldlobbies' query type */
+export interface IWipeOldlobbiesQuery {
+  params: IWipeOldlobbiesParams;
+  result: IWipeOldlobbiesResult;
+}
+
+const wipeOldlobbiesIR: any = {"usedParamSet":{"date":true},"params":[{"name":"date","required":false,"transform":{"type":"scalar"},"locs":[{"a":69,"b":73}]}],"statement":"DELETE from lobbies\nWHERE lobby_state = 'finished' \nAND created_at < :date"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * DELETE from lobbies
+ * WHERE lobby_state = 'finished' 
+ * AND created_at < :date
+ * ```
+ */
+export const wipeOldlobbies = new PreparedQuery<IWipeOldlobbiesParams,IWipeOldlobbiesResult>(wipeOldlobbiesIR);
+
+

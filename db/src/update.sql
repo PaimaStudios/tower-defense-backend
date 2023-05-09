@@ -63,3 +63,8 @@ UPDATE lobbies
 SET  lobby_state = 'finished',
 current_match_state = :current_match_state!
 WHERE lobby_id = :lobby_id!;
+
+/* @name wipeOldlobbies */
+DELETE from lobbies
+WHERE lobby_state = 'finished' 
+AND created_at < :date;
