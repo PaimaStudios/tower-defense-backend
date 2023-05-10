@@ -11,7 +11,9 @@ import type {
 // export type DefenderStructureType = 'anacondaTower' | 'slothTower' | 'piranhaTower';
 
 export enum GamePlan {
+  OneVSOne_All = 'OneVSOne_All',
   OneVSOne_SameLvl1 = 'OneVSOne_SameLvL1',
+  TwoLvl1_VS_OneLvl2 = 'TwoLvl1_VS_OneLvl2',
   OneVSOne_SameLvl2 = 'OneVSOne_SameLvL2',
   OneVSOne_SameLvl3 = 'OneVSOne_SameLvL3',
 }
@@ -34,8 +36,25 @@ class Balancing {
       case GamePlan.OneVSOne_SameLvl3:
         throw new Error('GamePlan not implemented');
       default:
-        throw new Error('GamePlan not implemented');
+        throw new Error('GamePlan not implemented / compatible');
     }
+  }
+
+  getAllTowerActions(): { [key: string]: TurnAction[] } {
+    const attackers: AttackerStructureType[] = ['macawCrypt', 'gorillaCrypt', 'jaguarCrypt'];
+    const defenders: DefenderStructureType[] = ['anacondaTower', 'slothTower', 'piranhaTower'];
+
+    const resultMap: { [key: string]: TurnAction[] } = {};
+
+    for (const defender of defenders) {
+      for (const attacker of attackers) {
+        const result = this.oneVSOne_SameLvl1(attacker, defender);
+        const key = `${defender}-${attacker}`;
+        resultMap[key] = result;
+      }
+    }
+
+    return resultMap;
   }
 
   oneVSOne_SameLvl1(

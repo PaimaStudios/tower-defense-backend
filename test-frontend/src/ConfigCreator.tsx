@@ -9,6 +9,8 @@ import './ConfigCreator.css';
 import Prando from 'paima-engine/paima-prando';
 import Simulation from './Simulation';
 import Balancing, { GamePlan } from './balancing/balancing';
+import { configToConcise } from '@tower-defense/utils';
+import GeneralConfig from './components/GeneralConfig';
 
 const maps: Record<string, string> = {
   // backwards:
@@ -31,7 +33,7 @@ const maps: Record<string, string> = {
 };
 
 const defaultConfigUnparsed =
-  'gs10;bh25;gd100;ga100;rv25;rc10;rp50;hb5;sb10;at;1;p50;h10;c21;d14;r2;2;p30;h30;c25;d15;r2;3;p40;h40;c28;d20;r3;pt;1;p50;h50;c12;d2;r4;2;p30;h75;c12;d2;r4;3;p40;h100;c19;d2;r4;st;1;p50;h50;c34;d2;r2;2;p30;h150;c31;d3;r2;3;p40;h200;c31;d4;r2;gc;1;p70;h14;r20;c10;d1;br3;bc1;s4;2;p40;h40;r9;c15;d1;br3;bc1;s5;3;p50;h40;r9;c17;d1;br3;bc1;s5;jc;1;p70;h1;r10;c8;d1;br3;bc1;s16;2;p40;h2;r10;c10;d1;br1;bc1;s40;3;p50;h2;r10;c13;d1;br2;bc30;s40;mc;1;p70;h6;r15;c7;d1;br1;bc5;s10;ac60;ar1;2;p40;h10;r15;c9;d3;br3;bc1;s11;ac40;ar2;3;p50;h10;r10;c11;d3;br3;bc30;s11;ac40;ar2';
+  'gs10;bh25;gd100;ga100;rv25;rc25;rp50;hb5;sb10;at;1;p50;h10;c21;d14;r2;2;p25;h13;c16;d17;r3;3;p25;h16;c16;d20;r4;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r5;3;p25;h80;c8;d4;r6;st;1;p50;h50;c34;d2;r2;2;p25;h65;c26;d3;r3;3;p25;h80;c26;d4;r4;gc;1;p70;h14;r20;c10;d1;br3;bc1;s4;2;p60;h17;r16;c13;d1;br3;bc1;s6;3;p50;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r12;c11;d1;br3;bc1;s35;2;p35;h3;r12;c14;d2;br3;bc1;s44;3;p35;h4;r12;c17;d3;br2;bc30;s54;mc;1;p40;h6;r15;c7;d1;br1;bc5;s10;ac60;ar2;2;p20;h8;r12;c10;d2;br1;bc5;s12;ac55;ar1;3;p20;h10;r12;c13;d3;br3;bc30;s14;ac55;ar2';
 
 export default function () {
   const [config, setConfig] = useState(baseConfig);
@@ -43,6 +45,7 @@ export default function () {
   const rng = new Prando('hai');
   const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
   const [matchState, setMatchState] = useState(dummyState);
+  const [matchStates, setMatchStates] = useState([dummyState]);
 
   useEffect(() => {
     parseLoadConfig({ content: defaultConfigUnparsed });
@@ -58,23 +61,37 @@ export default function () {
 
   async function simulate() {
     console.log('Simulating...');
-    const balancing = new Balancing(matchState, GamePlan.OneVSOne_SameLvl2);
-    const moves = balancing.getTowerAction('macawCrypt', 'piranhaTower');
+    const newMatchStates = [];
 
-    let running = true;
-    let tick = 1;
+    const balancing = new Balancing(matchState, GamePlan.OneVSOne_All);
+    const allMoves = balancing.getAllTowerActions();
 
-    const updatedState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
-    const state = { ...updatedState, currentRound: 1 };
-    while (running) {
-      processTick(config, state, moves, tick, rng);
-      tick++;
-      if (state.currentRound === 4 && state.roundEnded == true) {
-        running = false;
+    for (const moves of Object.values(allMoves)) {
+      let running = true;
+      let tick = 1;
+
+      const updatedState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
+      const state = { ...updatedState, currentRound: 1 };
+      while (running) {
+        processTick(config, state, moves, tick, rng);
+        tick++;
+        if (state.currentRound === 3 && state.roundEnded == true) {
+          running = false;
+        }
       }
+      newMatchStates.push(state);
+      console.log(`State after simulation for moves ${moves}:`, state);
     }
-    setMatchState(state);
-    console.log('State after simulation:', state);
+
+    setMatchStates(newMatchStates);
+    // TODO: remove the below line once the UI is updated to display multiple simulation results.
+    setMatchState(newMatchStates[0]); // Update the matchState with the first simulation result.
+  }
+
+  async function logCurrentConfig() {
+    console.log('Logging current config...');
+    const configString = configToConcise(config);
+    console.log(configString);
   }
 
   async function getLatest() {
@@ -117,96 +134,7 @@ export default function () {
         <button onClick={getLatest}>Get Latest</button>
       </div>
       <div className="separation-line"></div>
-
-      <div className="general">
-        <div className="column">
-          <div className="input">
-            <span>Game Speed</span>
-            <input
-              type="number"
-              value={config.baseSpeed}
-              onChange={e => setConfig({ ...config, baseSpeed: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Defender Base Health</span>
-            <input
-              type="number"
-              value={config.defenderBaseHealth}
-              onChange={e => setConfig({ ...config, defenderBaseHealth: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Attacker Gold per turn</span>
-            <input
-              type="number"
-              value={config.baseAttackerGoldRate}
-              onChange={e =>
-                setConfig({ ...config, baseAttackerGoldRate: parseInt(e.target.value) })
-              }
-            />
-          </div>
-          <div className="input">
-            <span>Defender Gold per turn</span>
-            <input
-              type="number"
-              value={config.baseDefenderGoldRate}
-              onChange={e =>
-                setConfig({ ...config, baseDefenderGoldRate: parseInt(e.target.value) })
-              }
-            />
-          </div>
-        </div>
-        <div className="column">
-          <div className="input">
-            <span>Cost of Repairing structures</span>
-            <input
-              type="number"
-              value={config.repairCost}
-              onChange={e => setConfig({ ...config, repairCost: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Tower health regained by repairing</span>
-            <input
-              type="number"
-              value={config.towerRepairValue}
-              onChange={e => setConfig({ ...config, towerRepairValue: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Money recouped (in %) when salvaging structures</span>
-            <input
-              type="number"
-              value={config.recoupPercentage}
-              onChange={e => setConfig({ ...config, recoupPercentage: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>
-              <del>Health buff given by Upgraded Gorilla Crypts</del>
-            </span>
-            <input
-              type="number"
-              value={config.healthBuffAmount}
-              onChange={e => setConfig({ ...config, healthBuffAmount: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>
-              <del>Speed buff given by Upgraded Jaguar Crypts</del>
-            </span>
-            <input
-              type="number"
-              value={config.speedBuffAmount}
-              onChange={e => setConfig({ ...config, speedBuffAmount: parseInt(e.target.value) })}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="game-interpretation">
-        <b>Game Interpretation:</b> 1 second = {config.baseSpeed} ticks
-      </div>
+      <GeneralConfig config={config} setConfig={setConfig} />
       <div className="small-separation-line"></div>
       <div className="tower">
         <h1>Anaconda Tower Specs</h1>
@@ -2524,7 +2452,7 @@ export default function () {
                     macawCrypt: {
                       ...config.macawCrypt,
                       3: {
-                        ...config.macawCrypt[1],
+                        ...config.macawCrypt[3],
                         attackDamage: parseInt(e.target.value),
                       },
                     },
@@ -2616,6 +2544,18 @@ export default function () {
         </div>
       </div>
 
+      <div className="send-button-container">
+        <button className="simulate-button" onClick={simulate}>
+          SIMULATE
+        </button>
+        <button className="log-button" onClick={logCurrentConfig}>
+          LOG
+        </button>
+        <button className="send-button" onClick={submit}>
+          SEND
+        </button>
+      </div>
+
       <div className="simulation-panel">
         <h2>Game Simulation</h2>
         <div className="input">
@@ -2637,17 +2577,8 @@ export default function () {
           </select>
         </div>
         <div className="result">
-          <Simulation data={matchState} />
+          <Simulation data={matchStates} />
         </div>
-      </div>
-
-      <div className="send-button-container">
-        <button className="simulate-button" onClick={simulate}>
-          SIMULATE
-        </button>
-        <button className="send-button" onClick={submit}>
-          SEND
-        </button>
       </div>
     </div>
   );
