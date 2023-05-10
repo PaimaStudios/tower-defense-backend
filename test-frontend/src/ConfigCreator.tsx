@@ -33,7 +33,7 @@ const maps: Record<string, string> = {
 };
 
 const defaultConfigUnparsed =
-  'gs10;bh25;gd100;ga100;rv25;rc25;rp50;hb5;sb10;at;1;p50;h10;c21;d14;r2;2;p25;h13;c16;d17;r3;3;p25;h16;c16;d20;r4;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r5;3;p25;h80;c8;d4;r6;st;1;p50;h50;c34;d2;r2;2;p25;h65;c26;d3;r3;3;p25;h80;c26;d4;r4;gc;1;p70;h14;r20;c10;d1;br3;bc1;s4;2;p60;h17;r16;c13;d1;br3;bc1;s6;3;p50;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r12;c11;d1;br3;bc1;s35;2;p35;h3;r12;c14;d2;br3;bc1;s44;3;p35;h4;r12;c17;d3;br2;bc30;s54;mc;1;p40;h6;r15;c7;d1;br1;bc5;s10;ac60;ar2;2;p20;h8;r12;c10;d2;br1;bc5;s12;ac55;ar1;3;p20;h10;r12;c13;d3;br3;bc30;s14;ac55;ar2';
+  'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc25;rp50;hb5;sb10;at;1;p50;h12;c21;d14;r2;2;p25;h15;c16;d17;r3;3;p25;h18;c16;d20;r4;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r5;3;p25;h80;c8;d4;r6;st;1;p50;h50;c20;d3;r2;2;p25;h65;c26;d4;r3;3;p25;h80;c26;d5;r4;gc;1;p70;h14;r20;c10;d1;br3;bc1;s4;2;p35;h17;r16;c13;d1;br3;bc1;s6;3;p35;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h3;r16;c17;d2;br3;bc1;s22;3;p35;h4;r16;c20;d3;br2;bc30;s26;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c10;d1;br1;bc5;s10;ac55;ar1;3;p40;h10;r16;c13;d2;br3;bc30;s12;ac55;ar2';
 
 export default function () {
   const [config, setConfig] = useState(baseConfig);

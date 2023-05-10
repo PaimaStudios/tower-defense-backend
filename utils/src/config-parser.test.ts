@@ -33,6 +33,8 @@ describe('Input parsing', () => {
     baseSpeed: Math.ceil(1 + Math.random() * 20),
     healthBuffAmount: Math.ceil(1 + Math.random() * 10), // see on gorilla crypt balance docs
     speedBuffAmount: Math.ceil(1 + Math.random() * 10), // see on jaguar crypt balance docs
+    maxAttackerGold: Math.ceil(1 + Math.random() * 1000),
+    maxDefenderGold: Math.ceil(1 + Math.random() * 1000),
     anacondaTower: {
       1: randomTower(),
       2: randomTower(),

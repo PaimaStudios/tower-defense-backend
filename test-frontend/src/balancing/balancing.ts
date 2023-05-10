@@ -1,6 +1,6 @@
-import { coordsToIndex } from '@tower-defense/game-logic/build/processTick';
 import type {
   AttackerStructureType,
+  Coordinates,
   DefenderStructureType,
   MatchState,
   TurnAction,
@@ -25,6 +25,10 @@ class Balancing {
   constructor(matchState: MatchState, gamePlan: GamePlan) {
     this.matchState = matchState;
     this.gamePlan = gamePlan;
+  }
+
+  coordsToIndex(coords: Coordinates, width: number): number {
+    return width * coords.y + coords.x;
   }
 
   getTowerAction(attacker: AttackerStructureType, defender: DefenderStructureType): TurnAction[] {
@@ -82,7 +86,7 @@ class Balancing {
       round: 1,
       action: 'build',
       faction: 'defender',
-      coordinates: coordsToIndex({ x: position, y: 7 }, this.matchState.width),
+      coordinates: this.coordsToIndex({ x: position, y: 7 }, this.matchState.width),
       structure: type,
     };
   }
@@ -93,7 +97,7 @@ class Balancing {
       round: 2,
       action: 'build',
       faction: 'attacker',
-      coordinates: coordsToIndex({ x: position, y: 7 }, this.matchState.width),
+      coordinates: this.coordsToIndex({ x: position, y: 7 }, this.matchState.width),
       structure: type,
     };
   }
