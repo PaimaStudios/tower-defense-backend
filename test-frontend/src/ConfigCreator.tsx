@@ -7,39 +7,48 @@ import { useEffect, useState } from 'react';
 import mw from 'mw';
 import './ConfigCreator.css';
 import Prando from 'paima-engine/paima-prando';
+import Simulation from './Simulation';
+import Balancing, { GamePlan } from './balancing/balancing';
+import { configToConcise } from '@tower-defense/utils';
+import GeneralConfig from './components/GeneralConfig';
 
 const maps: Record<string, string> = {
+  // backwards:
+  //   '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222',
+  // crossing:
+  //   '1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222',
+  // narrow:
+  //   '1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222',
+  // snale:
+  //   '1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222',
+  // straight:
+  //   '1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222',
+  // wavy: '1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222',
+  // fork: '1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222',
+  // islands:
+  //   '7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888',
+  line: '1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222',
   jungle:
     '1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626664\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222',
-  backwards:
-    '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222',
-  crossing:
-    '1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222',
-  narrow:
-    '1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222',
-  snale:
-    '1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222',
-  straight:
-    '1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222',
-  wavy: '1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222',
-  fork: '1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222',
-  islands:
-    '7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888',
-  line: '1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222',
 };
+
+const defaultConfigUnparsed =
+  'gs10;bh25;gd100;ga100;rv25;rc25;rp50;hb5;sb10;at;1;p50;h10;c21;d14;r2;2;p25;h13;c16;d17;r3;3;p25;h16;c16;d20;r4;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r5;3;p25;h80;c8;d4;r6;st;1;p50;h50;c34;d2;r2;2;p25;h65;c26;d3;r3;3;p25;h80;c26;d4;r4;gc;1;p70;h14;r20;c10;d1;br3;bc1;s4;2;p60;h17;r16;c13;d1;br3;bc1;s6;3;p50;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r12;c11;d1;br3;bc1;s35;2;p35;h3;r12;c14;d2;br3;bc1;s44;3;p35;h4;r12;c17;d3;br2;bc30;s54;mc;1;p40;h6;r15;c7;d1;br1;bc5;s10;ac60;ar2;2;p20;h8;r12;c10;d2;br1;bc5;s12;ac55;ar1;3;p20;h10;r12;c13;d3;br3;bc30;s14;ac55;ar2';
+
 export default function () {
   const [config, setConfig] = useState(baseConfig);
-  const [mapName, setMapName] = useState('jungle');
-  const [map, setMap] = useState(maps.jungle);
+  const [mapName, setMapName] = useState('line');
+  const [map, setMap] = useState(maps.line);
   const [configKey, setConfigKey] = useState('');
   const configEndpoint = 'https://td-backend-testnet-c1.paimastudios.com/user_configs';
   const creator = '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
   const rng = new Prando('hai');
   const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
   const [matchState, setMatchState] = useState(dummyState);
+  const [matchStates, setMatchStates] = useState([dummyState]);
 
   useEffect(() => {
-    console.log('baseConfig: ', baseConfig);
+    parseLoadConfig({ content: defaultConfigUnparsed });
   }, []);
 
   async function submit() {
@@ -51,46 +60,61 @@ export default function () {
   }
 
   async function simulate() {
-    console.log('Simulate');
-    const moves = [];
-    let running = true;
-    let tick = 1;
-    const state = { ...dummyState, currentRound: 3 };
-    while (running) {
-      const events = processTick(config, state, moves, tick, rng);
-      tick++;
-      if (!events) running = false;
+    console.log('Simulating...');
+    const newMatchStates = [];
+
+    const balancing = new Balancing(matchState, GamePlan.OneVSOne_All);
+    const allMoves = balancing.getAllTowerActions();
+
+    for (const moves of Object.values(allMoves)) {
+      let running = true;
+      let tick = 1;
+
+      const updatedState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
+      const state = { ...updatedState, currentRound: 1 };
+      while (running) {
+        processTick(config, state, moves, tick, rng);
+        tick++;
+        if (state.currentRound === 3 && state.roundEnded == true) {
+          running = false;
+        }
+      }
+      newMatchStates.push(state);
+      console.log(`State after simulation for moves ${moves}:`, state);
     }
-    setMatchState(state);
+
+    setMatchStates(newMatchStates);
+    // TODO: remove the below line once the UI is updated to display multiple simulation results.
+    setMatchState(newMatchStates[0]); // Update the matchState with the first simulation result.
+  }
+
+  async function logCurrentConfig() {
+    console.log('Logging current config...');
+    const configString = configToConcise(config);
+    console.log(configString);
   }
 
   async function getLatest() {
     const response = await fetch(configEndpoint + '?' + new URLSearchParams({ creator }));
     const responseHashMap = await response.json();
     const configs: [any] = responseHashMap.configs;
-    // get the last element of the array
     const latestConfig = configs[configs.length - 1];
-    // update config input field with the config id
     setConfigKey(latestConfig.id);
-    // update the config object with the latest config
-    // setConfig(latestConfig.content);
+  }
+
+  function parseLoadConfig(configObj: any) {
+    const content = configObj.content;
+    const parsedConfig = parseConfig(content);
+    setConfig(parsedConfig);
   }
 
   async function updateConfig() {
     const response = await fetch(configEndpoint + '?' + new URLSearchParams({ creator }));
     const responseHashMap = await response.json();
-    console.log('responseHasmap: ', responseHashMap);
-    // const updatedConfigValue = responseHashMap[configKey];
-
     const configObj = responseHashMap.configs.find((config: any) => config.id === configKey);
-    console.log('config found: ', configObj);
 
     if (configObj) {
-      const content = configObj.content;
-      const parsedConfig = parseConfig(content);
-
-      console.log('parsedConfig: ', parsedConfig);
-      setConfig(parsedConfig);
+      parseLoadConfig(configObj);
     } else {
       console.error('Config not found for the given config key');
     }
@@ -110,96 +134,7 @@ export default function () {
         <button onClick={getLatest}>Get Latest</button>
       </div>
       <div className="separation-line"></div>
-
-      <div className="general">
-        <div className="column">
-          <div className="input">
-            <span>Game Speed</span>
-            <input
-              type="number"
-              value={config.baseSpeed}
-              onChange={e => setConfig({ ...config, baseSpeed: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Defender Base Health</span>
-            <input
-              type="number"
-              value={config.defenderBaseHealth}
-              onChange={e => setConfig({ ...config, defenderBaseHealth: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Attacker Gold per turn</span>
-            <input
-              type="number"
-              value={config.baseAttackerGoldRate}
-              onChange={e =>
-                setConfig({ ...config, baseAttackerGoldRate: parseInt(e.target.value) })
-              }
-            />
-          </div>
-          <div className="input">
-            <span>Defender Gold per turn</span>
-            <input
-              type="number"
-              value={config.baseDefenderGoldRate}
-              onChange={e =>
-                setConfig({ ...config, baseDefenderGoldRate: parseInt(e.target.value) })
-              }
-            />
-          </div>
-        </div>
-        <div className="column">
-          <div className="input">
-            <span>Cost of Repairing structures</span>
-            <input
-              type="number"
-              value={config.repairCost}
-              onChange={e => setConfig({ ...config, repairCost: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Tower health regained by repairing</span>
-            <input
-              type="number"
-              value={config.towerRepairValue}
-              onChange={e => setConfig({ ...config, towerRepairValue: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>Money recouped (in %) when salvaging structures</span>
-            <input
-              type="number"
-              value={config.recoupPercentage}
-              onChange={e => setConfig({ ...config, recoupPercentage: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>
-              <del>Health buff given by Upgraded Gorilla Crypts</del>
-            </span>
-            <input
-              type="number"
-              value={config.healthBuffAmount}
-              onChange={e => setConfig({ ...config, healthBuffAmount: parseInt(e.target.value) })}
-            />
-          </div>
-          <div className="input">
-            <span>
-              <del>Speed buff given by Upgraded Jaguar Crypts</del>
-            </span>
-            <input
-              type="number"
-              value={config.speedBuffAmount}
-              onChange={e => setConfig({ ...config, speedBuffAmount: parseInt(e.target.value) })}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="game-interpretation">
-        <b>Game Interpretation:</b> 1 second = {config.baseSpeed} ticks
-      </div>
+      <GeneralConfig config={config} setConfig={setConfig} />
       <div className="small-separation-line"></div>
       <div className="tower">
         <h1>Anaconda Tower Specs</h1>
@@ -2517,7 +2452,7 @@ export default function () {
                     macawCrypt: {
                       ...config.macawCrypt,
                       3: {
-                        ...config.macawCrypt[1],
+                        ...config.macawCrypt[3],
                         attackDamage: parseInt(e.target.value),
                       },
                     },
@@ -2609,6 +2544,18 @@ export default function () {
         </div>
       </div>
 
+      <div className="send-button-container">
+        <button className="simulate-button" onClick={simulate}>
+          SIMULATE
+        </button>
+        <button className="log-button" onClick={logCurrentConfig}>
+          LOG
+        </button>
+        <button className="send-button" onClick={submit}>
+          SEND
+        </button>
+      </div>
+
       <div className="simulation-panel">
         <h2>Game Simulation</h2>
         <div className="input">
@@ -2630,18 +2577,8 @@ export default function () {
           </select>
         </div>
         <div className="result">
-          <h2>Results</h2>
-          <p>Final health: {matchState.defenderBase.health}</p>
+          <Simulation data={matchStates} />
         </div>
-      </div>
-
-      <div className="send-button-container">
-        <button className="simulate-button" onClick={simulate}>
-          SIMULATE
-        </button>
-        <button className="send-button" onClick={submit}>
-          SEND
-        </button>
       </div>
     </div>
   );
