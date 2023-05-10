@@ -11,6 +11,8 @@ interface GeneralConfigProps {
     recoupPercentage: number;
     healthBuffAmount: number;
     speedBuffAmount: number;
+    maxAttackerGold: number;
+    maxDefenderGold: number;
   };
   setConfig: (config: any) => void;
 }
@@ -54,6 +56,22 @@ const GeneralConfig: React.FC<GeneralConfigProps> = ({ config, setConfig }) => {
               onChange={e =>
                 setConfig({ ...config, baseDefenderGoldRate: parseInt(e.target.value) })
               }
+            />
+          </div>
+          <div className="input">
+            <span>Max Attacker's Gold</span>
+            <input
+              type="number"
+              value={config.maxAttackerGold}
+              onChange={e => setConfig({ ...config, maxAttackerGold: parseInt(e.target.value) })}
+            />
+          </div>
+          <div className="input">
+            <span>Max Defender's Gold</span>
+            <input
+              type="number"
+              value={config.maxDefenderGold}
+              onChange={e => setConfig({ ...config, maxDefenderGold: parseInt(e.target.value) })}
             />
           </div>
         </div>
