@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
-import type { IGetPaginatedUserLobbiesResult } from '@tower-defense/db';
+import { IGetPaginatedUserLobbiesResult, getRoundData } from '@tower-defense/db';
 import { requirePool, getPaginatedUserLobbies, getRoundMoves } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
@@ -49,10 +49,16 @@ export class UserLobbiesController extends Controller {
         );
         const ids = moves.map(m => m.wallet);
         const myTurn = !ids.includes(wallet);
-        return { ...l, myTurn };
+        const [roundData] = await getRoundData.run(
+          { lobby_id: l.lobby_id, round_number: l.current_round },
+          pool
+        );
+        const round_start_height = !roundData ? null : roundData.starting_block_height;
+        return { ...l, myTurn, round_start_height };
       } else return l;
     });
     const lobbies = await Promise.all(addedWaitStatus);
     return { lobbies };
   }
 }
+('1111111111111222222222\r\n1111111111111222222222\r\n1155511115551222222222\r\n1551555155155226262222\r\n1551111111111222222222\r\n1511115551115666266662\r\n3511111111111222222264\r\n1511115551115666266662\r\n1551555155155226262222\r\n1151511115151226662222\r\n1155511115551222222222\r\n1111111111111222222222\r\n1111111111111222222222');

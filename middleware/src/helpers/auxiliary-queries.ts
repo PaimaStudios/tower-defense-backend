@@ -117,6 +117,7 @@ export async function fetchUserSetNft(
 
   try {
     const j = await res.json();
+    if (!j.nft) return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND);
     const nftAddress: ContractAddress = j.nft.address;
     const tokenId: number = parseInt(j.nft.token_id, 10);
     if (isNaN(tokenId)) {

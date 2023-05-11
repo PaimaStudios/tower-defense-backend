@@ -29,7 +29,10 @@ export class SearchOpenLobbiesController extends Controller {
 
     if (searchQuery.length == LOBBY_ID_LENGTH) {
       const lobbies = await getOpenLobbyById.run({ searchQuery, wallet }, pool);
-      return { lobbies };
+      // The frontend logic requires pagination in all cases, so let this hack
+      // work to stop endless spinners
+      if (!page || page === 1) return { lobbies };
+      else return { lobbies: [] };
     }
 
     const valPage = psqlNum.decode(page || 1); // pass 1 if undefined (or 0)
