@@ -494,7 +494,9 @@ function slothDamage(
   units: AttackerUnit[],
   randomnessGenerator: Prando
 ): TowerAttack[] {
-  const damageEvents = units.reduce((acc, unit) => {
+  const damageEvents = units
+  .filter(u => u.subType !== "jaguar")
+  .reduce((acc, unit) => {
     const events = towerShot(matchConfig, matchState, tower, unit, randomnessGenerator);
     const gotKilled = events.find(e => e.eventType === 'actorDeleted' && e.id === tower.id);
     if (gotKilled)
