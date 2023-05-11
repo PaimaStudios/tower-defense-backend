@@ -155,7 +155,7 @@ const baseJaguarCryptConfig3: CryptConfig = {
   attackWarmup: 10,
   attackCooldown: 20,
   unitSpeed: 40,
-  unitHealth: 2,
+  unitHealth: 5,
 };
 
 const baseMacawCryptConfig1: CryptConfig = {

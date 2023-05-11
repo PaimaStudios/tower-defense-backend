@@ -5,7 +5,6 @@ export function validateMoves(
   faction: Faction,
   matchState: MatchState
 ): boolean {
-  console.log('validating moves');
   const res = actions.reduce((acc, item) => {
     if (item.action === 'build')
       return canBuild(faction, item.coordinates, item.structure, matchState) ? acc : false;
@@ -25,14 +24,12 @@ function canBuild(
   const myTile = matchState.map[coords];
   const isTileAvailable = (tile: Tile) =>
     tile.type === 'open' && tile.faction === faction && faction === structureFaction;
-  console.log(myTile, 'my tile');
   //TODO: remove this extra logic once logging of such depth is not needed
   if (!isTileAvailable(myTile)) {
     const availableTiles = matchState.map.reduce(
       (acc: number[], tile, index) => (isTileAvailable(tile) ? [...acc, index] : acc),
       []
     );
-    console.log(availableTiles);
   }
   return isTileAvailable(myTile);
 }

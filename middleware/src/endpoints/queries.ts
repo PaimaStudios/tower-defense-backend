@@ -396,11 +396,17 @@ async function getMatchWinner(
       p1GoldSpent,
       p2GoldSpent,
     } = calculateMatchStats(j2);
+    const match_status = j.match_status || j2.lobby.lobby_state;
+    const winner_address =
+      j.winner_address || j2.initialState.defenderBase.health > 0
+        ? j2.initialState.defender
+        : j2.initialState.attacker;
+
     return {
       success: true,
       result: {
-        match_status: j.match_status,
-        winner_address: j.winner_address,
+        match_status,
+        winner_address,
         p1StructuresBuilt,
         p2StructuresBuilt,
         unitsDestroyed,

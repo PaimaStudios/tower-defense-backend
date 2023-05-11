@@ -246,19 +246,36 @@ export async function processZombieEffect(
   dbConn: Pool
 ): Promise<SQLUpdate[]> {
   const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
-  if (!lobby) return []
+  if (!lobby) return [];
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: lobby.current_round },
     dbConn
   );
-  if (!round) return []
+  if (!round) return [];
   const [configString] = await getMatchConfig.run({ id: lobby.config_id }, dbConn);
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
 
   console.log(`Executing zombie round (#${lobby.current_round}) for lobby ${lobby.lobby_id}`);
   // Simply proceed to the next round, without any moves (1 player per round).
-  return executeRound(blockHeight, lobby, matchConfig, [], round, randomnessGenerator);
+  const roundExecutionTuples = executeRound(
+    blockHeight,
+    lobby,
+    matchConfig,
+    [],
+    round,
+    randomnessGenerator
+  );
+  const practiceTuples = lobby.practice
+    ? practiceRound(
+        blockHeight,
+        { ...lobby, current_round: lobby.current_round + 1 },
+        matchConfig,
+        round, // match state here should have been mutated by the previous round execution...
+        randomnessGenerator
+      )
+    : [];
+  return [...roundExecutionTuples, ...practiceTuples];
 }
 
 export async function processStatsEffect(input: UserStats, dbConn: Pool): Promise<SQLUpdate[]> {
