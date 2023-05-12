@@ -33,7 +33,7 @@ import type {
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { attackerUnitMap } from './config';
-import { chooseTile, indexToCoords, isSpawnable, validateCoords } from './utils';
+import { chooseTile, euclideanDistance, indexToCoords, isSpawnable, validateCoords } from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -283,7 +283,7 @@ function spawn(
   // Then we compute the path tile in the map where the units will spawn at.
   const { height, map, width } = matchState;
   const mapState: MapState = { height, width, map };
-  const spawnTile = findClosebySpawnTile(mapState, crypt.coordinates);
+  const spawnTile = findCloseBySpawnTile(mapState, crypt.coordinates);
   return {
     eventType: 'spawn',
     faction: 'attacker',
@@ -313,23 +313,36 @@ function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
       return isSpawnable(tile);
     });
 }
+
+function closeBySpawnTiles(index: number, mapState: MapState, range: number): number[] {
+  const center = indexToCoords(index, mapState.width);
+  const tiles = getSurroundingCells(index, mapState.width, mapState.height, range)
+    .filter(tile => isSpawnable(mapState.map[tile]))
+    .map(tile => ({
+      index: tile,
+      distance: euclideanDistance(center, indexToCoords(tile, mapState.width)),
+    }));
+
+  if (tiles.length === 0) return [];
+  const minDistance = Math.min(...tiles.map(tile => tile.distance));
+  return tiles.filter(tile => tile.distance === minDistance).map(tile => tile.index);
+}
+
 /**
  * Function to find an available path next to a crypt to place a newly spawned unit.
- * If there is more than one candidate then @see {choosePath} is used to select one.
+ * If there is more than one candidate then @see {chooseTile} is used to select one.
  */
-function findClosebySpawnTile(mapState: MapState, coords: number, range = 1): number {
-  const adjacentTiles = adjacentSpawnTiles(coords, mapState);
+function findCloseBySpawnTile(mapState: MapState, index: number, range = 1): number {
+  const adjacentTiles = adjacentSpawnTiles(index, mapState);
   if (adjacentTiles.length > 0) {
     return chooseTile(adjacentTiles, mapState.width);
   }
-  const moreTiles = getSurroundingCells(coords, mapState.width, mapState.height, range + 1).filter(
-    n => isSpawnable(mapState.map[n])
-  );
+  const moreTiles = closeBySpawnTiles(index, mapState, range + 1);
   if (moreTiles.length > 0) {
     return chooseTile(moreTiles, mapState.width);
   }
 
-  return findClosebySpawnTile(mapState, coords, range + 1);
+  return findCloseBySpawnTile(mapState, index, range + 1);
 }
 
 // Movement events, dervive from the units already on the match sate.
@@ -606,27 +619,6 @@ function findCloseByUnits(
   return units;
 }
 
-function isInRange(unitA: number, unitB: number, range: number, mapWidth: number): boolean {
-  const coordsA = indexToCoords(unitA, mapWidth);
-  const coordsB = indexToCoords(unitB, mapWidth);
-  //
-  let found = false;
-  for (let x = coordsA.x - range; x <= coordsA.x + range; x++) {
-    for (let y = coordsA.y - range; y <= coordsA.y + range; y++) {
-      // Exclude the center cell itself
-      if (x === coordsA.x && y === coordsA.y) {
-        continue;
-      }
-      // Calculate the distance from the center cell
-      const dx = Math.abs(x - coordsA.x);
-      const dy = Math.abs(y - coordsA.y);
-
-      // Exclude diagonals for each range
-      if (dx + dy <= range && x === coordsB.x && y === coordsB.y) found = true;
-    }
-  }
-  return found;
-}
 export function getSurroundingCells(
   index: number,
   mapWidth: number,
