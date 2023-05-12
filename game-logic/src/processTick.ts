@@ -619,27 +619,6 @@ function findCloseByUnits(
   return units;
 }
 
-function isInRange(unitA: number, unitB: number, range: number, mapWidth: number): boolean {
-  const coordsA = indexToCoords(unitA, mapWidth);
-  const coordsB = indexToCoords(unitB, mapWidth);
-  //
-  let found = false;
-  for (let x = coordsA.x - range; x <= coordsA.x + range; x++) {
-    for (let y = coordsA.y - range; y <= coordsA.y + range; y++) {
-      // Exclude the center cell itself
-      if (x === coordsA.x && y === coordsA.y) {
-        continue;
-      }
-      // Calculate the distance from the center cell
-      const dx = Math.abs(x - coordsA.x);
-      const dy = Math.abs(y - coordsA.y);
-
-      // Exclude diagonals for each range
-      if (dx + dy <= range && x === coordsB.x && y === coordsB.y) found = true;
-    }
-  }
-  return found;
-}
 export function getSurroundingCells(
   index: number,
   mapWidth: number,
