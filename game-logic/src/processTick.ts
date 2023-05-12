@@ -283,7 +283,7 @@ function spawn(
   // Then we compute the path tile in the map where the units will spawn at.
   const { height, map, width } = matchState;
   const mapState: MapState = { height, width, map };
-  const spawnTile = findClosebySpawnTile(mapState, crypt.coordinates);
+  const spawnTile = findCloseBySpawnTile(mapState, crypt.coordinates);
   return {
     eventType: 'spawn',
     faction: 'attacker',
@@ -314,7 +314,7 @@ function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
     });
 }
 
-function closebySpawnTiles(index: number, mapState: MapState, range: number): number[] {
+function closeBySpawnTiles(index: number, mapState: MapState, range: number): number[] {
   const center = indexToCoords(index, mapState.width);
   const tiles = getSurroundingCells(index, mapState.width, mapState.height, range)
     .filter(tile => isSpawnable(mapState.map[tile]))
@@ -322,6 +322,8 @@ function closebySpawnTiles(index: number, mapState: MapState, range: number): nu
       index: tile,
       distance: euclideanDistance(center, indexToCoords(tile, mapState.width)),
     }));
+
+  if (tiles.length === 0) return [];
   const minDistance = Math.min(...tiles.map(tile => tile.distance));
   return tiles.filter(tile => tile.distance === minDistance).map(tile => tile.index);
 }
@@ -330,17 +332,17 @@ function closebySpawnTiles(index: number, mapState: MapState, range: number): nu
  * Function to find an available path next to a crypt to place a newly spawned unit.
  * If there is more than one candidate then @see {chooseTile} is used to select one.
  */
-function findClosebySpawnTile(mapState: MapState, index: number, range = 1): number {
+function findCloseBySpawnTile(mapState: MapState, index: number, range = 1): number {
   const adjacentTiles = adjacentSpawnTiles(index, mapState);
   if (adjacentTiles.length > 0) {
     return chooseTile(adjacentTiles, mapState.width);
   }
-  const moreTiles = closebySpawnTiles(index, mapState, range + 1);
+  const moreTiles = closeBySpawnTiles(index, mapState, range + 1);
   if (moreTiles.length > 0) {
     return chooseTile(moreTiles, mapState.width);
   }
 
-  return findClosebySpawnTile(mapState, index, range + 1);
+  return findCloseBySpawnTile(mapState, index, range + 1);
 }
 
 // Movement events, dervive from the units already on the match sate.
