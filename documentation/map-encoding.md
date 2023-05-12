@@ -178,6 +178,15 @@ Blocked path tiles are to be used sparingly as a last resort, to subtly influenc
 
 Units can get stuck if blocked paths are placed in a way that no adjacent path tile is present. There must always be a clear path from blocked path to the defender base.
 
-Blocked paths are currently used on 2 maps. Illustrated by the green material on screenshots below.
+Blocked paths are currently used on these maps, illustrated by the green material.
+
+- Backwards
 ![Backwards map](images/backwards.png)
+- Straight
 ![Straight map](images/straight.png)
+- Fork
+![Fork](images/fork.png)
+- Jungle
+![Jungle](images/jungle.png)
+- Wavy
+![Wavy](images/wavy.png)
