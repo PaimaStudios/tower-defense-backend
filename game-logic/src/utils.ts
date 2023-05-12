@@ -122,3 +122,7 @@ export function isDefenderStructure(
 ): structure is DefenderStructure {
   return structure.faction === 'defender';
 }
+
+export const euclideanDistance = (a: Coordinates, b: Coordinates): number => {
+  return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+};
