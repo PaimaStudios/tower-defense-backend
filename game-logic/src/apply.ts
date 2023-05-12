@@ -25,14 +25,8 @@ export default function applyEvent(
   const faction = event.faction;
   switch (event.eventType) {
     case 'goldUpdate':
-      if (faction === 'attacker') {
-        const amount = event.amount > config.maxAttackerGold ? config.maxAttackerGold : event.amount;
-        matchState.attackerGold = amount;
-      }
-      else if (faction === 'defender') {
-        const amount = event.amount > config.maxDefenderGold ? config.maxDefenderGold : event.amount;
-        matchState.defenderGold = amount;
-      }
+      if (faction === 'attacker') matchState.attackerGold = event.amount;
+      else if (faction === 'defender') matchState.defenderGold = event.amount;
       break;
     case 'build':
       // mutate map with new actor
@@ -185,14 +179,22 @@ function applyBuild(
   }
 }
 
-function applyTowerRepair(config: MatchConfig, matchState: MatchState, tower: DefenderStructure): void {
+function applyTowerRepair(
+  config: MatchConfig,
+  matchState: MatchState,
+  tower: DefenderStructure
+): void {
   const max = config[tower.structure][tower.upgrades].health;
   const repaired = tower.health + config.towerRepairValue;
   tower.health = repaired > max ? max : repaired;
   matchState.defenderGold -= config.repairCost;
 }
 
-function applyCryptRepair(config: MatchConfig, matchState: MatchState, crypt: AttackerStructure): void {
+function applyCryptRepair(
+  config: MatchConfig,
+  matchState: MatchState,
+  crypt: AttackerStructure
+): void {
   // crypt.spawned = crypt.spawned.slice(1); // deprecated since we don't age crypts anymore
   matchState.attackerGold -= config.repairCost;
 }
