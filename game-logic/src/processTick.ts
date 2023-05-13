@@ -100,11 +100,11 @@ function processTick(
 function incrementRound(matchState: MatchState): null {
   // reset the list of spawned units of every crypt
   for (const crypt of Object.values(matchState.actors.crypts)) {
-    crypt.spawned = [];
+    (crypt as AttackerStructure).spawned = [];
   }
   // reset the last shot of every tower
   for (const tower of Object.values(matchState.actors.towers)) {
-    tower.lastShot = 0;
+    (tower as DefenderStructure).lastShot = 0;
   }
   matchState.finishedSpawning = [];
   // increment round
@@ -261,7 +261,7 @@ function spawnEvents(
 ): UnitSpawnedEvent[] {
   // Crypts are stored in an ordered map in the map state, we extract an array, filter active ones, and iterate.
   const crypts: AttackerStructure[] = Object.values(matchState.actors.crypts).filter(
-    c => !matchState.finishedSpawning.includes(c.id)
+    (c: AttackerStructure) => !matchState.finishedSpawning.includes(c.id)
   );
   const events = crypts.map(ss => {
     // We get the crypt stats by looking up with the Match Config passed.
@@ -354,21 +354,21 @@ function findCloseBySpawnTile(mapState: MapState, index: number, range = 1): num
   return findCloseBySpawnTile(mapState, index, range + 1);
 }
 
-// Movement events, dervive from the units already on the match sate.
+// Movement events, derive from the units already on the match sate.
 function movementEvents(
   matchConfig: MatchConfig,
   matchState: MatchState,
   currentTick: number
 ): Array<UnitMovementEvent | StatusEffectAppliedEvent> {
   const attackers = Object.values(matchState.actors.units);
-  const events = attackers.map(attacker => {
+  const events = attackers.map((attacker: AttackerUnit) => {
     // Units will always emit movement events unless they are macaws and they are busy attacking a nearby tower.
     let busyAttacking = false;
     if (attacker.subType === 'macaw') {
       const a = attacker as Macaw;
       const cooldown = matchConfig.macawCrypt[attacker.upgradeTier].attackCooldown;
       const cool = a.lastShot === 0 || currentTick - a.lastShot > cooldown;
-      busyAttacking = cool && findClosebyTowers(matchState, attacker.coordinates, 1).length > 0;
+      busyAttacking = cool && findClosebyTowers(matchState, a.coordinates, 1).length > 0;
     }
     if (busyAttacking) return null;
     else {
@@ -622,7 +622,7 @@ function findCloseByUnits(
   // Get all surrounding tile indexes;
   const surrounding = getSurroundingCells(coords, matchState.width, matchState.height, range);
   // Get all units present on the map
-  const units: AttackerUnit[] = Object.values(matchState.actors.units).filter(u =>
+  const units: AttackerUnit[] = Object.values(matchState.actors.units).filter((u: AttackerUnit) =>
     surrounding.includes(u.coordinates)
   );
   return units;
@@ -665,7 +665,7 @@ function findClosebyTowers(
 ): DefenderStructure[] {
   if (radius > range) return [];
   const inRange = getSurroundingCells(coords, matchState.width, matchState.height, radius);
-  const structures = Object.values(matchState.actors.towers).filter(tw =>
+  const structures = Object.values(matchState.actors.towers).filter((tw: DefenderStructure) =>
     inRange.includes(tw.coordinates)
   );
   if (structures.length) {

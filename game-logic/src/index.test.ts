@@ -18,23 +18,27 @@ import type {
   UnitMovementEvent,
   TileNumber,
   Macaw,
+  Tile,
 } from '@tower-defense/utils';
 import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
 const maps = [
- "1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626664\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222",
- "1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222",
- "7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888",
- "1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222"
-]
+  '1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626664\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222',
+  '1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222',
+  '7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888',
+  '1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222',
+];
 export function build(towerCount: number, cryptCount: number, macaws = false): TurnAction[] {
-  const map = maps[Math.floor(Math.random() * maps.length)].replace("\\r\\n", "").split("").map(a => Number(a) as TileNumber)
+  const map = maps[Math.floor(Math.random() * maps.length)]
+    .replace('\\r\\n', '')
+    .split('')
+    .map(a => Number(a) as TileNumber);
   const available = availableForBuilding(map);
   const towers: TurnAction[] = available.towers
     .sort(() => 0.5 - Math.random())
@@ -57,52 +61,62 @@ export function build(towerCount: number, cryptCount: number, macaws = false): T
         action: 'build',
         faction: 'attacker',
         coordinates,
-        structure: macaws ? 'macawCrypt' : randomFromArray(['macawCrypt', 'gorillaCrypt', 'jaguarCrypt']),
+        structure: macaws
+          ? 'macawCrypt'
+          : randomFromArray(['macawCrypt', 'gorillaCrypt', 'jaguarCrypt']),
       };
     });
   return [...towers, ...crypts];
 }
 
 function repair(m: MatchState): RepairStructureAction[] {
-  const towers: RepairStructureAction[] = Object.values(m.actors.towers).map(a => {
-    return {
-      round: 2,
-      action: 'repair',
-      faction: 'defender',
-      id: a.id,
-    };
-  });
-  const crypts: RepairStructureAction[] = Object.values(m.actors.crypts).map(a => {
-    return {
-      round: 2,
-      action: 'repair',
-      faction: 'attacker',
-      id: a.id,
-    };
-  });
+  const towers: RepairStructureAction[] = Object.values(m.actors.towers).map(
+    (a: DefenderStructure) => {
+      return {
+        round: 2,
+        action: 'repair',
+        faction: 'defender',
+        id: a.id,
+      };
+    }
+  );
+  const crypts: RepairStructureAction[] = Object.values(m.actors.crypts).map(
+    (a: AttackerStructure) => {
+      return {
+        round: 2,
+        action: 'repair',
+        faction: 'attacker',
+        id: a.id,
+      };
+    }
+  );
   return [...towers, ...crypts];
 }
 function upgrade(m: MatchState) {
-  const towers: UpgradeStructureAction[] = Object.values(m.actors.towers).map(a => {
-    return {
-      round: 2,
-      action: 'upgrade',
-      faction: 'defender',
-      id: a.id,
-    };
-  });
-  const crypts: UpgradeStructureAction[] = Object.values(m.actors.crypts).map(a => {
-    return {
-      round: 2,
-      action: 'upgrade',
-      faction: 'attacker',
-      id: a.id,
-    };
-  });
+  const towers: UpgradeStructureAction[] = Object.values(m.actors.towers).map(
+    (a: DefenderStructure) => {
+      return {
+        round: 2,
+        action: 'upgrade',
+        faction: 'defender',
+        id: a.id,
+      };
+    }
+  );
+  const crypts: UpgradeStructureAction[] = Object.values(m.actors.crypts).map(
+    (a: AttackerStructure) => {
+      return {
+        round: 2,
+        action: 'upgrade',
+        faction: 'attacker',
+        id: a.id,
+      };
+    }
+  );
   return [...towers, ...crypts];
 }
 function mockSalvageAll({ actors }: MatchState) {
-  const towers = Object.values(actors.towers).map(tower => {
+  const towers = Object.values(actors.towers).map((tower: DefenderStructure) => {
     const salvageAction: SalvageStructureAction = {
       round: 2,
       action: 'salvage',
@@ -111,7 +125,7 @@ function mockSalvageAll({ actors }: MatchState) {
     };
     return salvageAction;
   });
-  const crypts = Object.values(actors.crypts).map(crypt => {
+  const crypts = Object.values(actors.crypts).map((crypt: AttackerStructure) => {
     const salvageAction: SalvageStructureAction = {
       round: 2,
       action: 'salvage',
@@ -416,6 +430,7 @@ describe('Game Logic', () => {
     const ok = Object.keys(matchState.actors.units).every(u => ids.includes(u));
     expect(ok).toBeTruthy();
   });
+
   test('crypts stop spawning once they reach their spawn limit', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
@@ -435,14 +450,16 @@ describe('Game Logic', () => {
     }, true);
     expect(ok).toBeTruthy();
   });
+
   test('AI makes moves', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
     const moves = generateRandomMoves(matchConfig, matchState, 'defender', 1);
-    console.log(moves, "moves")
+    console.log(moves, 'moves');
     const ok = moves.length > 0;
     expect(ok).toBeTruthy;
   });
+
   //TODO: this test doesn't test anything
   test('units move forward', () => {
     const matchConfig = baseConfig;
@@ -452,7 +469,9 @@ describe('Game Logic', () => {
     const ticks = [...Array(2000).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
     const ok = true;
-    const baseIndex = matchState.map.findIndex(t => t.type === 'base' && t.faction === 'defender');
+    const baseIndex = matchState.map.findIndex(
+      (t: Tile) => t.type === 'base' && t.faction === 'defender'
+    );
     for (const tick of ticks) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
       if (matchState.roundEnded) console.log(matchState, 'state');
@@ -479,42 +498,45 @@ describe('Game Logic', () => {
     for (const tick of ticks) {
       processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
     }
-    const snapshot = structuredClone(matchState.actors.towers);
+    const snapshot: Record<number, DefenderStructure> = structuredClone(matchState.actors.towers);
     const units = Object.values(matchState.actors.units);
     const events = units.map(u => {
       return damage(u, Object.values(matchState.actors.towers));
     });
     // applyEvents(matchConfig, matchState, events.flat(), 2, randomnessGenerator);
     const oldState = Object.values(snapshot)[0].health;
-    const newState = Object.values(matchState.actors.towers)[0].health;
+    const newState = Object.values(matchState.actors.towers as Record<number, DefenderStructure>)[0]
+      .health;
     const diff = oldState - newState;
     expect(diff).toBe(units.length);
   });
-  test("attackers keep track of last shot", () => {
+  test('attackers keep track of last shot', () => {
     let ok = true;
     const matchConfig = baseConfig;
-    const matchState = {...getMatchState(), currentRound: 3};
+    const matchState = { ...getMatchState(), currentRound: 3 };
     const moves = build(2, 10, true);
     const randomnessGenerator = new Prando(1);
     // Do a whole round
     let go = true;
     let tick = 1;
-    while (go){
+    while (go) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-      const damages = events?.filter((e: TickEvent): e is DamageEvent => e.eventType === "damage") || [];
-      for (let d of damages){
-        const attacker = d.faction === "attacker" 
-        ? matchState.actors.units[d.sourceID] as Macaw
-        : matchState.actors.towers[d.sourceID];
+      const damages =
+        events?.filter((e: TickEvent): e is DamageEvent => e.eventType === 'damage') || [];
+      for (const d of damages) {
+        const attacker =
+          d.faction === 'attacker'
+            ? (matchState.actors.units[d.sourceID] as Macaw)
+            : matchState.actors.towers[d.sourceID];
         if (attacker && attacker.lastShot !== tick) {
           ok = false;
         }
       }
-      tick ++;
+      tick++;
       if (!events) go = false;
     }
-    expect(ok).toBeTruthy()
-  })
+    expect(ok).toBeTruthy();
+  });
 });
 
 function damage(u: AttackerUnit, t: DefenderStructure[]): DamageEvent[] {
