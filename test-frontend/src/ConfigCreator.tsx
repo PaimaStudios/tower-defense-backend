@@ -33,7 +33,7 @@ const maps: Record<string, string> = {
 };
 
 const defaultConfigUnparsed =
-  'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc25;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r3;3;p25;h18;c16;d20;r4;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r5;3;p25;h80;c8;d4;r6;st;1;p50;h50;c20;d3;r2;2;p25;h65;c26;d4;r3;3;p25;h80;c26;d5;r4;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r16;c13;d1;br3;bc1;s6;3;p35;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h3;r16;c17;d2;br3;bc1;s22;3;p35;h4;r16;c20;d3;br2;bc30;s26;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c10;d2;br1;bc5;s10;ac60;ar1;3;p40;h10;r16;c13;d2;br3;bc30;s12;ac50;ar2';
+  'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc25;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r4;3;p25;h80;c8;d4;r5;st;1;p50;h50;c20;d3;r2;2;p25;h65;c26;d4;r2;3;p25;h80;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r16;c13;d1;br3;bc1;s6;3;p35;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h3;r16;c17;d2;br3;bc1;s22;3;p35;h4;r16;c20;d3;br2;bc30;s26;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c10;d2;br1;bc5;s10;ac60;ar1;3;p40;h10;r16;c13;d2;br3;bc30;s12;ac50;ar2';
 
 export default function () {
   const [config, setConfig] = useState(baseConfig);
@@ -41,7 +41,7 @@ export default function () {
   const [map, setMap] = useState(maps.line);
   const [configKey, setConfigKey] = useState('');
   const configEndpoint = 'https://td-backend-testnet-c1.paimastudios.com/user_configs';
-  const creator = '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
+  const creator = '0x0';
   const rng = new Prando('hai');
   const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
   const [matchState, setMatchState] = useState(dummyState);
