@@ -268,6 +268,7 @@ export function parseConfig(s: string): MatchConfig {
   const config = configParser(s);
   if ('error' in config) {
     console.warn('Unable to parse provided config, using baseConfig instead');
+    console.warn('Error: ', config);
     return baseConfig;
   }
   return config;
