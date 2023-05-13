@@ -264,11 +264,11 @@ export const baseConfig: MatchConfig = {
   gorillaCrypt: baseGorillaCryptConfig,
   jaguarCrypt: baseJaguarCryptConfig,
 };
-export function parseConfig(s: string): MatchConfig {
+export function parseConfig(s: string, verboseLog = false): MatchConfig {
   const config = configParser(s);
   if ('error' in config) {
     console.warn('Unable to parse provided config, using baseConfig instead');
-    console.warn('Error: ', config);
+    if (verboseLog) console.warn('Error: ', config);
     return baseConfig;
   }
   return config;

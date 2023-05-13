@@ -272,7 +272,7 @@ describe('Game Logic', () => {
     }
     const cryptState1 = structuredClone(matchState.actors.crypts);
     const moves2 = repair(matchState);
-    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     // match state here should be repaired
     // compare
     const cryptSpawnedDiff = Object.keys(cryptState1).map(crypt => {
@@ -287,11 +287,11 @@ describe('Game Logic', () => {
     const matchState = getMatchState();
     const moves = build(1, 1);
     const randomnessGenerator = new Prando(1);
-    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const cryptState1 = structuredClone(matchState.actors.crypts);
     const towerState1 = structuredClone(matchState.actors.towers);
     const moves2 = upgrade(matchState);
-    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const cryptUpgradeDiff = Object.keys(cryptState1).map(crypt => {
       const originalState = cryptState1[parseInt(crypt)].upgrades;
       const newState = matchState.actors.crypts[parseInt(crypt)].upgrades;
@@ -309,9 +309,9 @@ describe('Game Logic', () => {
     const matchState = getMatchState();
     const moves = build(3, 3);
     const randomnessGenerator = new Prando(1);
-    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const moves2 = mockSalvageAll(matchState);
-    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const extantTowers = Object.values(matchState.actors.towers);
     const extantCrypts = Object.values(matchState.actors.crypts);
     const totalCount = [...extantCrypts, ...extantTowers].length;
@@ -487,7 +487,7 @@ describe('Game Logic', () => {
     expect(ok).toBeTruthy();
   });
 
-  // // // damage
+  // Damage
   test('macaws attacks to towers are registered', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
