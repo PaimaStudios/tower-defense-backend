@@ -46,8 +46,7 @@ export default function () {
   const creator = '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
   const rng = new Prando('hai');
   const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
-  const [matchState, setMatchState] = useState(dummyState);
-  const [matchStates, setMatchStates] = useState([dummyState]);
+  const [matchStates, setMatchStates] = useState<MatchState[]>([]);
 
   useEffect(() => {
     parseLoadConfig({ content: defaultConfigUnparsed });
@@ -65,7 +64,7 @@ export default function () {
     console.log('Simulating...');
     const newMatchStates = [];
 
-    const balancing = new Balancing(matchState, GamePlan.OneVSOne_All);
+    const balancing = new Balancing(dummyState, GamePlan.OneVSOne_All);
     const allMoves = balancing.getAllTowerActions();
 
     for (const moves of Object.values(allMoves)) {
@@ -86,8 +85,6 @@ export default function () {
     }
 
     setMatchStates(newMatchStates);
-    // TODO: remove the below line once the UI is updated to display multiple simulation results.
-    setMatchState(newMatchStates[0]); // Update the matchState with the first simulation result.
   }
 
   async function logCurrentConfig() {
