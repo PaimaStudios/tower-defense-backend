@@ -73,7 +73,16 @@ export default function () {
       let running = true;
       let tick = 1;
 
-      const updatedState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
+      const modifiedConfig = { ...config, ...{ baseAttackerGoldRate: 500 } };
+      const updatedState = generateMatchState(
+        'defender',
+        '0x1',
+        '0x2',
+        mapName,
+        map,
+        modifiedConfig,
+        rng
+      );
       const state = { ...updatedState, currentRound: 1 };
       while (running) {
         processTick(config, state, moves, tick, rng);
