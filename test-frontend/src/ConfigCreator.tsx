@@ -9,6 +9,7 @@ import './ConfigCreator.css';
 import Prando from 'paima-engine/paima-prando';
 import Simulation from './Simulation';
 import Balancing, { GamePlan } from './balancing/balancing';
+import type { MatchState } from '@tower-defense/utils';
 import { configToConcise } from '@tower-defense/utils';
 import GeneralConfig from './components/GeneralConfig';
 import TowerConfig from './components/TowerConfig';
@@ -64,9 +65,10 @@ export default function () {
     console.log('Simulating...');
     const newMatchStates = [];
 
-    const balancing = new Balancing(dummyState, GamePlan.OneVSOne_All);
+    const balancing = new Balancing(dummyState, GamePlan.OneVSOne_SameLvl2);
     const allMoves = balancing.getAllTowerActions();
 
+    console.log('States after simulations:');
     for (const moves of Object.values(allMoves)) {
       let running = true;
       let tick = 1;
@@ -76,12 +78,12 @@ export default function () {
       while (running) {
         processTick(config, state, moves, tick, rng);
         tick++;
-        if (state.currentRound === 3 && state.roundEnded == true) {
+        if (state.currentRound === 4 && state.roundEnded == true) {
           running = false;
         }
       }
       newMatchStates.push(state);
-      console.log(`State after simulation for moves ${moves}:`, state);
+      console.log({ moves, state });
     }
 
     setMatchStates(newMatchStates);
@@ -178,9 +180,7 @@ export default function () {
             ))}
           </select>
         </div>
-        <div className="result">
-          <Simulation data={matchStates} />
-        </div>
+        <Simulation data={matchStates} />
       </div>
     </div>
   );

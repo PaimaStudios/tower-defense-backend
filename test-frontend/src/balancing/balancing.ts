@@ -52,7 +52,7 @@ class Balancing {
 
     for (const defender of defenders) {
       for (const attacker of attackers) {
-        const result = this.oneVSOne_SameLvl1(attacker, defender);
+        const result = this.getTowerAction(attacker, defender);
         const key = `${defender}-${attacker}`;
         resultMap[key] = result;
       }
@@ -111,7 +111,7 @@ class Balancing {
     };
   }
 
-  upgradeAttacker(id = 4, round = 3): UpgradeStructureAction {
+  upgradeAttacker(id = 4, round = 4): UpgradeStructureAction {
     return {
       id,
       round,
