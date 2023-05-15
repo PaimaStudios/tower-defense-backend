@@ -1,46 +1,7 @@
+import type { MatchState } from '@tower-defense/utils';
 import React from 'react';
 
-interface IGameApiResponse {
-  defenderBase: {
-    health: number;
-  };
-  actors: {
-    crypts: {
-      [key: string]: {
-        type: string;
-        faction: string;
-        id: number;
-        structure: string;
-        upgrades: number;
-        coordinates: number;
-        builtOnRound: number;
-        spawned: number[];
-        health?: number;
-      };
-    };
-    towers: {
-      [key: string]: {
-        type: string;
-        faction: string;
-        id: number;
-        structure: string;
-        health: number;
-        upgrades: number;
-        coordinates: number;
-        lastShot: number;
-      };
-    };
-    units: {};
-  };
-  currentRound: number;
-  finishedSpawning: number[];
-}
-
-interface IGameApiDisplayProps {
-  data: IGameApiResponse[];
-}
-
-const GameApiResponseDisplay: React.FC<{ response: IGameApiResponse }> = ({ response }) => {
+const GameApiResponseDisplay: React.FC<{ response: MatchState }> = ({ response }) => {
   const { crypts, towers } = response.actors;
 
   return (
@@ -70,7 +31,6 @@ const GameApiResponseDisplay: React.FC<{ response: IGameApiResponse }> = ({ resp
             <p>
               Structure: <b>{crypt.structure}</b>
             </p>
-            {crypt.health && <p>Health: {crypt.health}</p>}
             <p>Coordinates: {crypt.coordinates}</p>
             <p>Upgrades: {crypt.upgrades}</p>
           </div>
@@ -80,9 +40,13 @@ const GameApiResponseDisplay: React.FC<{ response: IGameApiResponse }> = ({ resp
   );
 };
 
+interface IGameApiDisplayProps {
+  data: MatchState[];
+}
+
 const GameApiDisplay: React.FC<IGameApiDisplayProps> = ({ data }) => {
   return (
-    <div>
+    <div className="result">
       {data.map((response, index) => (
         <div key={index}>
           <div className="separation-line"></div>
