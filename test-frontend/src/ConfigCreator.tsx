@@ -15,6 +15,7 @@ import GeneralConfig from './components/GeneralConfig';
 import TowerConfig from './components/TowerConfig';
 import CryptConfig from './components/CryptConfig';
 import { LevelSelector } from './components/LevelSelector';
+import { ExtraRounds } from './components/ExtraRound';
 
 const maps: Record<string, string> = {
   // backwards:
@@ -44,6 +45,7 @@ export default function () {
   const [mapName, setMapName] = useState('line');
   const [map, setMap] = useState(maps.line);
   const [currentLevel, setCurrentLevel] = useState(1);
+  const [extraRounds, setExtraRounds] = useState(0);
   const [configKey, setConfigKey] = useState('');
   const configEndpoint = 'https://td-backend-testnet-c1.paimastudios.com/user_configs';
   const creator = '0x0'; // '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
@@ -57,7 +59,7 @@ export default function () {
 
   useEffect(() => {
     simulate();
-  }, [currentLevel]);
+  }, [currentLevel, extraRounds]);
 
   async function submit() {
     console.log(config, 'config');
@@ -68,7 +70,6 @@ export default function () {
   }
 
   async function simulate() {
-    console.log('Simulating...');
     const newMatchStates = [];
 
     let gamePlanLevel: GamePlan;
@@ -80,11 +81,11 @@ export default function () {
         break;
       case 2:
         gamePlanLevel = GamePlan.OneVSOne_SameLvl2;
-        maxRound = 4;
+        maxRound = 3;
         break;
       case 3:
         gamePlanLevel = GamePlan.OneVSOne_SameLvl3;
-        maxRound = 6;
+        maxRound = 3;
         break;
       default:
         throw new Error('Invalid game plan level');
@@ -93,12 +94,11 @@ export default function () {
     const balancing = new Balancing(dummyState, gamePlanLevel);
     const allMoves = balancing.getAllTowerActions();
 
-    console.log('States after simulations:');
     for (const moves of Object.values(allMoves)) {
       let running = true;
       let tick = 1;
 
-      const modifiedConfig = { ...config, ...{ baseAttackerGoldRate: 500 } };
+      const modifiedConfig = { ...config, ...{ baseAttackerGoldRate: 500, repairCost: 1 } };
       const updatedState = generateMatchState(
         'defender',
         '0x1',
@@ -112,12 +112,11 @@ export default function () {
       while (running) {
         processTick(config, state, moves, tick, rng);
         tick++;
-        if (state.currentRound === maxRound && state.roundEnded == true) {
+        if (state.currentRound === maxRound + extraRounds && state.roundEnded == true) {
           running = false;
         }
       }
       newMatchStates.push(state);
-      console.log({ moves, state });
     }
 
     setMatchStates(newMatchStates);
@@ -215,6 +214,7 @@ export default function () {
           </select>
         </div>
         <LevelSelector currentLevel={currentLevel} setCurrentLevel={setCurrentLevel} />
+        <ExtraRounds extraRounds={extraRounds} setExtraRounds={setExtraRounds} />
         <Simulation data={matchStates} />
       </div>
     </div>

@@ -1,9 +1,8 @@
 import type { MatchState } from '@tower-defense/utils';
-import React from 'react';
+import React, { useState } from 'react';
 
 const GameApiResponseDisplay: React.FC<{ response: MatchState }> = ({ response }) => {
   const { crypts, towers } = response.actors;
-
   return (
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
       <div>
@@ -45,14 +44,37 @@ interface IGameApiDisplayProps {
 }
 
 const GameApiDisplay: React.FC<IGameApiDisplayProps> = ({ data }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const sliderSize = 3;
+
+  const prevSlide = () => {
+    setCurrentIndex(prevIndex => (prevIndex === 0 ? data.length - sliderSize : prevIndex - 3));
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex(prevIndex => (prevIndex === data.length - sliderSize ? 0 : prevIndex + 3));
+  };
+
+  const sliderControlsStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+  };
+
   return (
     <div className="result">
-      {data.map((response, index) => (
-        <div key={index}>
-          <div className="separation-line"></div>
-          <GameApiResponseDisplay response={response} />
-        </div>
-      ))}
+      <div style={sliderControlsStyle}>
+        <button onClick={prevSlide}>Left</button>
+        <div />
+        <button onClick={nextSlide}>Right</button>
+      </div>
+      <div className="slider">
+        {data.slice(currentIndex, currentIndex + sliderSize).map((response, index) => (
+          <div key={index}>
+            <div className="separation-line"></div>
+            <GameApiResponseDisplay response={response} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

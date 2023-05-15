@@ -130,6 +130,48 @@ const CryptConfig: React.FC<Props> = ({ config, setConfig, type }) => {
               }
             />
           </div>
+          {type === 'macaw' && (
+            <>
+              <div className="input">
+                <span>Attack Range</span>
+                <input
+                  type="number"
+                  value={config[key][1].attackRange}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      [key]: {
+                        ...config[key],
+                        1: {
+                          ...config[key][1],
+                          attackRange: parseInt(e.target.value),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="input">
+                <span>Attack Cooldown</span>
+                <input
+                  type="number"
+                  value={config[key][1].attackCooldown}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      [key]: {
+                        ...config[key],
+                        1: {
+                          ...config[key][1],
+                          attackCooldown: parseInt(e.target.value),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+            </>
+          )}
           <div className="input">
             <span>
               <del>Buff Range</del>
@@ -289,6 +331,48 @@ const CryptConfig: React.FC<Props> = ({ config, setConfig, type }) => {
               }
             />
           </div>
+          {type === 'macaw' && (
+            <>
+              <div className="input">
+                <span>Attack Range</span>
+                <input
+                  type="number"
+                  value={config[key][2].attackRange}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      [key]: {
+                        ...config[key],
+                        2: {
+                          ...config[key][2],
+                          attackRange: parseInt(e.target.value),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="input">
+                <span>Attack Cooldown</span>
+                <input
+                  type="number"
+                  value={config[key][2].attackCooldown}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      [key]: {
+                        ...config[key],
+                        2: {
+                          ...config[key][2],
+                          attackCooldown: parseInt(e.target.value),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+            </>
+          )}
           <div className="input">
             <span>
               <del>Buff Range</del>
@@ -448,6 +532,48 @@ const CryptConfig: React.FC<Props> = ({ config, setConfig, type }) => {
               }
             />
           </div>
+          {type === 'macaw' && (
+            <>
+              <div className="input">
+                <span>Attack Range</span>
+                <input
+                  type="number"
+                  value={config[key][3].attackRange}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      [key]: {
+                        ...config[key],
+                        3: {
+                          ...config[key][3],
+                          attackRange: parseInt(e.target.value),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="input">
+                <span>Attack Cooldown</span>
+                <input
+                  type="number"
+                  value={config[key][3].attackCooldown}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      [key]: {
+                        ...config[key],
+                        3: {
+                          ...config[key][3],
+                          attackCooldown: parseInt(e.target.value),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+            </>
+          )}
           <div className="input">
             <span>
               <del>Buff Range</del>
