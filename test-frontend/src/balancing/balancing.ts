@@ -12,8 +12,8 @@ import type {
 
 export enum GamePlan {
   OneVSOne_All = 'OneVSOne_All',
-  OneVSOne_SameLvl1 = 'OneVSOne_SameLvL1',
   TwoLvl1_VS_OneLvl2 = 'TwoLvl1_VS_OneLvl2',
+  OneVSOne_SameLvl1 = 'OneVSOne_SameLvL1',
   OneVSOne_SameLvl2 = 'OneVSOne_SameLvL2',
   OneVSOne_SameLvl3 = 'OneVSOne_SameLvL3',
 }
@@ -38,7 +38,7 @@ class Balancing {
       case GamePlan.OneVSOne_SameLvl2:
         return this.oneVSOne_SameLvl2(attacker, defender);
       case GamePlan.OneVSOne_SameLvl3:
-        throw new Error('GamePlan not implemented');
+        return this.oneVSOne_SameLvl3(attacker, defender);
       default:
         throw new Error('GamePlan not implemented / compatible');
     }
@@ -75,6 +75,20 @@ class Balancing {
     return [
       this.newDefender(defender),
       this.newAttacker(attacker),
+      this.upgradeDefender(),
+      this.upgradeAttacker(),
+    ];
+  }
+
+  oneVSOne_SameLvl3(
+    attacker: AttackerStructureType,
+    defender: DefenderStructureType
+  ): TurnAction[] {
+    return [
+      this.newDefender(defender),
+      this.newAttacker(attacker),
+      this.upgradeDefender(),
+      this.upgradeAttacker(),
       this.upgradeDefender(),
       this.upgradeAttacker(),
     ];

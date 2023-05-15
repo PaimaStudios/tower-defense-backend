@@ -14,6 +14,7 @@ import { configToConcise } from '@tower-defense/utils';
 import GeneralConfig from './components/GeneralConfig';
 import TowerConfig from './components/TowerConfig';
 import CryptConfig from './components/CryptConfig';
+import { LevelSelector } from './components/LevelSelector';
 
 const maps: Record<string, string> = {
   // backwards:
@@ -42,9 +43,10 @@ export default function () {
   const [config, setConfig] = useState(baseConfig);
   const [mapName, setMapName] = useState('line');
   const [map, setMap] = useState(maps.line);
+  const [currentLevel, setCurrentLevel] = useState(1);
   const [configKey, setConfigKey] = useState('');
   const configEndpoint = 'https://td-backend-testnet-c1.paimastudios.com/user_configs';
-  const creator = '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
+  const creator = '0x0'; // '0xf91266532e0559dd2e2a13d2b486edff09e3d3c3';
   const rng = new Prando('hai');
   const dummyState = generateMatchState('defender', '0x1', '0x2', mapName, map, config, rng);
   const [matchStates, setMatchStates] = useState<MatchState[]>([]);
@@ -52,6 +54,10 @@ export default function () {
   useEffect(() => {
     parseLoadConfig({ content: defaultConfigUnparsed });
   }, []);
+
+  useEffect(() => {
+    simulate();
+  }, [currentLevel]);
 
   async function submit() {
     console.log(config, 'config');
@@ -65,7 +71,26 @@ export default function () {
     console.log('Simulating...');
     const newMatchStates = [];
 
-    const balancing = new Balancing(dummyState, GamePlan.OneVSOne_SameLvl2);
+    let gamePlanLevel: GamePlan;
+    let maxRound = 3;
+    switch (currentLevel) {
+      case 1:
+        gamePlanLevel = GamePlan.OneVSOne_SameLvl1;
+        maxRound = 3;
+        break;
+      case 2:
+        gamePlanLevel = GamePlan.OneVSOne_SameLvl2;
+        maxRound = 4;
+        break;
+      case 3:
+        gamePlanLevel = GamePlan.OneVSOne_SameLvl3;
+        maxRound = 6;
+        break;
+      default:
+        throw new Error('Invalid game plan level');
+    }
+
+    const balancing = new Balancing(dummyState, gamePlanLevel);
     const allMoves = balancing.getAllTowerActions();
 
     console.log('States after simulations:');
@@ -87,7 +112,7 @@ export default function () {
       while (running) {
         processTick(config, state, moves, tick, rng);
         tick++;
-        if (state.currentRound === 4 && state.roundEnded == true) {
+        if (state.currentRound === maxRound && state.roundEnded == true) {
           running = false;
         }
       }
@@ -189,6 +214,7 @@ export default function () {
             ))}
           </select>
         </div>
+        <LevelSelector currentLevel={currentLevel} setCurrentLevel={setCurrentLevel} />
         <Simulation data={matchStates} />
       </div>
     </div>
