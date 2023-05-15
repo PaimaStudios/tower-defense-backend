@@ -1,23 +1,12 @@
-import React, { ChangeEvent } from 'react';
+import type { MatchConfig } from '@tower-defense/utils';
+import React from 'react';
 
-interface GeneralConfigProps {
-  config: {
-    baseSpeed: number;
-    defenderBaseHealth: number;
-    baseAttackerGoldRate: number;
-    baseDefenderGoldRate: number;
-    repairCost: number;
-    towerRepairValue: number;
-    recoupPercentage: number;
-    healthBuffAmount: number;
-    speedBuffAmount: number;
-    maxAttackerGold: number;
-    maxDefenderGold: number;
-  };
-  setConfig: (config: any) => void;
+interface Props {
+  config: MatchConfig;
+  setConfig: (config: MatchConfig) => void;
 }
 
-const GeneralConfig: React.FC<GeneralConfigProps> = ({ config, setConfig }) => {
+const GeneralConfig: React.FC<Props> = ({ config, setConfig }) => {
   return (
     <div>
       <div className="general">
