@@ -2,7 +2,7 @@ import type { Pool } from 'pg';
 import type Prando from 'paima-engine/paima-prando';
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import type { WalletAddress } from 'paima-engine/paima-utils';
-import type { IGetLobbyByIdResult, IGetRoundDataResult } from '@tower-defense/db';
+import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams  } from '@tower-defense/db';
 import {
   getLobbyById,
   getRoundData,
@@ -49,7 +49,6 @@ import {
   scheduleStatsUpdate,
   persistConfigRegistration,
 } from './persist/index.js';
-import type { IEndMatchParams } from '@tower-defense/db/src/update.queries.js';
 import { wipeOldLobbies } from './persist/wipe.js';
 
 export const processCreateLobby = async (
@@ -210,7 +209,8 @@ export async function processSubmittedTurn(
     round,
     randomnessGenerator
   );
-  if (lobby.practice) {
+  const matchEnded = (round.match_state as any).defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
+  if (lobby.practice && !matchEnded) {
     const practiceTuples = practiceRound(
       blockHeight,
       { ...lobby, current_round: lobby.current_round + 1 },
@@ -266,7 +266,8 @@ export async function processZombieEffect(
     round,
     randomnessGenerator
   );
-  const practiceTuples = lobby.practice
+  const matchEnded = (round.match_state as any).defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
+  const practiceTuples = (lobby.practice && !matchEnded)
     ? practiceRound(
         blockHeight,
         { ...lobby, current_round: lobby.current_round + 1 },
@@ -313,7 +314,8 @@ export function executeRound(
   const executedRoundUpdate = persistExecutedRound(roundData, lobby, blockHeight);
 
   // Finalize match if defender dies or we've reached the final round
-  if (newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds) {
+  const matchEnded = newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
+  if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
     const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
