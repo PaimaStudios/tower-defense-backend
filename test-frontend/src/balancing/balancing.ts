@@ -3,6 +3,7 @@ import type {
   Coordinates,
   DefenderStructureType,
   MatchState,
+  RepairStructureAction,
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
@@ -75,6 +76,8 @@ class Balancing {
     return [
       this.newDefender(defender),
       this.newAttacker(attacker),
+      this.repairDefender(),
+      this.repairDefender(),
       this.upgradeDefender(),
       this.upgradeAttacker(),
     ];
@@ -87,6 +90,8 @@ class Balancing {
     return [
       this.newDefender(defender),
       this.newAttacker(attacker),
+      this.repairDefender(),
+      this.repairDefender(),
       this.upgradeDefender(),
       this.upgradeAttacker(),
       this.upgradeDefender(),
@@ -113,6 +118,15 @@ class Balancing {
       faction: 'attacker',
       coordinates: this.coordsToIndex({ x: position, y: 7 }, this.matchState.width),
       structure: type,
+    };
+  }
+
+  repairDefender(id = 3, round = 3): RepairStructureAction {
+    return {
+      id,
+      round,
+      action: 'repair',
+      faction: 'defender',
     };
   }
 
