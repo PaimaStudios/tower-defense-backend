@@ -100,24 +100,20 @@ VALUES
 ('reflection', '1111111111111222222222\r\n1111111111111222222222\r\n1155511115551222222222\r\n1551555155155226262222\r\n1551111111111222222222\r\n1511115551115666266662\r\n3511111111111222222264\r\n1511115551115666266662\r\n1551555155155226262222\r\n1151511115151226662222\r\n1155511115551222222222\r\n1111111111111222222222\r\n1111111111111222222222');
 
 INSERT INTO configs(id, creator, version, content)
-VALUES('defaultdefault', '0x0', 1, 
+VALUES
+('defaultdefault', '0x0', 1, 
 'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc25;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h50;c12;d2;r4;2;p25;h65;c9;d3;r4;3;p25;h80;c8;d4;r5;st;1;p50;h50;c20;d3;r2;2;p25;h65;c26;d4;r2;3;p25;h80;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r16;c13;d1;br3;bc1;s6;3;p35;h20;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h3;r16;c17;d2;br3;bc1;s22;3;p35;h4;r16;c20;d3;br2;bc30;s26;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c10;d2;br1;bc5;s10;ac60;ar1;3;p40;h10;r16;c13;d2;br3;bc30;s12;ac50;ar2'
-);
-
-INSERT INTO configs(id, content) 
-VALUES('FWJv579eJfdg0P','0x0', 1, 
+),
+('FWJv579eJfdg0P','0x0', 1, 
+'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc20;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h60;c12;d2;r4;2;p25;h75;c8;d2;r4;3;p25;h90;c10;d3;r5;st;1;p50;h60;c20;d3;r2;2;p25;h80;c26;d4;r2;3;p25;h100;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r18;c13;d1;br3;bc1;s6;3;p35;h20;r18;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h2;r14;c17;d2;br3;bc1;s20;3;p35;h3;r12;c20;d3;br2;bc30;s22;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c7;d2;br1;bc5;s10;ac80;ar2;3;p60;h10;r16;c10;d2;br3;bc30;s12;ac70;ar3'
+),
+('S6BZo8biAtrDp1', '0x0', 1, 
+'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc20;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h60;c12;d2;r4;2;p25;h75;c8;d2;r4;3;p25;h90;c10;d3;r5;st;1;p50;h60;c20;d3;r2;2;p25;h80;c26;d4;r2;3;p25;h100;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r18;c13;d1;br3;bc1;s6;3;p35;h20;r18;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h2;r14;c17;d2;br3;bc1;s20;3;p35;h3;r12;c20;d3;br2;bc30;s22;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c7;d2;br1;bc5;s10;ac80;ar2;3;p60;h10;r16;c10;d2;br3;bc30;s12;ac70;ar3'
+),
+('sEyGPliPidNUzx', '0x0', 1, 
 'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc20;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h60;c12;d2;r4;2;p25;h75;c8;d2;r4;3;p25;h90;c10;d3;r5;st;1;p50;h60;c20;d3;r2;2;p25;h80;c26;d4;r2;3;p25;h100;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r18;c13;d1;br3;bc1;s6;3;p35;h20;r18;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h2;r14;c17;d2;br3;bc1;s20;3;p35;h3;r12;c20;d3;br2;bc30;s22;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c7;d2;br1;bc5;s10;ac80;ar2;3;p60;h10;r16;c10;d2;br3;bc30;s12;ac70;ar3'
 );
 
-INSERT INTO configs(id, creator, version, content) 
-VALUES('S6BZo8biAtrDp1', '0x0', 1, 
-'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc20;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h60;c12;d2;r4;2;p25;h75;c8;d2;r4;3;p25;h90;c10;d3;r5;st;1;p50;h60;c20;d3;r2;2;p25;h80;c26;d4;r2;3;p25;h100;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r18;c13;d1;br3;bc1;s6;3;p35;h20;r18;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h2;r14;c17;d2;br3;bc1;s20;3;p35;h3;r12;c20;d3;br2;bc30;s22;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c7;d2;br1;bc5;s10;ac80;ar2;3;p60;h10;r16;c10;d2;br3;bc30;s12;ac70;ar3')
-;
-
-INSERT INTO configs(id, creator, version, content) 
-VALUES('sEyGPliPidNUzx', '0x0', '1', 
-'gs10;bh25;gd100;ga100;md300;ma260;rv25;rc20;rp50;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d18;r2;3;p25;h18;c16;d20;r3;pt;1;p50;h60;c12;d2;r4;2;p25;h75;c8;d2;r4;3;p25;h90;c10;d3;r5;st;1;p50;h60;c20;d3;r2;2;p25;h80;c26;d4;r2;3;p25;h100;c26;d5;r3;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h18;r18;c13;d1;br3;bc1;s6;3;p35;h20;r18;c16;d1;br3;bc1;s8;jc;1;p70;h2;r16;c13;d1;br3;bc1;s18;2;p35;h2;r14;c17;d2;br3;bc1;s20;3;p35;h3;r12;c20;d3;br2;bc30;s22;mc;1;p60;h6;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p40;h8;r16;c7;d2;br1;bc5;s10;ac80;ar2;3;p60;h10;r16;c10;d2;br3;bc30;s12;ac70;ar3'
-);
 -- paima general again
 
 CREATE TABLE rounds(
