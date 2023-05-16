@@ -398,10 +398,9 @@ async function getMatchWinner(
     } = calculateMatchStats(j2);
     const match_status = j.match_status || j2.lobby.lobby_state;
     const winner_address =
-      j.winner_address || j2.initialState.defenderBase.health > 0
+      (j.winner_address) || (j2.initialState.defenderBase.health > 0
         ? j2.initialState.defender
-        : j2.initialState.attacker;
-
+        : j2.initialState.attacker);
     return {
       success: true,
       result: {
