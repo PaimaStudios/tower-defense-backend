@@ -18,6 +18,7 @@ import type {
   UnitMovementEvent,
   TileNumber,
   Macaw,
+  Tile,
 } from '@tower-defense/utils';
 import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
@@ -89,26 +90,30 @@ function repair(m: MatchState): RepairStructureAction[] {
   return [...towers, ...crypts];
 }
 function upgrade(m: MatchState) {
-  const towers: UpgradeStructureAction[] = Object.values(m.actors.towers).map(a => {
-    return {
-      round: 2,
-      action: 'upgrade',
-      faction: 'defender',
-      id: a.id,
-    };
-  });
-  const crypts: UpgradeStructureAction[] = Object.values(m.actors.crypts).map(a => {
-    return {
-      round: 2,
-      action: 'upgrade',
-      faction: 'attacker',
-      id: a.id,
-    };
-  });
+  const towers: UpgradeStructureAction[] = Object.values(m.actors.towers).map(
+    (a: DefenderStructure) => {
+      return {
+        round: 2,
+        action: 'upgrade',
+        faction: 'defender',
+        id: a.id,
+      };
+    }
+  );
+  const crypts: UpgradeStructureAction[] = Object.values(m.actors.crypts).map(
+    (a: AttackerStructure) => {
+      return {
+        round: 2,
+        action: 'upgrade',
+        faction: 'attacker',
+        id: a.id,
+      };
+    }
+  );
   return [...towers, ...crypts];
 }
 function mockSalvageAll({ actors }: MatchState) {
-  const towers = Object.values(actors.towers).map(tower => {
+  const towers = Object.values(actors.towers).map((tower: DefenderStructure) => {
     const salvageAction: SalvageStructureAction = {
       round: 2,
       action: 'salvage',
@@ -117,7 +122,7 @@ function mockSalvageAll({ actors }: MatchState) {
     };
     return salvageAction;
   });
-  const crypts = Object.values(actors.crypts).map(crypt => {
+  const crypts = Object.values(actors.crypts).map((crypt: AttackerStructure) => {
     const salvageAction: SalvageStructureAction = {
       round: 2,
       action: 'salvage',
@@ -242,11 +247,11 @@ describe('Game Logic', () => {
     const matchState = getMatchState();
     const moves = build(1, 1);
     const randomnessGenerator = new Prando(1);
-    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const cryptState1 = structuredClone(matchState.actors.crypts);
     const towerState1 = structuredClone(matchState.actors.towers);
     const moves2 = upgrade(matchState);
-    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const cryptUpgradeDiff = Object.keys(cryptState1).map(crypt => {
       const originalState = cryptState1[parseInt(crypt)].upgrades;
       const newState = matchState.actors.crypts[parseInt(crypt)].upgrades;
@@ -264,9 +269,9 @@ describe('Game Logic', () => {
     const matchState = getMatchState();
     const moves = build(3, 3);
     const randomnessGenerator = new Prando(1);
-    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const moves2 = mockSalvageAll(matchState);
-    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const extantTowers = Object.values(matchState.actors.towers);
     const extantCrypts = Object.values(matchState.actors.crypts);
     const totalCount = [...extantCrypts, ...extantTowers].length;
@@ -387,6 +392,7 @@ describe('Game Logic', () => {
     const ok = Object.keys(matchState.actors.units).every(u => ids.includes(u));
     expect(ok).toBeTruthy();
   });
+
   test('crypts stop spawning once they reach their spawn limit', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
@@ -408,6 +414,7 @@ describe('Game Logic', () => {
     }, true);
     expect(ok).toBeTruthy();
   });
+
   test('AI makes moves', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
@@ -446,7 +453,7 @@ describe('Game Logic', () => {
     expect(ok).toBeTruthy();
   });
 
-  // // // damage
+  // Damage
   test('macaws attacks to towers are registered', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
@@ -457,14 +464,15 @@ describe('Game Logic', () => {
     for (const tick of ticks) {
       processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
     }
-    const snapshot = structuredClone(matchState.actors.towers);
+    const snapshot: Record<number, DefenderStructure> = structuredClone(matchState.actors.towers);
     const units = Object.values(matchState.actors.units);
     const events = units.map(u => {
       return damage(u, Object.values(matchState.actors.towers));
     });
     // applyEvents(matchConfig, matchState, events.flat(), 2, randomnessGenerator);
     const oldState = Object.values(snapshot)[0].health;
-    const newState = Object.values(matchState.actors.towers)[0].health;
+    const newState = Object.values(matchState.actors.towers as Record<number, DefenderStructure>)[0]
+      .health;
     const diff = oldState - newState;
     expect(diff).toBe(units.length);
   });

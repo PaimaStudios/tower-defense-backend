@@ -68,7 +68,7 @@ export {
   IGetUserConfigsParams,
   IGetUserConfigsResult,
   getOldLobbies,
-  getLastScheduledWiping
+  getLastScheduledWiping,
 } from './select.queries.js';
 export {
   IStartMatchParams,
@@ -81,5 +81,6 @@ export {
   removeScheduledData,
   IExecuteRoundParams,
   endMatch,
-  wipeOldlobbies
+  IEndMatchParams,
+  wipeOldlobbies,
 } from './update.queries.js';

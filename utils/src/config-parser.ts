@@ -276,7 +276,7 @@ export const damage = P.seqObj<Damage>(
     'damage',
     P.digits
       .map(Number)
-      .assert(s => s > 0 && s < 51, 'tower attack damage should be between 1 and 50'),
+      .assert(s => s > 0 && s < 101, 'tower attack damage should be between 1 and 100'),
   ],
   semicolon
 );

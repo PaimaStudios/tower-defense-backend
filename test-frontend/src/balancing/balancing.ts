@@ -3,6 +3,7 @@ import type {
   Coordinates,
   DefenderStructureType,
   MatchState,
+  RepairStructureAction,
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
@@ -12,8 +13,8 @@ import type {
 
 export enum GamePlan {
   OneVSOne_All = 'OneVSOne_All',
-  OneVSOne_SameLvl1 = 'OneVSOne_SameLvL1',
   TwoLvl1_VS_OneLvl2 = 'TwoLvl1_VS_OneLvl2',
+  OneVSOne_SameLvl1 = 'OneVSOne_SameLvL1',
   OneVSOne_SameLvl2 = 'OneVSOne_SameLvL2',
   OneVSOne_SameLvl3 = 'OneVSOne_SameLvL3',
 }
@@ -38,7 +39,7 @@ class Balancing {
       case GamePlan.OneVSOne_SameLvl2:
         return this.oneVSOne_SameLvl2(attacker, defender);
       case GamePlan.OneVSOne_SameLvl3:
-        throw new Error('GamePlan not implemented');
+        return this.oneVSOne_SameLvl3(attacker, defender);
       default:
         throw new Error('GamePlan not implemented / compatible');
     }
@@ -52,7 +53,7 @@ class Balancing {
 
     for (const defender of defenders) {
       for (const attacker of attackers) {
-        const result = this.oneVSOne_SameLvl1(attacker, defender);
+        const result = this.getTowerAction(attacker, defender);
         const key = `${defender}-${attacker}`;
         resultMap[key] = result;
       }
@@ -75,6 +76,24 @@ class Balancing {
     return [
       this.newDefender(defender),
       this.newAttacker(attacker),
+      this.repairDefender(),
+      this.repairDefender(),
+      this.upgradeDefender(),
+      this.upgradeAttacker(),
+    ];
+  }
+
+  oneVSOne_SameLvl3(
+    attacker: AttackerStructureType,
+    defender: DefenderStructureType
+  ): TurnAction[] {
+    return [
+      this.newDefender(defender),
+      this.newAttacker(attacker),
+      this.repairDefender(),
+      this.repairDefender(),
+      this.upgradeDefender(),
+      this.upgradeAttacker(),
       this.upgradeDefender(),
       this.upgradeAttacker(),
     ];
@@ -102,6 +121,15 @@ class Balancing {
     };
   }
 
+  repairDefender(id = 3, round = 3): RepairStructureAction {
+    return {
+      id,
+      round,
+      action: 'repair',
+      faction: 'defender',
+    };
+  }
+
   upgradeDefender(id = 3, round = 3): UpgradeStructureAction {
     return {
       id,
@@ -111,7 +139,7 @@ class Balancing {
     };
   }
 
-  upgradeAttacker(id = 4, round = 3): UpgradeStructureAction {
+  upgradeAttacker(id = 4, round = 4): UpgradeStructureAction {
     return {
       id,
       round,
