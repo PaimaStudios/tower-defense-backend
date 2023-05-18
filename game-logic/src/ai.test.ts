@@ -51,10 +51,6 @@ test('AI', () => {
   const matchConfig = getMatchConfig();
   const matchState = getMatchState({...matchConfig, baseAttackerGoldRate: 3000});
   const moves = generateRandomMoves(matchConfig, matchState, 'attacker', 1);
-  for (let m of moves){
-    if (m.action === "build")
-    console.log(matchState.map[m?.coordinates])
-  }
   const ok = moves.length > 0;
   expect(ok).toBeTruthy;
 });

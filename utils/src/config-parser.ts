@@ -276,7 +276,7 @@ export const damage = P.seqObj<Damage>(
     'damage',
     P.digits
       .map(Number)
-      .assert(s => s > 0 && s < 21, 'tower attack damage should be between 1 and 20'),
+      .assert(s => s > 0 && s < 51, 'tower attack damage should be between 1 and 50'),
   ],
   semicolon
 );
@@ -590,6 +590,7 @@ const configParser = P.seq<any>(
 );
 
 function parser(s: string): ConfigDefinition {
+  console.log(s, "s")
   try {
     const res = configParser.tryParse(s);
     return res.reduce((acc, item) => ({ ...acc, ...item }), {});

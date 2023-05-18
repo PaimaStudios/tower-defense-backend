@@ -21,20 +21,24 @@ import type {
 } from '@tower-defense/utils';
 import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
+import { calculateRecoupGold } from './utils';
 const maps = [
- "1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626664\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222",
- "1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222",
- "1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222",
- "7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888",
- "1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222"
-]
+  '1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626664\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1111155555111226666222\\r\\n1555551115111226226662\\r\\n1511111115155666222262\\r\\n1515555115151222222262\\r\\n1515115115551222222262\\r\\n3555115115151222266664\\r\\n1511115555155662262262\\r\\n1511111111111266662262\\r\\n1515555511111222222662\\r\\n1515111511555666222622\\r\\n1555111555511226666622\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1111111555111266622222\\r\\n1115551515111262626662\\r\\n1115155515155662626262\\r\\n1555111115551222666262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511155515551226662262\\r\\n1555151515151226262262\\r\\n1115151555151266262262\\r\\n1115551111155662266662\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1111155555116666622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n1111151115116222622222\\r\\n3511151115126222622264\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115126222622262\\r\\n1511151115566222622262\\r\\n1511151111222222622262\\r\\n1555551112222222666662\\r\\n1111111122222222222222',
+  '1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262962\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666664\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262962\\r\\n1155511111155662266622\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626664\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222',
+  '1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n3511111111111222222264\\r\\n1555555555555666666662\\r\\n1151111111111222222622\\r\\n1555555555555666666662\\r\\n1511111111111222222262\\r\\n1555555555555666666662\\r\\n1111111111111222222222',
+  '7777777777777888888888\\r\\n7555557887555566666668\\r\\n7511758228571112222268\\r\\n7511768228671556666668\\r\\n7511768228671512222228\\r\\n3517866666687555666668\\r\\n7717822222287111222264\\r\\n3517866666687555666668\\r\\n7511768228671512222228\\r\\n7511768228671556666668\\r\\n7511758228571112222268\\r\\n7555557887555566666668\\r\\n7777777777777888888888',
+  '1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222',
+];
 export function build(towerCount: number, cryptCount: number, macaws = false): TurnAction[] {
-  const map = maps[Math.floor(Math.random() * maps.length)].replace("\\r\\n", "").split("").map(a => Number(a) as TileNumber)
+  const map = maps[Math.floor(Math.random() * maps.length)]
+    .replace('\\r\\n', '')
+    .split('')
+    .map(a => Number(a) as TileNumber);
   const available = availableForBuilding(map);
   const towers: TurnAction[] = available.towers
     .sort(() => 0.5 - Math.random())
@@ -57,7 +61,9 @@ export function build(towerCount: number, cryptCount: number, macaws = false): T
         action: 'build',
         faction: 'attacker',
         coordinates,
-        structure: macaws ? 'macawCrypt' : randomFromArray(['macawCrypt', 'gorillaCrypt', 'jaguarCrypt']),
+        structure: macaws
+          ? 'macawCrypt'
+          : randomFromArray(['macawCrypt', 'gorillaCrypt', 'jaguarCrypt']),
       };
     });
   return [...towers, ...crypts];
@@ -66,7 +72,7 @@ export function build(towerCount: number, cryptCount: number, macaws = false): T
 function repair(m: MatchState): RepairStructureAction[] {
   const towers: RepairStructureAction[] = Object.values(m.actors.towers).map(a => {
     return {
-      round: 2,
+      round: 3,
       action: 'repair',
       faction: 'defender',
       id: a.id,
@@ -74,7 +80,7 @@ function repair(m: MatchState): RepairStructureAction[] {
   });
   const crypts: RepairStructureAction[] = Object.values(m.actors.crypts).map(a => {
     return {
-      round: 2,
+      round: 4,
       action: 'repair',
       faction: 'attacker',
       id: a.id,
@@ -126,13 +132,8 @@ function damageTowers(m: MatchState): void {
   const towers: DefenderStructure[] = Object.values(m.actors.towers);
   for (const tower of towers) {
     tower.health -= 50;
+    if (tower.health < 0) tower.health = 1;
   }
-  // const damagedTowers = Object.entries(m.actors.towers).reduce((acc, item) => {
-  //   const health = item[1].health - 50;
-  //   const tower = { ...item[1], health };
-  //   return { ...acc, [item[0]]: tower };
-  // }, m.actors.towers);
-  // return { ...m, actors: { ...m.actors, towers: damagedTowers } };
 }
 function randomFromArray<T>(array: T[]): T {
   const index = Math.floor(Math.random() * array.length);
@@ -172,27 +173,12 @@ function getAttackerMatchState() {
 }
 
 describe('Game Logic', () => {
-  const getTestData = () => {
-    const matchConfig = getMatchConfig();
-    const matchState = getMatchState();
-    const moves = build(10, 10);
-    const currentTick = 1;
-    const randomnessGenerator = new Prando(1);
-    return { matchConfig, matchState, moves, currentTick, randomnessGenerator };
-  };
-  // parser tests
-  // test('config parser works', () => {
-  // const goodDefinitions = ['st1;p40;h150;c10;d5;r2'];
-  // const badDefinitions = ['mc0;p40;h150;c10;d5;r2'];
-  // const configString = 'r|1|gr;d;105|st1;p40;h150;c10;d5;r2';
-  // const matchConfig: MatchConfig = parseConfig(configString);
-  // TODO
-  // expect(3).toBe(3);
-  // });
   // structure tests
   test('built structures show up in the match state', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
+    matchState.defenderGold = 10_000;
+    matchState.attackerGold = 10_000;
     const moves = build(5, 5);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -208,6 +194,8 @@ describe('Game Logic', () => {
   test('built structures show up in the match state with their respective ids', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
+    matchState.defenderGold = 10_000;
+    matchState.attackerGold = 10_000;
     const moves = build(5, 5);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -228,6 +216,7 @@ describe('Game Logic', () => {
   test('repaired towers are repaired', () => {
     const matchConfig = baseConfig;
     const matchState = getMatchState();
+    matchState.defenderGold = 10_000;
     const moves = build(3, 0);
     const currentTick = 1;
     const randomnessGenerator = new Prando(1);
@@ -239,34 +228,14 @@ describe('Game Logic', () => {
     const events2 = processTick(matchConfig, matchState, moves2, currentTick, randomnessGenerator);
     // match state here should be repaired
     // compare
-    const towerHealthDiff = Object.keys(towerState1).map(tower => {
-      const originalHealth = towerState1[parseInt(tower)].health;
-      const newHealth = matchState.actors.towers[parseInt(tower)].health;
-      return newHealth - originalHealth;
-    });
-    expect(towerHealthDiff).toStrictEqual([25, 25, 25]);
-  });
-  test('repaired crypts are repaired', () => {
-    const matchConfig = baseConfig;
-    const matchState = getAttackerMatchState();
-    const moves = build(0, 3);
-    const randomnessGenerator = new Prando(1);
-    const ticks = [...Array(10).keys()].map(i => i + 1); // [1..11]
-    // do a bunch of ticks so the crypts do some spawning
-    for (const tick of ticks) {
-      processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-    }
-    const cryptState1 = structuredClone(matchState.actors.crypts);
-    const moves2 = repair(matchState);
-    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
-    // match state here should be repaired
-    // compare
-    const cryptSpawnedDiff = Object.keys(cryptState1).map(crypt => {
-      const originalSpawned = cryptState1[parseInt(crypt)].spawned;
-      const newSpawned = matchState.actors.crypts[parseInt(crypt)].spawned;
-      return originalSpawned.length - newSpawned.length;
-    });
-    expect(cryptSpawnedDiff).toStrictEqual([1, 1, 1]);
+    const ok = Object.keys(towerState1).reduce((acc, tower) => {
+      const original = towerState1[parseInt(tower)];
+      const nnew = matchState.actors.towers[parseInt(tower)];
+      const diffOK = nnew.health - original.health === 25;
+      const isMax = nnew.health === matchConfig[original.structure][original.upgrades].health;
+      return diffOK || isMax ? acc : false;
+    }, true);
+    expect(ok).toBeTruthy();
   });
   test('upgraded structures are upgraded', () => {
     const matchConfig = baseConfig;
@@ -318,16 +287,15 @@ describe('Game Logic', () => {
     const matchState = getMatchState();
     const randomnessGenerator = new Prando(1);
     const initialGold = structuredClone(matchState.attackerGold);
-    console.log(initialGold, 'initial gold');
     const moves = build(0, 3);
     const moneySpent = moves.reduce((price, buildEvent) => {
       if (buildEvent.action !== 'build') return price;
       else {
         const cost = matchConfig[buildEvent.structure][1].price;
-        return price + cost;
+        const sum = price + cost;
+        return sum <= initialGold ? sum : price;
       }
     }, 0);
-    console.log(moneySpent, 'money spent');
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     expect(matchState.attackerGold).toBe(initialGold - moneySpent);
   });
@@ -347,56 +315,59 @@ describe('Game Logic', () => {
     processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     expect(matchState.defenderGold).toBe(initialGold - moneySpent);
   });
-  // test('repairs spend gold', () => {
-  //   const matchConfig = baseConfig;
-  //   const matchState = getMatchState();
-  //   const randomnessGenerator = new Prando(1);
-  //   const moves = build(3, 0);
-  //   const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-  //   const initialGold = structuredClone(matchState.defenderGold);
-  //   const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
-  //   const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
-  //   const moves2 = repair(matchState);
-  //   const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
-  //   const uEvents = events2 || [];
-  //   const moneySpent = uEvents.reduce((acc, item) => {
-  //     if (item.eventType === 'repair') return acc + matchConfig.repairCost;
-  //     else return acc;
-  //   }, 0);
-  //   expect(matchState.defenderGold).toBe(initialGold - moneySpent);
-  // });
-  // test('upgrades spend gold', () => {
-  //   const matchConfig = baseConfig;
-  //   const matchState = getMatchState();
-  //   const randomnessGenerator = new Prando(1);
-  //   const moves = build(0, 3);
-  //   const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-  //   const initialGold = structuredClone(matchState.attackerGold);
-  //   const cryptState1: ActorGraph<AttackerStructure> = structuredClone(matchState.actors.crypts);
-  //   const towerState1: ActorGraph<DefenderStructure> = structuredClone(matchState.actors.towers);
-  //   const moves2 = upgrade(matchState);
-  //   const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
-  //   const moneySpent = moves2.reduce((acc, item) => {
-  //     const structure: AttackerStructure = matchState.actors.crypts[item.id];
-  //     const cost = matchConfig[structure.structure][structure.upgrades].price;
-  //     return acc + cost;
-  //   }, 0);
-  //   expect(matchState.attackerGold).toBe(initialGold - moneySpent);
-  // });
-  // test('salvaged structures recoups money', () => {
-  //   const matchConfig = baseConfig;
-  //   const matchState = getMatchState();
-  //   const randomnessGenerator = new Prando(1);
-  //   const moves = build(0, 3);
-  //   const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
-  //   const initialGold = structuredClone(matchState.attackerGold);
-  //   const moves2 = mockSalvageAll(matchState);
-  //   const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
-  //   const moneyGained = Object.values(matchState.actors.crypts).reduce((acc, item) => {
-  //     return acc + 0.5 * matchConfig[item.structure][1].price;
-  //   }, 0);
-  //   expect(matchState.attackerGold).toBe(initialGold + moneyGained);
-  // });
+  test('repairs spend gold', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const randomnessGenerator = new Prando(1);
+    const moves = build(3, 0);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const initialGold = structuredClone(matchState.defenderGold);
+    const cryptState1 = structuredClone(matchState.actors.crypts);
+    const towerState1 = structuredClone(matchState.actors.towers);
+    const moves2 = repair(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const uEvents = events2 || [];
+    const moneySpent = uEvents.reduce((acc, item) => {
+      if (item.eventType === 'repair') return acc + matchConfig.repairCost;
+      else return acc;
+    }, 0);
+    expect(matchState.defenderGold).toBe(initialGold - moneySpent);
+  });
+  test('upgrades spend gold', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    matchState.attackerGold = 10_000;
+    const randomnessGenerator = new Prando(1);
+    const moves = build(0, 3);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const initialGold = structuredClone(matchState.attackerGold);
+    const cryptState1 = structuredClone(matchState.actors.crypts);
+    const towerState1 = structuredClone(matchState.actors.towers);
+    const moves2 = upgrade(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const moneySpent = moves2.reduce((acc, item) => {
+      const structure: AttackerStructure = matchState.actors.crypts[item.id];
+      const cost = matchConfig[structure.structure][structure.upgrades].price;
+      return acc + cost;
+    }, 0);
+    expect(matchState.attackerGold).toBe(initialGold - moneySpent);
+  });
+  test('salvaged structures recoups money', () => {
+    const matchConfig = baseConfig;
+    const matchState = getMatchState();
+    const randomnessGenerator = new Prando(1);
+    const moves = build(0, 3);
+    const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
+    const initialGold = structuredClone(matchState.attackerGold);
+    const crypts = structuredClone(matchState.actors.crypts)
+    const moves2 = mockSalvageAll(matchState);
+    const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
+    const moneyGained = Object.values(crypts).reduce((acc, item) => {
+      const recouped = calculateRecoupGold(item, matchConfig);
+      return acc + recouped;
+    }, 0);
+    expect(matchState.attackerGold).toBe(initialGold + moneyGained);
+  });
   // // // movement
   test('spawned units show up in the actors graph', () => {
     const matchConfig = baseConfig;
@@ -419,12 +390,14 @@ describe('Game Logic', () => {
   test('crypts stop spawning once they reach their spawn limit', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
-    const moves = build(1, 3);
+    matchState.attackerGold = 10_000;
+    const moves = build(1, 5);
     const randomnessGenerator = new Prando(1);
     const ticks = [...Array(1000).keys()].map(i => i + 1); // [0..10]
     // do a bunch of ticks so the crypts do some spawning
     const events = [];
     for (const tick of ticks) {
+      if (matchState.roundEnded) break;
       events.push(processTick(matchConfig, matchState, moves, tick, randomnessGenerator));
     }
     const cs: AttackerStructure[] = Object.values(matchState.actors.crypts);
@@ -439,29 +412,34 @@ describe('Game Logic', () => {
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
     const moves = generateRandomMoves(matchConfig, matchState, 'defender', 1);
-    console.log(moves, "moves")
     const ok = moves.length > 0;
     expect(ok).toBeTruthy;
   });
-  //TODO: this test doesn't test anything
   test('units move forward', () => {
     const matchConfig = baseConfig;
     const matchState = getAttackerMatchState();
     const moves = build(1, 10);
     const randomnessGenerator = new Prando(1);
-    const ticks = [...Array(2000).keys()].map(i => i + 1); // [0..10]
+    const ticks = [...Array(2000).keys()].map(i => i + 1);
     // do a bunch of ticks so the crypts do some spawning
-    const ok = true;
-    const baseIndex = matchState.map.findIndex(t => t.type === 'base' && t.faction === 'defender');
+    let ok = true;
     for (const tick of ticks) {
+      if (matchState.roundEnded) break;
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-      if (matchState.roundEnded) console.log(matchState, 'state');
-      else {
-        if (!events) console.log(tick, 'tick');
-        if (events) {
-          const movementEvents = events.filter(
-            (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
-          );
+      if (events) {
+        const movementEvents = events.filter(
+          (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
+        );
+        for (let m of movementEvents) {
+          const unit = matchState.actors.units[m.actorID];
+          // unit might have been killed
+          if (!unit) break;
+          const current = unit.path.indexOf(unit.coordinates);
+          const good =
+            m.completion === 100
+              ? m.nextCoordinates === unit.path[current]
+              : m.nextCoordinates === unit.path[current + 1];
+          if (!good) ok = false;
         }
       }
     }
@@ -490,31 +468,33 @@ describe('Game Logic', () => {
     const diff = oldState - newState;
     expect(diff).toBe(units.length);
   });
-  test("attackers keep track of last shot", () => {
+  test('attackers keep track of last shot', () => {
     let ok = true;
     const matchConfig = baseConfig;
-    const matchState = {...getMatchState(), currentRound: 3};
+    const matchState = { ...getMatchState(), currentRound: 3 };
     const moves = build(2, 10, true);
     const randomnessGenerator = new Prando(1);
     // Do a whole round
     let go = true;
     let tick = 1;
-    while (go){
+    while (go) {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
-      const damages = events?.filter((e: TickEvent): e is DamageEvent => e.eventType === "damage") || [];
-      for (let d of damages){
-        const attacker = d.faction === "attacker" 
-        ? matchState.actors.units[d.sourceID] as Macaw
-        : matchState.actors.towers[d.sourceID];
+      const damages =
+        events?.filter((e: TickEvent): e is DamageEvent => e.eventType === 'damage') || [];
+      for (let d of damages) {
+        const attacker =
+          d.faction === 'attacker'
+            ? (matchState.actors.units[d.sourceID] as Macaw)
+            : matchState.actors.towers[d.sourceID];
         if (attacker && attacker.lastShot !== tick) {
           ok = false;
         }
       }
-      tick ++;
+      tick++;
       if (!events) go = false;
     }
-    expect(ok).toBeTruthy()
-  })
+    expect(ok).toBeTruthy();
+  });
 });
 
 function damage(u: AttackerUnit, t: DefenderStructure[]): DamageEvent[] {

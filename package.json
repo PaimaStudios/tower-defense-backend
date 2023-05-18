@@ -13,7 +13,7 @@
     "prettier": "prettier --config .prettierrc --ignore-path .prettierignore --check .",
     "prettier:fix": "prettier --write --config .prettierrc --ignore-path .prettierignore --check .",
     "test": "DOTENV_CONFIG_PATH=./.env.test jest",
-    "t": "DOTENV_CONFIG_PATH=./.env.test jest -t 'AI creates moves'",
+    "t": "DOTENV_CONFIG_PATH=./.env.test jest -t 'registerConfig'",
     "test:watch": "npm test -- --watch"
   },
   "workspaces": [
