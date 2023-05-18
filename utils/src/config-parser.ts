@@ -568,7 +568,7 @@ const crypts = P.seqMap(
 );
 
 interface InvalidConfig {
-  error: 'invalidString';
+  error: string;
 }
 
 export type ConfigDefinition = MatchConfig | InvalidConfig;
@@ -590,13 +590,14 @@ const configParser = P.seq<any>(
 );
 
 function parser(s: string): ConfigDefinition {
+  console.log(s, "s")
   try {
     const res = configParser.tryParse(s);
     return res.reduce((acc, item) => ({ ...acc, ...item }), {});
   } catch (e) {
-    // console.log(e, 'parsing failure');
+    console.log(e, 'parsing failure');
     return {
-      error: 'invalidString',
+      error: e as string,
     };
   }
 }
