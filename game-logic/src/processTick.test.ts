@@ -24,7 +24,6 @@ describe('Map utilities find', () => {
   });
   test('surrounding cells', () => {
     const surroundingCells = getSurroundingCells(22, 10, 10, 2);
-    console.log({ surroundingCells });
     expect(surroundingCells.length).toBe(12);
     [2, 11, 12, 13, 20, 21, 23, 24, 31, 32, 33, 42].forEach(point =>
       expect(surroundingCells).toContain(point)

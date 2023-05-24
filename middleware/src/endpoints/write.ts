@@ -30,7 +30,6 @@ const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
     }
     return { result: wallet, success: true };
   } catch (err) {
-    console.log({ err });
     return errorFxn(PaimaMiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
   }
 };
