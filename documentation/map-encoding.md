@@ -181,12 +181,17 @@ Units can get stuck if blocked paths are placed in a way that no adjacent path t
 Blocked paths are currently used on these maps, illustrated by the green material.
 
 - Backwards
+
 ![Backwards map](images/backwards.png)
 - Straight
+  
 ![Straight map](images/straight.png)
 - Fork
+  
 ![Fork](images/fork.png)
 - Jungle
+  
 ![Jungle](images/jungle.png)
 - Wavy
+  
 ![Wavy](images/wavy.png)
