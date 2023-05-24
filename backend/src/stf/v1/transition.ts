@@ -2,7 +2,7 @@ import type { Pool } from 'pg';
 import type Prando from 'paima-engine/paima-prando';
 import type { SQLUpdate } from 'paima-engine/paima-db';
 import type { WalletAddress } from 'paima-engine/paima-utils';
-import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams  } from '@tower-defense/db';
+import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams } from '@tower-defense/db';
 import {
   getLobbyById,
   getRoundData,
@@ -11,7 +11,7 @@ import {
   getMatchConfig,
   endMatch,
 } from '@tower-defense/db';
-import {
+import type {
   ClosedLobbyInput,
   CreatedLobbyInput,
   JoinedLobbyInput,
@@ -21,8 +21,8 @@ import {
   SubmittedTurnInput,
   UserStats,
   ZombieRound,
-  isCleanDB,
 } from './types.js';
+import { isWipeOldLobbies } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
 import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import { configParser } from '@tower-defense/utils';
@@ -209,7 +209,9 @@ export async function processSubmittedTurn(
     round,
     randomnessGenerator
   );
-  const matchEnded = (round.match_state as any).defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
+  const matchEnded =
+    (round.match_state as any).defenderBase.health <= 0 ||
+    lobby.current_round === lobby.num_of_rounds;
   if (lobby.practice && !matchEnded) {
     const practiceTuples = practiceRound(
       blockHeight,
@@ -235,7 +237,7 @@ export async function processScheduledData(
   if (isUserStats(input)) {
     return processStatsEffect(input, dbConn);
   }
-  if (isCleanDB(input)) return [wipeOldLobbies()];
+  if (isWipeOldLobbies(input)) return [wipeOldLobbies(input.days)];
   return [];
 }
 
@@ -266,16 +268,19 @@ export async function processZombieEffect(
     round,
     randomnessGenerator
   );
-  const matchEnded = (round.match_state as any).defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
-  const practiceTuples = (lobby.practice && !matchEnded)
-    ? practiceRound(
-        blockHeight,
-        { ...lobby, current_round: lobby.current_round + 1 },
-        matchConfig,
-        round, // match state here should have been mutated by the previous round execution...
-        randomnessGenerator
-      )
-    : [];
+  const matchEnded =
+    (round.match_state as any).defenderBase.health <= 0 ||
+    lobby.current_round === lobby.num_of_rounds;
+  const practiceTuples =
+    lobby.practice && !matchEnded
+      ? practiceRound(
+          blockHeight,
+          { ...lobby, current_round: lobby.current_round + 1 },
+          matchConfig,
+          round, // match state here should have been mutated by the previous round execution...
+          randomnessGenerator
+        )
+      : [];
   return [...roundExecutionTuples, ...practiceTuples];
 }
 
@@ -314,7 +319,8 @@ export function executeRound(
   const executedRoundUpdate = persistExecutedRound(roundData, lobby, blockHeight);
 
   // Finalize match if defender dies or we've reached the final round
-  const matchEnded = newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
+  const matchEnded =
+    newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
     const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);

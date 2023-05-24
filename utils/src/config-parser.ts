@@ -590,7 +590,6 @@ const configParser = P.seq<any>(
 );
 
 function parser(s: string): ConfigDefinition {
-  console.log(s, "s")
   try {
     const res = configParser.tryParse(s);
     return res.reduce((acc, item) => ({ ...acc, ...item }), {});

@@ -1,22 +1,17 @@
 import { retryPromise } from 'paima-engine/paima-utils';
 import { builder } from 'paima-engine/paima-concise';
 
-import type { EndpointErrorFxn } from '../errors';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import {
   getLobbyStateWithUser,
   getNonemptyNewLobbies,
   getUserConfigs,
 } from '../helpers/auxiliary-queries';
-import {
-  lobbyWasClosed,
-  moveToString,
-  userCreatedLobby,
-  userJoinedLobby,
-} from '../helpers/utility-functions';
+import { moveToString, userCreatedLobby, userJoinedLobby } from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
 import { GameENV, configToConcise } from '@tower-defense/utils';
 import type { MatchConfig, Faction, MapName, TurnAction } from '@tower-defense/utils';
+import type { EndpointErrorFxn } from 'paima-engine/paima-mw-core';
 import {
   awaitBlock,
   getActiveAddress,
@@ -35,7 +30,7 @@ const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
     }
     return { result: wallet, success: true };
   } catch (err) {
-    return errorFxn(MiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
+    return errorFxn(PaimaMiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
   }
 };
 
@@ -213,13 +208,10 @@ async function closeLobby(lobbyID: string): Promise<OldResult> {
       RETRY_PERIOD,
       RETRIES_COUNT
     );
-    if (lobbyWasClosed(lobbyState)) {
-      return { success: true, message: '' };
-    } else if (!userCreatedLobby(userWalletAddress, lobbyState)) {
+    if (!userCreatedLobby(userWalletAddress, lobbyState)) {
       return errorFxn(MiddlewareErrorCode.CANNOT_CLOSE_SOMEONES_LOBBY);
-    } else {
-      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
     }
+    return { success: true, message: '' };
   } catch (err) {
     return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
   }

@@ -160,9 +160,9 @@ function parseSubmitTurn(c: ConciseConsumer): SubmittedTurnInput {
 function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput {
   const version = tryParse(c.nextValue(), pRoundNumber);
   const content = tryParse(c.nextValue(), P.all);
-  console.log(content, "content")
+  console.log(content, 'config to register');
   const config = configParser(content);
-  if ('error' in config) throw(config.error);
+  if ('error' in config) throw config.error;
   return {
     input: 'registeredConfig',
     version,
