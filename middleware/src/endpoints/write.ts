@@ -7,12 +7,7 @@ import {
   getNonemptyNewLobbies,
   getUserConfigs,
 } from '../helpers/auxiliary-queries';
-import {
-  lobbyWasClosed,
-  moveToString,
-  userCreatedLobby,
-  userJoinedLobby,
-} from '../helpers/utility-functions';
+import { moveToString, userCreatedLobby, userJoinedLobby } from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
 import { GameENV, configToConcise } from '@tower-defense/utils';
 import type { MatchConfig, Faction, MapName, TurnAction } from '@tower-defense/utils';
@@ -214,13 +209,10 @@ async function closeLobby(lobbyID: string): Promise<OldResult> {
       RETRY_PERIOD,
       RETRIES_COUNT
     );
-    if (lobbyWasClosed(lobbyState)) {
-      return { success: true, message: '' };
-    } else if (!userCreatedLobby(userWalletAddress, lobbyState)) {
+    if (!userCreatedLobby(userWalletAddress, lobbyState)) {
       return errorFxn(MiddlewareErrorCode.CANNOT_CLOSE_SOMEONES_LOBBY);
-    } else {
-      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
     }
+    return { success: true, message: '' };
   } catch (err) {
     return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE);
   }
