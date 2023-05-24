@@ -1,7 +1,6 @@
 import { retryPromise } from 'paima-engine/paima-utils';
 import { builder } from 'paima-engine/paima-concise';
 
-import type { EndpointErrorFxn } from '../errors';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import {
   getLobbyStateWithUser,
@@ -17,6 +16,7 @@ import {
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
 import { GameENV, configToConcise } from '@tower-defense/utils';
 import type { MatchConfig, Faction, MapName, TurnAction } from '@tower-defense/utils';
+import type { EndpointErrorFxn } from 'paima-engine/paima-mw-core';
 import {
   awaitBlock,
   getActiveAddress,
@@ -35,7 +35,8 @@ const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
     }
     return { result: wallet, success: true };
   } catch (err) {
-    return errorFxn(MiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
+    console.log({ err });
+    return errorFxn(PaimaMiddlewareErrorCode.INTERNAL_INVALID_POSTING_MODE, err);
   }
 };
 

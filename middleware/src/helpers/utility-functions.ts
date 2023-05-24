@@ -1,4 +1,4 @@
-import { getDeployment, pushLog } from 'paima-engine/paima-mw-core';
+import { PaimaMiddlewareErrorCode, getDeployment, pushLog } from 'paima-engine/paima-mw-core';
 import type {
   MatchExecutorData,
   MatchState,
@@ -104,7 +104,7 @@ export function calculateRoundEnd(
       seconds: secondsToEnd,
     };
   } catch (err) {
-    errorFxn(MiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
+    errorFxn(PaimaMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
     return {
       blocks: 0,
       seconds: 0,
