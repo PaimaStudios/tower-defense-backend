@@ -80,6 +80,7 @@ export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {
 export function isUserStats(input: ScheduledDataInput): input is UserStats {
   return (input as UserStats).effect === 'stats';
 }
-export function isCleanDB(input: ScheduledDataInput): input is UserStats {
+
+export function isWipeOldLobbies(input: ScheduledDataInput): input is WipeOldLobbies {
   return (input as WipeOldLobbies).effect === 'wipeOldLobbies';
 }

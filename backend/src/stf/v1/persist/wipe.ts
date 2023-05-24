@@ -29,7 +29,7 @@ function createWipeInput(days: number): string {
   return `w|${days}`;
 }
 
-export function wipeOldLobbies(): SQLUpdate {
-  const date = new Date(new Date().setDate(new Date().getDate() - interval));
+export function wipeOldLobbies(days: number): SQLUpdate {
+  const date = new Date(new Date().setDate(new Date().getDate() - days));
   return [wipeOldlobbies, { date }];
 }

@@ -22,7 +22,7 @@ import type {
   UserStats,
   ZombieRound,
 } from './types.js';
-import { isCleanDB } from './types.js';
+import { isWipeOldLobbies } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
 import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import { configParser } from '@tower-defense/utils';
@@ -237,7 +237,7 @@ export async function processScheduledData(
   if (isUserStats(input)) {
     return processStatsEffect(input, dbConn);
   }
-  if (isCleanDB(input)) return [wipeOldLobbies()];
+  if (isWipeOldLobbies(input)) return [wipeOldLobbies(input.days)];
   return [];
 }
 
