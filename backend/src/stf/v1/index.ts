@@ -40,7 +40,7 @@ export default async function (
     queries = await processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
   else if (parsed.input === 'registeredConfig')
     queries = await processConfig(user, parsed, randomnessGenerator);
-  // add schedule data to wipe old lobbies on set schedule 
+  // add schedule data to wipe old lobbies on set schedule
   const wiping = await wipeSchedule(blockHeight, dbConn);
   return wiping ? [...queries, scheduleWipeOldLobbies(blockHeight)] : queries;
 }

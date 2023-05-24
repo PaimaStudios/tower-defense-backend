@@ -62,8 +62,8 @@ export interface UserStats extends ScheduledDataInput {
   user: WalletAddress;
   result: ResultConcise;
 }
-export interface WipeOldLobbies extends ScheduledDataInput{
-  effect: "wipeOldLobbies",
+export interface WipeOldLobbies extends ScheduledDataInput {
+  effect: 'wipeOldLobbies';
   days: number;
 }
 
