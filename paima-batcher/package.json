@@ -10,7 +10,7 @@
   "workspaces": [
     "./address-validator",
     "./batched-transaction-poster",
-    "./catapult-validator",
+    "./tower-defense-validator",
     "./db",
     "./game-input-validator",
     "./runtime",

@@ -5,5 +5,5 @@
     "outDir": "build"
   },
   "include": ["src/**/*"],
-  "references": [{ "path": "../utils" }, { "path": "../db" }, { "path": "../catapult-validator" }]
+  "references": [{ "path": "../utils" }, { "path": "../db" }, { "path": "../tower-defense-validator" }]
 }

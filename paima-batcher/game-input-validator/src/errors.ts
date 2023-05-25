@@ -1,12 +1,12 @@
 import { ErrorCode, GameInputValidatorCoreType, GENERIC_ERROR_MESSAGES } from "@paima-batcher/utils";
-import { CATAPULT_ERROR_MESSAGES } from "@paima-batcher/catapult-validator";
+import { TOWER_DEFENSE_ERROR_MESSAGES } from "@paima-batcher/tower-defense-validator";
 
 function getSpecificErrors(validatorType: GameInputValidatorCoreType): Record<ErrorCode, string> {
     switch (validatorType) {
         case GameInputValidatorCoreType.NO_VALIDATION:
             return {};
-        case GameInputValidatorCoreType.CATAPULT:
-            return CATAPULT_ERROR_MESSAGES;
+        case GameInputValidatorCoreType.TOWER_DEFENSE:
+            return TOWER_DEFENSE_ERROR_MESSAGES;
         default:
             return {};
     }

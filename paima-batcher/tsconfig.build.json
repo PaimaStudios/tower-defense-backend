@@ -5,7 +5,7 @@
     { "path": "./utils" },
     { "path": "./address-validator" },
     { "path": "./game-input-validator" },
-    { "path": "./catapult-validator" },
+    { "path": "./tower-defense-validator" },
     { "path": "./batched-transaction-poster" },
     { "path": "./webserver" },
     { "path": "./runtime" }

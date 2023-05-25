@@ -1,6 +1,6 @@
-# Paima Batcher Catapult Game Input Validator
+# Paima Batcher Tower Defense Game Input Validator
 
-The game input validator for Catapult
+The game input validator for Tower Defense
 
 ## Usage
 

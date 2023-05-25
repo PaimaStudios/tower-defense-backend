@@ -8,7 +8,7 @@
   "references": [
     { "path": "../webserver/" },
     { "path": "../game-input-validator/" },
-    { "path": "../catapult-validator" },
+    { "path": "../tower-defense-validator" },
     { "path": "../utils" },
     { "path": "../batched-transaction-poster" }
   ]

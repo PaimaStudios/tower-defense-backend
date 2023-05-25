@@ -57,7 +57,7 @@ export const CHAIN_URI = process.env.CHAIN_URI || "";
 export const STORAGE_CONTRACT_ADDRESS = process.env.STORAGE_CONTRACT_ADDRESS || "";
 export const DEFAULT_FEE = process.env.DEFAULT_FEE || "";
 
-export const CATAPULT_BACKEND_URI = process.env.CATAPULT_BACKEND_URI || "";
+export const TOWER_DEFENSE_BACKEND_URI = process.env.TOWER_DEFENSE_BACKEND_URI || "";
 
 export const GAME_INPUT_VALIDATOR_PERIOD = parseInt(process.env.GAME_INPUT_VALIDATOR_PERIOD || "0", 10);
 export const BATCHED_TRANSACTION_POSTER_PERIOD = parseInt(process.env.BATCHED_TRANSACTION_POSTER_PERIOD || "0", 10);
@@ -194,8 +194,8 @@ export function getStorageContract(web3: Web3, address: string): Contract {
 
 export function getGameInputValidatorType(typeString: string): GameInputValidatorCoreType {
     switch (typeString) {
-        case "catapult":
-            return GameInputValidatorCoreType.CATAPULT;
+        case "tower-defense":
+            return GameInputValidatorCoreType.TOWER_DEFENSE;
         case "no-validation":
         default:
             return GameInputValidatorCoreType.NO_VALIDATION;

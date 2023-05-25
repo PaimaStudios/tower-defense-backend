@@ -26,5 +26,5 @@ export const enum GenericRejectionCode {
 
 export const enum GameInputValidatorCoreType {
     NO_VALIDATION,
-    CATAPULT
+    TOWER_DEFENSE
 }

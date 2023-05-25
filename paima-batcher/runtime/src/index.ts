@@ -2,14 +2,14 @@ import type { Pool } from "pg";
 
 import BatchedTransactionPoster from "@paima-batcher/batched-transaction-poster";
 import { server, startServer } from "@paima-batcher/webserver";
-import CatapultValidator from "@paima-batcher/catapult-validator";
+import TowerDefenseValidator from "@paima-batcher/tower-defense-validator";
 import GameInputValidator, { EmptyInputValidatorCoreInitializator, getErrors } from "@paima-batcher/game-input-validator";
 
 import {
     BATCHED_MESSAGE_SIZE_LIMIT,
     BATCHED_TRANSACTION_POSTER_PERIOD,
     BATCHER_PRIVATE_KEY,
-    CATAPULT_BACKEND_URI,
+    TOWER_DEFENSE_BACKEND_URI,
     CHAIN_URI,
     ErrorCode,
     ErrorMessageFxn,
@@ -75,8 +75,8 @@ const errorCodeToMessage: ErrorMessageFxn = (errorCode: ErrorCode) => {
 
 async function getValidatorCore(validationType: GameInputValidatorCoreType): Promise<GameInputValidatorCore> {
     switch (validationType) {
-        case GameInputValidatorCoreType.CATAPULT:
-            return await CatapultValidator.initialize(CATAPULT_BACKEND_URI);
+        case GameInputValidatorCoreType.TOWER_DEFENSE:
+            return await TowerDefenseValidator.initialize(TOWER_DEFENSE_BACKEND_URI);
         case GameInputValidatorCoreType.NO_VALIDATION:
         default:
             return EmptyInputValidatorCoreInitializator.initialize();
