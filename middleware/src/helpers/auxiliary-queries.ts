@@ -4,16 +4,22 @@ import { pushLog } from 'paima-engine/paima-mw-core';
 import type { ContractAddress } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
-  LobbyState,
+  LobbyResponse,
   NewLobbies,
   NewLobby,
   NFT,
   NftId,
   NftScore,
+  PackedLobbyResponse,
   PackedLobbyState,
   SuccessfulResult,
 } from '../types';
-import { nftScoreSnakeToCamel, userCreatedLobby, userJoinedLobby } from './utility-functions';
+import {
+  hasLobby,
+  nftScoreSnakeToCamel,
+  userCreatedLobby,
+  userJoinedLobby,
+} from './utility-functions';
 import {
   backendQueryLobbyState,
   backendQueryUserConfigs,
@@ -25,7 +31,9 @@ import {
 } from './query-constructors';
 import type { WalletAddress } from 'paima-engine/paima-utils';
 
-export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
+export async function getRawLobbyState(
+  lobbyID: string
+): Promise<PackedLobbyResponse | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getRawLobbyState');
 
   let res: Response;
@@ -37,7 +45,7 @@ export async function getRawLobbyState(lobbyID: string): Promise<PackedLobbyStat
   }
 
   try {
-    const j = (await res.json()) as { lobby: LobbyState };
+    const j = (await res.json()) as LobbyResponse;
     // TODO: properly typecheck
     return {
       success: true,
@@ -93,7 +101,7 @@ export async function getLobbyStateWithUser(
   address: string
 ): Promise<PackedLobbyState> {
   const lobbyState = await getRawLobbyState(lobbyID);
-  if (!lobbyState.success) {
+  if (!lobbyState.success || !hasLobby(lobbyState)) {
     throw new Error('Failed to get lobby state');
   } else if (userJoinedLobby(address, lobbyState) || userCreatedLobby(address, lobbyState)) {
     return lobbyState;

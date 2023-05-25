@@ -19,6 +19,7 @@ export const enum MiddlewareErrorCode {
   UNABLE_TO_VERIFY_NFT_OWNERSHIP,
   NFT_OWNED_BY_DIFFERENT_ADDRESS,
   NFT_TITLE_IMAGE_UNKNOWN,
+  LOBBY_NOT_FOUND,
   NO_OPEN_LOBBIES,
   // Write endpoint related:
   FAILURE_VERIFYING_LOBBY_CREATION,
@@ -47,6 +48,7 @@ const MIDDLEWARE_ERROR_MESSAGES: Record<MiddlewareErrorCode, string> = {
     'Registered NFT is owned by different address',
   [MiddlewareErrorCode.NFT_TITLE_IMAGE_UNKNOWN]:
     'Indexer unable to find title and image of registered NFT',
+  [MiddlewareErrorCode.LOBBY_NOT_FOUND]: 'Lobby not found',
   [MiddlewareErrorCode.NO_OPEN_LOBBIES]: 'No open lobbies were found, please try again later',
   [MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CREATION]: 'Failure while verifying lobby creation',
   [MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE]: 'Failure while verifying lobby closing',

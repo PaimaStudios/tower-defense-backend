@@ -3,6 +3,7 @@ import type { IGetLobbyByIdResult } from '@tower-defense/db';
 import { getLobbyById, getRoundData, requirePool } from '@tower-defense/db';
 import { GameENV } from '@tower-defense/utils';
 
+//TODO: these types are not in sync with the mw
 interface Response {
   lobby: Lobby | null;
 }
@@ -20,29 +21,28 @@ export class lobbyStateController extends Controller {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
     if (!lobby) return { lobby: null };
-    else {
-      const [round_data] = await getRoundData.run(
-        { lobby_id: lobbyID, round_number: lobby.current_round },
-        pool
-      );
-      const startingBlockheight = round_data?.starting_block_height || 0;
-      if (lobby.lobby_state === 'open') {
-        const nextRound = {
-          seconds: lobby.round_length * GameENV.BLOCK_TIME, // db holds the blockheight
-          calculated_at: Date.now(),
-        };
-        const response = {
-          ...lobby,
-          ...{ next_round_in: nextRound, round_start_height: startingBlockheight },
-        };
-        return { lobby: response };
-      } else {
-        const response = {
-          ...lobby,
-          round_start_height: startingBlockheight,
-        };
-        return { lobby: response };
-      }
+
+    const [round_data] = await getRoundData.run(
+      { lobby_id: lobbyID, round_number: lobby.current_round },
+      pool
+    );
+    const startingBlockheight = round_data?.starting_block_height || 0;
+    if (lobby.lobby_state === 'open') {
+      const nextRound = {
+        seconds: lobby.round_length * GameENV.BLOCK_TIME, // db holds the blockheight
+        calculated_at: Date.now(),
+      };
+      const response = {
+        ...lobby,
+        ...{ next_round_in: nextRound, round_start_height: startingBlockheight },
+      };
+      return { lobby: response };
+    } else {
+      const response = {
+        ...lobby,
+        round_start_height: startingBlockheight,
+      };
+      return { lobby: response };
     }
   }
 }

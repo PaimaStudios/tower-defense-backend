@@ -8,7 +8,14 @@ import type {
   TurnAction,
 } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
-import type { LobbyState, NftScore, NftScoreSnake, PackedLobbyState, RoundEnd } from '../types';
+import type {
+  LobbyState,
+  NftScore,
+  NftScoreSnake,
+  PackedLobbyResponse,
+  PackedLobbyState,
+  RoundEnd,
+} from '../types';
 import { getBlockTime } from 'paima-engine/paima-utils';
 import { matchExecutor } from 'paima-engine/paima-executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
@@ -41,6 +48,10 @@ export function moveToString(move: TurnAction): string {
       pushLog('[moveToString] found move with invalid type:', move);
       throw new Error(`Invalid move submitted: ${move}`);
   }
+}
+
+export function hasLobby(lobby: PackedLobbyResponse): lobby is PackedLobbyState {
+  return lobby.lobby !== null;
 }
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {

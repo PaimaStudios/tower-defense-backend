@@ -1,4 +1,4 @@
-;import type { FailedResult } from 'paima-engine/paima-mw-core';
+import type { FailedResult } from 'paima-engine/paima-mw-core';
 import type {
   ContractAddress,
   Hash,
@@ -39,8 +39,11 @@ export interface RoundEnd {
 export type Result<T> = SuccessfulResult<T> | FailedResult;
 export type OldResult = SuccessfulResultMessage | FailedResult;
 
-interface CreateLobbySuccessfulResponse {
+interface BaseResponse {
   success: true;
+}
+
+interface CreateLobbySuccessfulResponse extends BaseResponse {
   lobbyID: Hash;
   lobbyStatus: LobbyStatus;
 }
@@ -51,8 +54,7 @@ export interface NewLobby {
   lobby_id: Hash;
 }
 
-export interface NewLobbies {
-  success: true;
+export interface NewLobbies extends BaseResponse {
   lobbies: NewLobby[];
 }
 
@@ -88,27 +90,31 @@ export interface LobbyState extends BasicLobbyInfo {
   lobby_state: LobbyStatus;
 }
 
-export interface PackedLobbyState {
-  success: true;
+export interface PackedLobbyState extends BaseResponse {
   lobby: LobbyState;
 }
 
-export interface PackedLobbyConfig {
-  success: true;
+export interface PackedLobbyResponse extends BaseResponse {
+  lobby: LobbyState | null;
+}
+
+export interface LobbyResponse {
+  lobby: LobbyState | null;
+}
+
+export interface PackedLobbyConfig extends BaseResponse {
   result: {
     config: MatchConfig;
   };
 }
-export interface PackedCurrentRound {
-  success: true;
+export interface PackedCurrentRound extends BaseResponse {
   result: {
     currentRound: number;
     roundStartHeight: number;
   };
 }
 
-export interface LobbyStates {
-  success: true;
+export interface LobbyStates extends BaseResponse {
   lobbies: LobbyState[];
 }
 
@@ -118,8 +124,7 @@ export interface UserStats {
   losses: number;
 }
 
-export interface PackedUserStats {
-  success: true;
+export interface PackedUserStats extends BaseResponse {
   stats: UserStats;
 }
 
