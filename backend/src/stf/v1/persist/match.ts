@@ -1,7 +1,6 @@
 import type {
   IExecuteRoundParams,
   IGetLobbyByIdResult,
-  IGetRoundDataResult,
   INewFinalStateParams,
   INewMatchMoveParams,
   INewRoundParams,
@@ -57,7 +56,7 @@ export function persistMove(matchId: string, user: WalletAddress, a: TurnAction)
 
 // Persist an executed round (and delete scheduled zombie round input)
 export function persistExecutedRound(
-  roundData: IGetRoundDataResult,
+  roundStartBlockHeight: number,
   lobby: IGetLobbyByIdResult,
   blockHeight: number
 ): SQLUpdate[] {
@@ -70,7 +69,10 @@ export function persistExecutedRound(
   const executedRoundTuple: SQLUpdate = [executeRound, exParams];
 
   // We remove the scheduled zombie round input
-  const block_height = roundData.starting_block_height + lobby.round_length;
+  const block_height = roundStartBlockHeight + lobby.round_length;
+  console.log(
+    `@${blockHeight} REMOVE: ${block_height} (${roundStartBlockHeight}+${lobby.round_length})`
+  );
   return [executedRoundTuple, deleteZombieRound(lobby.lobby_id, block_height)];
 }
 

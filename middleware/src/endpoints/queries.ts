@@ -3,6 +3,7 @@ import type {
   MatchWinnerResponse,
   PackedCurrentRound,
   PackedLobbyConfig,
+  PackedLobbyResponse,
 } from '../types';
 
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
@@ -57,7 +58,7 @@ import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors'
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');
 
-  let packedLobbyState: PackedLobbyState | FailedResult;
+  let packedLobbyState: PackedLobbyResponse | FailedResult;
   let latestBlockHeight: number;
 
   try {
@@ -69,18 +70,21 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
     if (!packedLobbyState.success) {
       return errorFxn(packedLobbyState.errorMessage);
     }
+    if (!packedLobbyState.lobby) {
+      return errorFxn(MiddlewareErrorCode.LOBBY_NOT_FOUND);
+    }
   } catch (err) {
     return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
-    const l: LobbyState = packedLobbyState.lobby;
+    const lobby = packedLobbyState.lobby;
     // TODO: properly typecheck? Or should have happened in getRawLobbyState?
     let [start, length] = [0, 0];
 
-    if (l.lobby_state === 'active') {
-      start = l.round_start_height;
-      length = l.round_length;
+    if (lobby.lobby_state === 'active') {
+      start = lobby.round_start_height;
+      length = lobby.round_length;
     }
 
     const end = calculateRoundEnd(start, length, latestBlockHeight);
@@ -88,7 +92,7 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
     return {
       success: true,
       lobby: {
-        ...l,
+        ...lobby,
         round_ends_in_blocks: end.blocks,
         round_ends_in_secs: end.seconds,
       },
@@ -398,7 +402,8 @@ async function getMatchWinner(
     } = calculateMatchStats(j2);
     const match_status = j.match_status || j2.lobby.lobby_state;
     const winner_address =
-      (j.winner_address) || (j2.initialState.defenderBase.health > 0
+      j.winner_address ||
+      (j2.initialState.defenderBase.health > 0
         ? j2.initialState.defender
         : j2.initialState.attacker);
     return {

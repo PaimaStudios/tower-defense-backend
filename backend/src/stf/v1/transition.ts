@@ -118,16 +118,15 @@ export function practiceRound(
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
+  // updates that would've been done during persist.
+  const newRound = roundData.round_within_match + 1;
+  const newStartingBlockHeight = blockHeight;
+
   // structuredClone would be better but it requires node v17.
   const matchState = JSON.parse(JSON.stringify(roundData.match_state)) as unknown as MatchState;
   const user = PRACTICE_BOT_ADDRESS;
   const faction = user === matchState.defender ? 'defender' : 'attacker';
-  const moves = generateRandomMoves(
-    matchConfig,
-    matchState,
-    faction,
-    roundData.round_within_match + 1
-  );
+  const moves = generateRandomMoves(matchConfig, matchState, faction, newRound);
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
   const roundExecutionTuples = executeRound(
     blockHeight,
@@ -137,7 +136,8 @@ export function practiceRound(
     {
       ...roundData,
       match_state: matchState as any,
-      round_within_match: roundData.round_within_match + 1,
+      round_within_match: newRound,
+      starting_block_height: newStartingBlockHeight,
     },
     randomnessGenerator
   );
@@ -316,7 +316,11 @@ export function executeRound(
   const lobbyUpdate = persistUpdateMatchState(lobby.lobby_id, newState);
 
   // We generate updates for the executed round
-  const executedRoundUpdate = persistExecutedRound(roundData, lobby, blockHeight);
+  const executedRoundUpdate = persistExecutedRound(
+    roundData.starting_block_height,
+    lobby,
+    blockHeight
+  );
 
   // Finalize match if defender dies or we've reached the final round
   const matchEnded =
