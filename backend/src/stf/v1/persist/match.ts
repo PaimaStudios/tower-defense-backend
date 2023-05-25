@@ -70,9 +70,6 @@ export function persistExecutedRound(
 
   // We remove the scheduled zombie round input
   const block_height = roundStartBlockHeight + lobby.round_length;
-  console.log(
-    `@${blockHeight} REMOVE: ${block_height} (${roundStartBlockHeight}+${lobby.round_length})`
-  );
   return [executedRoundTuple, deleteZombieRound(lobby.lobby_id, block_height)];
 }
 
