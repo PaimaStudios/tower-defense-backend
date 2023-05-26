@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+
+  paima-batcher-db:
+    image: postgres:14
+    container_name: paima-batcher-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_LOGGING: "true"
+    volumes:
+      - ./db/migrations/up.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -p 5532" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    expose:
+      - "5532"
+    ports:
+      - "5532:5532"
+    command: -p 5532
+
+  paima-batcher:
+    build:
+      context: .
+      target: development-build-stage
+      dockerfile: Dockerfile
+    container_name: paima-batcher
+    ports:
+      - '3340:3340'
+    volumes:
+      - ./.env.development:/app/.env.development
+    restart: 'unless-stopped'
+    links:
+      - paima-batcher-db
+    depends_on:
+      - paima-batcher-db
+
+volumes:
+  data:
+    driver: local
