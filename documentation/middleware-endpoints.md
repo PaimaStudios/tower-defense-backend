@@ -9,18 +9,22 @@ These endpoints facilitate interaction with the user's wallet.
 ### Endpoint `userWalletLogin`:
 
 ```ts
-async function userWalletLogin(loginType: string): Promise<Wallet | FailedResult>;
+async function userWalletLogin(loginType: string, preferBatchedMode: boolean = false): Promise<Wallet | FailedResult>;
 ```
 
 Attempts to log into the specified wallet. If the user’s wallet has previously authorized connecting to the game, the endpoint will instantly return the wallet information. If not, the connection is attempted, which may result in a pop-up window which the user will have to confirm authorizing connecting their wallet to the game before the data is returned.
 
-The single parameter, `loginType`, is a string specifying which wallet should be used. Case is ignored (the string is converted to lowercase before processing). Only the following values are currently supported:
+The first parameter, `loginType`, is a string specifying which wallet should be used. Case is ignored (the string is converted to lowercase before processing). Only the following values are currently supported:
 
 - `"metamask"`
+- `"evm-flint"`
 - `"flint"`
 - `"nufi"`
 - `"nami"`
 - `"eternl"`
+- `"polkadot"`
+
+The first parameter, `preferBatchedMode`, can be ommitted. If truthy value is provided, then even EVM wallets (`metamask` & `evm-flint` currently) will use `BATCHED` posting mode.
 
 #### Example Output:
 
