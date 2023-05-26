@@ -2,23 +2,26 @@ import type { GameInputValidatorCore, ErrorCode } from "@paima-batcher/utils";
 import { GenericRejectionCode } from "@paima-batcher/utils";
 import {
     MAPS,
-    ANIMALS,
     TOWER_DEFENSE_ERROR_MESSAGES,
     TowerDefenseRejectionCode,
     BOOLEANS,
+    FACTIONS,
 } from "./constants.js";
 import { queryLobbyState, queryRoundStatus } from "./query-constructors.js";
 
 export { TOWER_DEFENSE_ERROR_MESSAGES };
 
-const MAX_ROUND_LENGTH = 15 * 60 * 24;
+const BLOCKS_PER_MINUTE = 30;
+const BLOCKS_PER_DAY = BLOCKS_PER_MINUTE * 60 * 24;
+const MIN_ROUND_LENGTH = BLOCKS_PER_MINUTE;
+const MAX_ROUND_LENGTH = BLOCKS_PER_DAY;
 
-interface CatapultValidatorCore extends GameInputValidatorCore {
+interface TowerDefenseValidatorCore extends GameInputValidatorCore {
     backendUri: string;
 }
 
-const CatapultValidatorCoreInitializator = {
-    async initialize(backendUri: string): Promise<CatapultValidatorCore> {
+const TowerDefenseValidatorCoreInitializator = {
+    async initialize(backendUri: string): Promise<TowerDefenseValidatorCore> {
         return {
             backendUri,
             async validate(
@@ -49,12 +52,14 @@ const CatapultValidatorCoreInitializator = {
                             userAddress,
                             backendUri
                         );
+                    } else if (cmd === "r") {
+                        return TowerDefenseRejectionCode.
                     } else {
                         return TowerDefenseRejectionCode.INVALID_COMMAND;
                     }
                 } catch (err) {
                     console.log(
-                        "[catapult-validator] Error while validating:",
+                        "[tower-defense-validator] Error while validating:",
                         err
                     );
                     return GenericRejectionCode.INVALID_GAME_INPUT;
@@ -66,18 +71,17 @@ const CatapultValidatorCoreInitializator = {
 
 async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
     const elems = gameInput.split("|");
-    if (elems.length != 9) {
+    if (elems.length != 8) {
         return TowerDefenseRejectionCode.C_NUM_PARAMS;
     }
     const [
         cmd,
-        numOfLivesStr,
-        gridSizeStr,
+        matchConfigID,
+        creatorFaction,
         numOfRoundsStr,
         roundLengthStr,
         isHiddenStr,
         map,
-        selectedAnimal,
         isPracticeStr
     ] = elems;
 
@@ -85,31 +89,29 @@ async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
         return TowerDefenseRejectionCode.INVALID_COMMAND;
     }
 
+    if (matchConfigID.length !== 14) {
+        return TowerDefenseRejectionCode.C_INVALID_MATCH_CONFIG_ID;
+    }
+
+    if (!FACTIONS.includes(creatorFaction)) {
+        return TowerDefenseRejectionCode.C_FACTION;
+    }
+
     if (
-        ![numOfLivesStr, gridSizeStr, numOfRoundsStr, roundLengthStr].every(
+        ![numOfRoundsStr, roundLengthStr].every(
             parStr => /^[0-9]+$/.test(parStr)
         )
     ) {
         return TowerDefenseRejectionCode.C_NONNUMERIC_ARGS;
     }
 
-    const numOfLives = parseInt(numOfLivesStr);
-    if (numOfLives < 1 || numOfLives > 10) {
-        return TowerDefenseRejectionCode.C_NUM_LIVES;
-    }
-
-    const gridSize = parseInt(gridSizeStr);
-    if (gridSize < 3 || gridSize > 5) {
-        return TowerDefenseRejectionCode.C_GRID_SIZE;
-    }
-
     const numOfRounds = parseInt(numOfRoundsStr);
-    if (numOfRounds < 3 || numOfRounds > 100) {
+    if (numOfRounds < 3 || numOfRounds > 1000) {
         return TowerDefenseRejectionCode.C_NUM_ROUNDS;
     }
 
     const roundLength = parseInt(roundLengthStr);
-    if (roundLength < 15 || roundLength > MAX_ROUND_LENGTH) {
+    if (roundLength < MIN_ROUND_LENGTH || roundLength > MAX_ROUND_LENGTH) {
         return TowerDefenseRejectionCode.C_ROUND_LENGTH;
     }
 
@@ -119,10 +121,6 @@ async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
 
     if (!MAPS.includes(map)) {
         return TowerDefenseRejectionCode.C_MAP;
-    }
-
-    if (!ANIMALS.includes(selectedAnimal)) {
-        return TowerDefenseRejectionCode.C_ANIMAL;
     }
 
     if (!BOOLEANS.includes(isPracticeStr)) {
@@ -138,17 +136,17 @@ async function validateJoinLobby(
     backendUri: string
 ): Promise<ErrorCode> {
     const elems = gameInput.split("|");
-    if (elems.length != 3) {
+    if (elems.length != 2) {
         return TowerDefenseRejectionCode.J_NUM_PARAMS;
     }
 
-    const [cmd, lobbyIdStar, selectedAnimal] = elems;
+    const [cmd, lobbyIdStar] = elems;
 
     if (cmd !== "j") {
         return TowerDefenseRejectionCode.INVALID_COMMAND;
     }
 
-    if (lobbyIdStar[0] !== "*") {
+    if (lobbyIdStar[0] !== "*" || lobbyIdStar.length !== 13) {
         return TowerDefenseRejectionCode.J_INVALID_LOBBY_ID;
     }
     const lobbyID = lobbyIdStar.slice(1);
@@ -161,10 +159,6 @@ async function validateJoinLobby(
         return joinValidationResult;
     }
 
-    if (!ANIMALS.includes(selectedAnimal)) {
-        return TowerDefenseRejectionCode.J_ANIMAL;
-    }
-
     return 0;
 }
 
@@ -174,25 +168,25 @@ async function validateSubmitMoves(
     backendUri: string
 ): Promise<ErrorCode> {
     const elems = gameInput.split("|");
-    if (elems.length != 6) {
+    if (elems.length < 4) {
         return TowerDefenseRejectionCode.S_NUM_PARAMS;
     }
 
-    const [cmd, lobbyIdStar, roundNumberStr, move1, move2, move3] = elems;
+    const [cmd, lobbyIdStar, roundNumberStr, ...moves] = elems;
 
     if (cmd !== "s") {
-        //console.log("[catapult-validator] Invalid command")
+        //console.log("[tower-defense-validator] Invalid command")
         return TowerDefenseRejectionCode.INVALID_COMMAND;
     }
 
-    if (lobbyIdStar[0] !== "*") {
-        //console.log("[catapult-validator] Invalid lobbyID")
+    if (lobbyIdStar[0] !== "*" || lobbyIdStar.length !== 13) {
+        //console.log("[tower-defense-validator] Invalid lobbyID")
         return TowerDefenseRejectionCode.S_INVALID_LOBBY_ID;
     }
 
     const lobbyID = lobbyIdStar.slice(1);
     if (!/^[0-9]+$/.test(roundNumberStr)) {
-        //console.log("[catapult-validator] Non-numeric round number")
+        //console.log("[tower-defense-validator] Non-numeric round number")
         return TowerDefenseRejectionCode.S_NONNUMERIC_ROUND_NUMBER;
     }
     const roundNumber = parseInt(roundNumberStr);
@@ -203,7 +197,7 @@ async function validateSubmitMoves(
         backendUri
     );
     if (errorCode !== 0) {
-        //console.log("[catapult-validator] Failed to validate lobby")
+        //console.log("[tower-defense-validator] Failed to validate lobby")
         return errorCode;
     }
 
@@ -252,7 +246,7 @@ async function validateCloseLobby(
         return TowerDefenseRejectionCode.INVALID_COMMAND;
     }
 
-    if (lobbyIdStar[0] !== "*") {
+    if (lobbyIdStar[0] !== "*" || lobbyIdStar.length !== 13) {
         return TowerDefenseRejectionCode.CS_INVALID_LOBBY_ID;
     }
     const lobbyID = lobbyIdStar.slice(1);
@@ -278,25 +272,25 @@ async function canJoinLobby(
         const lobbyStateResponse = await fetch(query);
         const lobbyState = await lobbyStateResponse.json();
         if (!lobbyState.lobby) {
-            //console.log("[catapult-validator] Lobby does not exist");
+            //console.log("[tower-defense-validator] Lobby does not exist");
             return TowerDefenseRejectionCode.J_NONEXISTENT_LOBBY;
         }
         if (lobbyState.lobby.lobby_id !== lobbyID) {
-            //console.log("[catapult-validator] Lobby with different ID returned");
+            //console.log("[tower-defense-validator] Lobby with different ID returned");
             return TowerDefenseRejectionCode.J_INVALID_LOBBY_ID;
         }
         if (lobbyState.lobby.lobby_state !== "open") {
-            //console.log("[catapult-validator] Lobby not open");
+            //console.log("[tower-defense-validator] Lobby not open");
             return TowerDefenseRejectionCode.J_LOBBY_NOT_OPEN;
         }
         if (lobbyState.lobby.lobby_creator === userAddress.toLowerCase()) {
-            //console.log("[catapult-validator] Cannot join own lobby");
+            //console.log("[tower-defense-validator] Cannot join own lobby");
             return TowerDefenseRejectionCode.J_PLAYER_CREATED_LOBBY;
         }
         return 0;
     } catch (err) {
         console.log(
-            "[catapult-validator] Error while querying lobby state:",
+            "[tower-defense-validator] Error while querying lobby state:",
             err
         );
         return TowerDefenseRejectionCode.J_UNKNOWN;
@@ -313,25 +307,25 @@ async function canCloseLobby(
         const lobbyStateResponse = await fetch(query);
         const lobbyState = await lobbyStateResponse.json();
         if (!lobbyState.lobby) {
-            //console.log("[catapult-validator] Lobby does not exist");
+            //console.log("[tower-defense-validator] Lobby does not exist");
             return TowerDefenseRejectionCode.CS_NONEXISTENT_LOBBY;
         }
         if (lobbyState.lobby.lobby_id !== lobbyID) {
-            //console.log("[catapult-validator] Lobby with different ID returned");
+            //console.log("[tower-defense-validator] Lobby with different ID returned");
             return TowerDefenseRejectionCode.CS_INVALID_LOBBY_ID;
         }
         if (lobbyState.lobby.lobby_state !== "open") {
-            //console.log("[catapult-validator] Lobby not open");
+            //console.log("[tower-defense-validator] Lobby not open");
             return TowerDefenseRejectionCode.CS_LOBBY_NOT_OPEN;
         }
         if (lobbyState.lobby.lobby_creator !== userAddress.toLowerCase()) {
-            //console.log("[catapult-validator] Cannot join own lobby");
+            //console.log("[tower-defense-validator] Cannot join own lobby");
             return TowerDefenseRejectionCode.CS_PLAYER_DIDNT_CREATE_LOBBY;
         }
         return 0;
     } catch (err) {
         console.log(
-            "[catapult-validator] Error while querying lobby state:",
+            "[tower-defense-validator] Error while querying lobby state:",
             err
         );
         return TowerDefenseRejectionCode.CS_UNKNOWN;
@@ -350,28 +344,28 @@ async function validateLobbyGetGridSize(
         const lobbyStateResponse = await fetch(queryLobby);
         const lobbyState = await lobbyStateResponse.json();
         if (lobbyState.lobby === null) {
-            console.log("[catapult-validator] Lobby does not exist");
+            console.log("[tower-defense-validator] Lobby does not exist");
             return [TowerDefenseRejectionCode.S_NONEXISTENT_LOBBY, 0];
         }
         if (lobbyState.lobby.lobby_id !== lobbyID) {
             console.log(
-                "[catapult-validator] Lobby with different ID returned"
+                "[tower-defense-validator] Lobby with different ID returned"
             );
             return [TowerDefenseRejectionCode.S_INVALID_LOBBY_ID, 0];
         }
         if (lobbyState.lobby.lobby_state !== "active") {
-            console.log("[catapult-validator] Lobby not active");
+            console.log("[tower-defense-validator] Lobby not active");
             return [TowerDefenseRejectionCode.S_LOBBY_NOT_ACTIVE, 0];
         }
         if (lobbyState.lobby.current_round !== currentRound) {
-            console.log("[catapult-validator] Lobby in a different round");
+            console.log("[tower-defense-validator] Lobby in a different round");
             return [TowerDefenseRejectionCode.S_WRONG_ROUND, 0];
         }
         if (
             lobbyState.lobby.lobby_creator !== userAddress &&
             lobbyState.lobby.player_two !== userAddress
         ) {
-            console.log("[catapult-validator] Player not in lobby");
+            console.log("[tower-defense-validator] Player not in lobby");
             return [TowerDefenseRejectionCode.S_PLAYER_NOT_IN_LOBBY, 0];
         }
 
@@ -379,14 +373,14 @@ async function validateLobbyGetGridSize(
         const roundStateResponse = await fetch(queryRound);
         const roundState = await roundStateResponse.json();
         if (roundState.round.usersWhoSubmittedMoves.includes(userAddress)) {
-            console.log("[catapult-validator] Player already submitted moves");
+            console.log("[tower-defense-validator] Player already submitted moves");
             return [TowerDefenseRejectionCode.S_REPEATED_SUBMIT, 0];
         }
 
         return [0, lobbyState.lobby.grid_size];
     } catch (err) {
         console.log(
-            "[catapult-validator] Error while querying lobby state:",
+            "[tower-defense-validator] Error while querying lobby state:",
             err
         );
         return [TowerDefenseRejectionCode.S_UNKNOWN, 0];
@@ -410,4 +404,4 @@ function validateMove(move: string, gridSize: number): ErrorCode {
     }
 }
 
-export default CatapultValidatorCoreInitializator;
+export default TowerDefenseValidatorCoreInitializator;

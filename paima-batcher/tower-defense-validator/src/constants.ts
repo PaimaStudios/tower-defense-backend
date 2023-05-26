@@ -1,17 +1,22 @@
 import { GenericRejectionCode } from "@paima-batcher/utils";
 
-export const MAPS = ["jungle", "ocean"];
-
-export const ANIMALS = [
-    "piranha",
-    "gorilla",
-    "anaconda",
-    "jaguar",
-    "macaw",
-    "sloth",
+export const MAPS = [
+    'jungle',
+    'backwards',
+    'crossing',
+    'narrow',
+    'snake',
+    'straight',
+    'wavy',
+    'fork',
+    'islands',
+    'line',
+    'reflection',
 ];
 
 export const BOOLEANS = ["T", "F", ""];
+
+export const FACTIONS = ["a", "r", "t"];
 
 export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, string> = {
     [TowerDefenseRejectionCode.INVALID_COMMAND]:
@@ -21,10 +26,6 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "The createLobby command requires a different number of parameters",
     [TowerDefenseRejectionCode.C_NONNUMERIC_ARGS]:
         "One or more of the numeric parameters of createLobby have a non-numeric value",
-    [TowerDefenseRejectionCode.C_NUM_LIVES]:
-        "The number of lives parameter is out of range",
-    [TowerDefenseRejectionCode.C_GRID_SIZE]:
-        "The grid size parameter is out of range",
     [TowerDefenseRejectionCode.C_NUM_ROUNDS]:
         "The number of rounds parameter is out of range",
     [TowerDefenseRejectionCode.C_ROUND_LENGTH]:
@@ -33,8 +34,6 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "The isHidden parameter is not a valid boolean value",
     [TowerDefenseRejectionCode.C_MAP]:
         "The selected map does not exist or is not supported",
-    [TowerDefenseRejectionCode.C_ANIMAL]:
-        "The selected animal does not exist or is not supported",
     [TowerDefenseRejectionCode.C_PRACTICE]:
         "The isPractice parameter is not a valid boolean value",
     [TowerDefenseRejectionCode.C_UNKNOWN]:
@@ -49,8 +48,6 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
     [TowerDefenseRejectionCode.J_LOBBY_NOT_OPEN]: "The specified lobby is not open",
     [TowerDefenseRejectionCode.J_PLAYER_CREATED_LOBBY]:
         "A player cannot join their own lobby",
-    [TowerDefenseRejectionCode.J_ANIMAL]:
-        "The selected animal does not exist or is not supported",
     [TowerDefenseRejectionCode.J_UNKNOWN]:
         "Unknown error while processing a joinLobby command",
 
@@ -101,8 +98,13 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
     [TowerDefenseRejectionCode.CS_LOBBY_NOT_OPEN]: "The specified lobby is not open",
     [TowerDefenseRejectionCode.CS_PLAYER_DIDNT_CREATE_LOBBY]:
         "A player can only close their own lobby",
-    [TowerDefenseRejectionCode.J_UNKNOWN]:
+    [TowerDefenseRejectionCode.CS_UNKNOWN]:
         "Unknown error while processing a closeLobby command",
+
+    [TowerDefenseRejectionCode.R_NOT_SUPPORTED]:
+        "Posting registerConfig through batcher is not supported",
+    [TowerDefenseRejectionCode.R_UNKNOWN]:
+        "Unknown error while processing a registerConfig command",
 };
 
 export const enum TowerDefenseRejectionCode {
@@ -112,13 +114,10 @@ export const enum TowerDefenseRejectionCode {
     // createLobby errors:
     C_NUM_PARAMS,
     C_NONNUMERIC_ARGS,
-    C_NUM_LIVES,
-    C_GRID_SIZE,
     C_NUM_ROUNDS,
     C_ROUND_LENGTH,
     C_HIDDEN,
     C_MAP,
-    C_ANIMAL,
     C_PRACTICE,
     C_UNKNOWN,
 
@@ -128,7 +127,6 @@ export const enum TowerDefenseRejectionCode {
     J_NONEXISTENT_LOBBY,
     J_LOBBY_NOT_OPEN,
     J_PLAYER_CREATED_LOBBY,
-    J_ANIMAL,
     J_UNKNOWN,
 
     // submitMoves errors:
@@ -160,5 +158,9 @@ export const enum TowerDefenseRejectionCode {
     CS_LOBBY_NOT_OPEN,
     CS_PLAYER_DIDNT_CREATE_LOBBY,
     CS_UNKNOWN,
+
+    // registerConfig errors:
+    R_NOT_SUPPORTED,
+    R_UNKNOWN
 }
 
