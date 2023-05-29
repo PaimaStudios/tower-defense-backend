@@ -1,23 +1,9 @@
-import { baseConfig, parseConfig } from './config';
-import type {
-  TurnAction,
-  MatchConfig,
-  MatchState,
-  DefenderStructure,
-  AttackerStructure,
-  RepairStructureAction,
-  UpgradeStructureAction,
-  SalvageStructureAction,
-  AttackerUnit,
-  TickEvent,
-  DamageEvent,
-  UnitSpawnedEvent,
-  UnitMovementEvent,
-  TileNumber,
-} from '@tower-defense/utils';
+import { baseConfig } from './config';
+import type { MatchConfig, MatchState, TileNumber } from '@tower-defense/utils';
 import Prando from 'paima-engine/paima-prando';
 import { generateRandomMoves } from './ai';
 import { generateMatchState } from './map-processor';
+import { validateMoves } from './validation';
 
 export const testmap: TileNumber[] = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
@@ -30,11 +16,6 @@ export const testmap: TileNumber[] = [
   1, 1, 2, 6, 6, 6, 2, 6, 2, 6, 2, 1, 5, 5, 5, 1, 1, 5, 5, 5, 1, 5, 5, 5, 6, 6, 2, 2, 2, 6, 6, 6, 2,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 ];
-function getMatchConfig() {
-  const configString = 'r|1|gr;d;105|st1;p40;h150;c10;d5;r2';
-  const matchConfig: MatchConfig = parseConfig(configString);
-  return matchConfig;
-}
 
 function getMatchState(config: MatchConfig): MatchState {
   return generateMatchState(
@@ -47,10 +28,23 @@ function getMatchState(config: MatchConfig): MatchState {
     new Prando(1)
   );
 }
-test('AI', () => {
-  const matchConfig = getMatchConfig();
-  const matchState = getMatchState({...matchConfig, baseAttackerGoldRate: 3000});
-  const moves = generateRandomMoves(matchConfig, matchState, 'attacker', 1);
-  const ok = moves.length > 0;
-  expect(ok).toBeTruthy;
+describe('AI', () => {
+  test('builds valid structures', () => {
+    const maxDefenderStructures = testmap.filter(tile => tile === 1).length;
+    const maxAttackerStructures = testmap.filter(tile => tile === 2).length;
+    // enough to cover the whole map
+    const testGold = 5000;
+    const matchState = getMatchState({
+      ...baseConfig,
+      baseAttackerGoldRate: testGold,
+      baseDefenderGoldRate: testGold,
+    });
+    const attackerMoves = generateRandomMoves(baseConfig, matchState, 'attacker', 1);
+    expect(attackerMoves.length).toBe(maxAttackerStructures);
+    expect(validateMoves(attackerMoves, 'attacker', matchState)).toBe(true);
+
+    const defenderMoves = generateRandomMoves(baseConfig, matchState, 'defender', 1);
+    expect(defenderMoves.length).toBe(maxDefenderStructures);
+    expect(validateMoves(defenderMoves, 'defender', matchState)).toBe(true);
+  });
 });
