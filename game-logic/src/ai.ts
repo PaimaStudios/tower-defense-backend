@@ -52,29 +52,29 @@ export function generateRandomMoves(
 //   ]
 //   else return acc
 // }, [])
+
 function chooseStructures(
   matchConfig: MatchConfig,
   map: Tile[],
   faction: Faction,
   round: number,
   budget: number,
-  choices: Structure[],
-  chosen: BuildStructureAction[] = []
+  choices: Structure[]
 ): BuildStructureAction[] {
-  const structure = choices[Math.floor(Math.random() * choices.length)];
-  const price = matchConfig[structure][1].price;
-  if (budget >= price) {
-    const usableTileIndices = map.reduce(
-      (acc: number[], item, index) =>
-        item.type === 'open' && item.faction === faction ? [...acc, index] : acc,
-      []
-    );
+  let currentBudget = budget;
+  const usableTileIndices = map.reduce(
+    (tiles, item, index) =>
+      item.type === 'open' && item.faction === faction ? [...tiles, index] : tiles,
+    [] as number[]
+  );
+
+  const actions: BuildStructureAction[] = [];
+  while (currentBudget > 0) {
+    const structure = choices[Math.floor(Math.random() * choices.length)];
+    const price = matchConfig[structure][1].price;
+    if (currentBudget < price || usableTileIndices.length === 0) break;
+
     const coordinates = usableTileIndices[Math.floor(Math.random() * usableTileIndices.length)];
-    const newMap: Tile[] = [
-      ...map.slice(0, coordinates),
-      { type: 'unbuildable', faction },
-      ...map.slice(coordinates + 1),
-    ];
     const action: BuildStructureAction = {
       action: 'build',
       structure,
@@ -82,9 +82,10 @@ function chooseStructures(
       faction,
       round,
     };
-    return chooseStructures(matchConfig, newMap, faction, round, budget - price, choices, [
-      ...chosen,
-      action,
-    ]);
-  } else return chosen;
+
+    actions.push(action);
+    currentBudget -= price;
+    usableTileIndices.splice(usableTileIndices.indexOf(coordinates), 1);
+  }
+  return actions;
 }

@@ -1,10 +1,12 @@
 import type {
   AttackerStructure,
+  BuildStructureAction,
   Coordinates,
   DefenderStructure,
   MatchConfig,
   StructureUpgradeTier,
   Tile,
+  TurnAction,
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
 
@@ -115,6 +117,10 @@ export function chooseTile(tiles: number[], mapWidth: number): number {
     else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
   });
   return pick;
+}
+
+export function isBuildAction(action: TurnAction): action is BuildStructureAction {
+  return action.action === 'build';
 }
 
 export function isDefenderStructure(
