@@ -4,9 +4,9 @@ import type {
   Coordinates,
   DefenderStructure,
   MatchConfig,
-  StructureUpgradeTier,
   Tile,
   TurnAction,
+  UpgradeTier,
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
 
@@ -18,7 +18,7 @@ export const calculateRecoupGold = (
 
   let price = 0;
   for (let tier = 1; tier <= upgrades; tier++) {
-    price += structureConfigGraph[tier as StructureUpgradeTier].price;
+    price += structureConfigGraph[tier as UpgradeTier].price;
   }
   return Math.floor((config.recoupPercentage / 100) * price);
 };
