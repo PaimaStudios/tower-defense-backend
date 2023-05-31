@@ -28,8 +28,8 @@ export const GeneralQueries: React.FC<GeneralQueriesProps> = ({ lobby, round, lo
   };
 
   const matchWinner = async (lobbyID: string) => {
-    const result = await mw.getMatchWinner(lobbyID);
-    console.log(`match winner of ${lobbyID}:`, result);
+    const response = await mw.getMatchWinner(lobbyID);
+    console.log(`match winner of ${lobbyID}:`, response.success ? response.result : response);
   };
 
   const nftStats = async (nftContract: string, tokenId: number) => {
@@ -46,7 +46,7 @@ export const GeneralQueries: React.FC<GeneralQueriesProps> = ({ lobby, round, lo
         Get Open Lobbies page {round}
       </button>
       <button onClick={getRandomLobby}>Get Random Lobby</button>
-      <button onClick={() => matchWinner(lobby)}>Get Match Winner</button>
+      <button onClick={() => matchWinner(lobby)}>Get Match Results</button>
       <button onClick={() => nftStats(lobby, round)}>Get NFT Stats</button>
       <button onClick={getLobbyState}>Get Lobby State</button>
     </div>

@@ -46,6 +46,7 @@ import type {
   UserStats,
 } from '../types';
 import type {
+  LobbyStatus,
   MapName,
   MatchConfig,
   MatchExecutorData,
@@ -378,45 +379,36 @@ async function getMatchWinner(
 ): Promise<SuccessfulResult<MatchWinnerResponse> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getMatchWinner');
 
-  let res: Response;
-  let res2: Response;
+  let matchWinnerResponse: Response;
+  let matchExecutorResponse: Response;
   try {
-    const query = backendQueryMatchWinner(lobbyId);
-    const query2 = await backendQueryMatchExecutor(lobbyId);
-    res = await fetch(query);
-    res2 = await fetch(query2);
+    [matchWinnerResponse, matchExecutorResponse] = await Promise.all([
+      fetch(backendQueryMatchWinner(lobbyId)),
+      fetch(backendQueryMatchExecutor(lobbyId)),
+    ]);
   } catch (err) {
     return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
 
   try {
-    const j = await res.json();
-    const j2: MatchExecutorData = await res2.json();
-    const {
-      p1StructuresBuilt,
-      p2StructuresBuilt,
-      unitsDestroyed,
-      unitsSpawned,
-      p1GoldSpent,
-      p2GoldSpent,
-    } = calculateMatchStats(j2);
-    const match_status = j.match_status || j2.lobby.lobby_state;
+    const matchWinner = (await matchWinnerResponse.json()) as {
+      match_status?: LobbyStatus;
+      winner_address?: string;
+    };
+    const matchExecutor: MatchExecutorData = await matchExecutorResponse.json();
+    const match_status = matchWinner.match_status || matchExecutor.lobby.lobby_state;
     const winner_address =
-      j.winner_address ||
-      (j2.initialState.defenderBase.health > 0
-        ? j2.initialState.defender
-        : j2.initialState.attacker);
+      matchWinner.winner_address ||
+      (matchExecutor.initialState.defenderBase.health > 0
+        ? matchExecutor.initialState.defender
+        : matchExecutor.initialState.attacker);
+
     return {
       success: true,
       result: {
         match_status,
         winner_address,
-        p1StructuresBuilt,
-        p2StructuresBuilt,
-        unitsDestroyed,
-        unitsSpawned,
-        p1GoldSpent,
-        p2GoldSpent,
+        ...calculateMatchStats(matchExecutor),
       },
     };
   } catch (err) {

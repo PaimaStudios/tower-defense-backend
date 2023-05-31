@@ -1,11 +1,16 @@
 import { PaimaMiddlewareErrorCode, getDeployment, pushLog } from 'paima-engine/paima-mw-core';
 import type {
+  ActorsObject,
+  AttackerStructure,
+  DefenderStructure,
+  MatchConfig,
   MatchExecutorData,
   MatchState,
   Structure,
   StructureConcise,
   TickEvent,
   TurnAction,
+  UpgradeTier,
 } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
@@ -19,6 +24,7 @@ import type {
 import { getBlockTime } from 'paima-engine/paima-utils';
 import { matchExecutor } from 'paima-engine/paima-executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
+import type { NewRoundEvent } from 'paima-engine/paima-executors/build/types';
 
 const conciseMap: Record<Structure, StructureConcise> = {
   anacondaTower: 'at',
@@ -52,6 +58,10 @@ export function moveToString(move: TurnAction): string {
 
 export function hasLobby(lobby: PackedLobbyResponse): lobby is PackedLobbyState {
   return lobby.lobby !== null;
+}
+
+function isTickEvents(events: TickEvent[] | NewRoundEvent[] | null): events is TickEvent[] {
+  return events !== null && events[0].eventType !== 'newRound';
 }
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {
@@ -146,7 +156,7 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
   const p1isAttacker =
     data.lobby.lobby_creator === (data.lobby.current_match_state as unknown as MatchState).attacker;
   const config = parseConfig(data.configString);
-  const m = matchExecutor.initialize(
+  const executor = matchExecutor.initialize(
     config,
     data.lobby.num_of_rounds,
     data.initialState,
@@ -156,54 +166,110 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
   );
   let events: (TickEvent | { eventType: 'newRound' })[] = [];
   let run = true;
+  let attackerUpgradesCost = 0;
+  let defenderUpgradesCost = 0;
   while (run) {
-    const tickEvents = m.tick();
+    const tickEvents = executor.tick();
     if (!tickEvents) run = false;
     else events = [...events, ...tickEvents];
+
+    const currentState = executor.currentState;
+    if (isTickEvents(tickEvents)) {
+      const upgrades = computeUpgradeCosts(tickEvents, currentState.actors, config);
+      attackerUpgradesCost += upgrades.attackerUpgradesCost;
+      defenderUpgradesCost += upgrades.defenderUpgradesCost;
+    }
   }
-  const r = {
+  const initialStats = {
     defenderStructuresBuilt: 0,
     attackerStructuresBuilt: 0,
+    attackerGoldSpent: attackerUpgradesCost,
+    defenderGoldSpent: defenderUpgradesCost,
     unitsDestroyed: 0,
     unitsSpawned: 0,
     rounds: 1,
   };
-  const rr = events.reduce((acc, e, i) => {
-    if (e.eventType === 'spawn') return { ...acc, unitsSpawned: acc.unitsSpawned + 1 };
-    if (e.eventType === 'actorDeleted' && e.faction === 'attacker') {
-      const previous = events[i - 1];
-      if (previous.eventType === 'defenderBaseUpdate') return acc;
-      else return { ...acc, unitsDestroyed: acc.unitsDestroyed + 1 };
+
+  const stats = events.reduce((stats, event, i) => {
+    // upgrade events calculated separately due to match state dependency
+    switch (event.eventType) {
+      case 'spawn':
+        return { ...stats, unitsSpawned: stats.unitsSpawned + 1 };
+      case 'actorDeleted':
+        if (event.faction === 'attacker') {
+          const previous = events[i - 1];
+          if (previous.eventType === 'defenderBaseUpdate') return stats;
+          else return { ...stats, unitsDestroyed: stats.unitsDestroyed + 1 };
+        }
+        return stats;
+      case 'build':
+        const buildCost = config[event.structure][1].price;
+        return {
+          ...stats,
+          [`${event.faction}GoldSpent`]: stats[`${event.faction}GoldSpent`] + buildCost,
+          [`${event.faction}StructuresBuilt`]: stats[`${event.faction}StructuresBuilt`] + 1,
+        };
+      case 'newRound':
+        return { ...stats, rounds: stats.rounds + 1 };
+      case 'repair':
+        return {
+          ...stats,
+          [`${event.faction}GoldSpent`]: stats[`${event.faction}GoldSpent`] + config.repairCost,
+        };
+      default:
+        return stats;
     }
-    if (e.eventType === 'build' && e.faction === 'defender')
-      return {
-        ...acc,
-        defenderStructuresBuilt: acc.defenderStructuresBuilt + 1,
-      };
-    if (e.eventType === 'build' && e.faction === 'attacker')
-      return {
-        ...acc,
-        attackerStructuresBuilt: acc.attackerStructuresBuilt + 1,
-      };
-    else if (e.eventType === 'newRound') return { ...acc, rounds: acc.rounds + 1 };
-    else return acc;
-  }, r);
-  if (p1isAttacker)
+  }, initialStats);
+
+  if (p1isAttacker) {
     return {
-      p1StructuresBuilt: rr.attackerStructuresBuilt,
-      p2StructuresBuilt: rr.defenderStructuresBuilt,
-      p1GoldSpent: config.baseAttackerGoldRate * rr.rounds - m.currentState.attackerGold,
-      p2GoldSpent: config.baseDefenderGoldRate * rr.rounds - m.currentState.defenderGold,
-      unitsDestroyed: rr.unitsDestroyed,
-      unitsSpawned: rr.unitsSpawned,
+      p1StructuresBuilt: stats.attackerStructuresBuilt,
+      p2StructuresBuilt: stats.defenderStructuresBuilt,
+      p1GoldSpent: stats.attackerGoldSpent,
+      p2GoldSpent: stats.defenderGoldSpent,
+      unitsDestroyed: stats.unitsDestroyed,
+      unitsSpawned: stats.unitsSpawned,
     };
-  else
-    return {
-      p1StructuresBuilt: rr.defenderStructuresBuilt,
-      p2StructuresBuilt: rr.attackerStructuresBuilt,
-      p1GoldSpent: config.baseDefenderGoldRate * rr.rounds - m.currentState.defenderGold,
-      p2GoldSpent: config.baseAttackerGoldRate * rr.rounds - m.currentState.attackerGold,
-      unitsDestroyed: rr.unitsDestroyed,
-      unitsSpawned: rr.unitsSpawned,
-    };
+  }
+  return {
+    p1StructuresBuilt: stats.defenderStructuresBuilt,
+    p2StructuresBuilt: stats.attackerStructuresBuilt,
+    p1GoldSpent: stats.defenderGoldSpent,
+    p2GoldSpent: stats.attackerGoldSpent,
+    unitsDestroyed: stats.unitsDestroyed,
+    unitsSpawned: stats.unitsSpawned,
+  };
+}
+
+/**
+ * Actors are in their final state (since upgrades are applied in single tick) so workaround for that is needed.
+ * // TODO: Works only for 3 tiered structures, will need to be more generic if we introduce more
+ * @param tickEvents
+ * @param actors structures in their final state, after applying the events
+ * @param config
+ * @returns Computes the cost of upgrades for both factions based on provided events
+ */
+function computeUpgradeCosts(tickEvents: TickEvent[], actors: ActorsObject, config: MatchConfig) {
+  const upgrades = tickEvents.reduce((acc, event) => {
+    if (event.eventType === 'upgrade') {
+      const toUpgrade =
+        event.faction === 'attacker' ? actors.crypts[event.id] : actors.towers[event.id];
+      if (acc.includes(toUpgrade)) {
+        acc.push({ ...toUpgrade, upgrades: (toUpgrade.upgrades - 1) as UpgradeTier });
+      } else {
+        acc.push(toUpgrade);
+      }
+      return acc;
+    }
+    return acc;
+  }, [] as (AttackerStructure | DefenderStructure)[]);
+
+  return upgrades.reduce(
+    (spentGold, upgrade) => {
+      const cost = config[upgrade.structure][upgrade.upgrades].price;
+      spentGold[`${upgrade.faction}UpgradesCost`] += cost;
+      return spentGold;
+    },
+    { attackerUpgradesCost: 0, defenderUpgradesCost: 0 }
+  );
 }
