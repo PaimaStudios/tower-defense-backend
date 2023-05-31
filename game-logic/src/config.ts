@@ -2,7 +2,6 @@ import type {
   MatchConfig,
   TowerConfig,
   CryptConfig,
-  Level,
   UnitType,
   RoleSetting,
   RoleSettingConcise,

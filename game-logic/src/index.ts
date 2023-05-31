@@ -8,9 +8,7 @@ export { validateMoves } from './validation';
 export { generateRandomMoves } from './ai';
 
 const calculateResult = (isAttacker: boolean, defenderSurvived: boolean): Result => {
-  return isAttacker
-  ? defenderSurvived ? "loss" : "win"
-  : defenderSurvived ? "win" : "loss"
+  return isAttacker ? (defenderSurvived ? 'loss' : 'win') : defenderSurvived ? 'win' : 'loss';
 };
 
 export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState): MatchResults {

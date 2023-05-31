@@ -18,7 +18,6 @@ import type {
   UnitMovementEvent,
   TileNumber,
   Macaw,
-  Tile,
 } from '@tower-defense/utils';
 import { generateMatchState } from './map-processor';
 import { generateRandomMoves } from './ai';
@@ -364,7 +363,7 @@ describe('Game Logic', () => {
     const moves = build(0, 3);
     const events = processTick(matchConfig, matchState, moves, 1, randomnessGenerator);
     const initialGold = structuredClone(matchState.attackerGold);
-    const crypts = structuredClone(matchState.actors.crypts)
+    const crypts = structuredClone(matchState.actors.crypts);
     const moves2 = mockSalvageAll(matchState);
     const events2 = processTick(matchConfig, matchState, moves2, 1, randomnessGenerator);
     const moneyGained = Object.values(crypts).reduce((acc, item) => {
@@ -437,7 +436,7 @@ describe('Game Logic', () => {
         const movementEvents = events.filter(
           (e: TickEvent | null): e is UnitMovementEvent => e?.eventType === 'movement'
         );
-        for (let m of movementEvents) {
+        for (const m of movementEvents) {
           const unit = matchState.actors.units[m.actorID];
           // unit might have been killed
           if (!unit) break;
@@ -489,7 +488,7 @@ describe('Game Logic', () => {
       const events = processTick(matchConfig, matchState, moves, tick, randomnessGenerator);
       const damages =
         events?.filter((e: TickEvent): e is DamageEvent => e.eventType === 'damage') || [];
-      for (let d of damages) {
+      for (const d of damages) {
         const attacker =
           d.faction === 'attacker'
             ? (matchState.actors.units[d.sourceID] as Macaw)

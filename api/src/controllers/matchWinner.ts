@@ -7,6 +7,7 @@ interface MatchWinnerResponse {
   match_status: LobbyStatus;
   winner_address: string;
 }
+
 const getWinner = (finalState: IGetFinalStateResult): string => {
   switch (finalState.player_one_result) {
     case 'win':

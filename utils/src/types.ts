@@ -38,9 +38,8 @@ export interface TowerConfig {
   damage: number;
   range: number;
 }
-export type StructureUpgradeTier = 1 | 2 | 3;
-export type TowerConfigGraph = Record<StructureUpgradeTier, TowerConfig>;
-export type CryptConfigGraph = Record<StructureUpgradeTier, CryptConfig>;
+export type TowerConfigGraph = Record<UpgradeTier, TowerConfig>;
+export type CryptConfigGraph = Record<UpgradeTier, CryptConfig>;
 
 export interface CryptConfig {
   // crypt stats
@@ -154,10 +153,10 @@ export interface DefenderStructure {
 interface DefenderBase {
   coordinates: number;
   health: number;
-  level: Level;
+  level: UpgradeTier;
 }
 interface AttackerBase {
-  level: Level;
+  level: UpgradeTier;
 }
 
 export type Tile =
@@ -204,7 +203,6 @@ export interface Coordinates {
 
 export type AttackerStructureType = 'macawCrypt' | 'gorillaCrypt' | 'jaguarCrypt';
 export type DefenderStructureType = 'anacondaTower' | 'slothTower' | 'piranhaTower';
-export type Level = 1 | 2 | 3;
 
 export type TurnAction =
   | BuildStructureAction
