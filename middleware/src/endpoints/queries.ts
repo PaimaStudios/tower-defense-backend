@@ -396,19 +396,18 @@ async function getMatchWinner(
       winner_address?: string;
     };
     const matchExecutor: MatchExecutorData = await matchExecutorResponse.json();
-    const match_status = matchWinner.match_status || matchExecutor.lobby.lobby_state;
-    const winner_address =
-      matchWinner.winner_address ||
-      (matchExecutor.initialState.defenderBase.health > 0
-        ? matchExecutor.initialState.defender
-        : matchExecutor.initialState.attacker);
 
     return {
       success: true,
       result: {
-        match_status,
-        winner_address,
         ...calculateMatchStats(matchExecutor),
+        // WARN: stats below dependant on mutable matchExecutor state (changed in calculateMatchStats)
+        match_status: matchWinner.match_status || matchExecutor.lobby.lobby_state,
+        winner_address:
+          matchWinner.winner_address ||
+          (matchExecutor.initialState.defenderBase.health > 0
+            ? matchExecutor.initialState.defender
+            : matchExecutor.initialState.attacker),
       },
     };
   } catch (err) {
