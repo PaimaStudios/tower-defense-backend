@@ -250,18 +250,17 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
  * @returns Computes the cost of upgrades for both factions based on provided events
  */
 function computeUpgradeCosts(tickEvents: TickEvent[], actors: ActorsObject, config: MatchConfig) {
-  const upgrades = tickEvents.reduce((acc, event) => {
+  const upgrades = tickEvents.reduce((upgrades, event) => {
     if (event.eventType === 'upgrade') {
       const toUpgrade =
         event.faction === 'attacker' ? actors.crypts[event.id] : actors.towers[event.id];
-      if (acc.includes(toUpgrade)) {
-        acc.push({ ...toUpgrade, upgrades: (toUpgrade.upgrades - 1) as UpgradeTier });
+      if (upgrades.includes(toUpgrade)) {
+        upgrades.push({ ...toUpgrade, upgrades: (toUpgrade.upgrades - 1) as UpgradeTier });
       } else {
-        acc.push(toUpgrade);
+        upgrades.push(toUpgrade);
       }
-      return acc;
     }
-    return acc;
+    return upgrades;
   }, [] as (AttackerStructure | DefenderStructure)[]);
 
   return upgrades.reduce(
