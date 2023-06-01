@@ -38,6 +38,10 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "The isPractice parameter is not a valid boolean value",
     [TowerDefenseRejectionCode.C_UNKNOWN]:
         "Unknown error while processing a createLobby command",
+    [TowerDefenseRejectionCode.C_INVALID_MATCH_CONFIG_ID]:
+        "Invalid match config id",
+    [TowerDefenseRejectionCode.C_FACTION]:
+        "Invalid faction",
 
     [TowerDefenseRejectionCode.J_NUM_PARAMS]:
         "The joinLobby command requires a different number of parameters",
@@ -120,6 +124,8 @@ export const enum TowerDefenseRejectionCode {
     C_MAP,
     C_PRACTICE,
     C_UNKNOWN,
+    C_INVALID_MATCH_CONFIG_ID,
+    C_FACTION,
 
     // joinLobby errors:
     J_NUM_PARAMS,
@@ -163,4 +169,3 @@ export const enum TowerDefenseRejectionCode {
     R_NOT_SUPPORTED,
     R_UNKNOWN
 }
-

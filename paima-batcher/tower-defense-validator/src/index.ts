@@ -53,7 +53,7 @@ const TowerDefenseValidatorCoreInitializator = {
                             backendUri
                         );
                     } else if (cmd === "r") {
-                        return TowerDefenseRejectionCode.
+                        return TowerDefenseRejectionCode.R_NOT_SUPPORTED;
                     } else {
                         return TowerDefenseRejectionCode.INVALID_COMMAND;
                     }
@@ -201,7 +201,7 @@ async function validateSubmitMoves(
         return errorCode;
     }
 
-    const moveValidation = [move1, move2, move3].map((m) => validateMove(m, gridSize));
+    const moveValidation = moves.map((m) => validateMove(m, gridSize));
     const firstInvalid = moveValidation.findIndex(s => s !== 0);
     if (firstInvalid >= 0) {
         return moveValidation[firstInvalid];
