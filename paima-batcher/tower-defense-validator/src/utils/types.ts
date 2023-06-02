@@ -4,8 +4,8 @@ import type {
   IGetBlockHeightResult,
   match_result,
 } from './db';
-import type { WalletAddress } from 'paima-engine/paima-utils';
 
+type WalletAddress = string;
 export type Hash = string;
 export type URI = string;
 export type EthAddress = Hash;
