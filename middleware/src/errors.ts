@@ -25,6 +25,7 @@ export const enum MiddlewareErrorCode {
   FAILURE_VERIFYING_LOBBY_CREATION,
   FAILURE_VERIFYING_LOBBY_CLOSE,
   FAILURE_VERIFYING_LOBBY_JOIN,
+  FAILURE_VERIFYING_CONFIG_REGISTER,
   CANNOT_JOIN_OWN_LOBBY,
   CANNOT_CLOSE_SOMEONES_LOBBY,
   SUBMIT_MOVES_INVALID_MOVES,
@@ -53,6 +54,8 @@ const MIDDLEWARE_ERROR_MESSAGES: Record<MiddlewareErrorCode, string> = {
   [MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CREATION]: 'Failure while verifying lobby creation',
   [MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_CLOSE]: 'Failure while verifying lobby closing',
   [MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN]: 'Failure while verifying lobby join',
+  [MiddlewareErrorCode.FAILURE_VERIFYING_CONFIG_REGISTER]:
+    'Failure while verifying config registration',
   [MiddlewareErrorCode.CANNOT_JOIN_OWN_LOBBY]: 'Cannot join your own lobby',
   [MiddlewareErrorCode.CANNOT_CLOSE_SOMEONES_LOBBY]: 'Cannot close lobby created by someone else',
   [MiddlewareErrorCode.SUBMIT_MOVES_INVALID_MOVES]: 'One or more invalid moves submitted',
