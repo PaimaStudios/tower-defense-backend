@@ -3,7 +3,7 @@ import type {
   IGetRoundDataResult,
   IGetBlockHeightResult,
   match_result,
-} from './db';
+} from './db.js';
 
 type WalletAddress = string;
 export type Hash = string;

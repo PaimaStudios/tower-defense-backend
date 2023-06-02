@@ -7,7 +7,7 @@ import type {
   Tile,
   TurnAction,
   UpgradeTier,
-} from './types';
+} from './types.js';
 import { AStarFinder } from 'astar-typescript';
 
 export const calculateRecoupGold = (

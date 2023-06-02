@@ -1,5 +1,5 @@
-import type { TurnAction, Faction, MatchState, BuildStructureAction } from './types';
-import { isBuildAction } from './utils';
+import type { TurnAction, Faction, MatchState, BuildStructureAction } from './types.js';
+import { isBuildAction } from './utils.js';
 
 export function validateMoves(
   actions: TurnAction[],
