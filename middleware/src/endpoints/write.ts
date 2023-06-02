@@ -322,10 +322,10 @@ async function registerConfig(config: MatchConfig): Promise<any> {
         message: `config registered as ${registeredConfig?.id}`,
       };
     } else {
-      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
+      return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_CONFIG_REGISTER);
     }
   } catch (err) {
-    return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_LOBBY_JOIN);
+    return errorFxn(MiddlewareErrorCode.FAILURE_VERIFYING_CONFIG_REGISTER, err);
   }
 }
 export const writeEndpoints = {
