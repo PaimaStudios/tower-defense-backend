@@ -7,7 +7,10 @@ import {
     BOOLEANS,
     FACTIONS,
 } from "./constants.js";
-import { queryLobbyState, queryRoundStatus } from "./query-constructors.js";
+import { queryLobbyState } from "./query-constructors.js";
+import { parseMoves, validateLobbyGetState } from "./move-validation.js";
+import { MatchState } from "./utils/types.js";
+import { validateMoves } from "./utils/validation.js";
 
 export { TOWER_DEFENSE_ERROR_MESSAGES };
 
@@ -53,7 +56,7 @@ const TowerDefenseValidatorCoreInitializator = {
                             backendUri
                         );
                     } else if (cmd === "r") {
-                        return TowerDefenseRejectionCode.
+                        return TowerDefenseRejectionCode.R_NOT_SUPPORTED;
                     } else {
                         return TowerDefenseRejectionCode.INVALID_COMMAND;
                     }
@@ -168,7 +171,7 @@ async function validateSubmitMoves(
     backendUri: string
 ): Promise<ErrorCode> {
     const elems = gameInput.split("|");
-    if (elems.length < 4) {
+    if (elems.length < 3) {
         return TowerDefenseRejectionCode.S_NUM_PARAMS;
     }
 
@@ -190,21 +193,34 @@ async function validateSubmitMoves(
         return TowerDefenseRejectionCode.S_NONNUMERIC_ROUND_NUMBER;
     }
     const roundNumber = parseInt(roundNumberStr);
-    const [errorCode, gridSize] = await validateLobbyGetGridSize(
+
+    const [errorCode, lobbyState] = await validateLobbyGetState(
         lobbyID,
         userAddress,
         roundNumber,
         backendUri
     );
     if (errorCode !== 0) {
-        //console.log("[tower-defense-validator] Failed to validate lobby")
         return errorCode;
     }
 
-    const moveValidation = [move1, move2, move3].map((m) => validateMove(m, gridSize));
-    const firstInvalid = moveValidation.findIndex(s => s !== 0);
-    if (firstInvalid >= 0) {
-        return moveValidation[firstInvalid];
+    try {
+        const matchState: MatchState = lobbyState.lobby.current_match_state as unknown as MatchState;
+        const faction =
+          userAddress === matchState.attacker
+            ? 'attacker'
+            : 'defender';
+        const parsedMoves = parseMoves(moves, roundNumber, faction);
+        if (!validateMoves(parsedMoves, faction, matchState)) {
+            return TowerDefenseRejectionCode.S_SEMANTIC;
+        }
+    } catch (err) {
+        if (typeof err === "number") {
+            return err;
+        } else {
+            console.error("[validateSubmitMoves] error:", err);
+            return TowerDefenseRejectionCode.S_UNKNOWN;
+        }
     }
 
     return 0;
@@ -329,78 +345,6 @@ async function canCloseLobby(
             err
         );
         return TowerDefenseRejectionCode.CS_UNKNOWN;
-    }
-}
-
-async function validateLobbyGetGridSize(
-    lobbyID: string,
-    userAddress: string,
-    currentRound: number,
-    backendUri: string
-): Promise<[ErrorCode, number]> {
-    userAddress = userAddress.toLowerCase();
-    try {
-        const queryLobby = queryLobbyState(backendUri, lobbyID);
-        const lobbyStateResponse = await fetch(queryLobby);
-        const lobbyState = await lobbyStateResponse.json();
-        if (lobbyState.lobby === null) {
-            console.log("[tower-defense-validator] Lobby does not exist");
-            return [TowerDefenseRejectionCode.S_NONEXISTENT_LOBBY, 0];
-        }
-        if (lobbyState.lobby.lobby_id !== lobbyID) {
-            console.log(
-                "[tower-defense-validator] Lobby with different ID returned"
-            );
-            return [TowerDefenseRejectionCode.S_INVALID_LOBBY_ID, 0];
-        }
-        if (lobbyState.lobby.lobby_state !== "active") {
-            console.log("[tower-defense-validator] Lobby not active");
-            return [TowerDefenseRejectionCode.S_LOBBY_NOT_ACTIVE, 0];
-        }
-        if (lobbyState.lobby.current_round !== currentRound) {
-            console.log("[tower-defense-validator] Lobby in a different round");
-            return [TowerDefenseRejectionCode.S_WRONG_ROUND, 0];
-        }
-        if (
-            lobbyState.lobby.lobby_creator !== userAddress &&
-            lobbyState.lobby.player_two !== userAddress
-        ) {
-            console.log("[tower-defense-validator] Player not in lobby");
-            return [TowerDefenseRejectionCode.S_PLAYER_NOT_IN_LOBBY, 0];
-        }
-
-        const queryRound = queryRoundStatus(backendUri, lobbyID, currentRound);
-        const roundStateResponse = await fetch(queryRound);
-        const roundState = await roundStateResponse.json();
-        if (roundState.round.usersWhoSubmittedMoves.includes(userAddress)) {
-            console.log("[tower-defense-validator] Player already submitted moves");
-            return [TowerDefenseRejectionCode.S_REPEATED_SUBMIT, 0];
-        }
-
-        return [0, lobbyState.lobby.grid_size];
-    } catch (err) {
-        console.log(
-            "[tower-defense-validator] Error while querying lobby state:",
-            err
-        );
-        return [TowerDefenseRejectionCode.S_UNKNOWN, 0];
-    }
-}
-
-function validateMove(move: string, gridSize: number): ErrorCode {
-    const [moveType, movePar] = [move[0], move.slice(1)];
-    if (moveType === "t") {
-        return movePar === "" ? 0 : TowerDefenseRejectionCode.S_TAUNT_PARAM;
-    } else if (moveType === "f" || moveType === "r") {
-        if (!/^[0-9]+$/.test(movePar)) {
-            return TowerDefenseRejectionCode.S_NONNUMERIC_POSITION;
-        }
-        const position = parseInt(movePar);
-        return position >= 1 && position <= gridSize
-            ? 0
-            : TowerDefenseRejectionCode.S_INVALID_POSITION;
-    } else {
-        return TowerDefenseRejectionCode.S_UNSUPPORTED_MOVE;
     }
 }
 

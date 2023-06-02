@@ -1,4 +1,5 @@
 import { GenericRejectionCode } from "@paima-batcher/utils";
+import { Structure } from "./utils/types.js";
 
 export const MAPS = [
     'jungle',
@@ -36,6 +37,10 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "The selected map does not exist or is not supported",
     [TowerDefenseRejectionCode.C_PRACTICE]:
         "The isPractice parameter is not a valid boolean value",
+    [TowerDefenseRejectionCode.C_INVALID_MATCH_CONFIG_ID]:
+        "The provided match config is not valid",
+    [TowerDefenseRejectionCode.C_FACTION]:
+        "The selected faction does not exist or is not supported",
     [TowerDefenseRejectionCode.C_UNKNOWN]:
         "Unknown error while processing a createLobby command",
 
@@ -69,7 +74,7 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "The user has already submitted their moves for this round",
     [TowerDefenseRejectionCode.S_TAUNT_PARAM]:
         "Invalid moves: the taunt move takes no parameters",
-    [TowerDefenseRejectionCode.S_NONNUMERIC_POSITION]:
+    [TowerDefenseRejectionCode.S_NONNUMERIC_PARAM]:
         "Invalid moves: the position parameter must be a number",
     [TowerDefenseRejectionCode.S_INVALID_POSITION]:
         "Invalid moves: a position parameter is out of range",
@@ -77,6 +82,10 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "Invalid moves: one or more unknown or unsupported moves",
     [TowerDefenseRejectionCode.S_INVALID_MOVES]:
         "One or more of the specified moves are invalid",
+    [TowerDefenseRejectionCode.S_SEMANTIC]:
+        "Submitted moves not allowed",
+    [TowerDefenseRejectionCode.S_B_INVALID_PARAMS]:
+        "Invalid parameters of build command",
     [TowerDefenseRejectionCode.S_UNKNOWN]:
         "Unknown error while processing a submitMoves command",
 
@@ -119,6 +128,8 @@ export const enum TowerDefenseRejectionCode {
     C_HIDDEN,
     C_MAP,
     C_PRACTICE,
+    C_INVALID_MATCH_CONFIG_ID,
+    C_FACTION,
     C_UNKNOWN,
 
     // joinLobby errors:
@@ -139,10 +150,12 @@ export const enum TowerDefenseRejectionCode {
     S_PLAYER_NOT_IN_LOBBY,
     S_REPEATED_SUBMIT,
     S_TAUNT_PARAM,
-    S_NONNUMERIC_POSITION,
+    S_NONNUMERIC_PARAM,
     S_INVALID_POSITION,
     S_UNSUPPORTED_MOVE,
     S_INVALID_MOVES,
+    S_SEMANTIC,
+    S_B_INVALID_PARAMS,
     S_UNKNOWN,
 
     // setNft errors:
@@ -164,3 +177,11 @@ export const enum TowerDefenseRejectionCode {
     R_UNKNOWN
 }
 
+export const STRUCTURE_NAMES: Record<string, Structure> = {
+    ['at']: 'anacondaTower',
+    ['pt']: 'piranhaTower',
+    ['st']: 'slothTower',
+    ['gc']: 'gorillaCrypt',
+    ['jc']: 'jaguarCrypt',
+    ['mc']: 'macawCrypt'
+}
