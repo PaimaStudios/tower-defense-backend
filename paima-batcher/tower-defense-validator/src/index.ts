@@ -53,7 +53,7 @@ const TowerDefenseValidatorCoreInitializator = {
                             backendUri
                         );
                     } else if (cmd === "r") {
-                        return TowerDefenseRejectionCode.
+                        return TowerDefenseRejectionCode.R_NOT_SUPPORTED;
                     } else {
                         return TowerDefenseRejectionCode.INVALID_COMMAND;
                     }
@@ -190,6 +190,8 @@ async function validateSubmitMoves(
         return TowerDefenseRejectionCode.S_NONNUMERIC_ROUND_NUMBER;
     }
     const roundNumber = parseInt(roundNumberStr);
+
+    /*
     const [errorCode, gridSize] = await validateLobbyGetGridSize(
         lobbyID,
         userAddress,
@@ -206,8 +208,9 @@ async function validateSubmitMoves(
     if (firstInvalid >= 0) {
         return moveValidation[firstInvalid];
     }
+    */
 
-    return 0;
+    return -1;
 }
 
 async function validateSetNft(gameInput: string): Promise<ErrorCode> {

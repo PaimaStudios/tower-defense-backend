@@ -36,6 +36,10 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
         "The selected map does not exist or is not supported",
     [TowerDefenseRejectionCode.C_PRACTICE]:
         "The isPractice parameter is not a valid boolean value",
+    [TowerDefenseRejectionCode.C_INVALID_MATCH_CONFIG_ID]:
+        "The provided match config is not valid",
+    [TowerDefenseRejectionCode.C_FACTION]:
+        "The selected faction does not exist or is not supported",
     [TowerDefenseRejectionCode.C_UNKNOWN]:
         "Unknown error while processing a createLobby command",
 
@@ -119,6 +123,8 @@ export const enum TowerDefenseRejectionCode {
     C_HIDDEN,
     C_MAP,
     C_PRACTICE,
+    C_INVALID_MATCH_CONFIG_ID,
+    C_FACTION,
     C_UNKNOWN,
 
     // joinLobby errors:
