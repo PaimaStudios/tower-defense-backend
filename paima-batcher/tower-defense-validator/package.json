@@ -4,5 +4,8 @@
   "description": "",
   "main": "build/index.js",
   "type": "module",
-  "types": "build/index.d.ts"
+  "types": "build/index.d.ts",
+  "dependencies": {
+    "astar-typescript": "^1.2.7"
+  }
 }
