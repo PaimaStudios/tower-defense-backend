@@ -205,7 +205,7 @@ async function validateSubmitMoves(
     }
 
     try {
-        const matchState: MatchState = lobbyState.current_match_state as unknown as MatchState;
+        const matchState: MatchState = lobbyState.lobby.current_match_state as unknown as MatchState;
         const faction =
           userAddress === matchState.attacker
             ? 'attacker'
