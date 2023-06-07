@@ -1,4 +1,4 @@
-import { PaimaMiddlewareErrorCode, getDeployment, pushLog } from 'paima-engine/paima-mw-core';
+import { PaimaMiddlewareErrorCode, pushLog } from 'paima-engine/paima-mw-core';
 import type {
   ActorsObject,
   AttackerStructure,
@@ -12,6 +12,7 @@ import type {
   TurnAction,
   UpgradeTier,
 } from '@tower-defense/utils';
+import { GameENV } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
   LobbyState,
@@ -21,7 +22,6 @@ import type {
   PackedLobbyState,
   RoundEnd,
 } from '../types';
-import { getBlockTime } from 'paima-engine/paima-utils';
 import { matchExecutor } from 'paima-engine/paima-executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
 import type { NewRoundEvent } from 'paima-engine/paima-executors/build/types';
@@ -118,8 +118,7 @@ export function calculateRoundEnd(
 
   try {
     const blocksToEnd = roundEnd - current;
-    const secsPerBlock = getBlockTime(getDeployment());
-    const secondsToEnd = blocksToEnd * secsPerBlock;
+    const secondsToEnd = blocksToEnd * GameENV.BLOCK_TIME;
     return {
       blocks: blocksToEnd,
       seconds: secondsToEnd,

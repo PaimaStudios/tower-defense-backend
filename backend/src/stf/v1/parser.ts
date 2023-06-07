@@ -157,6 +157,7 @@ function parseSubmitTurn(c: ConciseConsumer): SubmittedTurnInput {
     actions,
   };
 }
+
 function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput {
   const version = tryParse(c.nextValue(), pRoundNumber);
   const content = tryParse(c.nextValue(), P.all);
