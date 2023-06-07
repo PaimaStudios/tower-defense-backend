@@ -61,7 +61,7 @@ export function hasLobby(lobby: PackedLobbyResponse): lobby is PackedLobbyState 
 }
 
 function isTickEvents(events: TickEvent[] | NewRoundEvent[] | null): events is TickEvent[] {
-  return events !== null && events[0].eventType !== 'newRound';
+  return events !== null && events.length > 0 && events[0].eventType !== 'newRound';
 }
 
 export function userJoinedLobby(address: String, lobby: PackedLobbyState): boolean {
