@@ -17,7 +17,7 @@ export const MAPS = [
 
 export const BOOLEANS = ["T", "F", ""];
 
-export const FACTIONS = ["a", "r", "t"];
+export const FACTIONS = ["a", "r", "d"];
 
 export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, string> = {
     [TowerDefenseRejectionCode.INVALID_COMMAND]:
