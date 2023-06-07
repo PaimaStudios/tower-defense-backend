@@ -1,4 +1,4 @@
-import { PaimaMiddlewareErrorCode, getDeployment, pushLog } from 'paima-engine/paima-mw-core';
+import { pushLog } from 'paima-engine/paima-mw-core';
 import type {
   ActorsObject,
   AttackerStructure,
@@ -12,6 +12,7 @@ import type {
   TurnAction,
   UpgradeTier,
 } from '@tower-defense/utils';
+import { GameENV } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
   LobbyState,
@@ -21,7 +22,6 @@ import type {
   PackedLobbyState,
   RoundEnd,
 } from '../types';
-import { getBlockTime } from 'paima-engine/paima-utils';
 import { matchExecutor } from 'paima-engine/paima-executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
 import type { NewRoundEvent } from 'paima-engine/paima-executors/build/types';
@@ -116,21 +116,11 @@ export function calculateRoundEnd(
     roundEnd = current;
   }
 
-  try {
-    const blocksToEnd = roundEnd - current;
-    const secsPerBlock = getBlockTime(getDeployment());
-    const secondsToEnd = blocksToEnd * secsPerBlock;
-    return {
-      blocks: blocksToEnd,
-      seconds: secondsToEnd,
-    };
-  } catch (err) {
-    errorFxn(PaimaMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
-    return {
-      blocks: 0,
-      seconds: 0,
-    };
-  }
+  const blocksToEnd = roundEnd - current;
+  return {
+    blocks: roundEnd - current,
+    seconds: blocksToEnd * GameENV.BLOCK_TIME,
+  };
 }
 
 export function nftScoreSnakeToCamel(nftScore: NftScoreSnake): NftScore {
