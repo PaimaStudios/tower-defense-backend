@@ -1,4 +1,4 @@
-import { PaimaMiddlewareErrorCode, pushLog } from 'paima-engine/paima-mw-core';
+import { pushLog } from 'paima-engine/paima-mw-core';
 import type {
   ActorsObject,
   AttackerStructure,
@@ -116,20 +116,11 @@ export function calculateRoundEnd(
     roundEnd = current;
   }
 
-  try {
-    const blocksToEnd = roundEnd - current;
-    const secondsToEnd = blocksToEnd * GameENV.BLOCK_TIME;
-    return {
-      blocks: blocksToEnd,
-      seconds: secondsToEnd,
-    };
-  } catch (err) {
-    errorFxn(PaimaMiddlewareErrorCode.INTERNAL_INVALID_DEPLOYMENT, err);
-    return {
-      blocks: 0,
-      seconds: 0,
-    };
-  }
+  const blocksToEnd = roundEnd - current;
+  return {
+    blocks: roundEnd - current,
+    seconds: blocksToEnd * GameENV.BLOCK_TIME,
+  };
 }
 
 export function nftScoreSnakeToCamel(nftScore: NftScoreSnake): NftScore {
