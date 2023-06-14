@@ -9,6 +9,8 @@ const creds = {
 };
 
 const WINNERS_LIMIT = 80;
+const START_BLOCKHEIGHT = 11883010;
+
 const selectWinners = async () => {
   const pool = new pg.Pool(creds);
   const winners = await pool.query(`
@@ -22,6 +24,7 @@ const selectWinners = async () => {
   FROM lobbies
   JOIN final_match_state
   ON final_match_state.lobby_id = lobbies.lobby_id
+  WHERE creation_block_height >= ${START_BLOCKHEIGHT}
   ORDER BY creation_block_height ASC
 `);
 
