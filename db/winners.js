@@ -8,7 +8,7 @@ const creds = {
   port: parseInt(process.env.DB_PORT || '5432', 10),
 };
 
-const WINNERS_LIMIT = 80;
+const WINNERS_LIMIT = 120;
 const START_BLOCKHEIGHT = 11883010;
 
 const selectWinners = async () => {
