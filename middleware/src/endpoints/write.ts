@@ -16,7 +16,7 @@ import {
   awaitBlock,
   getActiveAddress,
   PaimaMiddlewareErrorCode,
-  postConciselyEncodedData,
+  postConciseData,
 } from 'paima-engine/paima-mw-core';
 
 const RETRY_PERIOD = 1000;
@@ -75,24 +75,9 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
     { value: isPractice ? 'T' : 'F' },
   ]);
 
-  let currentBlockVar: number;
-  try {
-    const result = await postConciselyEncodedData(conciseBuilder.build());
-    if (!result.success) {
-      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
-    }
-    currentBlockVar = result.result;
-
-    if (currentBlockVar < 0) {
-      return errorFxn(
-        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
-        `Received block height: ${currentBlockVar}`
-      );
-    }
-  } catch (err) {
-    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
-  }
-  const currentBlock = currentBlockVar;
+  const response = await postConciseData(conciseBuilder.build(), errorFxn);
+  if (!response.success) return response;
+  const currentBlock = response.blockHeight;
 
   try {
     await awaitBlock(currentBlock);
@@ -130,24 +115,9 @@ async function joinLobby(lobbyID: string): Promise<OldResult> {
   conciseBuilder.setPrefix('j');
   conciseBuilder.addValue({ value: lobbyID, isStateIdentifier: true });
 
-  let currentBlockVar: number;
-  try {
-    const result = await postConciselyEncodedData(conciseBuilder.build());
-    if (!result.success) {
-      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
-    }
-    currentBlockVar = result.result;
-
-    if (currentBlockVar < 0) {
-      return errorFxn(
-        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
-        `Received block height: ${currentBlockVar}`
-      );
-    }
-  } catch (err) {
-    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
-  }
-  const currentBlock = currentBlockVar;
+  const response = await postConciseData(conciseBuilder.build(), errorFxn);
+  if (!response.success) return response;
+  const currentBlock = response.blockHeight;
 
   try {
     await awaitBlock(currentBlock);
@@ -182,24 +152,9 @@ async function closeLobby(lobbyID: string): Promise<OldResult> {
   conciseBuilder.setPrefix('cs');
   conciseBuilder.addValue({ value: lobbyID, isStateIdentifier: true });
 
-  let currentBlockVar: number;
-  try {
-    const result = await postConciselyEncodedData(conciseBuilder.build());
-    if (!result.success) {
-      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
-    }
-    currentBlockVar = result.result;
-
-    if (currentBlockVar < 0) {
-      return errorFxn(
-        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
-        `Received block height: ${currentBlockVar}`
-      );
-    }
-  } catch (err) {
-    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
-  }
-  const currentBlock = currentBlockVar;
+  const response = await postConciseData(conciseBuilder.build(), errorFxn);
+  if (!response.success) return response;
+  const currentBlock = response.blockHeight;
 
   try {
     await awaitBlock(currentBlock);
@@ -240,16 +195,10 @@ async function submitMoves(json: string): Promise<OldResult> {
   } catch (err) {
     return errorFxn(MiddlewareErrorCode.SUBMIT_MOVES_INVALID_MOVES, err);
   }
-  try {
-    const result = await postConciselyEncodedData(conciseBuilder.build());
-    if (result.success) {
-      return { success: true, message: '' };
-    } else {
-      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN);
-    }
-  } catch (err) {
-    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
-  }
+
+  const response = await postConciseData(conciseBuilder.build(), errorFxn);
+  if (!response.success) return response;
+  return { success: true, message: '' };
 }
 
 async function setNft(nftAddress: string, nftId: number): Promise<OldResult> {
@@ -263,16 +212,9 @@ async function setNft(nftAddress: string, nftId: number): Promise<OldResult> {
   conciseBuilder.addValue({ value: nftAddress });
   conciseBuilder.addValue({ value: nftId.toString(10) });
 
-  try {
-    const result = await postConciselyEncodedData(conciseBuilder.build());
-    if (result.success) {
-      return { success: true, message: '' };
-    } else {
-      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN);
-    }
-  } catch (err) {
-    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
-  }
+  const response = await postConciseData(conciseBuilder.build(), errorFxn);
+  if (!response.success) return response;
+  return { success: true, message: '' };
 }
 
 async function registerConfig(config: MatchConfig): Promise<any> {
@@ -289,24 +231,9 @@ async function registerConfig(config: MatchConfig): Promise<any> {
   conciseBuilder.addValue({ value: configString, isStateIdentifier: false });
   const finalString = conciseBuilder.build();
 
-  let currentBlockVar: number;
-  try {
-    const result = await postConciselyEncodedData(finalString);
-    if (!result.success) {
-      return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, result.errorMessage);
-    }
-    currentBlockVar = result.result;
-
-    if (currentBlockVar < 0) {
-      return errorFxn(
-        PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN,
-        `Received block height: ${currentBlockVar}`
-      );
-    }
-  } catch (err) {
-    return errorFxn(PaimaMiddlewareErrorCode.ERROR_POSTING_TO_CHAIN, err);
-  }
-  const currentBlock = currentBlockVar;
+  const response = await postConciseData(finalString, errorFxn);
+  if (!response.success) return response;
+  const currentBlock = response.blockHeight;
 
   try {
     await awaitBlock(currentBlock);

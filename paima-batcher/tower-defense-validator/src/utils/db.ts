@@ -10,7 +10,6 @@ export type role_setting = 'attacker' | 'defender' | 'random';
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
-
 /** 'GetBlockHeight' return type */
 export interface IGetBlockHeightResult {
   block_height: number;
