@@ -26,6 +26,12 @@ const selectGameInputSubmissions = async pool => {
   console.log(totalInputs.rows);
 };
 
+const selectTotalWallets = async pool => {
+  const totalWallets = await pool.query(`SELECT COUNT(DISTINCT user_address) FROM historical_game_inputs`);
+  console.log('Total # of unique player wallets: ');
+  console.log(totalWallets.rows);
+};
+
 const selectUniquePlayers = async pool => {
   const players = await pool.query(`
     SELECT 
@@ -43,7 +49,9 @@ const run = async () => {
   await selectGamesPlayed(pool);
   await selectRounds(pool);
   await selectGameInputSubmissions(pool);
+  await selectTotalWallets (pool);
   await selectUniquePlayers(pool);
+
 
   process.exit(0);
 };
