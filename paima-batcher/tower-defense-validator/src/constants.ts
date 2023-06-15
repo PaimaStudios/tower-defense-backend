@@ -54,13 +54,8 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
   [TowerDefenseRejectionCode.S_WRONG_ROUND]:
     'The supplied round number does not correspond to the current round of the specified lobby',
   [TowerDefenseRejectionCode.S_PLAYER_NOT_IN_LOBBY]: 'The user is not in the specified lobby',
-  [TowerDefenseRejectionCode.S_REPEATED_SUBMIT]:
-    'The user has already submitted their moves for this round',
-  [TowerDefenseRejectionCode.S_TAUNT_PARAM]: 'Invalid moves: the taunt move takes no parameters',
   [TowerDefenseRejectionCode.S_NONNUMERIC_PARAM]:
     'Invalid moves: the position parameter must be a number',
-  [TowerDefenseRejectionCode.S_INVALID_POSITION]:
-    'Invalid moves: a position parameter is out of range',
   [TowerDefenseRejectionCode.S_UNSUPPORTED_MOVE]:
     'Invalid moves: one or more unknown or unsupported moves',
   [TowerDefenseRejectionCode.S_INVALID_MOVES]: 'One or more of the specified moves are invalid',
@@ -72,7 +67,6 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
     'The setNft command requires a different number of parameters',
   [TowerDefenseRejectionCode.N_NONNUMERIC_TOKEN_ID]: 'The supplied token ID is not a valid integer',
   [TowerDefenseRejectionCode.N_NEGATIVE_TOKEN_ID]: 'The supplied token ID is negative',
-  [TowerDefenseRejectionCode.N_UNKNOWN]: 'Unknown error while processing a setNft command',
 
   [TowerDefenseRejectionCode.CS_NUM_PARAMS]:
     'The closeLobby command requires a different number of parameters',
@@ -85,7 +79,6 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
 
   [TowerDefenseRejectionCode.R_NOT_SUPPORTED]:
     'Posting registerConfig through batcher is not supported',
-  [TowerDefenseRejectionCode.R_UNKNOWN]: 'Unknown error while processing a registerConfig command',
 };
 
 export const enum TowerDefenseRejectionCode {
@@ -120,10 +113,7 @@ export const enum TowerDefenseRejectionCode {
   S_LOBBY_NOT_ACTIVE,
   S_WRONG_ROUND,
   S_PLAYER_NOT_IN_LOBBY,
-  S_REPEATED_SUBMIT,
-  S_TAUNT_PARAM,
   S_NONNUMERIC_PARAM,
-  S_INVALID_POSITION,
   S_UNSUPPORTED_MOVE,
   S_INVALID_MOVES,
   S_SEMANTIC,
@@ -134,7 +124,6 @@ export const enum TowerDefenseRejectionCode {
   N_NUM_PARAMS,
   N_NONNUMERIC_TOKEN_ID,
   N_NEGATIVE_TOKEN_ID,
-  N_UNKNOWN,
 
   // closeLobby errors:
   CS_NUM_PARAMS,
@@ -146,7 +135,6 @@ export const enum TowerDefenseRejectionCode {
 
   // registerConfig errors:
   R_NOT_SUPPORTED,
-  R_UNKNOWN,
 }
 
 export const STRUCTURE_NAMES: Record<string, Structure> = {
