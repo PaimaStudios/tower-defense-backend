@@ -9,9 +9,21 @@ const creds = {
 };
 
 const selectGamesPlayed = async pool => {
-  const totalGames = await pool.query(`SELECT COUNT(*) FROM final_match_state`);
-  console.log('Total games played: ');
+  const totalGames = await pool.query(`SELECT COUNT(*) FROM lobbies`);
+  console.log('Total # of matches played: ');
   console.log(totalGames.rows);
+};
+
+const selectRounds = async pool => {
+  const totalRounds = await pool.query(`SELECT COUNT(*) FROM rounds`);
+  console.log('Total # of rounds played: ');
+  console.log(totalRounds.rows);
+};
+
+const selectGameInputSubmissions = async pool => {
+  const totalInputs = await pool.query(`SELECT COUNT(*) FROM historical_game_inputs`);
+  console.log('Total # of game inputs submitted: ');
+  console.log(totalInputs.rows);
 };
 
 const selectUniquePlayers = async pool => {
@@ -29,6 +41,8 @@ const selectUniquePlayers = async pool => {
 const run = async () => {
   const pool = new pg.Pool(creds);
   await selectGamesPlayed(pool);
+  await selectRounds(pool);
+  await selectGameInputSubmissions(pool);
   await selectUniquePlayers(pool);
 
   process.exit(0);
