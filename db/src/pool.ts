@@ -1,4 +1,4 @@
-import pg from 'pg';
+import type pg from 'pg';
 /**
  * Pool of Postgres connections to avoid overhead of connecting on every request.
  */

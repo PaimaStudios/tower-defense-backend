@@ -291,7 +291,6 @@ export const range = P.seqObj<Range>(
   ]
   // no semicolon, it ends here
 );
-type UpgradeTier = 1 | 2 | 3;
 export const tier = P.seqMap(
   P.digit.map(Number).assert(s => s > 0 && s < 4, 'only tiers 1, 2 and 3 exist'),
   semicolon,
@@ -303,11 +302,6 @@ interface Tower {
   cooldown: number;
   damage: number;
   range: number;
-}
-interface VersionedTower {
-  1: Tower;
-  2: Tower;
-  3: Tower;
 }
 const at = P.seqMap(P.string('at'), semicolon, _ => ({ name: 'anacondaTower' }));
 const pt = P.seqMap(P.string('pt'), semicolon, _ => ({ name: 'piranhaTower' }));
@@ -358,7 +352,6 @@ const towers = P.seqMap(
   }
 );
 
-// crypts
 interface Crypt {
   price: number;
   buffRange: number;
@@ -369,11 +362,6 @@ interface Crypt {
   attackCooldown: number;
   unitSpeed: number;
   unitHealth: number;
-}
-interface VersionedCrypt {
-  1: Crypt;
-  2: Crypt;
-  3: Crypt;
 }
 const gc = P.seqMap(P.string('gc'), semicolon, _ => ({ name: 'gorillaCrypt' }));
 const jc = P.seqMap(P.string('jc'), semicolon, _ => ({ name: 'jaguarCrypt' }));
@@ -481,7 +469,7 @@ export const attackRange = P.seqObj<attackRange>(P.string('ar'), [
   'attackRange',
   P.digits.map(Number).assert(s => s > 0 && s < 6, 'macaw attack range should be between 1 and 5'),
 ]);
-export const crypt = P.seqMap(
+export const crypt: P.Parser<Crypt> = P.seqMap(
   price,
   unitHealth,
   spawnRate,
