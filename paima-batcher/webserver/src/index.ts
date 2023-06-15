@@ -195,6 +195,7 @@ async function initializeServer(errorCodeToMessage: ErrorMessageFxn, pool: Pool)
         res.status(400).json({
           success: false,
           message: errorCodeToMessage(validity),
+          code: validity,
         });
         return;
       }
