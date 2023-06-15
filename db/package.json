@@ -9,7 +9,8 @@
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "npx pgtyped -w -c pgtypedconfig.json",
-    "stats": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config stats.js"
+    "stats": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/stats.js",
+    "winners": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/winners.js"
   },
   "author": "",
   "license": "ISC",
