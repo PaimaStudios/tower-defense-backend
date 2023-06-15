@@ -11,8 +11,7 @@ const creds = {
 const WINNERS_LIMIT = 120;
 const START_BLOCKHEIGHT = 11883010;
 
-const selectWinners = async () => {
-  const pool = new pg.Pool(creds);
+const selectWinners = async pool => {
   const winners = await pool.query(`
   SELECT 
     final_match_state.lobby_id,
@@ -38,4 +37,11 @@ const selectWinners = async () => {
   console.log(firstWinners);
 };
 
-selectWinners();
+const run = async () => {
+  const pool = new pg.Pool(creds);
+  await selectWinners(pool);
+
+  process.exit(0);
+};
+
+run();
