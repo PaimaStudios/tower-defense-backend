@@ -56,7 +56,7 @@ const TowerDefenseValidatorCoreInitializator = {
 
 async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
   const elems = gameInput.split('|');
-  if (elems.length != 8) {
+  if (elems.length != 9) {
     return TowerDefenseRejectionCode.C_NUM_PARAMS;
   }
   const [
@@ -68,6 +68,7 @@ async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
     isHiddenStr,
     map,
     isPracticeStr,
+    hasAutoplayStr,
   ] = elems;
 
   if (cmd !== 'c') {
@@ -106,6 +107,10 @@ async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
 
   if (!BOOLEANS.includes(isPracticeStr)) {
     return TowerDefenseRejectionCode.C_PRACTICE;
+  }
+
+  if (!BOOLEANS.includes(hasAutoplayStr)) {
+    return TowerDefenseRejectionCode.C_AUTOPLAY;
   }
 
   return 0;
