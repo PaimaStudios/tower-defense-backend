@@ -23,6 +23,8 @@ export interface CreatedLobbyInput {
   matchConfigID: string; // same format as lobby ID, 12char base 62
   isHidden: boolean;
   isPractice: boolean;
+  // adds random moves for AFK players when time runs out
+  hasAutoplay: boolean;
 }
 
 export interface JoinedLobbyInput {

@@ -31,7 +31,7 @@ import { consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `
-createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?
+createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?|hasAutoplay?
 joinedLobby          = j|*lobbyID
 closedLobby          = cs|*lobbyID
 setNFT               = n|address|tokenID
@@ -52,6 +52,7 @@ const createdLobby: ParserRecord<CreatedLobbyInput> = {
   isHidden: PaimaParser.TrueFalseParser(false),
   map: PaimaParser.EnumParser(maps),
   isPractice: PaimaParser.TrueFalseParser(false),
+  hasAutoplay: PaimaParser.TrueFalseParser(true),
 };
 const joinedLobby: ParserRecord<JoinedLobbyInput> = {
   lobbyID: PaimaParser.NCharsParser(12, 12),

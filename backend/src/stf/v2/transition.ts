@@ -249,6 +249,11 @@ export async function processZombieEffect(
 ): Promise<SQLUpdate[]> {
   const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   if (!lobby) return [];
+  if (!lobby.player_two) {
+    console.error(`Lobby ${lobby.lobby_id} is missing a player two. Skipping zombie round.`);
+    return [];
+  }
+
   const [round] = await getRoundData.run(
     { lobby_id: lobby.lobby_id, round_number: lobby.current_round },
     dbConn
@@ -258,13 +263,29 @@ export async function processZombieEffect(
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
 
-  console.log(`Executing zombie round (#${lobby.current_round}) for lobby ${lobby.lobby_id}`);
-  // Simply proceed to the next round, without any moves (1 player per round).
+  console.log(
+    `Executing ${lobby.autoplay ? 'autoplay' : ''} zombie round (#${
+      lobby.current_round
+    }) for lobby ${lobby.lobby_id}`
+  );
+  const faction = round.round_within_match % 2 === 0 ? 'attacker' : 'defender';
+  const user = faction === lobby.creator_faction ? lobby.lobby_creator : lobby.player_two;
+  const moves = lobby.autoplay
+    ? generateRandomMoves(
+        matchConfig,
+        round.match_state as any as MatchState,
+        faction,
+        round.round_within_match
+      )
+    : [];
+  const movesTuples = moves.map(action => persistMove(lobby.lobby_id, user, action));
+
+  // Proceed to the next round
   const roundExecutionTuples = executeRound(
     blockHeight,
     lobby,
     matchConfig,
-    [],
+    moves,
     round,
     randomnessGenerator
   );
@@ -281,7 +302,7 @@ export async function processZombieEffect(
           randomnessGenerator
         )
       : [];
-  return [...roundExecutionTuples, ...practiceTuples];
+  return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
 }
 
 export async function processStatsEffect(input: UserStats, dbConn: Pool): Promise<SQLUpdate[]> {
