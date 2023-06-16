@@ -103,7 +103,7 @@ function TestFrontend() {
   async function userWalletLoginWrapper() {
     const loginType = lobby ? lobby : 'metamask';
     await mw
-      .userWalletLogin(loginType)
+      .userWalletLogin(loginType, true)
       .then(res => {
         if (res.success) {
           console.log('Successfully logged in address:', res.result.walletAddress);
@@ -163,6 +163,7 @@ function TestFrontend() {
       isHidden: false,
       mapName: 'jungle',
       isPractice: false,
+      hasAutoplay: true,
     };
     mw.createLobby(JSON.stringify(lobby)).then(console.log).catch(console.error);
   }
