@@ -72,6 +72,7 @@ INSERT INTO lobbies(
   created_at,
   hidden,
   practice,
+  autoplay,
   current_match_state,
   player_two)
 VALUES(
@@ -88,6 +89,7 @@ VALUES(
   :created_at!,
   :hidden!,
   :practice!,
+  :autoplay!,
   :current_match_state!,
   :player_two)
  ;

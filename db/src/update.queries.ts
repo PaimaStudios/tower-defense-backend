@@ -132,6 +132,7 @@ export interface IStartMatchParams {
 
 /** 'StartMatch' return type */
 export interface IStartMatchResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;

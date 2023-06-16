@@ -329,6 +329,7 @@ export interface IGetMatchUserStatsParams {
 
 /** 'GetMatchUserStats' return type */
 export interface IGetMatchUserStatsResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -564,6 +565,7 @@ export interface IGetPaginatedOpenLobbiesParams {
 
 /** 'GetPaginatedOpenLobbies' return type */
 export interface IGetPaginatedOpenLobbiesResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -617,6 +619,7 @@ export interface ISearchPaginatedOpenLobbiesParams {
 
 /** 'SearchPaginatedOpenLobbies' return type */
 export interface ISearchPaginatedOpenLobbiesResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -663,6 +666,7 @@ export interface IGetOpenLobbyByIdParams {
 
 /** 'GetOpenLobbyById' return type */
 export interface IGetOpenLobbyByIdResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -703,6 +707,7 @@ export type IGetRandomLobbyParams = void;
 
 /** 'GetRandomLobby' return type */
 export interface IGetRandomLobbyResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -746,6 +751,7 @@ export type IGetRandomActiveLobbyParams = void;
 
 /** 'GetRandomActiveLobby' return type */
 export interface IGetRandomActiveLobbyResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -790,6 +796,7 @@ export interface IGetUserLobbiesParams {
 
 /** 'GetUserLobbies' return type */
 export interface IGetUserLobbiesResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -838,6 +845,7 @@ export interface IGetPaginatedUserLobbiesParams {
 
 /** 'GetPaginatedUserLobbies' return type */
 export interface IGetPaginatedUserLobbiesResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -884,6 +892,7 @@ export type IGetActiveLobbiesParams = void;
 
 /** 'GetActiveLobbies' return type */
 export interface IGetActiveLobbiesResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -926,6 +935,7 @@ export interface IGetLobbyByIdParams {
 
 /** 'GetLobbyById' return type */
 export interface IGetLobbyByIdResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -1261,6 +1271,7 @@ export interface IGetOldLobbiesParams {
 
 /** 'GetOldLobbies' return type */
 export interface IGetOldLobbiesResult {
+  autoplay: boolean;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;

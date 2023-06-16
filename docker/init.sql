@@ -54,6 +54,7 @@ CREATE TABLE lobbies(
   creation_block_height INTEGER NOT NULL,
   hidden BOOLEAN NOT NULL DEFAULT false,
   practice BOOLEAN NOT NULL DEFAULT false,
+  autoplay BOOLEAN NOT NULL DEFAULT false,
   config_id TEXT references configs(id),
   map TEXT NOT NULL references maps(name),
   num_of_rounds INTEGER NOT NULL,

@@ -17,10 +17,9 @@
   "db": {
     "dbName": "postgres",
     "user": "postgres",
-    "password": "",
+    "password": "postgres",
     "host": "localhost",
     "port": 5432,
-    "ssl": false,
-    "dbUrl": "postgres://postgres@localhost/postgres"
+    "ssl": false
   }
 }
