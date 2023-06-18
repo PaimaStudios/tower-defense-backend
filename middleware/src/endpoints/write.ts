@@ -42,6 +42,7 @@ interface CreateLobbyParams {
   isHidden: boolean;
   mapName: MapName;
   isPractice: boolean;
+  hasAutoplay: boolean;
 }
 
 async function createLobby(json: string): Promise<CreateLobbyResponse> {
@@ -50,8 +51,8 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   const query = getUserWallet(errorFxn);
   if (!query.success) return query;
   const userWalletAddress = query.result;
-  const parsed: CreateLobbyParams = JSON.parse(json);
-  const { presetName, role, numberOfRounds, roundLength, isHidden, mapName, isPractice } = parsed;
+  const params: CreateLobbyParams = JSON.parse(json);
+  const { presetName, role } = params;
   const configName =
     presetName === 'short'
       ? GameENV.SHORT_CONFIG
@@ -68,11 +69,12 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
   conciseBuilder.addValues([
     { value: configName },
     { value: roleEncoding },
-    { value: numberOfRounds.toString(10) },
-    { value: roundLength.toString(10) },
-    { value: isHidden ? 'T' : 'F' },
-    { value: mapName },
-    { value: isPractice ? 'T' : 'F' },
+    { value: params.numberOfRounds.toString(10) },
+    { value: params.roundLength.toString(10) },
+    { value: params.isHidden ? 'T' : 'F' },
+    { value: params.mapName },
+    { value: params.isPractice ? 'T' : 'F' },
+    { value: params.hasAutoplay ? 'T' : 'F' },
   ]);
 
   const response = await postConciseData(conciseBuilder.build(), errorFxn);

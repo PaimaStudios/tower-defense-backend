@@ -481,13 +481,14 @@ The argument of this function is a JSON string, which when unpacked looks like:
 
 ```ts
 {
-  "configName": string,         // 14 character string. Default is "defaultedfault"
+  "configName": string,         // 14 character string. Default is "defaultdefault"
   "creatorRole": "attacker" | "defender" | "random",  // role of the lobby creator
   "numberOfRounds": number,     // must be a positive whole number
   "roundLength": number,        // must be a positive whole number
   "mapName": string,
   "isHidden" = false: boolean   // false by default
   "isPractice" = false: boolean // false by default
+  "hasAutoplay" = true: boolean // true by default
 }
 ```
 
