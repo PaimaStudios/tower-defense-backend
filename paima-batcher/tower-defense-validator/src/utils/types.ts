@@ -347,6 +347,7 @@ export const maps = [
   'islands',
   'line',
   'reflection',
+  'merge',
 ] as const;
 export type MapName = (typeof maps)[number];
 
