@@ -13,6 +13,7 @@ export const MAPS = [
   'islands',
   'line',
   'reflection',
+  'merge',
 ];
 
 export const BOOLEANS = ['T', 'F', ''];
