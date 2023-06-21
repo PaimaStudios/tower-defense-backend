@@ -6,7 +6,6 @@ import type {
   MatchConfig,
   MatchState,
   Structure,
-  Tile,
   TurnAction,
 } from '@tower-defense/utils';
 
@@ -20,9 +19,10 @@ export function generateRandomMoves(
   const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
   const structures = faction === 'defender' ? towers : crypts;
-  const toBuild = chooseStructures(matchConfig, matchState.map, faction, round, gold, structures);
+  const toBuild = chooseStructures(matchConfig, matchState, faction, round, gold, structures);
   return toBuild;
 }
+
 // Repairs. Only do if tower health below 50%
 // const repairs: RepairStructureAction[] = Object.values(matchState.actors.towers).reduce(
 //   (acc: RepairStructureAction[], item) => {
@@ -55,19 +55,23 @@ export function generateRandomMoves(
 
 function chooseStructures(
   matchConfig: MatchConfig,
-  map: Tile[],
+  matchState: MatchState,
   faction: Faction,
   round: number,
   budget: number,
   choices: Structure[]
 ): BuildStructureAction[] {
-  let currentBudget = budget;
-  const usableTileIndices = map.reduce(
+  const usableTileIndices = matchState.map.reduce(
     (tiles, item, index) =>
       item.type === 'open' && item.faction === faction ? [...tiles, index] : tiles,
     [] as number[]
   );
+  const actors = faction === 'attacker' ? matchState.actors.crypts : matchState.actors.towers;
+  Object.values(actors).forEach(structure => {
+    usableTileIndices.splice(usableTileIndices.indexOf(structure.coordinates), 1);
+  });
 
+  let currentBudget = budget;
   const actions: BuildStructureAction[] = [];
   while (currentBudget > 0) {
     const structure = choices[Math.floor(Math.random() * choices.length)];

@@ -155,17 +155,12 @@ interface DefenderBase {
   health: number;
   level: UpgradeTier;
 }
+
 interface AttackerBase {
   level: UpgradeTier;
 }
 
-export type Tile =
-  | PathTile
-  | BlockedPathTile
-  | BaseTile
-  | OpenTile
-  | StructureTile
-  | UnbuildableTile;
+export type Tile = PathTile | BlockedPathTile | BaseTile | OpenTile | UnbuildableTile;
 
 export interface PathTile {
   type: 'path';
@@ -174,12 +169,6 @@ export interface PathTile {
 
 export interface BlockedPathTile {
   type: 'blockedPath';
-  faction: Faction;
-}
-
-export interface StructureTile {
-  type: 'structure';
-  id: number;
   faction: Faction;
 }
 

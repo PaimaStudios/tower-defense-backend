@@ -20,6 +20,7 @@ export function validateMoves(
 
 /**
  * Helper function to see if a structure is being built in an available tile
+ * WARN: tile.type === 'open' says nothing about whether the tile is occupied
  */
 function canBuild(
   faction: Faction,
@@ -27,8 +28,15 @@ function canBuild(
   matchState: MatchState
 ): boolean {
   const structureFaction: Faction = structure.includes('rypt') ? 'attacker' : 'defender';
+  if (faction !== structureFaction) return false;
+
   const tile = matchState.map[coordinates];
-  return tile.type === 'open' && tile.faction === faction && faction === structureFaction;
+  const isSuitable = tile.type === 'open' && tile.faction === faction;
+  if (!isSuitable) return false;
+
+  const actors = faction === 'attacker' ? matchState.actors.crypts : matchState.actors.towers;
+  const isOccupied = Object.values(actors).some(actor => actor.coordinates === coordinates);
+  return !isOccupied;
 }
 
 /**
