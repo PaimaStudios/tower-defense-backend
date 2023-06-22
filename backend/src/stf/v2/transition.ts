@@ -60,6 +60,7 @@ export const processCreateLobby = async (
 ): Promise<SQLUpdate[]> => {
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
+    if (!map) return [];
     const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
     if (!configString) return [];
     const matchConfig = parseConfig(configString.content);
@@ -86,6 +87,7 @@ export const processJoinLobby = async (
   // if Lobby doesn't exist, bail
   if (!lobbyState) return [];
   const [map] = await getMapLayout.run({ name: lobbyState.map }, dbConn);
+  if (!map) return [];
   // if match config is not in the database, bail
   const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
   if (!configString) return [];
