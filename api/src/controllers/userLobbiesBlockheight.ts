@@ -15,21 +15,14 @@ export class UserLobbiesBlockheightController extends Controller {
     const pool = requirePool();
     wallet = wallet.toLowerCase();
     const valBH = psqlNum.decode(blockHeight);
-    if (isLeft(valBH))
-      throw new ValidateError(
-        {
-          blockHeight: {
-            message: 'invalid number',
-          },
-        },
-        ''
-      );
-    else {
-      const lobbies = await getNewLobbiesByUserAndBlockHeight.run(
-        { wallet: wallet, block_height: blockHeight },
-        pool
-      );
-      return { lobbies };
+    if (isLeft(valBH)) {
+      throw new ValidateError({ blockHeight: { message: 'invalid number' } }, '');
     }
+
+    const lobbies = await getNewLobbiesByUserAndBlockHeight.run(
+      { wallet: wallet, block_height: blockHeight },
+      pool
+    );
+    return { lobbies };
   }
 }

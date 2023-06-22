@@ -96,7 +96,7 @@ This endpoint is paginated, meaning that the `page` argument can be used to requ
       "map": "jungle",
       "hidden": false,
       "practice": true,
-      "lobby_state": "finished",
+      "lobby_state": "active",
       "current_match_state": {
         "attacker": "0xdda...f2e",
         "attackerGold": 430,
@@ -123,7 +123,81 @@ This endpoint is paginated, meaning that the `page` argument can be used to requ
         "width": 22,
         "height": 13,
         "mapState": [
-          {"type": "path", "faction": "defender", "leadsTo": [4, 5]},
+          {"type": "path", "faction": "defender"},
+          {"type": "open", "faction": "defender"},
+          // ...
+        ]
+      }
+    }
+    // ...
+  ]
+}
+```
+
+---
+
+### Endpoint `getUserFinishedLobbies`:
+
+```ts
+async function getUserFinishedLobbies(
+  wallet: string,
+  page: number,
+  count?: number
+): Promise<LobbyStates | FailedResult>;
+```
+
+Returns a list of lobbies the specified user played in.
+
+This endpoint is paginated, meaning that the `page` argument can be used to request different pages, and the optional `count` argument can specify the number of lobbies returned in each call.
+
+#### Example Output:
+
+```json
+{
+  "success": true,
+  "lobbies": [
+    {
+      "lobby_id": "zisC9B75VPZ4",    // 12 characters
+      "config_id": "abcdefabcdefab", // 14 characters
+      "created_at": "2022-07-28T10:42:34.961Z",
+      "creation_block_height": 5684941,
+      "creator_faction": "attacker",
+      "lobby_creator": "0xdda...f2e",
+      "player_two": "0x186...a40",
+      "num_of_rounds": 20,
+      "current_round": 20,
+      "round_length": 40,
+      "map": "jungle",
+      "hidden": false,
+      "practice": true,
+      "lobby_state": "finished",
+      "current_match_state": {
+        "attacker": "0xdda...f2e",
+        "attackerGold": 430,
+        "attackerBase": {
+          "level": 1,
+        },
+        "defender": "0x186...a40",
+        "defenderGold": 320,
+        "defenderBase": {
+          "health": 93,
+          "level": 2
+        },
+        "actors": {
+          "crypts": [3, 5, 6],
+          "towers": [1, 2, 4],
+          "units": [9, 10, 11, 12]
+        },
+        "actorCount": 10,
+        "currentRound": 20,
+        "finishedSpawning": [3, 6],
+        "roundEnded": true,
+        // map related attributes
+        "name": "jungle", // or whatever the map is"
+        "width": 22,
+        "height": 13,
+        "mapState": [
+          {"type": "path", "faction": "defender"},
           {"type": "open", "faction": "defender"},
           // ...
         ]
@@ -154,7 +228,7 @@ As requested this endpoint adds a query for the user stats of the lobby creator.
 
 #### Example Output:
 
-```json
+```ts
 {
   "success": true,
   "lobbies": [

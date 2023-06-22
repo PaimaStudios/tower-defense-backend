@@ -1,20 +1,15 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import type { IGetPaginatedUserLobbiesResult } from '@tower-defense/db';
-import { getRoundData } from '@tower-defense/db';
-import { requirePool, getPaginatedUserLobbies, getRoundMoves } from '@tower-defense/db';
+import { requirePool, getUserFinishedLobbies } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
 
 interface Response {
-  lobbies: UserLobby[];
+  lobbies: IGetPaginatedUserLobbiesResult[];
 }
 
-interface UserLobby extends IGetPaginatedUserLobbiesResult {
-  myTurn?: boolean;
-}
-
-@Route('user_lobbies')
-export class UserLobbiesController extends Controller {
+@Route('user_finished_lobbies')
+export class UserFinishedLobbiesController extends Controller {
   @Get()
   public async get(
     @Query() wallet: string,
@@ -38,27 +33,10 @@ export class UserLobbiesController extends Controller {
     const p = valPage.right;
     const c = valCount.right;
     const offset = (p - 1) * c;
-    const userLobbies = await getPaginatedUserLobbies.run(
+    const userLobbies = await getUserFinishedLobbies.run(
       { wallet: wallet, count: `${c}`, page: `${offset}` },
       pool
     );
-    const addedWaitStatus = userLobbies.map(async l => {
-      if (l.lobby_state === 'active') {
-        const moves = await getRoundMoves.run(
-          { lobby_id: l.lobby_id, round: l.current_round },
-          pool
-        );
-        const ids = moves.map(m => m.wallet);
-        const myTurn = !ids.includes(wallet);
-        const [roundData] = await getRoundData.run(
-          { lobby_id: l.lobby_id, round_number: l.current_round },
-          pool
-        );
-        const round_start_height = !roundData ? null : roundData.starting_block_height;
-        return { ...l, myTurn, round_start_height };
-      } else return l;
-    });
-    const lobbies = await Promise.all(addedWaitStatus);
-    return { lobbies };
+    return { lobbies: userLobbies };
   }
 }

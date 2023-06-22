@@ -77,6 +77,19 @@ export function backendQuerySearchLobby(
   return buildBackendQuery(endpoint, options);
 }
 
+export function backendQueryFinishedLobbies(
+  wallet: WalletAddress,
+  page: number,
+  count?: number
+): string {
+  const endpoint = 'user_finished_lobbies';
+  const options: QueryOptions = { wallet, page };
+  if (count !== undefined) {
+    options.count = count;
+  }
+
+  return buildBackendQuery(endpoint, options);
+}
 export function backendQueryUserLobbiesBlockheight(
   wallet: WalletAddress,
   blockHeight: number

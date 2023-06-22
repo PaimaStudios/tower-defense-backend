@@ -29,6 +29,8 @@ import { roundExecutorController } from './../controllers/roundExecutor';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { SearchOpenLobbiesController } from './../controllers/searchOpenLobbies';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { UserFinishedLobbiesController } from './../controllers/userFinishedLobbies';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { UserLobbiesController } from './../controllers/userLobbies';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { UserLobbiesBlockheightController } from './../controllers/userLobbiesBlockheight';
@@ -101,6 +103,7 @@ const models: TsoaRoute.Models = {
     "IGetRandomActiveLobbyResult": {
         "dataType": "refObject",
         "properties": {
+            "autoplay": {"dataType":"boolean","required":true},
             "config_id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "created_at": {"dataType":"datetime","required":true},
             "creation_block_height": {"dataType":"double","required":true},
@@ -131,6 +134,7 @@ const models: TsoaRoute.Models = {
     "IGetRandomLobbyResult": {
         "dataType": "refObject",
         "properties": {
+            "autoplay": {"dataType":"boolean","required":true},
             "config_id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "created_at": {"dataType":"datetime","required":true},
             "creation_block_height": {"dataType":"double","required":true},
@@ -161,6 +165,7 @@ const models: TsoaRoute.Models = {
     "ISearchPaginatedOpenLobbiesResult": {
         "dataType": "refObject",
         "properties": {
+            "autoplay": {"dataType":"boolean","required":true},
             "config_id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "created_at": {"dataType":"datetime","required":true},
             "creation_block_height": {"dataType":"double","required":true},
@@ -518,6 +523,33 @@ export function RegisterRoutes(app: express.Router) {
                 validatedArgs = getValidatedArgs(args, request, response);
 
                 const controller = new SearchOpenLobbiesController();
+
+
+              const promise = controller.get.apply(controller, validatedArgs as any);
+              promiseHandler(controller, promise, response, undefined, next);
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/user_finished_lobbies',
+            ...(fetchMiddlewares<RequestHandler>(UserFinishedLobbiesController)),
+            ...(fetchMiddlewares<RequestHandler>(UserFinishedLobbiesController.prototype.get)),
+
+            function UserFinishedLobbiesController_get(request: any, response: any, next: any) {
+            const args = {
+                    wallet: {"in":"query","name":"wallet","required":true,"dataType":"string"},
+                    count: {"in":"query","name":"count","dataType":"double"},
+                    page: {"in":"query","name":"page","dataType":"double"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = getValidatedArgs(args, request, response);
+
+                const controller = new UserFinishedLobbiesController();
 
 
               const promise = controller.get.apply(controller, validatedArgs as any);
