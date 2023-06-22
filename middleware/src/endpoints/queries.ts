@@ -19,6 +19,7 @@ import { calculateMatchStats, calculateRoundEnd } from '../helpers/utility-funct
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executors';
 import {
   backendQueryCurrentRound,
+  backendQueryFinishedLobbies,
   backendQueryLobbyConfig,
   backendQueryMapByName,
   backendQueryMatchExecutor,
@@ -55,6 +56,7 @@ import type {
 import type { FailedResult } from 'paima-engine/paima-mw-core';
 import { getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
 import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
+import type { WalletAddress } from 'paima-engine/paima-utils';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');
@@ -104,7 +106,7 @@ async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | Failed
 }
 
 async function getLobbySearch(
-  wallet: string,
+  wallet: WalletAddress,
   searchQuery: string,
   page: number,
   count?: number
@@ -112,10 +114,36 @@ async function getLobbySearch(
   const errorFxn = buildEndpointErrorFxn('getLobbySearch');
 
   let response: Response;
-  let latestBlockHeight: number;
   try {
     const query = backendQuerySearchLobby(wallet, searchQuery, page, count);
-    [response, latestBlockHeight] = await Promise.all([fetch(query), getBlockNumber()]);
+    response = await fetch(query);
+  } catch (err) {
+    return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
+  }
+
+  try {
+    const j = (await response.json()) as { lobbies: LobbyState[] };
+    // TODO: properly typecheck
+    return {
+      success: true,
+      lobbies: j.lobbies,
+    };
+  } catch (err) {
+    return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
+  }
+}
+
+async function getUserFinishedLobbies(
+  wallet: WalletAddress,
+  page: number,
+  count?: number
+): Promise<LobbyStates | FailedResult> {
+  const errorFxn = buildEndpointErrorFxn('getUserFinishedLobbies');
+
+  let response: Response;
+  try {
+    const query = backendQueryFinishedLobbies(wallet, page, count);
+    response = await fetch(query);
   } catch (err) {
     return errorFxn(PaimaMiddlewareErrorCode.ERROR_QUERYING_BACKEND_ENDPOINT, err);
   }
@@ -176,7 +204,7 @@ async function getCurrentRound(lobbyID: string): Promise<PackedCurrentRound | Fa
     return errorFxn(PaimaMiddlewareErrorCode.INVALID_RESPONSE_FROM_BACKEND, err);
   }
 }
-async function getUserStats(walletAddress: string): Promise<PackedUserStats | FailedResult> {
+async function getUserStats(walletAddress: WalletAddress): Promise<PackedUserStats | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserStats');
 
   let res: Response;
@@ -203,7 +231,9 @@ async function getUserStats(walletAddress: string): Promise<PackedUserStats | Fa
   }
 }
 
-async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[]> | FailedResult> {
+async function getUserWalletNfts(
+  address: WalletAddress
+): Promise<SuccessfulResult<NFT[]> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserWalletNfts');
 
   const initSize = 100;
@@ -247,7 +277,7 @@ async function getUserWalletNfts(address: string): Promise<SuccessfulResult<NFT[
   }
 }
 
-async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | FailedResult> {
+async function getUserSetNFT(wallet: WalletAddress): Promise<SuccessfulResult<NFT> | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getUserSetNFT');
 
   let nftId: NftId;
@@ -284,7 +314,7 @@ async function getUserSetNFT(wallet: string): Promise<SuccessfulResult<NFT> | Fa
 }
 
 async function getNewLobbies(
-  wallet: string,
+  wallet: WalletAddress,
   blockHeight: number
 ): Promise<NewLobbies | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getNewLobbies');
@@ -296,7 +326,7 @@ async function getNewLobbies(
 }
 
 async function getUserLobbiesMatches(
-  walletAddress: string,
+  walletAddress: WalletAddress,
   page: number,
   count?: number
 ): Promise<LobbyStates | FailedResult> {
@@ -323,7 +353,7 @@ async function getUserLobbiesMatches(
 }
 
 async function getOpenLobbies(
-  wallet: string,
+  wallet: WalletAddress,
   page: number,
   count?: number
 ): Promise<LobbyStates | FailedResult> {
@@ -525,6 +555,7 @@ export const queryEndpoints = {
   getCurrentRound,
   getRandomOpenLobby,
   getOpenLobbies,
+  getUserFinishedLobbies,
   getUserLobbiesMatches,
   getUserWalletNfts,
   getNewLobbies,

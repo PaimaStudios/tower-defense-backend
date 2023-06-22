@@ -789,6 +789,56 @@ const getRandomActiveLobbyIR: any = {"usedParamSet":{},"params":[],"statement":"
 export const getRandomActiveLobby = new PreparedQuery<IGetRandomActiveLobbyParams,IGetRandomActiveLobbyResult>(getRandomActiveLobbyIR);
 
 
+/** 'GetUserFinishedLobbies' parameters type */
+export interface IGetUserFinishedLobbiesParams {
+  count: string | null | void;
+  page: string | null | void;
+  wallet: string | null | void;
+}
+
+/** 'GetUserFinishedLobbies' return type */
+export interface IGetUserFinishedLobbiesResult {
+  autoplay: boolean;
+  config_id: string | null;
+  created_at: Date;
+  creation_block_height: number;
+  creator_faction: role_setting;
+  current_match_state: Json;
+  current_round: number;
+  hidden: boolean;
+  lobby_creator: string;
+  lobby_id: string;
+  lobby_state: lobby_status;
+  map: string;
+  num_of_rounds: number;
+  player_two: string | null;
+  practice: boolean;
+  round_length: number;
+}
+
+/** 'GetUserFinishedLobbies' query type */
+export interface IGetUserFinishedLobbiesQuery {
+  params: IGetUserFinishedLobbiesParams;
+  result: IGetUserFinishedLobbiesResult;
+}
+
+const getUserFinishedLobbiesIR: any = {"usedParamSet":{"wallet":true,"count":true,"page":true},"params":[{"name":"wallet","required":false,"transform":{"type":"scalar"},"locs":[{"a":90,"b":96},{"a":122,"b":128}]},{"name":"count","required":false,"transform":{"type":"scalar"},"locs":[{"a":162,"b":167}]},{"name":"page","required":false,"transform":{"type":"scalar"},"locs":[{"a":176,"b":180}]}],"statement":"SELECT * FROM lobbies\nWHERE lobbies.lobby_state = 'finished'\nAND (lobbies.lobby_creator = :wallet\nOR lobbies.player_two = :wallet)\nORDER BY created_at DESC\nLIMIT :count\nOFFSET :page"};
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT * FROM lobbies
+ * WHERE lobbies.lobby_state = 'finished'
+ * AND (lobbies.lobby_creator = :wallet
+ * OR lobbies.player_two = :wallet)
+ * ORDER BY created_at DESC
+ * LIMIT :count
+ * OFFSET :page
+ * ```
+ */
+export const getUserFinishedLobbies = new PreparedQuery<IGetUserFinishedLobbiesParams,IGetUserFinishedLobbiesResult>(getUserFinishedLobbiesIR);
+
+
 /** 'GetUserLobbies' parameters type */
 export interface IGetUserLobbiesParams {
   wallet: string | null | void;

@@ -126,7 +126,6 @@ ORDER BY created_at DESC
 LIMIT :count
 OFFSET :page;
 
-
 /* @name searchPaginatedOpenLobbies */
 SELECT * FROM lobbies
 WHERE lobbies.lobby_state = 'open' AND lobbies.hidden IS FALSE AND lobbies.lobby_creator != :wallet AND lobbies.lobby_id LIKE :searchQuery
@@ -150,6 +149,15 @@ SELECT * FROM lobbies
 WHERE random() < 0.1
 AND lobbies.lobby_state = 'active'
 LIMIT 1;
+
+/* @name getUserFinishedLobbies */
+SELECT * FROM lobbies
+WHERE lobbies.lobby_state = 'finished'
+AND (lobbies.lobby_creator = :wallet
+OR lobbies.player_two = :wallet)
+ORDER BY created_at DESC
+LIMIT :count
+OFFSET :page;
 
 /* @name getUserLobbies */
 SELECT * FROM lobbies
