@@ -1,57 +1,31 @@
 import type {
-  AttackerStructureType,
+  ActorsObject,
   BuildStructureAction,
-  DefenderStructureType,
   Faction,
   MatchConfig,
   MatchState,
   Structure,
+  StructureType,
   TurnAction,
+  UpgradeStructureAction,
+  UpgradeTier,
 } from '@tower-defense/utils';
+import { getPossibleStructures } from './utils';
 
+/**
+ * @returns completely random list of structures to build
+ */
 export function generateRandomMoves(
   matchConfig: MatchConfig,
   matchState: MatchState,
   faction: Faction,
   round: number
 ): TurnAction[] {
-  const towers: DefenderStructureType[] = ['anacondaTower', 'piranhaTower', 'slothTower'];
-  const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
-  const structures = faction === 'defender' ? towers : crypts;
+  const structures = getPossibleStructures(faction);
   const toBuild = chooseStructures(matchConfig, matchState, faction, round, gold, structures);
   return toBuild;
 }
-
-// Repairs. Only do if tower health below 50%
-// const repairs: RepairStructureAction[] = Object.values(matchState.actors.towers).reduce(
-//   (acc: RepairStructureAction[], item) => {
-//     const config = matchConfig[item.structure];
-//     const isAffordable = matchConfig.repairCost < gold;
-//     const dying = item.health < (config[1].health / 2);
-//     if (dying && isAffordable){
-//       gold -= matchConfig.repairCost // substract from gold so further iterations compare with substracted amount
-//       return [...acc, {
-//         action: "repair",
-//         faction: "defender",
-//         id: item.id,a
-//         round: matchState.currentRound // + 1?
-//       }]
-//     }
-//     else return acc;
-//   },
-//   []
-// );
-// Build. Do on lanes in which we are outnumbered
-// const lanes = [];
-// const losingLanes = lanes.reduce((acc, item) => {
-//   const cryptsInLane = findCryptsInlane(l);
-//   const towersInLane = findTowersInlane(l);
-//   if (towersInLane < cryptsInLane.length) return [...acc,
-//   chooseTowersToBuild(matchConfig, matchState, gold)
-//   ]
-//   else return acc
-// }, [])
 
 function chooseStructures(
   matchConfig: MatchConfig,
@@ -59,7 +33,7 @@ function chooseStructures(
   faction: Faction,
   round: number,
   budget: number,
-  choices: Structure[]
+  choices: StructureType[]
 ): BuildStructureAction[] {
   const usableTileIndices = matchState.map.reduce(
     (tiles, item, index) =>
@@ -93,3 +67,72 @@ function chooseStructures(
   }
   return actions;
 }
+
+function upgradeStructures(
+  matchConfig: MatchConfig,
+  actors: ActorsObject,
+  faction: Faction,
+  round: number,
+  budget: number
+): [UpgradeStructureAction[], number] {
+  const structures = faction === 'attacker' ? actors.crypts : actors.towers;
+  const possibleUpgrades: { cost: number; id: number }[] = Object.values(structures).reduce(
+    (upgrades, actor: Structure) => {
+      if (actor.upgrades === 3) return upgrades;
+
+      //TODO: helper function
+      const cost = matchConfig[actor.structure][(actor.upgrades + 1) as UpgradeTier].price;
+      const nextTierUpgrade = { cost, id: actor.id };
+      if (actor.upgrades === 1) {
+        const tier3Cost = matchConfig[actor.structure][(actor.upgrades + 2) as UpgradeTier].price;
+        return [...upgrades, nextTierUpgrade, { cost: tier3Cost, id: actor.id }];
+      }
+      return [...upgrades, nextTierUpgrade];
+    },
+    [] as { cost: number; id: number }[]
+  );
+
+  if (possibleUpgrades.length === 0) return [[], 0];
+
+  let moneyLeft = budget;
+  const actions: UpgradeStructureAction[] = [];
+  while (moneyLeft > 0 && possibleUpgrades.length > 0) {
+    const upgrade = possibleUpgrades.shift();
+    if (!upgrade || moneyLeft < upgrade.cost) break;
+
+    const action: UpgradeStructureAction = {
+      action: 'upgrade',
+      id: upgrade.id,
+      round,
+      faction,
+    };
+    actions.push(action);
+    moneyLeft -= upgrade.cost;
+  }
+  return [actions, budget - moneyLeft];
+}
+
+export function generateBotMoves(
+  matchConfig: MatchConfig,
+  matchState: MatchState,
+  faction: Faction,
+  round: number
+): TurnAction[] {
+  const gold = matchState[`${faction}Gold`];
+  const structures = getPossibleStructures(faction);
+
+  const [upgrades, cost] = upgradeStructures(matchConfig, matchState.actors, faction, round, gold);
+  return upgrades;
+  // if (actors)
+  //   const toBuild = chooseStructures(matchConfig, matchState, faction, round, gold, structures);
+  // //1 upgrade as much as possible
+  // //build:
+  // ////defender - closest to base, with path coverage
+  // ////attacker - on least busy lane
+
+  // //utils - comparePath
+
+  // return toBuild;
+}
+
+// export const calculatePathCoverage = (

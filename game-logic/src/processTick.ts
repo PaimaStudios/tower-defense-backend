@@ -17,7 +17,6 @@ import type {
   DefenderStructure,
   StatusEffectAppliedEvent,
   UnitMovementEvent,
-  Coordinates,
   TowerAttack,
   UnitAttack,
   BuildStructureAction,
@@ -33,7 +32,14 @@ import type {
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { attackerUnitMap } from './config';
-import { chooseTile, euclideanDistance, indexToCoords, isSpawnable, validateCoords } from './utils';
+import {
+  chooseTile,
+  euclideanDistance,
+  getSurroundingCells,
+  indexToCoords,
+  isSpawnable,
+  validateCoords,
+} from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -626,35 +632,6 @@ function findCloseByUnits(
     surrounding.includes(u.coordinates)
   );
   return units;
-}
-
-export function getSurroundingCells(
-  index: number,
-  mapWidth: number,
-  mapHeight: number,
-  range: number
-): number[] {
-  const center = indexToCoords(index, mapWidth);
-  const surroundingCells: Coordinates[] = [];
-  for (let x = center.x - range; x <= center.x + range; x++) {
-    for (let y = center.y - range; y <= center.y + range; y++) {
-      // Exclude the center cell itself
-      if (x === center.x && y === center.y) {
-        continue;
-      }
-      // Calculate the distance from the center cell
-      const dx = Math.abs(x - center.x);
-      const dy = Math.abs(y - center.y);
-
-      // Exclude diagonals for each range
-      if (dx + dy <= range) {
-        surroundingCells.push({ x, y });
-      }
-    }
-  }
-  return surroundingCells
-    .map(coordinates => validateCoords(coordinates, mapWidth, mapHeight))
-    .filter((index: number | null): index is number => index != null);
 }
 
 function findClosebyTowers(

@@ -1,10 +1,20 @@
 import { baseConfig } from './config';
-import type { MatchConfig, MatchState, TileNumber } from '@tower-defense/utils';
+import type {
+  AttackerStructure,
+  AttackerStructureType,
+  DefenderStructure,
+  DefenderStructureType,
+  MatchConfig,
+  MatchState,
+  TileNumber,
+  UpgradeTier,
+} from '@tower-defense/utils';
 import Prando from 'paima-engine/paima-prando';
-import { generateRandomMoves } from './ai';
+import { generateBotMoves, generateRandomMoves } from './ai';
 import { generateMatchState } from './map-processor';
 import { validateMoves } from './validation';
 import processTick from './processTick';
+import { getPossibleStructures } from './utils';
 
 export const testmap: TileNumber[] = [
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
@@ -29,6 +39,47 @@ function getMatchState(config: MatchConfig): MatchState {
     new Prando(1)
   );
 }
+
+const getRandomCrypts = (count: number): Record<number, AttackerStructure> => {
+  const types = getPossibleStructures('attacker') as AttackerStructureType[];
+
+  const structures: Record<number, AttackerStructure> = {};
+  for (let i = 0; i < count; i++) {
+    const attackerStructure: AttackerStructure = {
+      type: 'structure',
+      faction: 'attacker',
+      id: Math.floor(Math.random() * 1000),
+      spawned: [],
+      structure: types[Math.floor(Math.random() * types.length)],
+      upgrades: (Math.floor(Math.random() * 3) + 1) as UpgradeTier,
+      coordinates: 0,
+      builtOnRound: 1,
+    };
+    structures[attackerStructure.id] = attackerStructure;
+  }
+  return structures;
+};
+
+const getRandomTowers = (count: number): Record<number, DefenderStructure> => {
+  const types = getPossibleStructures('defender') as DefenderStructureType[];
+
+  const structures: Record<number, DefenderStructure> = {};
+  for (let i = 0; i < count; i++) {
+    const defenderStructure: DefenderStructure = {
+      type: 'structure',
+      faction: 'defender',
+      id: Math.floor(Math.random() * 1000),
+      structure: types[Math.floor(Math.random() * types.length)] as DefenderStructureType,
+      upgrades: (Math.floor(Math.random() * 3) + 1) as UpgradeTier,
+      coordinates: 0,
+      health: 100,
+      lastShot: 0,
+    };
+    structures[defenderStructure.id] = defenderStructure;
+  }
+  return structures;
+};
+
 describe('AI', () => {
   test('builds valid structures (round scope)', () => {
     const maxDefenderStructures = testmap.filter(tile => tile === 1).length;
@@ -82,4 +133,40 @@ describe('AI', () => {
     expect(validateMoves(round4Moves, 'attacker', matchState)).toBe(true);
     expect(round4Moves.length).toBe(0);
   });
+
+  test('prioritizes upgrades', () => {
+    // enough to upgrade everything
+    const testGold = 6000;
+    const matchState = getMatchState({
+      ...baseConfig,
+      baseAttackerGoldRate: testGold,
+      baseDefenderGoldRate: testGold,
+    });
+    const defenderStructures = getRandomTowers(10);
+    matchState.actors.towers = defenderStructures;
+    const attackerStructures = getRandomCrypts(10);
+    matchState.actors.crypts = attackerStructures;
+
+    const maxTierSum = 30;
+
+    const defenderTierSum = Object.values(defenderStructures).reduce(
+      (acc, structure) => (acc += structure.upgrades),
+      0
+    );
+    // generated moves should contain upgrades to every structure
+    const defenderMoves = generateBotMoves(baseConfig, matchState, 'defender', 1);
+    const defenderUpgrades = defenderMoves.filter(move => move.action === 'upgrade').length;
+    expect(defenderUpgrades).toBe(maxTierSum - defenderTierSum);
+
+    const attackerTierSum = Object.values(attackerStructures).reduce(
+      (acc, structure) => (acc += structure.upgrades),
+      0
+    );
+    const attackerMoves = generateBotMoves(baseConfig, matchState, 'attacker', 1);
+    const attackerUpgrades = attackerMoves.filter(move => move.action === 'upgrade').length;
+    expect(attackerUpgrades).toBe(maxTierSum - attackerTierSum);
+  });
+
+  // test('calculates path coverage', () => {});
+  // test('picks closest X tiles to base with path coverage', () => {});
 });

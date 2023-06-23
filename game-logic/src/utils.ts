@@ -134,3 +134,42 @@ export function isDefenderStructure(structure: Structure): structure is Defender
 export const euclideanDistance = (a: Coordinates, b: Coordinates): number => {
   return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 };
+
+export function getSurroundingCells(
+  index: number,
+  mapWidth: number,
+  mapHeight: number,
+  range: number
+): number[] {
+  const center = indexToCoords(index, mapWidth);
+  const surroundingCells: Coordinates[] = [];
+  for (let x = center.x - range; x <= center.x + range; x++) {
+    for (let y = center.y - range; y <= center.y + range; y++) {
+      // Exclude the center cell itself
+      if (x === center.x && y === center.y) {
+        continue;
+      }
+      // Calculate the distance from the center cell
+      const dx = Math.abs(x - center.x);
+      const dy = Math.abs(y - center.y);
+
+      // Exclude diagonals for each range
+      if (dx + dy <= range) {
+        surroundingCells.push({ x, y });
+      }
+    }
+  }
+  return surroundingCells
+    .map(coordinates => validateCoords(coordinates, mapWidth, mapHeight))
+    .filter((index: number | null): index is number => index != null);
+}
+
+/**
+ * @param faction
+ * @returns all of the structures that a faction can build
+ */
+export const getPossibleStructures = (faction: Faction): StructureType[] => {
+  const towers: DefenderStructureType[] = ['anacondaTower', 'piranhaTower', 'slothTower'];
+  const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
+  return faction === 'defender' ? towers : crypts;
+};
