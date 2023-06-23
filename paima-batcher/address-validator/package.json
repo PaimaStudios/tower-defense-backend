@@ -10,7 +10,9 @@
     "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
     "@polkadot/util": "^10.4.2",
     "@polkadot/util-crypto": "^10.4.2",
+    "algosdk": "^2.3.0",
     "pg": "^8.7.3",
+    "tweetnacl": "^1.0.3",
     "web3": "^1.7.5"
   },
   "devDependencies": {
