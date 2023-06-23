@@ -20,6 +20,7 @@ import {
 import { validateEthereumAddress, verifySignatureEthereum } from './ethereum.js';
 import { validateCardanoAddress, verifySignatureCardano } from './cardano.js';
 import { validatePolkadotAddress, verifySignaturePolkadot } from './polkadot.js';
+import { validateAlgorandAddress, verifySignatureAlgorand } from './algorand.js';
 import { isSameDay, isSameMinute } from './date-utils.js';
 
 class PaimaAddressValidator {
@@ -75,6 +76,8 @@ class PaimaAddressValidator {
         return validateCardanoAddress(address);
       case AddressType.POLKADOT:
         return validatePolkadotAddress(address);
+      case AddressType.ALGORAND:
+        return validateAlgorandAddress(address);
       default:
         return false;
     }
@@ -96,6 +99,8 @@ class PaimaAddressValidator {
         return verifySignatureCardano(input.userAddress, message, input.userSignature);
       case AddressType.POLKADOT:
         return verifySignaturePolkadot(input.userAddress, message, input.userSignature);
+      case AddressType.ALGORAND:
+        return verifySignatureAlgorand(input.userAddress, message, input.userSignature);
       default:
         return false;
     }

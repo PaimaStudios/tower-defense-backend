@@ -3,4 +3,5 @@ export const enum AddressType {
   EVM = 1,
   CARDANO = 2,
   POLKADOT = 3,
+  ALGORAND = 4,
 }

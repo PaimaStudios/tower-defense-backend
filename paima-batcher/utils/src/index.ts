@@ -196,6 +196,25 @@ export function getStorageContract(web3: Web3, address: string): Contract {
   return new web3.eth.Contract(storageBuild.abi as AbiItem[], address);
 }
 
+function hexStringToBytes(hexString: string): number[] {
+    if (!/^[0-9a-fA-F]+$/.test(hexString)) {
+        throw new Error("Non-hex digits found in hex string");
+    }
+    const bytes: number[] = [];
+    if (hexString.length % 2 !== 0) {
+        hexString = '0' + hexString;
+    }
+    for (let c = 0; c < hexString.length; c += 2) {
+        const nextByte = hexString.slice(c, c + 2);
+        bytes.push(parseInt(nextByte, 16));
+    }
+    return bytes;
+}
+
+export function hexStringToUint8Array(hexString: string): Uint8Array {
+    return new Uint8Array(hexStringToBytes(hexString));
+}
+
 export function getGameInputValidatorType(typeString: string): GameInputValidatorCoreType {
   switch (typeString) {
     case 'tower-defense':
