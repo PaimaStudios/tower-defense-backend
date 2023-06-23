@@ -1,6 +1,6 @@
 import type { IGetMovesByLobbyResult } from '@tower-defense/db';
 import { ENV } from 'paima-engine/paima-utils';
-import type { Structure, TurnAction } from './types.js';
+import type { StructureType, TurnAction } from './types.js';
 type VersionString = `${number}.${number}.${number}`;
 
 const VERSION_MAJOR = 0;
@@ -51,7 +51,7 @@ export function moveToAction(move: IGetMovesByLobbyResult, attacker: string): Tu
       round: move.round,
       action: move.move_type,
       faction: move.wallet === attacker ? 'attacker' : 'defender',
-      structure: structure as Structure,
+      structure: structure as StructureType,
       coordinates: parseInt(coordinates),
     };
   } else {

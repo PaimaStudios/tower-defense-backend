@@ -1,16 +1,15 @@
 import { pushLog } from 'paima-engine/paima-mw-core';
 import type {
   ActorsObject,
-  AttackerStructure,
-  DefenderStructure,
   MatchConfig,
   MatchExecutorData,
   MatchState,
-  Structure,
+  StructureType,
   StructureConcise,
   TickEvent,
   TurnAction,
   UpgradeTier,
+  Structure,
 } from '@tower-defense/utils';
 import { GameENV } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
@@ -26,7 +25,7 @@ import { matchExecutor } from 'paima-engine/paima-executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
 import type { NewRoundEvent } from 'paima-engine/paima-executors/build/types';
 
-const conciseMap: Record<Structure, StructureConcise> = {
+const conciseMap: Record<StructureType, StructureConcise> = {
   anacondaTower: 'at',
   piranhaTower: 'pt',
   slothTower: 'st',
@@ -251,7 +250,7 @@ function computeUpgradeCosts(tickEvents: TickEvent[], actors: ActorsObject, conf
       }
     }
     return upgrades;
-  }, [] as (AttackerStructure | DefenderStructure)[]);
+  }, [] as Structure[]);
 
   return upgrades.reduce(
     (spentGold, upgrade) => {

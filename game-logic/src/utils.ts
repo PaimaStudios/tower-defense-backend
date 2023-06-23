@@ -1,9 +1,13 @@
 import type {
-  AttackerStructure,
+  AttackerStructureType,
   BuildStructureAction,
   Coordinates,
   DefenderStructure,
+  DefenderStructureType,
+  Faction,
   MatchConfig,
+  Structure,
+  StructureType,
   Tile,
   TurnAction,
   UpgradeTier,
@@ -11,7 +15,7 @@ import type {
 import { AStarFinder } from 'astar-typescript';
 
 export const calculateRecoupGold = (
-  { structure, upgrades }: AttackerStructure | DefenderStructure,
+  { structure, upgrades }: Structure,
   config: MatchConfig
 ): number => {
   const structureConfigGraph = config[structure];
@@ -123,9 +127,7 @@ export function isBuildAction(action: TurnAction): action is BuildStructureActio
   return action.action === 'build';
 }
 
-export function isDefenderStructure(
-  structure: AttackerStructure | DefenderStructure
-): structure is DefenderStructure {
+export function isDefenderStructure(structure: Structure): structure is DefenderStructure {
   return structure.faction === 'defender';
 }
 

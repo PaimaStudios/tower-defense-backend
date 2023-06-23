@@ -7,7 +7,7 @@ import type {
   ResultConcise,
   RoleSettingConcise,
   SalvageStructureAction,
-  Structure,
+  StructureType,
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
@@ -102,13 +102,13 @@ const pRoundNumber = P.digits.map(Number).chain(n => {
 });
 const pMapCoord = P.digits.map(Number);
 const pStructureID = P.digits.map(Number);
-const pAnacondaTower = P.string('at').map<Structure>(_ => 'anacondaTower');
-const pPiranhaTower = P.string('pt').map<Structure>(__ => 'piranhaTower');
-const pSlothTower = P.string('st').map<Structure>(_ => 'slothTower');
-const pGorillaCrypt = P.string('gc').map<Structure>(_ => 'gorillaCrypt');
-const pJaguarCrypt = P.string('jc').map<Structure>(_ => 'jaguarCrypt');
-const pMacawCrypt = P.string('mc').map<Structure>(_ => 'macawCrypt');
-const pStructureType = P.alt<Structure>(
+const pAnacondaTower = P.string('at').map<StructureType>(_ => 'anacondaTower');
+const pPiranhaTower = P.string('pt').map<StructureType>(__ => 'piranhaTower');
+const pSlothTower = P.string('st').map<StructureType>(_ => 'slothTower');
+const pGorillaCrypt = P.string('gc').map<StructureType>(_ => 'gorillaCrypt');
+const pJaguarCrypt = P.string('jc').map<StructureType>(_ => 'jaguarCrypt');
+const pMacawCrypt = P.string('mc').map<StructureType>(_ => 'macawCrypt');
+const pStructureType = P.alt<StructureType>(
   pAnacondaTower,
   pPiranhaTower,
   pSlothTower,
