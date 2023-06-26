@@ -6,7 +6,6 @@ import type {
   DefenderStructureType,
   MatchConfig,
   MatchState,
-  TileNumber,
   UpgradeTier,
 } from '@tower-defense/utils';
 import Prando from 'paima-engine/paima-prando';
@@ -16,17 +15,21 @@ import { validateMoves } from './validation';
 import processTick from './processTick';
 import { getPossibleStructures } from './utils';
 
-export const testmap: TileNumber[] = [
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5,
-  5, 1, 2, 6, 6, 6, 2, 6, 6, 6, 2, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 2, 6, 2, 6, 2, 6, 2, 6, 2,
-  1, 5, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5, 6, 6, 2, 6, 6, 6, 2, 6, 2, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 2, 2, 2, 2, 2, 2, 2, 6, 2, 1, 5, 1, 1, 1, 1, 1, 5, 5, 5, 1, 1, 1, 2, 6, 6, 6, 2, 2, 2, 6, 2,
-  3, 5, 5, 5, 5, 1, 1, 5, 1, 5, 5, 5, 1, 2, 6, 2, 6, 2, 6, 6, 6, 4, 1, 5, 1, 1, 5, 1, 5, 5, 1, 1, 1,
-  5, 1, 2, 6, 2, 6, 6, 6, 2, 6, 2, 1, 5, 1, 1, 5, 5, 5, 1, 1, 1, 1, 5, 5, 6, 6, 2, 2, 2, 2, 2, 6, 2,
-  1, 5, 1, 1, 1, 1, 1, 1, 5, 5, 5, 1, 1, 2, 2, 2, 6, 6, 6, 2, 6, 2, 1, 5, 1, 5, 5, 5, 5, 1, 5, 1, 5,
-  1, 1, 2, 6, 6, 6, 2, 6, 2, 6, 2, 1, 5, 5, 5, 1, 1, 5, 5, 5, 1, 5, 5, 5, 6, 6, 2, 2, 2, 6, 6, 6, 2,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-];
+const jungleMap =
+  '1111111111111222222222\\r\\n1555155515551266626662\\r\\n1515151515151262626262\\r\\n1515551555155662666262\\r\\n1511111111111222222262\\r\\n1511111555111266622262\\r\\n3555511515551262626694\\r\\n1511515511151262666262\\r\\n1511555111155662222262\\r\\n1511111155511222666262\\r\\n1515555151511266626262\\r\\n1555115551555662226662\\r\\n1111111111111222222222';
+// 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+// 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5, 5, 1, 2, 6, 6, 6, 2, 6, 6, 6, 2,
+// 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 2, 6, 2, 6, 2, 6, 2, 6, 2,
+// 1, 5, 1, 5, 5, 5, 1, 5, 5, 5, 1, 5, 5, 6, 6, 2, 6, 6, 6, 2, 6, 2,
+// 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 6, 2,
+// 1, 5, 1, 1, 1, 1, 1, 5, 5, 5, 1, 1, 1, 2, 6, 6, 6, 2, 2, 2, 6, 2,
+// 3, 5, 5, 5, 5, 1, 1, 5, 1, 5, 5, 5, 1, 2, 6, 2, 6, 2, 6, 6, 6, 4,
+// 1, 5, 1, 1, 5, 1, 5, 5, 1, 1, 1, 5, 1, 2, 6, 2, 6, 6, 6, 2, 6, 2,
+// 1, 5, 1, 1, 5, 5, 5, 1, 1, 1, 1, 5, 5, 6, 6, 2, 2, 2, 2, 2, 6, 2,
+// 1, 5, 1, 1, 1, 1, 1, 1, 5, 5, 5, 1, 1, 2, 2, 2, 6, 6, 6, 2, 6, 2,
+// 1, 5, 1, 5, 5, 5, 5, 1, 5, 1, 5, 1, 1, 2, 6, 6, 6, 2, 6, 2, 6, 2,
+// 1, 5, 5, 5, 1, 1, 5, 5, 5, 1, 5, 5, 5, 6, 6, 2, 2, 2, 6, 6, 6, 2,
+// 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 
 function getMatchState(config: MatchConfig): MatchState {
   return generateMatchState(
@@ -34,7 +37,7 @@ function getMatchState(config: MatchConfig): MatchState {
     '0xdDA309096477b89D7066948b31aB05924981DF2B',
     '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
     'fork',
-    testmap.join(''),
+    jungleMap,
     config,
     new Prando(1)
   );
@@ -82,8 +85,6 @@ const getRandomTowers = (count: number): Record<number, DefenderStructure> => {
 
 describe('AI', () => {
   test('builds valid structures (round scope)', () => {
-    const maxDefenderStructures = testmap.filter(tile => tile === 1).length;
-    const maxAttackerStructures = testmap.filter(tile => tile === 2).length;
     // enough to cover the whole map
     const testGold = 6000;
     const matchState = getMatchState({
@@ -91,6 +92,13 @@ describe('AI', () => {
       baseAttackerGoldRate: testGold,
       baseDefenderGoldRate: testGold,
     });
+    const maxAttackerStructures = matchState.map.filter(
+      tile => tile.type === 'open' && tile.faction === 'attacker'
+    ).length;
+    const maxDefenderStructures = matchState.map.filter(
+      tile => tile.type === 'open' && tile.faction === 'defender'
+    ).length;
+
     const attackerMoves = generateRandomMoves(baseConfig, matchState, 'attacker', 1);
     expect(attackerMoves.length).toBe(maxAttackerStructures);
     expect(validateMoves(attackerMoves, 'attacker', matchState)).toBe(true);
@@ -167,6 +175,5 @@ describe('AI', () => {
     expect(attackerUpgrades).toBe(maxTierSum - attackerTierSum);
   });
 
-  // test('calculates path coverage', () => {});
   // test('picks closest X tiles to base with path coverage', () => {});
 });
