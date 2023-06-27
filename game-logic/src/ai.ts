@@ -23,6 +23,10 @@ type PathCoverage = {
   coverage: number;
 };
 
+type CounterBuild = {
+  structures: StructureType[];
+  fallback?: StructureType;
+};
 
 //TODO: add prando to these... (!)
 
@@ -82,6 +86,134 @@ const computePathCoverage = (
     .sort((a, b) => b.coverage - a.coverage);
   return sortedTiles;
 };
+
+// map all structures and their (rough) effectiveness against opponent structures (-1 = worst choice, 0 = neutral, 1 = best choice)
+// this operates on assumption that all towers are equally balanced and only stregth/weaknesses against other types are reflected here
+const structureMap: Record<StructureType, Partial<Record<StructureType, number>>> = {
+  piranhaTower: {
+    gorillaCrypt: -0.5,
+    macawCrypt: 0.25,
+    jaguarCrypt: 0.5,
+  },
+  anacondaTower: {
+    gorillaCrypt: 0.75,
+    macawCrypt: -0.5,
+    jaguarCrypt: -0.25,
+  },
+  slothTower: {
+    gorillaCrypt: 0.25,
+    macawCrypt: 0.25,
+    jaguarCrypt: -0.5,
+  },
+
+  gorillaCrypt: {
+    piranhaTower: 0.5,
+    anacondaTower: -0.75,
+    slothTower: 0.25,
+  },
+  macawCrypt: {
+    piranhaTower: -0.25,
+    anacondaTower: 0.5,
+    slothTower: -0.25,
+  },
+  jaguarCrypt: {
+    piranhaTower: -0.5,
+    anacondaTower: 0.25,
+    slothTower: 0.5,
+  },
+};
+
+//TODO: check by someone more knowledgeable in config
+const counterStructureMap: Record<StructureType, StructureType[]> = {
+  piranhaTower: ['gorillaCrypt'],
+  anacondaTower: ['macawCrypt'],
+  slothTower: ['jaguarCrypt'],
+
+  gorillaCrypt: ['anacondaTower'],
+  macawCrypt: ['piranhaTower', 'slothTower'],
+  jaguarCrypt: ['piranhaTower'],
+};
+
+/**
+ * Computes list of suitable structures to build based on opponent structures
+ * plus fallbackStructure: counter to most common opponent structure
+ * WARN: tiers are ignored
+ */
+export const computeCounterBuild = (
+  playerStructures: Structure[],
+  opponentStructures: Structure[]
+): CounterBuild => {
+  const counters = opponentStructures.map(structure => {
+    const structures = counterStructureMap[structure.structure];
+    //TODO: prando
+    return structures[Math.floor(Math.random() * structures.length)];
+  });
+
+  // remove already build structures from list of counter structures
+  playerStructures.forEach(structure => {
+    const covered = counters.find(counter => counter === structure.structure);
+    if (covered) {
+      counters.splice(counters.indexOf(covered), 1);
+    }
+  });
+
+  //most common counter should be a fallback tower once everything else is countered already
+  const sortedCounters = counters
+    .reduce((acc, curr) => {
+      const structure = acc.find(item => item.structure === curr);
+      if (!structure) acc.push({ count: 1, structure: curr });
+      else structure.count += 1;
+      return acc;
+    }, [] as { structure: StructureType; count: number }[])
+    .sort((a, b) => b.count - a.count);
+  return {
+    structures: counters,
+    fallback: sortedCounters[0]?.structure,
+  };
+};
+
+/**
+ * // TODO: rework to counter strategy towers
+ * (eg. have list of best counter for each tower and then keep building until balanced, then build counters to most common tower)
+ * @returns ordered list of suitable structures based on enemy's structures
+ */
+// export const computeStrength = (faction: Faction, actors: StructureType[]): ActorStrength[] => {
+//   const structures = getPossibleStructures(faction)
+//     .reduce((acc, structure) => {
+//       const structureEfectiveness = actors.reduce((total, actor) => {
+//         const score = structureMap[structure][actor];
+//         if (score) {
+//           return total + score;
+//         }
+//         return total;
+//       }, 0);
+//       return [...acc, { structure, effectiveness: structureEfectiveness }];
+//     }, [] as { structure: StructureType; effectiveness: number }[])
+//     .sort((a, b) => b.effectiveness - a.effectiveness);
+
+//   return structures;
+// };
+
+// export const computeSuitableStructure = (
+//   faction: Faction,
+//   matchState: MatchState
+// ): StructureType => {
+//   const towerTypes = Object.values(matchState.actors.towers).map(tower => tower.structure);
+//   const cryptTypes = Object.values(matchState.actors.crypts).map(crypt => crypt.structure);
+//   const myStructures = faction === 'attacker' ? cryptTypes : towerTypes;
+//   const opponentStructures = faction === 'attacker' ? towerTypes : cryptTypes;
+
+//   const opponentStrength = computeStrength(faction, opponentStructures);
+//   myStructures.reduce((total, structure) => {}, {});
+//   const myStrengths = computeStrength(faction, myStructures);
+//   console.log({ opponentStrength });
+
+//   return structures[0].structure;
+// };
+
+/**
+ * @returns list of structures to be randomply placed on provided tiles. stops once budget is depleted or no more tiles are available
+ */
 function chooseStructures(
   matchConfig: MatchConfig,
   faction: Faction,
@@ -166,17 +298,17 @@ function upgradeStructures(
 function placeDefenderStructures(
   matchConfig: MatchConfig,
   tiles: PathCoverage[],
+  counterBuild: CounterBuild,
   round: number,
   budget: number
 ): [BuildStructureAction[], number] {
   const choices = getPossibleStructures('defender');
-
   let moneyLeft = budget;
   const actions: BuildStructureAction[] = [];
   while (moneyLeft > 0 && tiles.length > 0) {
     const tile = tiles.shift();
-    //TODO: based on match state
-    const structure = choices[Math.floor(Math.random() * choices.length)];
+    const random = choices[Math.floor(Math.random() * choices.length)];
+    const structure = counterBuild.structures.shift() ?? counterBuild.fallback ?? random;
     const price = matchConfig[structure][1].price;
     if (!tile || price > moneyLeft) break;
 
@@ -199,6 +331,7 @@ function placeDefenderStructures(
 function placeAttackerStructures(
   matchConfig: MatchConfig,
   tiles: number[],
+  counterBuild: CounterBuild,
   round: number,
   budget: number
 ): [BuildStructureAction[], number] {
@@ -209,8 +342,8 @@ function placeAttackerStructures(
   while (moneyLeft > 0 && tiles.length > 0) {
     //TODO: add prando
     const tile = tiles[Math.floor(Math.random() * tiles.length)];
-    //TODO: based on match state
-    const structure = choices[Math.floor(Math.random() * choices.length)];
+    const random = choices[Math.floor(Math.random() * choices.length)];
+    const structure = counterBuild.structures.shift() ?? counterBuild.fallback ?? random;
     const price = matchConfig[structure][1].price;
     if (!tile || price > moneyLeft) break;
 
@@ -238,8 +371,10 @@ export function generateBotMoves(
   round: number
 ): TurnAction[] {
   const gold = matchState[`${faction}Gold`];
-  const actors = Object.values(matchState.actors[faction === 'attacker' ? 'crypts' : 'towers']);
   const minStructureCost = getMinStructureCost(matchConfig, faction);
+  const actors = Object.values(matchState.actors[faction === 'attacker' ? 'crypts' : 'towers']);
+  const opponent = Object.values(matchState.actors[faction === 'attacker' ? 'towers' : 'crypts']);
+  const counterBuild = computeCounterBuild(actors, opponent);
   if (faction === 'defender') {
     //TODO: upgrade only towers with reach to opponents, then utilize reach in path coverage calculations
     const [upgrades, upgradesCost] = upgradeStructures(matchConfig, actors, faction, round, gold);
@@ -257,6 +392,7 @@ export function generateBotMoves(
     const [baseTowers, baseTowersCost] = placeDefenderStructures(
       matchConfig,
       preferredTiles,
+      counterBuild,
       round,
       gold - upgradesCost
     );
@@ -267,7 +403,13 @@ export function generateBotMoves(
     if (moneyLeft > minStructureCost) {
       const allTiles = getAvailableTiles(matchState.map, actors, faction);
       const otherTiles = computePathCoverage({ map, width, height }, allTiles, TOWER_RANGE);
-      const [otherTowers] = placeDefenderStructures(matchConfig, otherTiles, round, moneyLeft);
+      const [otherTowers] = placeDefenderStructures(
+        matchConfig,
+        otherTiles,
+        counterBuild,
+        round,
+        moneyLeft
+      );
       // console.log({ otherTowers });
       return [...upgrades, ...baseTowers, ...otherTowers];
     }
@@ -300,6 +442,7 @@ export function generateBotMoves(
     const [baseCrypts, baseCryptsCost] = placeAttackerStructures(
       matchConfig,
       tilesOnPath,
+      counterBuild,
       round,
       gold - upgradesCost
     );
@@ -309,7 +452,13 @@ export function generateBotMoves(
     //ran out of preffered tiles (all occupied already), place randomly
     if (moneyLeft > minStructureCost) {
       const allTiles = getAvailableTiles(matchState.map, actors, faction);
-      const [otherCrypts] = placeAttackerStructures(matchConfig, allTiles, round, moneyLeft);
+      const [otherCrypts] = placeAttackerStructures(
+        matchConfig,
+        allTiles,
+        counterBuild,
+        round,
+        moneyLeft
+      );
       // console.log({ otherTowers: otherCrypts });
       return [...upgrades, ...baseCrypts, ...otherCrypts];
     }
