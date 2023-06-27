@@ -1,5 +1,4 @@
 import type { TurnAction, Faction, MatchState, BuildStructureAction } from './types.js';
-import { isBuildAction } from './utils.js';
 
 export function validateMoves(
   actions: TurnAction[],
@@ -45,6 +44,10 @@ function canBuild(
 function hasStructure(faction: Faction, id: number, matchState: MatchState): boolean {
   if (faction === 'attacker') return !!matchState.actors.crypts[id];
   else return !!matchState.actors.towers[id];
+}
+
+function isBuildAction(action: TurnAction): action is BuildStructureAction {
+  return action.action === 'build';
 }
 
 /**
