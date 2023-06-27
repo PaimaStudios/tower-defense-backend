@@ -1,15 +1,28 @@
 import type {
-  ActorsObject,
   BuildStructureAction,
   Faction,
+  MapState,
   MatchConfig,
   MatchState,
   Structure,
   StructureType,
+  Tile,
   TurnAction,
   UpgradeStructureAction,
   UpgradeTier,
 } from '@tower-defense/utils';
+import {
+  calculatePath,
+  findCloseBySpawnTile,
+  getPossibleStructures,
+  getSurroundingCells,
+} from './utils';
+
+type PathCoverage = {
+  index: number;
+  coverage: number;
+};
+
 
 //TODO: add prando to these... (!)
 
@@ -44,6 +57,12 @@ const getAvailableTiles = (map: Tile[], actors: Structure[], faction: Faction): 
   return availableTiles;
 };
 
+export const getMinStructureCost = (matchConfig: MatchConfig, faction: Faction): number => {
+  const structures = getPossibleStructures(faction);
+  const minCost = Math.min(...structures.map(structure => matchConfig[structure][1].price));
+  return minCost;
+};
+
 /**
  * @returns sorted list of tile indices with coverage representing number of path tiles in range
  */
@@ -51,7 +70,7 @@ const computePathCoverage = (
   mapState: MapState,
   tiles: number[],
   range: number
-): TileCoverage[] => {
+): PathCoverage[] => {
   const sortedTiles = tiles
     .map(cell => {
       const nearTiles = getSurroundingCells(cell, mapState.width, mapState.height, range);
@@ -144,20 +163,19 @@ function upgradeStructures(
 /**
  * @returns list of structures to build on provided tiles and a total cost of these actions
  */
-function placeStructures(
+function placeDefenderStructures(
   matchConfig: MatchConfig,
-  tiles: TileCoverage[],
-  faction: Faction,
+  tiles: PathCoverage[],
   round: number,
   budget: number
 ): [BuildStructureAction[], number] {
-  const choices = getPossibleStructures(faction);
+  const choices = getPossibleStructures('defender');
 
   let moneyLeft = budget;
   const actions: BuildStructureAction[] = [];
   while (moneyLeft > 0 && tiles.length > 0) {
     const tile = tiles.shift();
-    //TODO: add prando
+    //TODO: based on match state
     const structure = choices[Math.floor(Math.random() * choices.length)];
     const price = matchConfig[structure][1].price;
     if (!tile || price > moneyLeft) break;
@@ -166,11 +184,46 @@ function placeStructures(
       action: 'build',
       structure,
       coordinates: tile.index,
-      faction,
+      faction: 'defender',
       round,
     };
     actions.push(action);
     moneyLeft -= price;
+  }
+  return [actions, budget - moneyLeft];
+}
+
+/**
+ * @returns list of structures to build on provided tiles and a total cost of these actions
+ */
+function placeAttackerStructures(
+  matchConfig: MatchConfig,
+  tiles: number[],
+  round: number,
+  budget: number
+): [BuildStructureAction[], number] {
+  const choices = getPossibleStructures('attacker');
+
+  let moneyLeft = budget;
+  const actions: BuildStructureAction[] = [];
+  while (moneyLeft > 0 && tiles.length > 0) {
+    //TODO: add prando
+    const tile = tiles[Math.floor(Math.random() * tiles.length)];
+    //TODO: based on match state
+    const structure = choices[Math.floor(Math.random() * choices.length)];
+    const price = matchConfig[structure][1].price;
+    if (!tile || price > moneyLeft) break;
+
+    const action: BuildStructureAction = {
+      action: 'build',
+      structure,
+      coordinates: tile,
+      faction: 'attacker',
+      round,
+    };
+    actions.push(action);
+    moneyLeft -= price;
+    tiles.splice(tiles.indexOf(tile), 1);
   }
   return [actions, budget - moneyLeft];
 }
@@ -186,14 +239,14 @@ export function generateBotMoves(
 ): TurnAction[] {
   const gold = matchState[`${faction}Gold`];
   const actors = Object.values(matchState.actors[faction === 'attacker' ? 'crypts' : 'towers']);
-  const occupiedTiles = new Set(actors.map(actor => actor.coordinates));
-
-  const [upgrades, upgradesCost] = upgradeStructures(matchConfig, actors, faction, round, gold);
-  console.log({ upgrades, upgradeCost: upgradesCost });
-
-  //TODO: choose towers based on opponent structures
+  const minStructureCost = getMinStructureCost(matchConfig, faction);
   if (faction === 'defender') {
+    //TODO: upgrade only towers with reach to opponents, then utilize reach in path coverage calculations
+    const [upgrades, upgradesCost] = upgradeStructures(matchConfig, actors, faction, round, gold);
+    // console.log({ upgrades, upgradeCost: upgradesCost });
+
     const { defenderBase, map, width, height } = matchState;
+    const occupiedTiles = new Set(actors.map(actor => actor.coordinates));
     const nearbyTiles = getSurroundingCells(
       defenderBase.coordinates,
       width,
@@ -201,48 +254,93 @@ export function generateBotMoves(
       BASE_TILES_RANGE
     ).filter(cell => map[cell].type === 'open' && !occupiedTiles.has(cell));
     const preferredTiles = computePathCoverage({ map, width, height }, nearbyTiles, TOWER_RANGE);
-    const [baseTowers, baseTowersCost] = placeStructures(
+    const [baseTowers, baseTowersCost] = placeDefenderStructures(
       matchConfig,
       preferredTiles,
-      faction,
       round,
       gold - upgradesCost
     );
-    console.log({ baseTowers, baseTowersCost });
+    // console.log({ baseTowers, baseTowersCost });
 
     const moneyLeft = gold - upgradesCost - baseTowersCost;
     //ran out of base tiles or none were available in the first place
-    if (moneyLeft > 0) {
+    if (moneyLeft > minStructureCost) {
       const allTiles = getAvailableTiles(matchState.map, actors, faction);
       const otherTiles = computePathCoverage({ map, width, height }, allTiles, TOWER_RANGE);
-      const [otherTowers, otherTowersCost] = placeStructures(
-        matchConfig,
-        otherTiles,
-        faction,
-        round,
-        moneyLeft
-      );
-      console.log({ otherTowers, otherTowersCost });
+      const [otherTowers] = placeDefenderStructures(matchConfig, otherTiles, round, moneyLeft);
+      // console.log({ otherTowers });
       return [...upgrades, ...baseTowers, ...otherTowers];
     }
 
     return [...upgrades, ...baseTowers];
   }
   if (faction === 'attacker') {
-    //calculate paths from blocked tile neighbours to defender base
+    const [upgrades, upgradesCost] = upgradeStructures(matchConfig, actors, faction, round, gold);
+
+    const startTiles = computeStartTiles(matchState);
+    const routes = startTiles
+      .map(tile => {
+        const path = calculatePath(tile, matchState.defenderBase.coordinates, matchState.pathMap);
+        const enemyTerritoryLength = path.filter(
+          tile => matchState.map[tile].faction === 'defender'
+        ).length;
+        return { path, length: enemyTerritoryLength };
+      })
+      .sort((a, b) => a.length - b.length);
+
+    const chosenPath = routes.shift()?.path;
+    if (!chosenPath) return [];
+    //calculate paths from blocked tile neighbours or to defender base
+    const tilesOnPath = getAvailableTiles(matchState.map, actors, faction).filter(tile => {
+      const spawn = findCloseBySpawnTile(matchState, tile);
+      return chosenPath.includes(spawn);
+    });
+    //.orderBy((a,b) => euclideanDistance(defenderBase,b) - euclideanDistance(defenderBase,a)))
+
+    const [baseCrypts, baseCryptsCost] = placeAttackerStructures(
+      matchConfig,
+      tilesOnPath,
+      round,
+      gold - upgradesCost
+    );
+    // console.log({ baseCrypts, baseCryptsCost });
+
+    const moneyLeft = gold - upgradesCost - baseCryptsCost;
+    //ran out of preffered tiles (all occupied already), place randomly
+    if (moneyLeft > minStructureCost) {
+      const allTiles = getAvailableTiles(matchState.map, actors, faction);
+      const [otherCrypts] = placeAttackerStructures(matchConfig, allTiles, round, moneyLeft);
+      // console.log({ otherTowers: otherCrypts });
+      return [...upgrades, ...baseCrypts, ...otherCrypts];
+    }
+    return [...upgrades, ...baseCrypts];
   }
-
+  console.error('Invalid faction');
   return [];
-  // if (actors)
-  //   const toBuild = chooseStructures(matchConfig, matchState, faction, round, gold, structures);
-  // //1 upgrade as much as possible
-  // //build:
-  // ////defender - closest to base, with path coverage DONE
-  // ////attacker - on least busy lane
-
-  // //utils - comparePath
-
-  // return toBuild;
 }
 
-// export const calculatePathCoverage = (
+/**
+ * @returns a list of possible starting points for attacker units (paths next to a blocked tile or attacker bases if no blocked tiles exist)
+ */
+export const computeStartTiles = (mapState: MapState) => {
+  const basesStarts = mapState.map.reduce((bases, tile, index) => {
+    if (tile.type === 'base' && tile.faction === 'attacker') {
+      const surrounding = getSurroundingCells(index, mapState.width, mapState.height, 1).filter(
+        tile => mapState.map[tile].type === 'path'
+      );
+      return [...bases, ...surrounding];
+    }
+    return bases;
+  }, [] as number[]);
+
+  const blockedStarts = mapState.map.reduce((tiles, item, index) => {
+    if (item.type === 'blockedPath' && item.faction === 'attacker') {
+      const surrounding = getSurroundingCells(index, mapState.width, mapState.height, 1);
+      const paths = surrounding.filter(tile => mapState.map[tile].type === 'path');
+      return [...tiles, ...paths];
+    }
+    return tiles;
+  }, [] as number[]);
+
+  return blockedStarts.length === 0 ? basesStarts : blockedStarts;
+};

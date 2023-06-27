@@ -4,12 +4,16 @@ import type {
   AttackerStructureType,
   DefenderStructure,
   DefenderStructureType,
-  MatchConfig,
   MatchState,
   UpgradeTier,
 } from '@tower-defense/utils';
 import Prando from 'paima-engine/paima-prando';
-import { generateBotMoves, generateRandomMoves } from './ai';
+import {
+  computeStartTiles,
+  generateBotMoves,
+  generateRandomMoves,
+  getMinStructureCost,
+} from './ai';
 import { generateMatchState } from './map-processor';
 import { validateMoves } from './validation';
 import processTick from './processTick';
@@ -31,13 +35,30 @@ const jungleMap =
 // 1, 5, 5, 5, 1, 1, 5, 5, 5, 1, 5, 5, 5, 6, 6, 2, 2, 2, 6, 6, 6, 2,
 // 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 
-function getMatchState(config: MatchConfig): MatchState {
+const backwards =
+  '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662262\\r\\n3555151151111222222264\\r\\n1515151155555226666692\\r\\n1515551111115666222262\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222';
+const reflection =
+  '1111111111111222222222\\r\\n1155511115551222222222\\r\\n1151511115151226662222\\r\\n1551555155155226262222\\r\\n1511115551115666266662\\r\\n1511111111111222222262\\r\\n3511111111111222222294\\r\\n1511111111111222222262\\r\\n1511115551115666266662\\r\\n1551555155155226262222\\r\\n1151511115151226662222\\r\\n1155511115551222222222\\r\\n1111111111111222222222';
+const merge =
+  '1111111111122222222222\\r\\n1155555555566666666664\\r\\n1151111511122222222222\\r\\n1151111511122222222222\\r\\n1151111511122222222222\\r\\n1151111555566666666664\\r\\n3551111111122222222222\\r\\n1151111555566666666664\\r\\n1151111511122222222222\\r\\n1151111511122222222222\\r\\n1151111511122222222222\\r\\n1155555555566666666664\\r\\n1111111111122222222222';
+
+//TODO: test utils (?)
+// const straight =
+//   '1111111111111222222222\\r\\n1155511111155662266622\\r\\n1151511555151262262662\\r\\n1551515515151266262262\\r\\n1511555115551226662262\\r\\n1511111111111222222262\\r\\n3555555555555666666694\\r\\n1511111111111222222262\\r\\n1511555115551226662262\\r\\n1551515515151266262262\\r\\n1151511555151262262662\\r\\n1155511111155662266622\\r\\n1111111111111222222222';
+// const wavy =
+//   '1111111111111222222222\\r\\n1115551115551226662222\\r\\n1555155515151226266662\\r\\n1511111555155666222262\\r\\n1555111111111222222262\\r\\n1515111555111222666262\\r\\n3515155515155662626694\\r\\n1515151115151262622262\\r\\n1515551115551262626662\\r\\n1511111111111266626222\\r\\n1551155551555222226222\\r\\n1155551155515666666222\\r\\n1111111111111222222222';
+// const fork =
+//   '1111111111111222222222\\r\\n1555555555555666666662\\r\\n1511111111111222222292\\r\\n1555555555555666666662\\r\\n1151111111111222222922\\r\\n1555555555555666666662\\r\\n3511111111111222222294\\r\\n1555555555555666666662\\r\\n1151111111111222222922\\r\\n1555555555555666666662\\r\\n1511111111111222222292\\r\\n1555555555555666666662\\r\\n1111111111111222222222';
+// const line =
+//   '1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n3555555555555666666664\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222\\r\\n1111111111111222222222';
+
+function getMatchState(config = baseConfig, map = jungleMap): MatchState {
   return generateMatchState(
     'defender',
     '0xdDA309096477b89D7066948b31aB05924981DF2B',
     '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
     'fork',
-    jungleMap,
+    map,
     config,
     new Prando(1)
   );
@@ -175,5 +196,25 @@ describe('AI', () => {
     expect(attackerUpgrades).toBe(maxTierSum - attackerTierSum);
   });
 
+  test('start tiles are computed correctly', () => {
+    let matchState = getMatchState(baseConfig, merge);
+    let startTiles = computeStartTiles(matchState);
+    expect(startTiles.length).toEqual(4);
+
+    matchState = getMatchState(baseConfig, reflection);
+    startTiles = computeStartTiles(matchState);
+    expect(startTiles.length).toEqual(2);
+
+    matchState = getMatchState(baseConfig, backwards);
+    startTiles = computeStartTiles(matchState);
+    expect(startTiles.length).toEqual(3);
+  });
+
+  test('min structure cost is computed correctly', () => {
+    const attackerCost = getMinStructureCost(baseConfig, 'attacker');
+    expect(attackerCost).toEqual(70);
+    const defenderCost = getMinStructureCost(baseConfig, 'defender');
+    expect(defenderCost).toEqual(50);
+  });
   // test('picks closest X tiles to base with path coverage', () => {});
 });
