@@ -87,42 +87,6 @@ const computePathCoverage = (
   return sortedTiles;
 };
 
-// map all structures and their (rough) effectiveness against opponent structures (-1 = worst choice, 0 = neutral, 1 = best choice)
-// this operates on assumption that all towers are equally balanced and only stregth/weaknesses against other types are reflected here
-const structureMap: Record<StructureType, Partial<Record<StructureType, number>>> = {
-  piranhaTower: {
-    gorillaCrypt: -0.5,
-    macawCrypt: 0.25,
-    jaguarCrypt: 0.5,
-  },
-  anacondaTower: {
-    gorillaCrypt: 0.75,
-    macawCrypt: -0.5,
-    jaguarCrypt: -0.25,
-  },
-  slothTower: {
-    gorillaCrypt: 0.25,
-    macawCrypt: 0.25,
-    jaguarCrypt: -0.5,
-  },
-
-  gorillaCrypt: {
-    piranhaTower: 0.5,
-    anacondaTower: -0.75,
-    slothTower: 0.25,
-  },
-  macawCrypt: {
-    piranhaTower: -0.25,
-    anacondaTower: 0.5,
-    slothTower: -0.25,
-  },
-  jaguarCrypt: {
-    piranhaTower: -0.5,
-    anacondaTower: 0.25,
-    slothTower: 0.5,
-  },
-};
-
 //TODO: check by someone more knowledgeable in config
 const counterStructureMap: Record<StructureType, StructureType[]> = {
   piranhaTower: ['gorillaCrypt'],
@@ -171,45 +135,6 @@ export const computeCounterBuild = (
     fallback: sortedCounters[0]?.structure,
   };
 };
-
-/**
- * // TODO: rework to counter strategy towers
- * (eg. have list of best counter for each tower and then keep building until balanced, then build counters to most common tower)
- * @returns ordered list of suitable structures based on enemy's structures
- */
-// export const computeStrength = (faction: Faction, actors: StructureType[]): ActorStrength[] => {
-//   const structures = getPossibleStructures(faction)
-//     .reduce((acc, structure) => {
-//       const structureEfectiveness = actors.reduce((total, actor) => {
-//         const score = structureMap[structure][actor];
-//         if (score) {
-//           return total + score;
-//         }
-//         return total;
-//       }, 0);
-//       return [...acc, { structure, effectiveness: structureEfectiveness }];
-//     }, [] as { structure: StructureType; effectiveness: number }[])
-//     .sort((a, b) => b.effectiveness - a.effectiveness);
-
-//   return structures;
-// };
-
-// export const computeSuitableStructure = (
-//   faction: Faction,
-//   matchState: MatchState
-// ): StructureType => {
-//   const towerTypes = Object.values(matchState.actors.towers).map(tower => tower.structure);
-//   const cryptTypes = Object.values(matchState.actors.crypts).map(crypt => crypt.structure);
-//   const myStructures = faction === 'attacker' ? cryptTypes : towerTypes;
-//   const opponentStructures = faction === 'attacker' ? towerTypes : cryptTypes;
-
-//   const opponentStrength = computeStrength(faction, opponentStructures);
-//   myStructures.reduce((total, structure) => {}, {});
-//   const myStrengths = computeStrength(faction, myStructures);
-//   console.log({ opponentStrength });
-
-//   return structures[0].structure;
-// };
 
 /**
  * @returns list of structures to be randomply placed on provided tiles. stops once budget is depleted or no more tiles are available
@@ -262,7 +187,6 @@ function upgradeStructures(
   const possibleUpgrades: Upgrade[] = actors.reduce((upgrades, actor: Structure) => {
     if (actor.upgrades === 3) return upgrades;
 
-    //TODO: helper function
     const cost = matchConfig[actor.structure][(actor.upgrades + 1) as UpgradeTier].price;
     const nextTierUpgrade = { cost, id: actor.id };
     if (actor.upgrades === 1) {
