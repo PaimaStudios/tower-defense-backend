@@ -5,6 +5,7 @@ import type {
   DefenderStructure,
   DefenderStructureType,
   Faction,
+  MapState,
   MatchConfig,
   Structure,
   StructureType,
@@ -173,3 +174,50 @@ export const getPossibleStructures = (faction: Faction): StructureType[] => {
   const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
   return faction === 'defender' ? towers : crypts;
 };
+
+function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
+  const { x, y } = indexToCoords(index, mapState.width);
+  return [
+    { x, y: y - 1 },
+    { x: x + 1, y },
+    { x, y: y + 1 },
+    { x: x - 1, y },
+  ]
+    .map(coordinates => validateCoords(coordinates, mapState.width, mapState.height))
+    .filter((index): index is number => {
+      if (index == null) return false;
+      const tile = mapState.map[index];
+      return isSpawnable(tile);
+    });
+}
+
+function closeBySpawnTiles(index: number, mapState: MapState, range: number): number[] {
+  const center = indexToCoords(index, mapState.width);
+  const tiles = getSurroundingCells(index, mapState.width, mapState.height, range)
+    .filter(tile => isSpawnable(mapState.map[tile]))
+    .map(tile => ({
+      index: tile,
+      distance: euclideanDistance(center, indexToCoords(tile, mapState.width)),
+    }));
+
+  if (tiles.length === 0) return [];
+  const minDistance = Math.min(...tiles.map(tile => tile.distance));
+  return tiles.filter(tile => tile.distance === minDistance).map(tile => tile.index);
+}
+
+/**
+ * Function to find an available path next to a crypt to place a newly spawned unit.
+ * If there is more than one candidate then @see {chooseTile} is used to select one.
+ */
+export function findCloseBySpawnTile(mapState: MapState, index: number, range = 1): number {
+  const adjacentTiles = adjacentSpawnTiles(index, mapState);
+  if (adjacentTiles.length > 0) {
+    return chooseTile(adjacentTiles, mapState.width);
+  }
+  const moreTiles = closeBySpawnTiles(index, mapState, range + 1);
+  if (moreTiles.length > 0) {
+    return chooseTile(moreTiles, mapState.width);
+  }
+
+  return findCloseBySpawnTile(mapState, index, range + 1);
+}
