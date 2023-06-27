@@ -1,5 +1,4 @@
 import type { TurnAction, Faction, MatchState, BuildStructureAction } from '@tower-defense/utils';
-import { isBuildAction } from './utils';
 
 export function validateMoves(
   actions: TurnAction[],
@@ -47,6 +46,9 @@ function hasStructure(faction: Faction, id: number, matchState: MatchState): boo
   else return !!matchState.actors.towers[id];
 }
 
+function isBuildAction(action: TurnAction): action is BuildStructureAction {
+  return action.action === 'build';
+}
 /**
  * Checks whether all of the build coordinates are unique
  */

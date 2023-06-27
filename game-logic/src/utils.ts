@@ -1,6 +1,5 @@
 import type {
   AttackerStructureType,
-  BuildStructureAction,
   Coordinates,
   DefenderStructure,
   DefenderStructureType,
@@ -10,7 +9,6 @@ import type {
   Structure,
   StructureType,
   Tile,
-  TurnAction,
   UpgradeTier,
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
@@ -111,7 +109,7 @@ function adjacentWalkableTiles(point: Coordinates, map: Array<0 | 1>[]): number[
     });
 }
 
-export function chooseTile(tiles: number[], mapWidth: number): number {
+function chooseTile(tiles: number[], mapWidth: number): number {
   const pick = tiles.reduce((prev, curr) => {
     const a = indexToCoords(prev, mapWidth);
     const b = indexToCoords(curr, mapWidth);
@@ -122,10 +120,6 @@ export function chooseTile(tiles: number[], mapWidth: number): number {
     else return Math.abs(6 - a.y) < Math.abs(6 - b.y) ? prev : curr;
   });
   return pick;
-}
-
-export function isBuildAction(action: TurnAction): action is BuildStructureAction {
-  return action.action === 'build';
 }
 
 export function isDefenderStructure(structure: Structure): structure is DefenderStructure {
