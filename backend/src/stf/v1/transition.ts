@@ -128,7 +128,13 @@ export function practiceRound(
   const matchState = JSON.parse(JSON.stringify(roundData.match_state)) as unknown as MatchState;
   const user = PRACTICE_BOT_ADDRESS;
   const faction = user === matchState.defender ? 'defender' : 'attacker';
-  const moves = generateRandomMoves(matchConfig, matchState, faction, newRound);
+  const moves = generateRandomMoves(
+    matchConfig,
+    matchState,
+    faction,
+    newRound,
+    randomnessGenerator
+  );
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
   const roundExecutionTuples = executeRound(
     blockHeight,

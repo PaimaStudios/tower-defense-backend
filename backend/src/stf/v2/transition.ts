@@ -130,7 +130,7 @@ export function practiceRound(
   const user = PRACTICE_BOT_ADDRESS;
   const faction = user === matchState.defender ? 'defender' : 'attacker';
   //TODO: random or bot based on lobby difficulty
-  const moves = generateBotMoves(matchConfig, matchState, faction, newRound);
+  const moves = generateBotMoves(matchConfig, matchState, faction, newRound, randomnessGenerator);
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
   const roundExecutionTuples = executeRound(
     blockHeight,
@@ -279,7 +279,8 @@ export async function processZombieEffect(
         matchConfig,
         round.match_state as any as MatchState,
         faction,
-        round.round_within_match
+        round.round_within_match,
+        randomnessGenerator
       )
     : [];
   const movesTuples = moves.map(action => persistMove(lobby.lobby_id, user, action));

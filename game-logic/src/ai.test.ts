@@ -106,6 +106,7 @@ const getRandomTowers = (count: number): Record<number, DefenderStructure> => {
 
 describe('AI', () => {
   test('builds valid structures (round scope)', () => {
+    const prando = new Prando(1);
     // enough to cover the whole map
     const testGold = 6000;
     const matchState = getMatchState({
@@ -120,11 +121,11 @@ describe('AI', () => {
       tile => tile.type === 'open' && tile.faction === 'defender'
     ).length;
 
-    const attackerMoves = generateRandomMoves(baseConfig, matchState, 'attacker', 1);
+    const attackerMoves = generateRandomMoves(baseConfig, matchState, 'attacker', 1, prando);
     expect(attackerMoves.length).toBe(maxAttackerStructures);
     expect(validateMoves(attackerMoves, 'attacker', matchState)).toBe(true);
 
-    const defenderMoves = generateRandomMoves(baseConfig, matchState, 'defender', 1);
+    const defenderMoves = generateRandomMoves(baseConfig, matchState, 'defender', 1, prando);
     expect(defenderMoves.length).toBe(maxDefenderStructures);
     expect(validateMoves(defenderMoves, 'defender', matchState)).toBe(true);
   });
@@ -140,12 +141,12 @@ describe('AI', () => {
     });
 
     //fill the map with structures
-    const round1Moves = generateRandomMoves(baseConfig, matchState, 'defender', 1);
+    const round1Moves = generateRandomMoves(baseConfig, matchState, 'defender', 1, prando);
     console.log({ crypts: matchState.actors.crypts, towers: matchState.actors.towers });
     expect(validateMoves(round1Moves, 'defender', matchState)).toBe(true);
     processTick(baseConfig, matchState, round1Moves, 1, prando);
 
-    const round2Moves = generateRandomMoves(baseConfig, matchState, 'attacker', 2);
+    const round2Moves = generateRandomMoves(baseConfig, matchState, 'attacker', 2, prando);
     expect(validateMoves(round2Moves, 'attacker', matchState)).toBe(true);
     processTick(baseConfig, matchState, round2Moves, 1, prando);
 
@@ -155,15 +156,16 @@ describe('AI', () => {
     expect(matchState.defenderGold).toBeGreaterThan(0);
 
     // new random moves should be empty (no more possible structures to build)
-    const round3Moves = generateRandomMoves(baseConfig, matchState, 'defender', 3);
+    const round3Moves = generateRandomMoves(baseConfig, matchState, 'defender', 3, prando);
     expect(validateMoves(round3Moves, 'defender', matchState)).toBe(true);
     expect(round3Moves.length).toBe(0);
-    const round4Moves = generateRandomMoves(baseConfig, matchState, 'attacker', 4);
+    const round4Moves = generateRandomMoves(baseConfig, matchState, 'attacker', 4, prando);
     expect(validateMoves(round4Moves, 'attacker', matchState)).toBe(true);
     expect(round4Moves.length).toBe(0);
   });
 
   test('prioritizes upgrades', () => {
+    const prando = new Prando(1);
     // enough to upgrade everything
     const testGold = 6000;
     const matchState = getMatchState({
@@ -183,7 +185,7 @@ describe('AI', () => {
       0
     );
     // generated moves should contain upgrades to every structure
-    const defenderMoves = generateBotMoves(baseConfig, matchState, 'defender', 1);
+    const defenderMoves = generateBotMoves(baseConfig, matchState, 'defender', 1, prando);
     const defenderUpgrades = defenderMoves.filter(move => move.action === 'upgrade').length;
     expect(defenderUpgrades).toBe(maxTierSum - defenderTierSum);
 
@@ -191,7 +193,7 @@ describe('AI', () => {
       (acc, structure) => (acc += structure.upgrades),
       0
     );
-    const attackerMoves = generateBotMoves(baseConfig, matchState, 'attacker', 1);
+    const attackerMoves = generateBotMoves(baseConfig, matchState, 'attacker', 1, prando);
     const attackerUpgrades = attackerMoves.filter(move => move.action === 'upgrade').length;
     expect(attackerUpgrades).toBe(maxTierSum - attackerTierSum);
   });
@@ -216,5 +218,4 @@ describe('AI', () => {
     const defenderCost = getMinStructureCost(baseConfig, 'defender');
     expect(defenderCost).toEqual(50);
   });
-  // test('picks closest X tiles to base with path coverage', () => {});
 });

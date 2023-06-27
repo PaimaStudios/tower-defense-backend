@@ -1,7 +1,7 @@
 import Prando from 'paima-engine/paima-prando';
 import { baseConfig } from './config';
 import { generateMatchState } from './map-processor';
-import { calculatePath, coordsToIndex, getSurroundingCells, indexToCoords } from './utils';
+import { calculatePath, coordsToIndex, getSurroundingCells } from './utils';
 
 const backwards =
   '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662292\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222292\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222';
@@ -78,4 +78,3 @@ describe('Map utilities find', () => {
     );
   });
 });
-
