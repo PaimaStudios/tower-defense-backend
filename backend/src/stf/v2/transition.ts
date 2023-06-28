@@ -28,7 +28,7 @@ import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
 import { configParser } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
-  generateBotMoves,
+  generateMoves,
   generateRandomMoves,
   matchResults,
   parseConfig,
@@ -129,8 +129,8 @@ export function practiceRound(
   const matchState = JSON.parse(JSON.stringify(roundData.match_state)) as unknown as MatchState;
   const user = PRACTICE_BOT_ADDRESS;
   const faction = user === matchState.defender ? 'defender' : 'attacker';
-  //TODO: random or bot based on lobby difficulty
-  const moves = generateBotMoves(matchConfig, matchState, faction, newRound, randomnessGenerator);
+  const movesFunction = generateMoves[lobbyState.bot_difficulty];
+  const moves = movesFunction(matchConfig, matchState, faction, newRound, randomnessGenerator);
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
   const roundExecutionTuples = executeRound(
     blockHeight,

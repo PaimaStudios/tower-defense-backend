@@ -336,6 +336,7 @@ export const maps = [
 ] as const;
 export type MapName = (typeof maps)[number];
 
+export type BotDifficulty = 'easy' | 'hard';
 export type RoleSetting = 'attacker' | 'defender' | 'random';
 export type RoleSettingConcise = 'a' | 'd' | 'r';
 export type StructureConcise = 'at' | 'pt' | 'st' | 'gc' | 'jc' | 'mc';

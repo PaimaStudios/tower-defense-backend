@@ -1,6 +1,8 @@
 /** Types generated for queries found in "src/select.sql" */
 import { PreparedQuery } from '@pgtyped/query';
 
+export type bot_difficulty = 'easy' | 'hard';
+
 export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
 export type match_result = 'loss' | 'win';
@@ -330,6 +332,7 @@ export interface IGetMatchUserStatsParams {
 /** 'GetMatchUserStats' return type */
 export interface IGetMatchUserStatsResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -566,6 +569,7 @@ export interface IGetPaginatedOpenLobbiesParams {
 /** 'GetPaginatedOpenLobbies' return type */
 export interface IGetPaginatedOpenLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -620,6 +624,7 @@ export interface ISearchPaginatedOpenLobbiesParams {
 /** 'SearchPaginatedOpenLobbies' return type */
 export interface ISearchPaginatedOpenLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -667,6 +672,7 @@ export interface IGetOpenLobbyByIdParams {
 /** 'GetOpenLobbyById' return type */
 export interface IGetOpenLobbyByIdResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -708,6 +714,7 @@ export type IGetRandomLobbyParams = void;
 /** 'GetRandomLobby' return type */
 export interface IGetRandomLobbyResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -752,6 +759,7 @@ export type IGetRandomActiveLobbyParams = void;
 /** 'GetRandomActiveLobby' return type */
 export interface IGetRandomActiveLobbyResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -799,6 +807,7 @@ export interface IGetUserFinishedLobbiesParams {
 /** 'GetUserFinishedLobbies' return type */
 export interface IGetUserFinishedLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -847,6 +856,7 @@ export interface IGetUserLobbiesParams {
 /** 'GetUserLobbies' return type */
 export interface IGetUserLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -896,6 +906,7 @@ export interface IGetPaginatedUserLobbiesParams {
 /** 'GetPaginatedUserLobbies' return type */
 export interface IGetPaginatedUserLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -943,6 +954,7 @@ export type IGetActiveLobbiesParams = void;
 /** 'GetActiveLobbies' return type */
 export interface IGetActiveLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -986,6 +998,7 @@ export interface IGetLobbyByIdParams {
 /** 'GetLobbyById' return type */
 export interface IGetLobbyByIdResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;
@@ -1322,6 +1335,7 @@ export interface IGetOldLobbiesParams {
 /** 'GetOldLobbies' return type */
 export interface IGetOldLobbiesResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;

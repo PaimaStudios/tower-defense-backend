@@ -1,4 +1,5 @@
 import type {
+  BotDifficulty,
   BuildStructureAction,
   Faction,
   MapState,
@@ -29,22 +30,30 @@ type CounterBuild = {
   fallback?: StructureType;
 };
 
-/**
- * @returns pseudo random list of structures to build
- */
-export function generateRandomMoves(
+type BotMovesFunction = (
   matchConfig: MatchConfig,
   matchState: MatchState,
   faction: Faction,
   round: number,
   prando: Prando
-): TurnAction[] {
+) => TurnAction[];
+
+/**
+ * @returns pseudo random list of structures to build
+ */
+export const generateRandomMoves: BotMovesFunction = (
+  matchConfig,
+  matchState,
+  faction,
+  round,
+  prando
+) => {
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
   const actors = Object.values(matchState.actors[faction === 'attacker' ? 'crypts' : 'towers']);
   const availableTiles = getAvailableTiles(matchState.map, actors, faction);
   const toBuild = chooseStructures(matchConfig, faction, round, gold, availableTiles, prando);
   return toBuild;
-}
+};
 
 /**
  * @returns list of tiles where faction can build structures
@@ -289,13 +298,13 @@ function placeAttackerStructures(
 const BASE_TILES_RANGE = 4;
 // simplified range for bot purposes
 const TOWER_RANGE = 2;
-export function generateBotMoves(
-  matchConfig: MatchConfig,
-  matchState: MatchState,
-  faction: Faction,
-  round: number,
-  prando: Prando
-): TurnAction[] {
+export const generateBotMoves: BotMovesFunction = (
+  matchConfig,
+  matchState,
+  faction,
+  round,
+  prando
+) => {
   const gold = matchState[`${faction}Gold`];
   const minStructureCost = getMinStructureCost(matchConfig, faction);
   const actors = Object.values(matchState.actors[faction === 'attacker' ? 'crypts' : 'towers']);
@@ -391,7 +400,7 @@ export function generateBotMoves(
   }
   console.error('Invalid faction');
   return [];
-}
+};
 
 /**
  * @returns a list of possible starting points for attacker units (paths next to a blocked tile or attacker bases if no blocked tiles exist)
@@ -417,4 +426,9 @@ export const computeStartTiles = (mapState: MapState) => {
   }, [] as number[]);
 
   return blockedStarts.length === 0 ? basesStarts : blockedStarts;
+};
+
+export const generateMoves: Record<BotDifficulty, BotMovesFunction> = {
+  easy: generateRandomMoves,
+  hard: generateBotMoves,
 };

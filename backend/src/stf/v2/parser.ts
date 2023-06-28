@@ -2,6 +2,7 @@ import type { ParserRecord } from 'paima-engine/paima-utils-backend';
 import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
 import type {
+  BotDifficulty,
   BuildStructureAction,
   RepairStructureAction,
   ResultConcise,
@@ -31,7 +32,7 @@ import { consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `
-createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?|hasAutoplay?
+createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?|hasAutoplay?|botDifficulty
 joinedLobby          = j|*lobbyID
 closedLobby          = cs|*lobbyID
 setNFT               = n|address|tokenID
@@ -41,6 +42,7 @@ wipeDBScheduledData  = w|days
 `;
 
 const roleSettings: RoleSettingConcise[] = ['a', 'd', 'r'];
+const botDifficulty: BotDifficulty[] = ['easy', 'hard'];
 const createdLobby: ParserRecord<CreatedLobbyInput> = {
   matchConfigID: PaimaParser.NCharsParser(14, 14),
   creatorFaction: PaimaParser.EnumParser(
@@ -53,6 +55,7 @@ const createdLobby: ParserRecord<CreatedLobbyInput> = {
   map: PaimaParser.EnumParser(maps),
   isPractice: PaimaParser.TrueFalseParser(false),
   hasAutoplay: PaimaParser.TrueFalseParser(true),
+  botDifficulty: PaimaParser.EnumParser(botDifficulty),
 };
 const joinedLobby: ParserRecord<JoinedLobbyInput> = {
   lobbyID: PaimaParser.NCharsParser(12, 12),
