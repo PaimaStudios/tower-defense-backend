@@ -20,11 +20,6 @@ import {
 } from './utils';
 import type Prando from 'paima-engine/paima-prando';
 
-type PathCoverage = {
-  index: number;
-  coverage: number;
-};
-
 type CounterBuild = {
   structures: StructureType[];
   fallback?: StructureType;
@@ -51,7 +46,17 @@ export const generateRandomMoves: BotMovesFunction = (
   const gold = faction === 'defender' ? matchState.defenderGold : matchState.attackerGold;
   const actors = Object.values(matchState.actors[faction === 'attacker' ? 'crypts' : 'towers']);
   const availableTiles = getAvailableTiles(matchState.map, actors, faction);
-  const toBuild = chooseStructures(matchConfig, faction, round, gold, availableTiles, prando);
+  const counterBuild: CounterBuild = { structures: [] };
+  const [toBuild] = placeStructures(
+    matchConfig,
+    counterBuild,
+    faction,
+    round,
+    gold,
+    prando,
+    availableTiles,
+    false
+  );
   return toBuild;
 };
 
@@ -77,13 +82,9 @@ export const getMinStructureCost = (matchConfig: MatchConfig, faction: Faction):
 };
 
 /**
- * @returns sorted list of tile indices with coverage representing number of path tiles in range
+ * @returns sorted list of tile indices based on coverage representing number of path tiles in range
  */
-const computePathCoverage = (
-  mapState: MapState,
-  tiles: number[],
-  range: number
-): PathCoverage[] => {
+const sortByPathCoverage = (mapState: MapState, tiles: number[], range: number): number[] => {
   const sortedTiles = tiles
     .map(cell => {
       const nearTiles = getSurroundingCells(cell, mapState.width, mapState.height, range);
@@ -92,7 +93,8 @@ const computePathCoverage = (
         coverage: nearTiles.filter(tile => mapState.map[tile].type === 'path').length,
       };
     })
-    .sort((a, b) => b.coverage - a.coverage);
+    .sort((a, b) => b.coverage - a.coverage)
+    .map(item => item.index);
   return sortedTiles;
 };
 
@@ -112,7 +114,7 @@ const counterStructureMap: Record<StructureType, StructureType[]> = {
  * plus fallbackStructure: counter to most common opponent structure
  * WARN: tiers are ignored
  */
-export const computeCounterBuild = (
+const computeCounterBuild = (
   playerStructures: Structure[],
   opponentStructures: Structure[],
   prando: Prando
@@ -147,42 +149,6 @@ export const computeCounterBuild = (
 };
 
 /**
- * @returns list of structures to be randomply placed on provided tiles. stops once budget is depleted or no more tiles are available
- */
-function chooseStructures(
-  matchConfig: MatchConfig,
-  faction: Faction,
-  round: number,
-  budget: number,
-  availableTiles: number[],
-  prando: Prando
-): BuildStructureAction[] {
-  const choices = getPossibleStructures(faction);
-
-  let currentBudget = budget;
-  const actions: BuildStructureAction[] = [];
-  while (currentBudget > 0) {
-    const structure = choices[prando.nextInt(0, choices.length - 1)];
-    const price = matchConfig[structure][1].price;
-    if (currentBudget < price || availableTiles.length === 0) break;
-
-    const coordinates = availableTiles[prando.nextInt(0, availableTiles.length - 1)];
-    const action: BuildStructureAction = {
-      action: 'build',
-      structure,
-      coordinates,
-      faction,
-      round,
-    };
-
-    actions.push(action);
-    currentBudget -= price;
-    availableTiles.splice(availableTiles.indexOf(coordinates), 1);
-  }
-  return actions;
-}
-
-/**
  * @returns list of possible upgrades for existing structures and total cost of these actions
  */
 function upgradeStructures(
@@ -193,7 +159,7 @@ function upgradeStructures(
   budget: number
 ): [UpgradeStructureAction[], number] {
   type Upgrade = { cost: number; id: number };
-  const possibleUpgrades: Upgrade[] = actors.reduce((upgrades, actor: Structure) => {
+  const possibleUpgrades: Upgrade[] = actors.reduce((upgrades, actor) => {
     if (actor.upgrades === 3) return upgrades;
 
     const cost = matchConfig[actor.structure][(actor.upgrades + 1) as UpgradeTier].price;
@@ -226,56 +192,27 @@ function upgradeStructures(
 }
 
 /**
+ * @param counterBuild list of structures to prefer while building, fallback to use once list is used up, random otherwise
+ * @param sortedTiles if true, tiles are picked sequentially, otherwise randomly
  * @returns list of structures to build on provided tiles and a total cost of these actions
  */
-function placeDefenderStructures(
+function placeStructures(
   matchConfig: MatchConfig,
-  tiles: PathCoverage[],
   counterBuild: CounterBuild,
+  faction: Faction,
   round: number,
   budget: number,
-  prando: Prando
-): [BuildStructureAction[], number] {
-  const choices = getPossibleStructures('defender');
-  let moneyLeft = budget;
-  const actions: BuildStructureAction[] = [];
-  while (moneyLeft > 0 && tiles.length > 0) {
-    const tile = tiles.shift();
-    const random = choices[prando.nextInt(0, choices.length - 1)];
-    const structure = counterBuild.structures.shift() ?? counterBuild.fallback ?? random;
-    const price = matchConfig[structure][1].price;
-    if (!tile || price > moneyLeft) break;
-
-    const action: BuildStructureAction = {
-      action: 'build',
-      structure,
-      coordinates: tile.index,
-      faction: 'defender',
-      round,
-    };
-    actions.push(action);
-    moneyLeft -= price;
-  }
-  return [actions, budget - moneyLeft];
-}
-
-/**
- * @returns list of structures to build on provided tiles and a total cost of these actions
- */
-function placeAttackerStructures(
-  matchConfig: MatchConfig,
+  prando: Prando,
   tiles: number[],
-  counterBuild: CounterBuild,
-  round: number,
-  budget: number,
-  prando: Prando
+  sortedTiles = true
 ): [BuildStructureAction[], number] {
-  const choices = getPossibleStructures('attacker');
+  const choices = getPossibleStructures(faction);
 
   let moneyLeft = budget;
   const actions: BuildStructureAction[] = [];
   while (moneyLeft > 0 && tiles.length > 0) {
-    const tile = tiles[prando.nextInt(0, tiles.length - 1)];
+    const tileIndex = sortedTiles ? 0 : prando.nextInt(0, tiles.length - 1);
+    const tile = tiles.splice(tileIndex, 1)[0];
     const random = choices[prando.nextInt(0, choices.length - 1)];
     const structure = counterBuild.structures.shift() ?? counterBuild.fallback ?? random;
     const price = matchConfig[structure][1].price;
@@ -285,12 +222,11 @@ function placeAttackerStructures(
       action: 'build',
       structure,
       coordinates: tile,
-      faction: 'attacker',
+      faction,
       round,
     };
     actions.push(action);
     moneyLeft -= price;
-    tiles.splice(tiles.indexOf(tile), 1);
   }
   return [actions, budget - moneyLeft];
 }
@@ -323,28 +259,30 @@ export const generateBotMoves: BotMovesFunction = (
       height,
       BASE_TILES_RANGE
     ).filter(cell => map[cell].type === 'open' && !occupiedTiles.has(cell));
-    const preferredTiles = computePathCoverage({ map, width, height }, nearbyTiles, TOWER_RANGE);
-    const [baseTowers, baseTowersCost] = placeDefenderStructures(
+    const preferredTiles = sortByPathCoverage({ map, width, height }, nearbyTiles, TOWER_RANGE);
+    const [baseTowers, baseTowersCost] = placeStructures(
       matchConfig,
-      preferredTiles,
       counterBuild,
+      faction,
       round,
       gold - upgradesCost,
-      prando
+      prando,
+      preferredTiles
     );
 
     const moneyLeft = gold - upgradesCost - baseTowersCost;
     //ran out of base tiles or none were available in the first place
     if (moneyLeft > minStructureCost) {
       const allTiles = getAvailableTiles(matchState.map, actors, faction);
-      const otherTiles = computePathCoverage({ map, width, height }, allTiles, TOWER_RANGE);
-      const [otherTowers] = placeDefenderStructures(
+      const otherTiles = sortByPathCoverage({ map, width, height }, allTiles, TOWER_RANGE);
+      const [otherTowers] = placeStructures(
         matchConfig,
-        otherTiles,
         counterBuild,
+        faction,
         round,
         moneyLeft,
-        prando
+        prando,
+        otherTiles
       );
       return [...upgrades, ...baseTowers, ...otherTowers];
     }
@@ -373,26 +311,30 @@ export const generateBotMoves: BotMovesFunction = (
       return chosenPath.includes(spawn);
     });
 
-    const [baseCrypts, baseCryptsCost] = placeAttackerStructures(
+    const [baseCrypts, baseCryptsCost] = placeStructures(
       matchConfig,
-      tilesOnPath,
       counterBuild,
+      faction,
       round,
       gold - upgradesCost,
-      prando
+      prando,
+      tilesOnPath,
+      false
     );
 
     const moneyLeft = gold - upgradesCost - baseCryptsCost;
     //ran out of preffered tiles (all occupied already), place randomly
     if (moneyLeft > minStructureCost) {
       const allTiles = getAvailableTiles(matchState.map, actors, faction);
-      const [otherCrypts] = placeAttackerStructures(
+      const [otherCrypts] = placeStructures(
         matchConfig,
-        allTiles,
         counterBuild,
+        faction,
         round,
         moneyLeft,
-        prando
+        prando,
+        allTiles,
+        false
       );
       return [...upgrades, ...baseCrypts, ...otherCrypts];
     }
