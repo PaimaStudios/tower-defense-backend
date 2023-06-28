@@ -20,6 +20,8 @@ export const BOOLEANS = ['T', 'F', ''];
 
 export const FACTIONS = ['a', 'r', 'd'];
 
+export const BOT_DIFFICULTIES = ['easy', 'hard'];
+
 export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, string> = {
   [TowerDefenseRejectionCode.INVALID_COMMAND]:
     'The supplied game input does not correspond to any supported command',
@@ -34,6 +36,8 @@ export const TOWER_DEFENSE_ERROR_MESSAGES: Record<TowerDefenseRejectionCode, str
   [TowerDefenseRejectionCode.C_MAP]: 'The selected map does not exist or is not supported',
   [TowerDefenseRejectionCode.C_AUTOPLAY]: 'The hasAutoplay parameter is not a valid boolean value',
   [TowerDefenseRejectionCode.C_PRACTICE]: 'The isPractice parameter is not a valid boolean value',
+  [TowerDefenseRejectionCode.C_BOT_DIFFICULTY]:
+    'The chosen bot difficulty does not exist or is not supported',
   [TowerDefenseRejectionCode.C_INVALID_MATCH_CONFIG_ID]: 'The provided match config is not valid',
   [TowerDefenseRejectionCode.C_FACTION]: 'The selected faction does not exist or is not supported',
   [TowerDefenseRejectionCode.C_UNKNOWN]: 'Unknown error while processing a createLobby command',
@@ -96,6 +100,7 @@ export const enum TowerDefenseRejectionCode {
   C_MAP,
   C_AUTOPLAY,
   C_PRACTICE,
+  C_BOT_DIFFICULTY,
   C_INVALID_MATCH_CONFIG_ID,
   C_FACTION,
   C_UNKNOWN,

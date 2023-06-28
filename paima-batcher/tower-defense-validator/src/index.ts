@@ -6,6 +6,7 @@ import {
   TowerDefenseRejectionCode,
   BOOLEANS,
   FACTIONS,
+  BOT_DIFFICULTIES,
 } from './constants.js';
 import { queryLobbyState } from './query-constructors.js';
 import { parseMoves, validateLobbyGetState } from './move-validation.js';
@@ -56,7 +57,7 @@ const TowerDefenseValidatorCoreInitializator = {
 
 async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
   const elems = gameInput.split('|');
-  if (elems.length != 9) {
+  if (elems.length != 10) {
     return TowerDefenseRejectionCode.C_NUM_PARAMS;
   }
   const [
@@ -69,6 +70,7 @@ async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
     map,
     isPracticeStr,
     hasAutoplayStr,
+    botDifficulty,
   ] = elems;
 
   if (cmd !== 'c') {
@@ -111,6 +113,10 @@ async function validateCreateLobby(gameInput: string): Promise<ErrorCode> {
 
   if (!BOOLEANS.includes(hasAutoplayStr)) {
     return TowerDefenseRejectionCode.C_AUTOPLAY;
+  }
+
+  if (!BOT_DIFFICULTIES.includes(botDifficulty)) {
+    return TowerDefenseRejectionCode.C_BOT_DIFFICULTY;
   }
 
   return 0;
