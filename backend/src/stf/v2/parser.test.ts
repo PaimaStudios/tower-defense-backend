@@ -3,20 +3,20 @@ import type { UserStats, ZombieRound } from './types';
 
 describe('Input parsing', () => {
   test('parses createLobby', () => {
-    const normalLobby = parse('c|defaultdefault|r|100|100|F|jungle|F|T');
+    const normalLobby = parse('c|defaultdefault|r|100|100|F|jungle|F|T|easy');
     expect(normalLobby.input).toBe('createdLobby');
 
-    const hiddenLobby = parse('c|defaultdefault|a|100|500|T|backwards|F|T');
+    const hiddenLobby = parse('c|defaultdefault|a|100|500|T|backwards|F|T|easy');
     expect(hiddenLobby.input).toBe('createdLobby');
 
-    const practiceLobby = parse('c|defaultdefault|d|100|1000|F|crossing|T|T');
+    const practiceLobby = parse('c|defaultdefault|d|100|1000|F|crossing|T|T|easy');
     expect(practiceLobby.input).toBe('createdLobby');
 
-    const noAutoplay = parse('c|defaultdefault|d|100|1000|F|crossing|T|F');
+    const noAutoplay = parse('c|defaultdefault|d|100|1000|F|crossing|T|F|hard');
     expect(noAutoplay.input).toBe('createdLobby');
     if (noAutoplay.input === 'createdLobby') {
-      console.log(noAutoplay);
       expect(noAutoplay.hasAutoplay).toBe(false);
+      expect(noAutoplay.botDifficulty).toBe('hard');
     }
   });
 
