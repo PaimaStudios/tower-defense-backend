@@ -20,6 +20,11 @@ import {
 } from './utils';
 import type Prando from 'paima-engine/paima-prando';
 
+type Lane = {
+  tiles: Set<number>;
+  utilization: number;
+};
+
 type CounterBuild = {
   structures: StructureType[];
   fallback?: StructureType;
@@ -81,17 +86,28 @@ export const getMinStructureCost = (matchConfig: MatchConfig, faction: Faction):
   return minCost;
 };
 
+function computeUtilization(tile: number, lanes: Lane[]) {
+  return lanes.reduce((acc, lane) => (lane.tiles.has(tile) ? acc + lane.utilization : 0), 1);
+}
+
 /**
- * @returns sorted list of tile indices based on coverage representing number of path tiles in range
+ * Utilization represents how many enemy actors use the tile in order to get to the base (starts at 1 - if no enemy actors use the tile)
+ * Coverage is then calculated as sum of utilizations of all path tiles in range
+ * @returns sorted list of tile indices based on coverage representing number of path tiles in range utilized by enemies
  */
-const sortByPathCoverage = (mapState: MapState, tiles: number[], range: number): number[] => {
+const sortByPathCoverage = (
+  mapState: MapState,
+  tiles: number[],
+  lanes: Lane[],
+  range: number
+): number[] => {
   const sortedTiles = tiles
     .map(cell => {
       const nearTiles = getSurroundingCells(cell, mapState.width, mapState.height, range);
-      return {
-        index: cell,
-        coverage: nearTiles.filter(tile => mapState.map[tile].type === 'path').length,
-      };
+      const coverage = nearTiles
+        .filter(tile => mapState.map[tile].type === 'path')
+        .reduce((acc, tile) => acc + computeUtilization(tile, lanes), 0);
+      return { index: cell, coverage };
     })
     .sort((a, b) => b.coverage - a.coverage)
     .map(item => item.index);
@@ -146,6 +162,25 @@ const computeCounterBuild = (
     structures: counters,
     fallback: sortedCounters[0]?.structure,
   };
+};
+
+/**
+ * @returns list of all possible paths of the map with their utilization (how many crypts spawn units on them)
+ */
+const computeLanes = (matchState: MatchState): Lane[] => {
+  const destination = matchState.defenderBase.coordinates;
+  const spawnPoints = Object.values(matchState.actors.crypts).map(attacker => {
+    return findCloseBySpawnTile(matchState, attacker.coordinates);
+  });
+
+  const lanes = computeStartTiles(matchState).map(tile => {
+    const route = calculatePath(tile, destination, matchState.pathMap);
+    const tiles = new Set(route);
+    const utilization = spawnPoints.filter(point => tiles.has(point)).length;
+    return { tiles, utilization };
+  });
+
+  return lanes;
 };
 
 /**
@@ -231,8 +266,8 @@ function placeStructures(
   return [actions, budget - moneyLeft];
 }
 
-const BASE_TILES_RANGE = 4;
-// simplified range for bot purposes
+const BASE_TILES_RANGE = 5;
+// WARN: simplified range for bot purposes
 const TOWER_RANGE = 2;
 export const generateBotMoves: BotMovesFunction = (
   matchConfig,
@@ -248,10 +283,22 @@ export const generateBotMoves: BotMovesFunction = (
   const counterBuild = computeCounterBuild(actors, opponent, prando);
 
   if (faction === 'defender') {
-    //TODO: upgrade only towers with reach to opponents, then utilize reach in path coverage calculations
-    const [upgrades, upgradesCost] = upgradeStructures(matchConfig, actors, faction, round, gold);
-
     const { defenderBase, map, width, height } = matchState;
+    const lanes = computeLanes(matchState).filter(lane => lane.utilization > 0);
+    const usefulActors = actors.filter(actor => {
+      const utilizedTile = getSurroundingCells(actor.coordinates, width, height, TOWER_RANGE).find(
+        tile => computeUtilization(tile, lanes) > 1
+      );
+      return utilizedTile !== undefined;
+    });
+    const [upgrades, upgradesCost] = upgradeStructures(
+      matchConfig,
+      usefulActors,
+      faction,
+      round,
+      gold
+    );
+
     const occupiedTiles = new Set(actors.map(actor => actor.coordinates));
     const nearbyTiles = getSurroundingCells(
       defenderBase.coordinates,
@@ -259,7 +306,7 @@ export const generateBotMoves: BotMovesFunction = (
       height,
       BASE_TILES_RANGE
     ).filter(cell => map[cell].type === 'open' && !occupiedTiles.has(cell));
-    const preferredTiles = sortByPathCoverage({ map, width, height }, nearbyTiles, TOWER_RANGE);
+    const preferredTiles = sortByPathCoverage(matchState, nearbyTiles, lanes, TOWER_RANGE);
     const [baseTowers, baseTowersCost] = placeStructures(
       matchConfig,
       counterBuild,
@@ -274,7 +321,7 @@ export const generateBotMoves: BotMovesFunction = (
     //ran out of base tiles or none were available in the first place
     if (moneyLeft > minStructureCost) {
       const allTiles = getAvailableTiles(matchState.map, actors, faction);
-      const otherTiles = sortByPathCoverage({ map, width, height }, allTiles, TOWER_RANGE);
+      const otherTiles = sortByPathCoverage(matchState, allTiles, lanes, TOWER_RANGE);
       const [otherTowers] = placeStructures(
         matchConfig,
         counterBuild,
