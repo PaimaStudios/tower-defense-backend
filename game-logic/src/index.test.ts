@@ -414,12 +414,12 @@ describe('Game Logic', () => {
     expect(ok).toBeTruthy();
   });
 
-  test('AI makes moves', () => {
+  test('random moves are generated', () => {
+    const prando = new Prando(1);
     const matchConfig = getMatchConfig();
     const matchState = getMatchState();
-    const moves = generateRandomMoves(matchConfig, matchState, 'defender', 1);
-    const ok = moves.length > 0;
-    expect(ok).toBeTruthy;
+    const moves = generateRandomMoves(matchConfig, matchState, 'defender', 1, prando);
+    expect(moves.length).toBeGreaterThan(0);
   });
   test('units move forward', () => {
     const matchConfig = baseConfig;

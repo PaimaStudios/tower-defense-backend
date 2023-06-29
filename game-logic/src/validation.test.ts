@@ -5,7 +5,7 @@ import { validateMoves } from './validation';
 import type {
   BuildStructureAction,
   Faction,
-  Structure,
+  StructureType,
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
@@ -16,7 +16,7 @@ const lineMap =
 describe('Validation', () => {
   const buildAction = (
     faction: Faction,
-    structure: Structure,
+    structure: StructureType,
     coordinates: number
   ): BuildStructureAction => ({ action: 'build', structure, coordinates, faction, round: 1 });
 

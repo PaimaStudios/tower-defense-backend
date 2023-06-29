@@ -17,7 +17,6 @@ import type {
   DefenderStructure,
   StatusEffectAppliedEvent,
   UnitMovementEvent,
-  Coordinates,
   TowerAttack,
   UnitAttack,
   BuildStructureAction,
@@ -33,7 +32,7 @@ import type {
 } from '@tower-defense/utils';
 import applyEvent from './apply';
 import { attackerUnitMap } from './config';
-import { chooseTile, euclideanDistance, indexToCoords, isSpawnable, validateCoords } from './utils';
+import { findCloseBySpawnTile, getSurroundingCells } from './utils';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure
@@ -305,53 +304,6 @@ function spawn(
     unitAttack: config[crypt.structure][crypt.upgrades].attackDamage,
     tier: crypt.upgrades,
   };
-}
-
-function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
-  const { x, y } = indexToCoords(index, mapState.width);
-  return [
-    { x, y: y - 1 },
-    { x: x + 1, y },
-    { x, y: y + 1 },
-    { x: x - 1, y },
-  ]
-    .map(coordinates => validateCoords(coordinates, mapState.width, mapState.height))
-    .filter((index): index is number => {
-      if (index == null) return false;
-      const tile = mapState.map[index];
-      return isSpawnable(tile);
-    });
-}
-
-function closeBySpawnTiles(index: number, mapState: MapState, range: number): number[] {
-  const center = indexToCoords(index, mapState.width);
-  const tiles = getSurroundingCells(index, mapState.width, mapState.height, range)
-    .filter(tile => isSpawnable(mapState.map[tile]))
-    .map(tile => ({
-      index: tile,
-      distance: euclideanDistance(center, indexToCoords(tile, mapState.width)),
-    }));
-
-  if (tiles.length === 0) return [];
-  const minDistance = Math.min(...tiles.map(tile => tile.distance));
-  return tiles.filter(tile => tile.distance === minDistance).map(tile => tile.index);
-}
-
-/**
- * Function to find an available path next to a crypt to place a newly spawned unit.
- * If there is more than one candidate then @see {chooseTile} is used to select one.
- */
-function findCloseBySpawnTile(mapState: MapState, index: number, range = 1): number {
-  const adjacentTiles = adjacentSpawnTiles(index, mapState);
-  if (adjacentTiles.length > 0) {
-    return chooseTile(adjacentTiles, mapState.width);
-  }
-  const moreTiles = closeBySpawnTiles(index, mapState, range + 1);
-  if (moreTiles.length > 0) {
-    return chooseTile(moreTiles, mapState.width);
-  }
-
-  return findCloseBySpawnTile(mapState, index, range + 1);
 }
 
 // Movement events, derive from the units already on the match sate.
@@ -626,35 +578,6 @@ function findCloseByUnits(
     surrounding.includes(u.coordinates)
   );
   return units;
-}
-
-export function getSurroundingCells(
-  index: number,
-  mapWidth: number,
-  mapHeight: number,
-  range: number
-): number[] {
-  const center = indexToCoords(index, mapWidth);
-  const surroundingCells: Coordinates[] = [];
-  for (let x = center.x - range; x <= center.x + range; x++) {
-    for (let y = center.y - range; y <= center.y + range; y++) {
-      // Exclude the center cell itself
-      if (x === center.x && y === center.y) {
-        continue;
-      }
-      // Calculate the distance from the center cell
-      const dx = Math.abs(x - center.x);
-      const dy = Math.abs(y - center.y);
-
-      // Exclude diagonals for each range
-      if (dx + dy <= range) {
-        surroundingCells.push({ x, y });
-      }
-    }
-  }
-  return surroundingCells
-    .map(coordinates => validateCoords(coordinates, mapWidth, mapHeight))
-    .filter((index: number | null): index is number => index != null);
 }
 
 function findClosebyTowers(

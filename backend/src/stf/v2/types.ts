@@ -1,4 +1,10 @@
-import type { MapName, ResultConcise, RoleSetting, TurnAction } from '@tower-defense/utils';
+import type {
+  BotDifficulty,
+  MapName,
+  ResultConcise,
+  RoleSetting,
+  TurnAction,
+} from '@tower-defense/utils';
 import type { WalletAddress } from 'paima-engine/paima-utils';
 
 export type ParsedSubmittedInput =
@@ -25,6 +31,7 @@ export interface CreatedLobbyInput {
   isPractice: boolean;
   // adds random moves for AFK players when time runs out
   hasAutoplay: boolean;
+  botDifficulty: BotDifficulty;
 }
 
 export interface JoinedLobbyInput {

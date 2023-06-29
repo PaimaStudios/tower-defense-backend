@@ -2,12 +2,13 @@ import type { ParserRecord } from 'paima-engine/paima-utils-backend';
 import { PaimaParser } from 'paima-engine/paima-utils-backend';
 import P from 'parsimmon';
 import type {
+  BotDifficulty,
   BuildStructureAction,
   RepairStructureAction,
   ResultConcise,
   RoleSettingConcise,
   SalvageStructureAction,
-  Structure,
+  StructureType,
   TurnAction,
   UpgradeStructureAction,
 } from '@tower-defense/utils';
@@ -31,7 +32,7 @@ import { consumer } from 'paima-engine/paima-concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `
-createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?|hasAutoplay?
+createdLobby         = c|matchConfigID|creatorFaction|numOfRounds|roundLength|isHidden?|map|isPractice?|hasAutoplay?|botDifficulty
 joinedLobby          = j|*lobbyID
 closedLobby          = cs|*lobbyID
 setNFT               = n|address|tokenID
@@ -41,6 +42,7 @@ wipeDBScheduledData  = w|days
 `;
 
 const roleSettings: RoleSettingConcise[] = ['a', 'd', 'r'];
+const botDifficulty: BotDifficulty[] = ['easy', 'hard'];
 const createdLobby: ParserRecord<CreatedLobbyInput> = {
   matchConfigID: PaimaParser.NCharsParser(14, 14),
   creatorFaction: PaimaParser.EnumParser(
@@ -53,6 +55,7 @@ const createdLobby: ParserRecord<CreatedLobbyInput> = {
   map: PaimaParser.EnumParser(maps),
   isPractice: PaimaParser.TrueFalseParser(false),
   hasAutoplay: PaimaParser.TrueFalseParser(true),
+  botDifficulty: PaimaParser.EnumParser(botDifficulty),
 };
 const joinedLobby: ParserRecord<JoinedLobbyInput> = {
   lobbyID: PaimaParser.NCharsParser(12, 12),
@@ -102,13 +105,13 @@ const pRoundNumber = P.digits.map(Number).chain(n => {
 });
 const pMapCoord = P.digits.map(Number);
 const pStructureID = P.digits.map(Number);
-const pAnacondaTower = P.string('at').map<Structure>(_ => 'anacondaTower');
-const pPiranhaTower = P.string('pt').map<Structure>(__ => 'piranhaTower');
-const pSlothTower = P.string('st').map<Structure>(_ => 'slothTower');
-const pGorillaCrypt = P.string('gc').map<Structure>(_ => 'gorillaCrypt');
-const pJaguarCrypt = P.string('jc').map<Structure>(_ => 'jaguarCrypt');
-const pMacawCrypt = P.string('mc').map<Structure>(_ => 'macawCrypt');
-const pStructureType = P.alt<Structure>(
+const pAnacondaTower = P.string('at').map<StructureType>(_ => 'anacondaTower');
+const pPiranhaTower = P.string('pt').map<StructureType>(__ => 'piranhaTower');
+const pSlothTower = P.string('st').map<StructureType>(_ => 'slothTower');
+const pGorillaCrypt = P.string('gc').map<StructureType>(_ => 'gorillaCrypt');
+const pJaguarCrypt = P.string('jc').map<StructureType>(_ => 'jaguarCrypt');
+const pMacawCrypt = P.string('mc').map<StructureType>(_ => 'macawCrypt');
+const pStructureType = P.alt<StructureType>(
   pAnacondaTower,
   pPiranhaTower,
   pSlothTower,

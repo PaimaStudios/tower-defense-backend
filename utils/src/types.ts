@@ -66,6 +66,7 @@ export interface RawMap {
   contents: TileNumber[];
 }
 export type TileNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0;
+
 export interface AnnotatedMap {
   name: string;
   width: number;
@@ -98,12 +99,7 @@ export interface ActorsObject {
 }
 export type ActorID = number;
 
-export type Actor =
-  | DefenderBase
-  | AttackerBase
-  | AttackerUnit
-  | AttackerStructure
-  | DefenderStructure;
+export type Structure = AttackerStructure | DefenderStructure;
 
 export type AttackerUnitType = 'macaw' | 'jaguar' | 'gorilla';
 export interface AttackerUnit {
@@ -199,7 +195,7 @@ export type TurnAction =
   | SalvageStructureAction
   | UpgradeStructureAction;
 
-export type Structure = DefenderStructureType | AttackerStructureType;
+export type StructureType = DefenderStructureType | AttackerStructureType;
 
 export interface BaseAction {
   round: number;
@@ -208,7 +204,7 @@ export interface BaseAction {
 export interface BuildStructureAction extends BaseAction {
   action: 'build';
   coordinates: number;
-  structure: Structure;
+  structure: StructureType;
 }
 export interface RepairStructureAction extends BaseAction {
   action: 'repair';
@@ -232,7 +228,7 @@ export interface BuildStructureEvent {
   coordinates: number;
   faction: Faction;
   id: number;
-  structure: Structure;
+  structure: StructureType;
 }
 export interface RepairStructureEvent {
   eventType: 'repair';
@@ -340,6 +336,7 @@ export const maps = [
 ] as const;
 export type MapName = (typeof maps)[number];
 
+export type BotDifficulty = 'easy' | 'hard';
 export type RoleSetting = 'attacker' | 'defender' | 'random';
 export type RoleSettingConcise = 'a' | 'd' | 'r';
 export type StructureConcise = 'at' | 'pt' | 'st' | 'gc' | 'jc' | 'mc';

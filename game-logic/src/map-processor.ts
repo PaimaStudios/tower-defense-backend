@@ -44,6 +44,7 @@ export function generateMatchState(
     roundEnded: false,
   };
 }
+
 function randomizeRoles(
   creator: WalletAddress,
   joiner: WalletAddress,
@@ -53,6 +54,7 @@ function randomizeRoles(
   if (number < 0.5) return [creator, joiner];
   else return [joiner, creator];
 }
+
 // Layouts as given by catastrophe are a long string, with rows of numbers
 // separated by \r\n .
 function processMapLayout(mapName: string, mapString: string): RawMap {
@@ -68,6 +70,7 @@ function processMapLayout(mapName: string, mapString: string): RawMap {
       .map(s => parseInt(s) as TileNumber),
   };
 }
+
 export function getMap(m: RawMap): AnnotatedMap {
   return {
     name: m.name,
@@ -77,6 +80,7 @@ export function getMap(m: RawMap): AnnotatedMap {
     pathMap: mapToMatrix(m.contents, m.width),
   };
 }
+
 function mapToMatrix(map: TileNumber[], width: number): Array<0 | 1>[] {
   const matrix = [];
   const walkableTiles: TileNumber[] = [3, 5, 6];
@@ -89,17 +93,6 @@ function mapToMatrix(map: TileNumber[], width: number): Array<0 | 1>[] {
 
 export function fillMap(contents: TileNumber[]): Tile[] {
   return contents.map(tile => tileMap[tile]);
-}
-
-export function annotateMap(contents: TileNumber[], width: number): Tile[][] {
-  const tiles = contents.map(tile => tileMap[tile]);
-  const reduced = tiles.reduce((acc, tile, index) => {
-    const row = Math.floor(index / width);
-    const existing = acc[row] || [];
-    acc[row] = [...existing, tile];
-    return acc;
-  }, [] as Tile[][]);
-  return reduced;
 }
 
 const tileMap: Record<TileNumber, Tile> = {

@@ -41,6 +41,7 @@ CREATE TABLE configs(
 
 CREATE TYPE lobby_status AS ENUM ('open', 'active', 'finished', 'closed');
 CREATE TYPE role_setting AS ENUM ('attacker', 'defender', 'random');
+CREATE TYPE bot_difficulty AS ENUM ('easy', 'hard');
 -- match state before a round is the gold in each side, and health/upgrade status of every structure.
 -- not practical to keep the state of every single tower of every single game in its own table, so we'll keep it as a json blob in the lobbies table and renew every round
 -- TODO or we can keep it in the rounds table? might help with game replays
@@ -54,6 +55,7 @@ CREATE TABLE lobbies(
   creation_block_height INTEGER NOT NULL,
   hidden BOOLEAN NOT NULL DEFAULT false,
   practice BOOLEAN NOT NULL DEFAULT false,
+  bot_difficulty bot_difficulty NOT NULL DEFAULT 'easy',
   autoplay BOOLEAN NOT NULL DEFAULT false,
   config_id TEXT references configs(id),
   map TEXT NOT NULL references maps(name),

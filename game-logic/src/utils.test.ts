@@ -1,12 +1,13 @@
 import Prando from 'paima-engine/paima-prando';
 import { baseConfig } from './config';
 import { generateMatchState } from './map-processor';
-import { calculatePath, coordsToIndex } from './utils';
+import { calculatePath, coordsToIndex, getSurroundingCells } from './utils';
+
+const backwards =
+  '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662292\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222292\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222';
 
 describe('Map functions', () => {
   test('path is found when spawning on blocked path', () => {
-    const backwards =
-      '1111111111111222222222\\r\\n1555551155551266666662\\r\\n1511151151151262222262\\r\\n1511155551151266662262\\r\\n1511111111151222262262\\r\\n1511155551155666662292\\r\\n3555151151111222222264\\r\\n1515151155555226666662\\r\\n1515551111115666222292\\r\\n1511111555511222266662\\r\\n1511111511511222262222\\r\\n1555555511555666662222\\r\\n1111111111111222222222';
     const { pathMap, ...matchState } = generateMatchState(
       'defender',
       '0xdDA309096477b89D7066948b31aB05924981DF2B',
@@ -41,5 +42,35 @@ describe('Map functions', () => {
     //   [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],1
     //   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],0
     // ];
+  });
+});
+
+describe('Map utilities find', () => {
+  test('surrounding cells in corner', () => {
+    const surroundingCells = getSurroundingCells(0, 10, 10, 1);
+    expect(surroundingCells.length).toBe(2);
+    expect(surroundingCells).toContain(1);
+    expect(surroundingCells).toContain(10);
+  });
+  test('surrounding cells near border', () => {
+    const surroundingCells = getSurroundingCells(1, 10, 10, 1);
+    expect(surroundingCells.length).toBe(3);
+    expect(surroundingCells).toContain(0);
+    expect(surroundingCells).toContain(2);
+    expect(surroundingCells).toContain(11);
+  });
+  test('surrounding cells', () => {
+    const surroundingCells = getSurroundingCells(11, 10, 10, 1);
+    expect(surroundingCells.length).toBe(4);
+    expect(surroundingCells).toContain(10);
+    expect(surroundingCells).toContain(12);
+    expect(surroundingCells).toContain(1);
+    expect(surroundingCells).toContain(21);
+
+    const biggerRange = getSurroundingCells(22, 10, 10, 2);
+    expect(biggerRange.length).toBe(12);
+    [2, 11, 12, 13, 20, 21, 23, 24, 31, 32, 33, 42].forEach(point =>
+      expect(biggerRange).toContain(point)
+    );
   });
 });

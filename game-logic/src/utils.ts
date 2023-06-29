@@ -1,17 +1,20 @@
 import type {
-  AttackerStructure,
-  BuildStructureAction,
+  AttackerStructureType,
   Coordinates,
   DefenderStructure,
+  DefenderStructureType,
+  Faction,
+  MapState,
   MatchConfig,
+  Structure,
+  StructureType,
   Tile,
-  TurnAction,
   UpgradeTier,
 } from '@tower-defense/utils';
 import { AStarFinder } from 'astar-typescript';
 
 export const calculateRecoupGold = (
-  { structure, upgrades }: AttackerStructure | DefenderStructure,
+  { structure, upgrades }: Structure,
   config: MatchConfig
 ): number => {
   const structureConfigGraph = config[structure];
@@ -106,7 +109,7 @@ function adjacentWalkableTiles(point: Coordinates, map: Array<0 | 1>[]): number[
     });
 }
 
-export function chooseTile(tiles: number[], mapWidth: number): number {
+function chooseTile(tiles: number[], mapWidth: number): number {
   const pick = tiles.reduce((prev, curr) => {
     const a = indexToCoords(prev, mapWidth);
     const b = indexToCoords(curr, mapWidth);
@@ -119,16 +122,96 @@ export function chooseTile(tiles: number[], mapWidth: number): number {
   return pick;
 }
 
-export function isBuildAction(action: TurnAction): action is BuildStructureAction {
-  return action.action === 'build';
-}
-
-export function isDefenderStructure(
-  structure: AttackerStructure | DefenderStructure
-): structure is DefenderStructure {
+export function isDefenderStructure(structure: Structure): structure is DefenderStructure {
   return structure.faction === 'defender';
 }
 
 export const euclideanDistance = (a: Coordinates, b: Coordinates): number => {
   return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 };
+
+export function getSurroundingCells(
+  index: number,
+  mapWidth: number,
+  mapHeight: number,
+  range: number
+): number[] {
+  const center = indexToCoords(index, mapWidth);
+  const surroundingCells: Coordinates[] = [];
+  for (let x = center.x - range; x <= center.x + range; x++) {
+    for (let y = center.y - range; y <= center.y + range; y++) {
+      // Exclude the center cell itself
+      if (x === center.x && y === center.y) {
+        continue;
+      }
+      // Calculate the distance from the center cell
+      const dx = Math.abs(x - center.x);
+      const dy = Math.abs(y - center.y);
+
+      // Exclude diagonals for each range
+      if (dx + dy <= range) {
+        surroundingCells.push({ x, y });
+      }
+    }
+  }
+  return surroundingCells
+    .map(coordinates => validateCoords(coordinates, mapWidth, mapHeight))
+    .filter((index: number | null): index is number => index != null);
+}
+
+/**
+ * @param faction
+ * @returns all of the structures that a faction can build
+ */
+export const getPossibleStructures = (faction: Faction): StructureType[] => {
+  const towers: DefenderStructureType[] = ['anacondaTower', 'piranhaTower', 'slothTower'];
+  const crypts: AttackerStructureType[] = ['gorillaCrypt', 'jaguarCrypt', 'macawCrypt'];
+  return faction === 'defender' ? towers : crypts;
+};
+
+function adjacentSpawnTiles(index: number, mapState: MapState): number[] {
+  const { x, y } = indexToCoords(index, mapState.width);
+  return [
+    { x, y: y - 1 },
+    { x: x + 1, y },
+    { x, y: y + 1 },
+    { x: x - 1, y },
+  ]
+    .map(coordinates => validateCoords(coordinates, mapState.width, mapState.height))
+    .filter((index): index is number => {
+      if (index == null) return false;
+      const tile = mapState.map[index];
+      return isSpawnable(tile);
+    });
+}
+
+function closeBySpawnTiles(index: number, mapState: MapState, range: number): number[] {
+  const center = indexToCoords(index, mapState.width);
+  const tiles = getSurroundingCells(index, mapState.width, mapState.height, range)
+    .filter(tile => isSpawnable(mapState.map[tile]))
+    .map(tile => ({
+      index: tile,
+      distance: euclideanDistance(center, indexToCoords(tile, mapState.width)),
+    }));
+
+  if (tiles.length === 0) return [];
+  const minDistance = Math.min(...tiles.map(tile => tile.distance));
+  return tiles.filter(tile => tile.distance === minDistance).map(tile => tile.index);
+}
+
+/**
+ * Function to find an available path next to a crypt to place a newly spawned unit.
+ * If there is more than one candidate then @see {chooseTile} is used to select one.
+ */
+export function findCloseBySpawnTile(mapState: MapState, index: number, range = 1): number {
+  const adjacentTiles = adjacentSpawnTiles(index, mapState);
+  if (adjacentTiles.length > 0) {
+    return chooseTile(adjacentTiles, mapState.width);
+  }
+  const moreTiles = closeBySpawnTiles(index, mapState, range + 1);
+  if (moreTiles.length > 0) {
+    return chooseTile(moreTiles, mapState.width);
+  }
+
+  return findCloseBySpawnTile(mapState, index, range + 1);
+}

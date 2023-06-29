@@ -1,6 +1,8 @@
 /** Types generated for queries found in "src/update.sql" */
 import { PreparedQuery } from '@pgtyped/query';
 
+export type bot_difficulty = 'easy' | 'hard';
+
 export type lobby_status = 'active' | 'closed' | 'finished' | 'open';
 
 export type role_setting = 'attacker' | 'defender' | 'random';
@@ -133,6 +135,7 @@ export interface IStartMatchParams {
 /** 'StartMatch' return type */
 export interface IStartMatchResult {
   autoplay: boolean;
+  bot_difficulty: bot_difficulty;
   config_id: string | null;
   created_at: Date;
   creation_block_height: number;

@@ -10,7 +10,13 @@ import {
 import { moveToString, userCreatedLobby, userJoinedLobby } from '../helpers/utility-functions';
 import type { CreateLobbyResponse, OldResult, Result } from '../types';
 import { GameENV, configToConcise } from '@tower-defense/utils';
-import type { MatchConfig, Faction, MapName, TurnAction } from '@tower-defense/utils';
+import type {
+  MatchConfig,
+  Faction,
+  MapName,
+  TurnAction,
+  BotDifficulty,
+} from '@tower-defense/utils';
 import type { EndpointErrorFxn } from 'paima-engine/paima-mw-core';
 import {
   awaitBlock,
@@ -42,6 +48,7 @@ interface CreateLobbyParams {
   isHidden: boolean;
   mapName: MapName;
   isPractice: boolean;
+  botDifficulty: BotDifficulty;
   hasAutoplay: boolean;
 }
 
@@ -75,6 +82,7 @@ async function createLobby(json: string): Promise<CreateLobbyResponse> {
     { value: params.mapName },
     { value: params.isPractice ? 'T' : 'F' },
     { value: params.hasAutoplay ? 'T' : 'F' },
+    { value: params.botDifficulty },
   ]);
 
   const response = await postConciseData(conciseBuilder.build(), errorFxn);

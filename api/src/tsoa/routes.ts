@@ -85,6 +85,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "bot_difficulty": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["easy"]},{"dataType":"enum","enums":["hard"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "role_setting": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["attacker"]},{"dataType":"enum","enums":["defender"]},{"dataType":"enum","enums":["random"]}],"validators":{}},
@@ -104,6 +109,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "autoplay": {"dataType":"boolean","required":true},
+            "bot_difficulty": {"ref":"bot_difficulty","required":true},
             "config_id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "created_at": {"dataType":"datetime","required":true},
             "creation_block_height": {"dataType":"double","required":true},
@@ -135,6 +141,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "autoplay": {"dataType":"boolean","required":true},
+            "bot_difficulty": {"ref":"bot_difficulty","required":true},
             "config_id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "created_at": {"dataType":"datetime","required":true},
             "creation_block_height": {"dataType":"double","required":true},
@@ -166,6 +173,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "autoplay": {"dataType":"boolean","required":true},
+            "bot_difficulty": {"ref":"bot_difficulty","required":true},
             "config_id": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "created_at": {"dataType":"datetime","required":true},
             "creation_block_height": {"dataType":"double","required":true},
