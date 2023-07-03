@@ -17,3 +17,4 @@ DROP TYPE lobby_status;
 DROP TYPE match_result;
 DROP TYPE role_setting;
 DROP TYPE move_type;
+DROP TYPE bot_difficulty;
