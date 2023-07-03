@@ -32,7 +32,7 @@ export class GameENV extends ENV {
     return process.env.LONG_CONFIG || 'defaultdefault';
   }
   static get LOBBY_AUTOPLAY_BLOCKHEIGHT(): number {
-    return Number(process.env.LOBBY_AUTOPLAY_BLOCKHEIGHT || '0');
+    return Number(process.env.LOBBY_AUTOPLAY_BLOCKHEIGHT);
   }
 }
 
