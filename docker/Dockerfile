@@ -1,13 +1,11 @@
-FROM node:16.17.0
+FROM node:16.20.1-bookworm
 RUN apt-get update \
-&& echo "deb http://apt-archive.postgresql.org/pub/repos/apt/ stretch-pgdg main" > /etc/apt/sources.list.d/pgdg.list \ 
-&& curl -s https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-&& apt-get -y update \
 && DEBIAN_FRONTEND=noninteractive \
    apt-get install --no-install-recommends --assume-yes \
-   postgresql-client-14
+   postgresql-client \
+&& apt-get clean
 WORKDIR /usr/src/app
-# copy all folders in 
+# copy all folders in
 COPY . .
 EXPOSE ${WEBSERVER_PORT}
 RUN npm install tsc -g
