@@ -19,3 +19,12 @@ jest.config.js
 # docker
 Dockerfile
 docker-compose.yml
+
+# envs
+.env*
+
+# other
+wipe.sh
+documentation
+**/*.md
+*.tar.gz
