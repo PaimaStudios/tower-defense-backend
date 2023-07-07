@@ -155,6 +155,7 @@ async function validateSubmitMoves(
   userAddress: string,
   backendUri: string
 ): Promise<ErrorCode> {
+  userAddress = userAddress.toLowerCase();
   const elems = gameInput.split('|');
   if (elems.length < 3) {
     return TowerDefenseRejectionCode.S_NUM_PARAMS;
