@@ -61,5 +61,5 @@ function buildTransaction(
         genesisID: "mainnet-v1.0",
         genesisHash: "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8="
     };
-    return makePaymentTxnWithSuggestedParams(userAddress, userAddress, 0, userAddress, msgArray, SUGGESTED_PARAMS);
+    return makePaymentTxnWithSuggestedParams(userAddress, userAddress, 0, undefined, msgArray, SUGGESTED_PARAMS);
 }
