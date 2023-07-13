@@ -27,7 +27,9 @@ const selectGameInputSubmissions = async pool => {
 };
 
 const selectTotalWallets = async pool => {
-  const totalWallets = await pool.query(`SELECT COUNT(DISTINCT user_address) FROM historical_game_inputs`);
+  const totalWallets = await pool.query(
+    `SELECT COUNT(DISTINCT user_address) FROM historical_game_inputs`
+  );
   console.log('Total # of unique player wallets: ');
   console.log(totalWallets.rows);
 };
@@ -37,7 +39,8 @@ const selectUniquePlayers = async pool => {
     SELECT 
       COUNT(DISTINCT user_address) FILTER (WHERE user_address LIKE '0x%') AS evm,
       COUNT(DISTINCT user_address) FILTER (WHERE user_address LIKE 'addr%') AS cardano,
-      COUNT(DISTINCT user_address) - COUNT(DISTINCT user_address) FILTER (WHERE user_address LIKE 'addr%') - COUNT(DISTINCT user_address) FILTER (WHERE user_address LIKE '0x%') as polkadot
+      COUNT(DISTINCT user_address) FILTER (WHERE user_address SIMILAR TO '[A-Z0-9]{58}') AS algorand,
+      COUNT(DISTINCT user_address) - COUNT(DISTINCT user_address) FILTER (WHERE user_address LIKE 'addr%') - COUNT(DISTINCT user_address) FILTER (WHERE user_address SIMILAR TO '[A-Z0-9]{58}') - COUNT(DISTINCT user_address) FILTER (WHERE user_address LIKE '0x%') as polkadot
     FROM historical_game_inputs
 `);
   console.log('Unique players wallet distribution: ');
@@ -49,9 +52,8 @@ const run = async () => {
   await selectGamesPlayed(pool);
   await selectRounds(pool);
   await selectGameInputSubmissions(pool);
-  await selectTotalWallets (pool);
+  await selectTotalWallets(pool);
   await selectUniquePlayers(pool);
-
 
   process.exit(0);
 };
