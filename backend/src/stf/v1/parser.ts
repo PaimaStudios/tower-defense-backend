@@ -1,5 +1,5 @@
-import type { ParserRecord } from 'paima-engine/paima-utils-backend';
-import { PaimaParser } from 'paima-engine/paima-utils-backend';
+import type { ParserRecord } from 'paima-engine/paima-concise';
+import { PaimaParser } from 'paima-engine/paima-concise';
 import P from 'parsimmon';
 import type {
   BuildStructureAction,
@@ -48,7 +48,7 @@ const createdLobby: ParserRecord<CreatedLobbyInput> = {
     value => conciseFactionMap[value as RoleSettingConcise]
   ),
   numOfRounds: PaimaParser.NumberParser(3, 1000),
-  roundLength: PaimaParser.DefaultRoundLength(),
+  roundLength: PaimaParser.DefaultRoundLength(parseInt(process.env.BLOCK_TIME || '4', 0)),
   isHidden: PaimaParser.TrueFalseParser(false),
   map: PaimaParser.EnumParser(maps),
   isPractice: PaimaParser.TrueFalseParser(false),
@@ -171,7 +171,7 @@ function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput {
   };
 }
 
-const myParser = new PaimaParser(myGrammar, parserCommands);
+const myParser = new PaimaParser(myGrammar, parserCommands, process.env.NODE_ENV === 'development');
 
 function parse(input: string): ParsedSubmittedInput {
   try {
