@@ -18,7 +18,7 @@ Secondly, make sure to create your own `.env.development` config file. Most of t
 
 Various `.env` files can be used and are used to configure the various build targets under different circumstances.
 
-Integration testing uses the commited `.env.test` files (see the integration testing compose files &ndash; [new](/integration-testing/config/new/docker-compose.yml) and [old](/integration-testing/config/old/docker-compose.yml)).
+Integration testing uses the committed `.env.test` files (see the integration testing compose files &ndash; [new](/integration-testing/config/new/docker-compose.yml) and [old](/integration-testing/config/old/docker-compose.yml)).
 
 Middleware and backend both use `.env.development` by default (which is purposefully not commited to the repository), but will use the file `.env.xxx` for arbitrary `xxx` if the `NODE_ENV` variable is set to `xxx`. To see where this binding happens, see [the docker compose file](/docker/docker-compose.yml) for the backend and [the build script](/middleware/scripts/build.sh) for the middleware.
 
