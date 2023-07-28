@@ -9,7 +9,7 @@ const POLLING_RATE = 1;
 
 async function main() {
   console.log(GameENV.CONTRACT_ADDRESS);
-  const chainFunnel = await paimaFunnel.initialize(GameENV.CHAIN_URI, GameENV.CONTRACT_ADDRESS);
+  const chainFunnel = await paimaFunnel.initialize(GameENV.CHAIN_URI, GameENV.CONTRACT_ADDRESS, gameSM.getReadWriteDbConn());
   setPool(gameSM.getReadonlyDbConn());
   const engine = paimaRuntime.initialize(chainFunnel, gameSM, gameBackendVersion);
   engine.setPollingRate(POLLING_RATE);
