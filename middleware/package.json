@@ -22,7 +22,6 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "esbuild": "^0.15.15",
-    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-    "@esbuild-plugins/node-modules-polyfill": "^0.1.4"
+    "esbuild-plugin-polyfill-node": "^0.3.0"
   }
 }
