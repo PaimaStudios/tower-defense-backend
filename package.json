@@ -43,8 +43,5 @@
     "prettier": "^2.7.1",
     "ts-jest": "^29.0.3",
     "typescript": "^5.5.4"
-  },
-  "dependencies": {
-    "paima-engine": "file:../paima-engine"
   }
 }
