@@ -15,8 +15,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pgtyped/cli": "^1.0.2",
-    "@pgtyped/query": "1.0.1",
+    "@pgtyped/cli": "^2.3.0",
+    "@pgtyped/query": "^2.3.0",
+    "@pgtyped/runtime": "^2.3.0",
     "pg": "^8.7.3"
   },
   "devDependencies": {
