@@ -1,24 +1,11 @@
 import { paimaEndpoints } from '@paima/mw-core';
 import {
   initMiddlewareCore,
-  cardanoWalletLoginEndpoint,
-  retrievePostingInfo,
-  switchToBatchedCardanoMode,
-  switchToBatchedEthMode,
-  switchToBatchedPolkadotMode,
-  switchToUnbatchedMode,
-  switchToAutomaticMode,
   userWalletLoginWithoutChecks,
-  automaticWalletLogin,
   updateBackendUri,
   getRemoteBackendVersion,
-  sendEvmWalletTransaction,
-  signMessageCardano,
   postConciselyEncodedData,
-  polkadotLoginRaw,
-  signMessagePolkadot,
 } from '@paima/mw-core';
-import type { PostingModeSwitchResult } from '@paima/mw-core';
 
 import { gameBackendVersion, GAME_NAME } from '@tower-defense/utils';
 
@@ -39,22 +26,9 @@ export * from './types';
 export {
   getMiddlewareConfig,
   userWalletLoginWithoutChecks,
-  cardanoWalletLoginEndpoint,
-  retrievePostingInfo,
-  switchToUnbatchedMode,
-  switchToBatchedEthMode,
-  switchToBatchedCardanoMode,
-  switchToBatchedPolkadotMode,
-  switchToAutomaticMode,
-  automaticWalletLogin,
   updateBackendUri,
   getRemoteBackendVersion,
-  sendEvmWalletTransaction,
-  signMessageCardano,
   postConciselyEncodedData,
-  polkadotLoginRaw,
-  signMessagePolkadot,
-  PostingModeSwitchResult,
 };
 
 export default endpoints;

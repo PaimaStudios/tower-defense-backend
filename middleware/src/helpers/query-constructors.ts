@@ -1,6 +1,6 @@
 import type { MapName } from '@tower-defense/utils';
 import type { QueryOptions } from '@paima/mw-core';
-import { buildBackendQuery, buildQuery } from '@paima/mw-core';
+import { buildQuery, getBackendUri } from '@paima/mw-core';
 import type { WalletAddress } from '@paima/utils';
 
 import { getIndexerUri, getStatefulUri } from '../state';
@@ -11,6 +11,10 @@ function buildIndexerQuery(endpoint: string, options: QueryOptions): string {
 
 function buildStatefulQuery(endpoint: string, options: QueryOptions): string {
   return `${getStatefulUri()}/${buildQuery(endpoint, options)}`;
+}
+
+function buildBackendQuery(endpoint: string, options: QueryOptions): string {
+  return `${getBackendUri()}/${buildQuery(endpoint, options)}`;
 }
 
 export function indexerQueryAccountNfts(account: string, size?: number, page?: number): string {

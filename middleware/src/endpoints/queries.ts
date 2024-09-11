@@ -53,7 +53,7 @@ import type {
   MatchExecutorData,
   RoundExecutorData,
 } from '@tower-defense/utils';
-import type { FailedResult } from '@paima/mw-core';
+import type { FailedResult } from '@paima/utils';
 import { getBlockNumber, PaimaMiddlewareErrorCode } from '@paima/mw-core';
 import type { MatchExecutor, RoundExecutor } from '@paima/executors';
 import type { WalletAddress } from '@paima/utils';

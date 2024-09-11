@@ -17,6 +17,7 @@
   "dependencies": {
     "@paima/executors": "^5.0.0",
     "@paima/mw-core": "5.0.0",
+    "@paima/providers": "^5.0.0",
     "@tower-defense/game-logic": "1.0.0",
     "@tower-defense/utils": "1.0.0"
   },

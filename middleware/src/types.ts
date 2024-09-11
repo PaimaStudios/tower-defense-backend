@@ -1,4 +1,4 @@
-import type { FailedResult } from '@paima/mw-core';
+import type { FailedResult } from '@paima/utils';
 import type {
   ContractAddress,
   Hash,

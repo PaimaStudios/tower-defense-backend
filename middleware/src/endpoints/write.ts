@@ -24,13 +24,14 @@ import {
   PaimaMiddlewareErrorCode,
   postConciseData,
 } from '@paima/mw-core';
+import { WalletMode } from '@paima/providers';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
 
 const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
   try {
-    const wallet = getActiveAddress();
+    const wallet = getActiveAddress(WalletMode.EvmEthers);
     if (wallet.length === 0) {
       return errorFxn(PaimaMiddlewareErrorCode.WALLET_NOT_CONNECTED);
     }

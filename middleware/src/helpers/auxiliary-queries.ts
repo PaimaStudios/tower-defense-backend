@@ -1,4 +1,4 @@
-import type { FailedResult } from '@paima/mw-core';
+import type { FailedResult } from '@paima/utils';
 import { PaimaMiddlewareErrorCode } from '@paima/mw-core';
 import { pushLog } from '@paima/mw-core';
 import type { ContractAddress } from '@tower-defense/utils';
