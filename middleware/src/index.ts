@@ -1,4 +1,4 @@
-import { paimaEndpoints } from 'paima-engine/paima-mw-core';
+import { paimaEndpoints } from '@paima/mw-core';
 import {
   initMiddlewareCore,
   cardanoWalletLoginEndpoint,
@@ -17,8 +17,8 @@ import {
   postConciselyEncodedData,
   polkadotLoginRaw,
   signMessagePolkadot,
-} from 'paima-engine/paima-mw-core';
-import type { PostingModeSwitchResult } from 'paima-engine/paima-mw-core';
+} from '@paima/mw-core';
+import type { PostingModeSwitchResult } from '@paima/mw-core';
 
 import { gameBackendVersion, GAME_NAME } from '@tower-defense/utils';
 

@@ -1,6 +1,6 @@
-import type { FailedResult } from 'paima-engine/paima-mw-core';
-import { PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
-import { pushLog } from 'paima-engine/paima-mw-core';
+import type { FailedResult } from '@paima/mw-core';
+import { PaimaMiddlewareErrorCode } from '@paima/mw-core';
+import { pushLog } from '@paima/mw-core';
 import type { ContractAddress } from '@tower-defense/utils';
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import type {
@@ -29,7 +29,7 @@ import {
   indexerQueryTitleImage,
   statefulQueryNftScore,
 } from './query-constructors';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from '@paima/utils';
 
 export async function getRawLobbyState(
   lobbyID: string

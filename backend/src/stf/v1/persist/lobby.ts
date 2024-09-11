@@ -1,7 +1,7 @@
-import type Prando from 'paima-engine/paima-prando';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type Prando from '@paima/prando';
+import type { WalletAddress } from '@paima/utils';
 import type { CreatedLobbyInput } from '../types';
-import type { SQLUpdate } from 'paima-engine/paima-db';
+import type { SQLUpdate } from '@paima/db';
 import type {
   ICloseLobbyParams,
   ICreateLobbyParams,

@@ -1,5 +1,5 @@
 import type { MapName, ResultConcise, RoleSetting, TurnAction } from '@tower-defense/utils';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from '@paima/utils';
 
 export type ParsedSubmittedInput =
   | CreatedLobbyInput

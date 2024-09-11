@@ -1,6 +1,6 @@
 import { getLastScheduledWiping, getOldLobbies, wipeOldlobbies } from '@tower-defense/db';
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import { createScheduledData } from 'paima-engine/paima-db';
+import type { SQLUpdate } from '@paima/db';
+import { createScheduledData } from '@paima/db';
 import type { Pool } from 'pg';
 
 const interval = Number(process.env.DB_WIPE_SCHEDULE) || 7;

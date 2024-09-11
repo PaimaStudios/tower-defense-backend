@@ -53,10 +53,10 @@ import type {
   MatchExecutorData,
   RoundExecutorData,
 } from '@tower-defense/utils';
-import type { FailedResult } from 'paima-engine/paima-mw-core';
-import { getBlockNumber, PaimaMiddlewareErrorCode } from 'paima-engine/paima-mw-core';
-import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { FailedResult } from '@paima/mw-core';
+import { getBlockNumber, PaimaMiddlewareErrorCode } from '@paima/mw-core';
+import type { MatchExecutor, RoundExecutor } from '@paima/executors';
+import type { WalletAddress } from '@paima/utils';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');

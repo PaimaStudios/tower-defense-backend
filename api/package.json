@@ -15,6 +15,7 @@
   "dependencies": {
     "@tower-defense/utils": "1.0.0",
     "@tower-defense/db": "1.0.0",
+    "@tower-defense/game-logic": "file:../game-logic",
     "fp-ts": "^2.12.3",
     "io-ts": "^2.2.18",
     "tsoa": "^4.1.2"

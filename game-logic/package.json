@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@tower-defense/utils": "1.0.0",
-    "astar-typescript": "^1.2.6"
+    "astar-typescript": "^1.2.6",
+    "@paima/prando": "5.0.0"
   }
 }

@@ -1,5 +1,5 @@
-import type { ParserRecord } from 'paima-engine/paima-concise';
-import { PaimaParser } from 'paima-engine/paima-concise';
+import type { ParserRecord } from '@paima/concise';
+import { PaimaParser } from '@paima/concise';
 import P from 'parsimmon';
 import type {
   BuildStructureAction,
@@ -26,8 +26,8 @@ import type {
   RegisteredConfigInput,
 } from './types';
 import { conciseFactionMap } from '@tower-defense/game-logic';
-import type { ConciseConsumer, ConciseValue } from 'paima-engine/paima-concise';
-import { consumer } from 'paima-engine/paima-concise';
+import type { ConciseConsumer, ConciseValue } from '@paima/concise';
+import { consumer } from '@paima/concise';
 
 // submittedMoves left out for now intentionally
 const myGrammar = `

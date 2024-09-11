@@ -18,7 +18,7 @@ import {
   getPossibleStructures,
   getSurroundingCells,
 } from './utils';
-import type Prando from 'paima-engine/paima-prando';
+import type Prando from '@paima/prando';
 
 type Lane = {
   tiles: Set<number>;

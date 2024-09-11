@@ -1,9 +1,9 @@
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import { createScheduledData } from 'paima-engine/paima-db';
+import type { SQLUpdate } from '@paima/db';
+import { createScheduledData } from '@paima/db';
 import type { IGetUserStatsResult, INewStatsParams, IUpdateStatsParams } from '@tower-defense/db';
 import { updateStats } from '@tower-defense/db';
 import { newStats } from '@tower-defense/db';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from '@paima/utils';
 import type { Result, ResultConcise } from '@tower-defense/utils';
 
 // Generate blank/empty user stats

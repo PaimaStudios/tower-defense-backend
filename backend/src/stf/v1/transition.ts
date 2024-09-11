@@ -1,7 +1,7 @@
 import type { Pool } from 'pg';
-import type Prando from 'paima-engine/paima-prando';
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type Prando from '@paima/prando';
+import type { SQLUpdate } from '@paima/db';
+import type { WalletAddress } from '@paima/utils';
 import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams } from '@tower-defense/db';
 import {
   getLobbyById,
@@ -33,7 +33,7 @@ import processTick, {
   parseConfig,
   validateMoves,
 } from '@tower-defense/game-logic';
-import { roundExecutor } from 'paima-engine/paima-executors';
+import { roundExecutor } from '@paima/executors';
 import {
   persistCloseLobby,
   persistExecutedRound,

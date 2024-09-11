@@ -1,11 +1,11 @@
-import type { EndpointErrorFxn } from 'paima-engine/paima-mw-core';
+import type { EndpointErrorFxn } from '@paima/mw-core';
 import {
   PaimaMiddlewareErrorCode,
   buildAbstractEndpointErrorFxn,
   PAIMA_MIDDLEWARE_ERROR_MESSAGES,
-} from 'paima-engine/paima-mw-core';
-import type { ErrorMessageFxn } from 'paima-engine/paima-utils';
-import { buildErrorCodeTranslator } from 'paima-engine/paima-utils';
+} from '@paima/mw-core';
+import type { ErrorMessageFxn } from '@paima/utils';
+import { buildErrorCodeTranslator } from '@paima/utils';
 
 export const enum MiddlewareErrorCode {
   GENERIC_GAME_ERROR = PaimaMiddlewareErrorCode.FINAL_PAIMA_GENERIC_ERROR + 1,

@@ -1,5 +1,5 @@
 import type { IGetMovesByLobbyResult } from '@tower-defense/db';
-import { ENV } from 'paima-engine/paima-utils';
+import { ENV } from '@paima/utils';
 import type { StructureType, TurnAction } from './types.js';
 type VersionString = `${number}.${number}.${number}`;
 
