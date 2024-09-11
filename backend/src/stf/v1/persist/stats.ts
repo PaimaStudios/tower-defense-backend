@@ -40,7 +40,7 @@ export function scheduleStatsUpdate(
   result: Result,
   block_height: number
 ): SQLUpdate {
-  return createScheduledData(createStatsUpdateInput(wallet, result), block_height);
+  return createScheduledData(createStatsUpdateInput(wallet, result), block_height, 'scheduleStatsUpdate');
 }
 
 const conciseResult: Record<Result, ResultConcise> = {

@@ -3,7 +3,7 @@ import { createScheduledData, deleteScheduledData } from '@paima/db';
 
 // Schedule a zombie round to be executed in the future
 export function scheduleZombieRound(lobbyId: string, block_height: number): SQLUpdate {
-  return createScheduledData(createZombieInput(lobbyId), block_height);
+  return createScheduledData(createZombieInput(lobbyId), block_height, 'scheduleZombieRound');
 }
 
 // Delete a scheduled zombie round to be executed in the future

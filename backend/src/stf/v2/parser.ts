@@ -175,7 +175,7 @@ function parseRegisterConfig(c: ConciseConsumer): RegisteredConfigInput {
   };
 }
 
-const myParser = new PaimaParser(myGrammar, parserCommands, process.env.NODE_ENV === 'development');
+const myParser = new PaimaParser(myGrammar, parserCommands, { debug: process.env.NODE_ENV === 'development' });
 
 function parse(input: string): ParsedSubmittedInput {
   try {
