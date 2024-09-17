@@ -8,6 +8,7 @@ export * from './update.queries.js';
 //to resolve clashing exports (contained in multiple queries.js files but identical)
 export {
   Json,
+  DateOrString,
   lobby_status,
   match_result,
   move_type,

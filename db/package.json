@@ -7,8 +7,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "npx pgtyped -w -c pgtypedconfig.json",
+    "prebuild": "./docker-with.sh pgtyped -c pgtypedconfig.json",
+    "watch": "./docker-with.sh pgtyped -c pgtypedconfig.json -w",
     "stats": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/stats.js",
     "winners": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/winners.js"
   },
