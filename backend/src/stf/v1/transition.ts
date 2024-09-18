@@ -1,7 +1,7 @@
 import type { Pool } from 'pg';
 import type Prando from '@paima/prando';
 import type { SQLUpdate } from '@paima/db';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams } from '@tower-defense/db';
 import {
   getLobbyById,

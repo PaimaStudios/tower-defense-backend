@@ -20,8 +20,8 @@ export async function wipeSchedule(blockHeight: number, dbConn: Pool): Promise<b
   } else return false;
 }
 // Schedule a zombie round to be executed in the future
-export function scheduleWipeOldLobbies(block_height: number): SQLUpdate {
-  return createScheduledData(createWipeInput(interval), block_height, 'scheduleWipeOldLobbies');
+export function scheduleWipeOldLobbies(blockHeight: number): SQLUpdate {
+  return createScheduledData(createWipeInput(interval), { blockHeight }, { precompile: 'scheduleWipeOldLobbies' });
 }
 
 // Create the wipe old lobbies input

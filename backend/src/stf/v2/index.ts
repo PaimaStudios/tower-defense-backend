@@ -1,6 +1,6 @@
 import type { Pool } from 'pg';
 import type Prando from '@paima/prando';
-import type { SubmittedChainData } from '@paima/utils';
+import type { SubmittedChainData } from '@paima/chain-types';
 import { SCHEDULED_DATA_ADDRESS } from '@paima/utils';
 
 import type { SQLUpdate } from '@paima/db';

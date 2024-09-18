@@ -5,7 +5,7 @@ import type {
   RoleSetting,
   TurnAction,
 } from '@tower-defense/utils';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 
 export type ParsedSubmittedInput =
   | CreatedLobbyInput

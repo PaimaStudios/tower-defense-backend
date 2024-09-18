@@ -1,5 +1,5 @@
 import type { SQLUpdate } from '@paima/db';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 
 import type { INewNftParams } from '@tower-defense/db';
 import { newNft } from '@tower-defense/db';

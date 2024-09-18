@@ -14,7 +14,7 @@ import { executeRound } from '@tower-defense/db';
 import type { SQLUpdate } from '@paima/db';
 import { deleteZombieRound, scheduleZombieRound } from './zombie';
 import type { MatchResults, MatchState, TurnAction } from '@tower-defense/utils';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 
 // This function inserts a new empty round in the database.
 // We schedule rounds here for future automatic execution as zombie rounds in this function.
