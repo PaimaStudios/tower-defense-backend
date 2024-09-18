@@ -12,9 +12,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tower-defense/db": "1.0.0",
-    "@tower-defense/game-logic": "file:../game-logic",
-    "@tower-defense/utils": "1.0.0",
+    "@tower-defense/db": "../db",
+    "@tower-defense/game-logic": "../game-logic",
+    "@tower-defense/utils": "../utils",
     "fp-ts": "^2.12.3",
     "io-ts": "^2.2.18",
     "tsoa": "^6.4.0"

@@ -6,7 +6,6 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config --experimental-specifier-resolution=node build/index.js"
   },
   "author": "",
@@ -15,8 +14,8 @@
     "@paima/db": "5.0.0",
     "@paima/executors": "^5.0.0",
     "@paima/precompiles": "5.0.0",
-    "@tower-defense/game-logic": "1.0.0",
-    "@tower-defense/utils": "1.0.0",
+    "@tower-defense/game-logic": "../game-logic",
+    "@tower-defense/utils": "../utils",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "node-fetch": "^3.2.4",

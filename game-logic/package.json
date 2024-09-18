@@ -5,14 +5,13 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tower-defense/utils": "1.0.0",
+    "@tower-defense/utils": "../utils",
     "astar-typescript": "^1.2.6",
-    "@paima/prando": "5.0.0"
+    "@paima/prando": "5.0.0",
+    "@paima/chain-types": "^5.0.0"
   }
 }
