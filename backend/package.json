@@ -12,9 +12,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@paima/chain-types": "^5.0.0",
     "@paima/db": "5.0.0",
     "@paima/executors": "^5.0.0",
+    "@paima/precompiles": "5.0.0",
     "@tower-defense/game-logic": "1.0.0",
     "@tower-defense/utils": "1.0.0",
     "cors": "^2.8.5",

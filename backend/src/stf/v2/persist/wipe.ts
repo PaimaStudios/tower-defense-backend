@@ -1,11 +1,11 @@
 import { getLastScheduledWiping, getOldLobbies, wipeOldlobbies } from '@tower-defense/db';
 import type { SQLUpdate } from '@paima/db';
 import { createScheduledData } from '@paima/db';
-import type { Pool } from 'pg';
+import type { PoolClient } from 'pg';
 
 const interval = Number(process.env.DB_WIPE_SCHEDULE) || 7;
 
-export async function wipeSchedule(blockHeight: number, dbConn: Pool): Promise<boolean> {
+export async function wipeSchedule(blockHeight: number, dbConn: PoolClient): Promise<boolean> {
   // weekly cleanup
   const blocksInDay = (60 * 60 * 24) / Number(process.env.BLOCK_TIME);
   // fetch last scheduled wiping from the db
