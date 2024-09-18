@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prebuild": "npm run -w api prebuild",
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.build.json",
     "serve:dev": "set -o allexport; source .env.development; set +o allexport && npm run build && WEBSERVER_PORT=3333 npx tsc --build tsconfig.build.json &&  node --experimental-specifier-resolution=node backend/build/index.js",
     "docker:cp": "cp ./docker/* ../ && cd ..",
     "docker": "npm run docker:cp && docker compose up",
