@@ -9,12 +9,12 @@ import {
 import type { MatchExecutorData, MatchState } from '@tower-defense/utils';
 import { moveToAction } from '@tower-defense/utils';
 
-type Response = MatchExecutorData | null;
+type MatchExecutorResponse = MatchExecutorData | null;
 
 @Route('match_executor')
 export class matchExecutorController extends Controller {
   @Get()
-  public async get(@Query() lobbyID: string): Promise<Response> {
+  public async get(@Query() lobbyID: string): Promise<MatchExecutorResponse> {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
     const [config] = await getMatchConfig.run({ id: lobby.config_id }, pool);

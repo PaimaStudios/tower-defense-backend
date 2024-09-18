@@ -56,7 +56,7 @@ import type {
 import type { FailedResult } from '@paima/utils';
 import { getBlockNumber, PaimaMiddlewareErrorCode } from '@paima/mw-core';
 import type { MatchExecutor, RoundExecutor } from '@paima/executors';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');

@@ -4,7 +4,7 @@ import { getLobbyById, getRoundData, requirePool } from '@tower-defense/db';
 import { GameENV } from '@tower-defense/utils';
 
 //TODO: these types are not in sync with the mw
-interface Response {
+interface LobbyStateResponse {
   lobby: Lobby | null;
 }
 
@@ -17,7 +17,7 @@ interface Lobby extends IGetLobbyByIdResult {
 @Route('lobby_state')
 export class lobbyStateController extends Controller {
   @Get()
-  public async get(@Query() lobbyID: string): Promise<Response> {
+  public async get(@Query() lobbyID: string): Promise<LobbyStateResponse> {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
     if (!lobby) return { lobby: null };

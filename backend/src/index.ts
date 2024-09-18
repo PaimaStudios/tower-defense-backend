@@ -1,5 +1,4 @@
 import { runPaimaEngine } from '@paima/engine';
-import paimaRuntime from 'paima-engine/paima-runtime';
 import { generatePrecompiles } from '@paima/precompiles';
 
 import RegisterRoutes from '@tower-defense/api';
@@ -30,6 +29,7 @@ const events = {};
 
 const POLLING_RATE = 1;
 
+/*
 async function main2() {
   console.log(GameENV.CONTRACT_ADDRESS);
   const chainFunnel = await paimaFunnel.initialize(GameENV.CHAIN_URI, GameENV.CONTRACT_ADDRESS);
@@ -43,6 +43,7 @@ async function main2() {
   engine.addEndpoints(registerEndpoints);
   engine.run(GameENV.STOP_BLOCKHEIGHT, GameENV.SERVER_ONLY_MODE);
 }
+  */
 
 async function main() {
   await runPaimaEngine(

@@ -1,5 +1,5 @@
 import type Prando from '@paima/prando';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 import type {
   AnnotatedMap,
   MatchState,

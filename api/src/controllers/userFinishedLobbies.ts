@@ -4,7 +4,7 @@ import { requirePool, getUserFinishedLobbies } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/Either';
 import { psqlNum } from '../validation.js';
 
-interface Response {
+interface UserFinishedLobbiesResponse {
   lobbies: IGetPaginatedUserLobbiesResult[];
 }
 
@@ -15,7 +15,7 @@ export class UserFinishedLobbiesController extends Controller {
     @Query() wallet: string,
     @Query() count?: number,
     @Query() page?: number
-  ): Promise<Response> {
+  ): Promise<UserFinishedLobbiesResponse> {
     const pool = requirePool();
     const valPage = psqlNum.decode(page || 1); // pass 1 if undefined (or 0)
     const valCount = psqlNum.decode(count || 10); // pass 10 if undefined (or 0)

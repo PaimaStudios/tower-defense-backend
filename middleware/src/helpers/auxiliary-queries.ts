@@ -29,7 +29,7 @@ import {
   indexerQueryTitleImage,
   statefulQueryNftScore,
 } from './query-constructors';
-import type { WalletAddress } from '@paima/utils';
+import type { WalletAddress } from '@paima/chain-types';
 
 export async function getRawLobbyState(
   lobbyID: string

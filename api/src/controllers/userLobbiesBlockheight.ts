@@ -4,14 +4,14 @@ import { requirePool, getNewLobbiesByUserAndBlockHeight } from '@tower-defense/d
 import { psqlNum } from '../validation.js';
 import { isLeft } from 'fp-ts/Either';
 
-interface Response {
+interface UserLobbiesBlockheightResponse {
   lobbies: IGetNewLobbiesByUserAndBlockHeightResult[];
 }
 
 @Route('user_lobbies_blockheight')
 export class UserLobbiesBlockheightController extends Controller {
   @Get()
-  public async get(@Query() wallet: string, @Query() blockHeight: number): Promise<Response> {
+  public async get(@Query() wallet: string, @Query() blockHeight: number): Promise<UserLobbiesBlockheightResponse> {
     const pool = requirePool();
     wallet = wallet.toLowerCase();
     const valBH = psqlNum.decode(blockHeight);

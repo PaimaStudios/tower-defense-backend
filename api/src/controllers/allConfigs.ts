@@ -3,14 +3,14 @@ import type { IGetUserConfigsResult } from '@tower-defense/db';
 import { getUserConfigs } from '@tower-defense/db';
 import { requirePool } from '@tower-defense/db';
 
-interface Response {
+interface UserConfigsResponse {
   configs: IGetUserConfigsResult[];
 }
 
 @Route('user_configs')
 export class userConfigsController extends Controller {
   @Get()
-  public async get(@Query() creator: string): Promise<Response> {
+  public async get(@Query() creator: string): Promise<UserConfigsResponse> {
     const pool = requirePool();
     const configs = await getUserConfigs.run({ creator }, pool);
     return { configs };
