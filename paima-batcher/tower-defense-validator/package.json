@@ -1,9 +1,0 @@
-{
-  "name": "@paima-batcher/tower-defense-validator",
-  "version": "0.1.0",
-  "description": "",
-  "main": "build/index.js",
-  "type": "module",
-  "types": "build/index.d.ts",
-  "dependencies": {}
-}
