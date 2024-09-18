@@ -12,9 +12,9 @@ import { psqlNum } from '../validation.js';
 import type { MatchState, RoundExecutorData } from '@tower-defense/utils';
 import { moveToAction } from '@tower-defense/utils';
 
-type RoundExecutorResponse = RoundExecutorData | Error;
+type RoundExecutorResponse = RoundExecutorData | RoundExecutorError;
 
-interface Error {
+interface RoundExecutorError {
   error: 'lobby not found' | 'bad round number' | 'round not found';
 }
 

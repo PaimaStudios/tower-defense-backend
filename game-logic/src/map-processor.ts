@@ -1,5 +1,4 @@
 import type Prando from '@paima/prando';
-import type { WalletAddress } from '@paima/chain-types';
 import type {
   AnnotatedMap,
   MatchState,
@@ -9,6 +8,10 @@ import type {
   RoleSetting,
   MatchConfig,
 } from '@tower-defense/utils';
+
+// Manually declare WalletAddress = string because api's tsoa can't find it otherwise. Root cause unknown.
+//import type { WalletAddress } from '@paima/chain-types';
+type WalletAddress = string;
 
 export function generateMatchState(
   creatorFaction: RoleSetting,

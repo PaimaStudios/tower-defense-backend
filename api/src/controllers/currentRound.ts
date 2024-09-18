@@ -1,14 +1,14 @@
 import { Controller, Get, Query, Route } from 'tsoa';
 import { requirePool, getLobbyById, getRoundData } from '@tower-defense/db';
 
-type CurrentRoundResponse = RoundData | Error;
+type CurrentRoundResponse = RoundData | CurrentRoundError;
 
 interface RoundData {
   currentRound: number;
   roundStartHeight: number;
 }
 
-interface Error {
+interface CurrentRoundError {
   error: 'round not found' | 'lobby not found';
 }
 
