@@ -2,8 +2,7 @@ import { runPaimaEngine } from '@paima/engine';
 import { generatePrecompiles } from '@paima/precompiles';
 
 import RegisterRoutes from '@tower-defense/api';
-import { gameBackendVersion, GameENV } from '@tower-defense/utils';
-import { setPool } from '@tower-defense/db';
+import { GameENV } from '@tower-defense/utils';
 
 import gameStateTransitionV1 from './stf/v1';
 import gameStateTransitionV2 from './stf/v2';
@@ -26,8 +25,6 @@ export enum PrecompileNames {
 export const precompiles = generatePrecompiles(PrecompileNames);
 
 const events = {};
-
-const POLLING_RATE = 1;
 
 /*
 async function main2() {
