@@ -2,6 +2,7 @@ import { getLastScheduledWiping, getOldLobbies, wipeOldlobbies } from '@tower-de
 import type { SQLUpdate } from '@paima/db';
 import { createScheduledData } from '@paima/db';
 import type { PoolClient } from 'pg';
+import { precompiles } from '../../../index.js';
 
 const interval = Number(process.env.DB_WIPE_SCHEDULE) || 7;
 
@@ -21,7 +22,7 @@ export async function wipeSchedule(blockHeight: number, dbConn: PoolClient): Pro
 }
 // Schedule a zombie round to be executed in the future
 export function scheduleWipeOldLobbies(blockHeight: number): SQLUpdate {
-  return createScheduledData(createWipeInput(interval), { blockHeight }, { precompile: 'scheduleWipeOldLobbies' });
+  return createScheduledData(createWipeInput(interval), { blockHeight }, { precompile: precompiles['scheduleWipeOldLobbies'] });
 }
 
 // Create the wipe old lobbies input

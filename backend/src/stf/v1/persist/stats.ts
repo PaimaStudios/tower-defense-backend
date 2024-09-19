@@ -5,6 +5,7 @@ import { updateStats } from '@tower-defense/db';
 import { newStats } from '@tower-defense/db';
 import type { WalletAddress } from '@paima/chain-types';
 import type { Result, ResultConcise } from '@tower-defense/utils';
+import { precompiles } from '../../../index.js';
 
 // Generate blank/empty user stats
 export function blankStats(wallet: string): SQLUpdate {
@@ -40,7 +41,7 @@ export function scheduleStatsUpdate(
   result: Result,
   blockHeight: number
 ): SQLUpdate {
-  return createScheduledData(createStatsUpdateInput(wallet, result), { blockHeight }, { precompile: 'scheduleStatsUpdate' });
+  return createScheduledData(createStatsUpdateInput(wallet, result), { blockHeight }, { precompile: precompiles['scheduleStatsUpdate'] });
 }
 
 const conciseResult: Record<Result, ResultConcise> = {
