@@ -52,7 +52,7 @@ async function main() {
     events,
     {}, // todo: openapi
     {
-      default: RegisterRoutes
+      default: app => app.use(RegisterRoutes),
     }
   );
 }
