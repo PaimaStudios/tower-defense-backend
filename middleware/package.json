@@ -6,7 +6,7 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "scripts/build.sh",
+    "postbuild": "scripts/build.sh",
     "build:devnet": "cross-env NODE_ENV=devnet sh scripts/build.sh",
     "build:mainnet": "cross-env NODE_ENV=mainnet sh scripts/build.sh",
     "lint": "prettier --write '**/*.ts'"
