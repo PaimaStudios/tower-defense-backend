@@ -21,6 +21,7 @@
   "workspaces": [
     "./utils",
     "./db",
+    "./contracts/evm",
     "./api",
     "./game-logic",
     "./backend",

@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    /* Needed for hardhat to use ts-node to require() an ESM hardhat.config.ts */
+    "module": "NodeNext"
+  }
+}
