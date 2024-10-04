@@ -1,10 +1,12 @@
 #!/bin/sh
 
 ENVIRONMENT=${NODE_ENV:-development}
-echo "Packaging Middleware for $ENVIRONMENT"
+echo "Packaging middleware for '$ENVIRONMENT'"
 DOTENV_CONFIG_PATH="../.env.$ENVIRONMENT" node --require dotenv/config ./esbuildconfig.cjs
-echo "Finished Packaging"
 
-echo "Vanilla Middleware (With Exports) Prepared In: packaged/middleware.js"
-head -n $(( $(grep -n '^export {' packaged/middleware.js | head -1 | cut -d: -f1) - 1 )) packaged/middleware.js > packaged/paimaMiddleware.js
-echo "Frontend-ready Middleware (Without Exports) Prepared In: packaged/paimaMiddleware.js"
+echo "Vanilla middleware prepared in: packaged/middleware.js"
+{
+    cat packaged/middleware.js
+    echo "Object.assign(window, paimaMiddleware.default);"
+} > packaged/paimaMiddleware.js
+echo "Frontend-ready middleware (globals exported) prepared in: packaged/paimaMiddleware.js"

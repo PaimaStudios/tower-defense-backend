@@ -14,15 +14,17 @@ const global = g.NodeGlobalsPolyfillPlugin({
   define: { 'process.env.var': '"hello"' }, // inject will override define, to keep env vars you must also pass define here https://github.com/evanw/esbuild/issues/660
 });
 const esbuild = require('esbuild');
+/** @type import('esbuild').BuildOptions */
 const config = {
   // JS output from previous compilation step used here instead of index.ts to have more control over the TS build process
   entryPoints: ['build/index.js'],
   bundle: true,
-  format: 'esm',
+  format: 'iife',
   define,
   outfile: 'packaged/middleware.js',
   plugins: [global, modules],
   external: ['pg-native'],
+  globalName: 'paimaMiddleware',
 };
 
 esbuild.build(config);
