@@ -29,6 +29,7 @@ const endpoints = {
       preference: {
         name,
       },
+      checkChainId: false,
     };
 
     return paimaEndpoints.userWalletLogin(loginInfo);
