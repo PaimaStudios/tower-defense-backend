@@ -1,7 +1,7 @@
-import { creds, requirePool } from './pool';
-export { creds, requirePool };
 import type Pool from 'pg';
 export type { Pool };
+import { creds, requirePool } from './pool.js';
+export { creds, requirePool };
 export * from './insert.queries.js';
 export * from './select.queries.js';
 export * from './update.queries.js';

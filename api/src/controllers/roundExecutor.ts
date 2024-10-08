@@ -7,7 +7,7 @@ import {
   getRoundMoves,
   getMatchConfig,
 } from '@tower-defense/db';
-import { isLeft } from 'fp-ts/Either';
+import { isLeft } from 'fp-ts/lib/Either.js';
 import { psqlNum } from '../validation.js';
 import type { MatchState, RoundExecutorData } from '@tower-defense/utils';
 import { moveToAction } from '@tower-defense/utils';

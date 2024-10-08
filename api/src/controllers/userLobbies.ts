@@ -2,7 +2,7 @@ import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import type { IGetPaginatedUserLobbiesResult } from '@tower-defense/db';
 import { getRoundData } from '@tower-defense/db';
 import { requirePool, getPaginatedUserLobbies, getRoundMoves } from '@tower-defense/db';
-import { isLeft } from 'fp-ts/Either';
+import { isLeft } from 'fp-ts/lib/Either.js';
 import { psqlNum } from '../validation.js';
 
 interface UserLobbiesResponse {

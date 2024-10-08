@@ -4,8 +4,8 @@ import { generatePrecompiles } from '@paima/precompiles';
 import RegisterRoutes from '@tower-defense/api';
 import { GameENV } from '@tower-defense/utils';
 
-import gameStateTransitionV1 from './stf/v1';
-import gameStateTransitionV2 from './stf/v2';
+import gameStateTransitionV1 from './stf/v1/index.js';
+import gameStateTransitionV2 from './stf/v2/index.js';
 
 function gameStateTransitionRouter(blockHeight: number) {
   if (blockHeight >= 0 && blockHeight < GameENV.LOBBY_AUTOPLAY_BLOCKHEIGHT) {

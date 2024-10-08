@@ -30,9 +30,9 @@ import type {
   Macaw,
   MapState,
 } from '@tower-defense/utils';
-import applyEvent from './apply';
-import { attackerUnitMap } from './config';
-import { findCloseBySpawnTile, getSurroundingCells } from './utils';
+import applyEvent from './apply.js';
+import { attackerUnitMap } from './config.js';
+import { findCloseBySpawnTile, getSurroundingCells } from './utils.js';
 
 // Main function, exported as default. Mostly pure functions, outputting events
 // given moves and a match state. The few exceptions are there to ensure

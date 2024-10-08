@@ -1,6 +1,6 @@
 import type Prando from '@paima/prando';
 import type { WalletAddress } from '@paima/chain-types';
-import type { CreatedLobbyInput } from '../types';
+import type { CreatedLobbyInput } from '../types.js';
 import type { SQLUpdate } from '@paima/db';
 import type {
   ICloseLobbyParams,
@@ -14,9 +14,9 @@ import { closeLobby, startMatch } from '@tower-defense/db';
 import { createLobby } from '@tower-defense/db';
 import type { MatchConfig, MatchState, RoleSetting } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
-import { blankStats } from './stats';
-import { practiceRound } from '../transition';
-import { persistNewRound } from './match';
+import { blankStats } from './stats.js';
+import { practiceRound } from '../transition.js';
+import { persistNewRound } from './match.js';
 import { generateMatchState } from '@tower-defense/game-logic';
 
 // Persist creation of a lobby

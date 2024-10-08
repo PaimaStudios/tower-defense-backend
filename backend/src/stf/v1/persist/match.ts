@@ -12,7 +12,7 @@ import { newRound } from '@tower-defense/db';
 import { updateCurrentMatchState } from '@tower-defense/db';
 import { executeRound } from '@tower-defense/db';
 import type { SQLUpdate } from '@paima/db';
-import { deleteZombieRound, scheduleZombieRound } from './zombie';
+import { deleteZombieRound, scheduleZombieRound } from './zombie.js';
 import type { MatchResults, MatchState, TurnAction } from '@tower-defense/utils';
 import type { WalletAddress } from '@paima/chain-types';
 

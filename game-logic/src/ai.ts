@@ -17,7 +17,7 @@ import {
   findCloseBySpawnTile,
   getPossibleStructures,
   getSurroundingCells,
-} from './utils';
+} from './utils.js';
 import type Prando from '@paima/prando';
 
 type Lane = {

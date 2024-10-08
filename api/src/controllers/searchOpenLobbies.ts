@@ -1,8 +1,8 @@
 import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import type { ISearchPaginatedOpenLobbiesResult } from '@tower-defense/db';
 import { requirePool, searchPaginatedOpenLobbies, getOpenLobbyById } from '@tower-defense/db';
-import { psqlNum } from '../validation';
-import { isLeft } from 'fp-ts/lib/Either';
+import { psqlNum } from '../validation.js';
+import { isLeft } from 'fp-ts/lib/Either.js';
 
 interface SearchOpenLobbiesResponse {
   lobbies: ISearchPaginatedOpenLobbiesResult[];
