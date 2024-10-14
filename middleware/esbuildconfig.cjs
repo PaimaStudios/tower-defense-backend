@@ -19,7 +19,7 @@ const config = {
   // JS output from previous compilation step used here instead of index.ts to have more control over the TS build process
   entryPoints: ['build/index.js'],
   bundle: true,
-  format: 'iife',
+  format: 'esm',
   define,
   outfile: 'packaged/middleware.js',
   plugins: [global, modules],
