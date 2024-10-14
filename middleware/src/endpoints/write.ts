@@ -31,7 +31,7 @@ const RETRIES_COUNT = 8;
 
 const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
   try {
-    const wallet = getActiveAddress(WalletMode.EvmEthers);
+    const wallet = getActiveAddress(WalletMode.EvmInjected);
     if (wallet.length === 0) {
       return errorFxn(PaimaMiddlewareErrorCode.WALLET_NOT_CONNECTED);
     }
