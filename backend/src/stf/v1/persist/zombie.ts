@@ -8,8 +8,8 @@ export function scheduleZombieRound(lobbyId: string, blockHeight: number): SQLUp
 }
 
 // Delete a scheduled zombie round to be executed in the future
-export function deleteZombieRound(lobbyId: string, block_height: number): SQLUpdate {
-  return deleteScheduledData(createZombieInput(lobbyId), block_height);
+export function deleteZombieRound(lobbyId: string, blockHeight: number): SQLUpdate {
+  return deleteScheduledData(createZombieInput(lobbyId), { blockHeight });
 }
 
 // Create the zombie round input
