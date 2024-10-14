@@ -26,22 +26,6 @@ export const precompiles = generatePrecompiles(PrecompileNames);
 
 const events = {};
 
-/*
-async function main2() {
-  console.log(GameENV.CONTRACT_ADDRESS);
-  const chainFunnel = await paimaFunnel.initialize(GameENV.CHAIN_URI, GameENV.CONTRACT_ADDRESS);
-  setPool(gameStateTransitionRouter.getReadonlyDbConn());
-  const engine = paimaRuntime.initialize(
-    chainFunnel,
-    gameStateTransitionRouter,
-    gameBackendVersion
-  );
-  engine.setPollingRate(POLLING_RATE);
-  engine.addEndpoints(registerEndpoints);
-  engine.run(GameENV.STOP_BLOCKHEIGHT, GameENV.SERVER_ONLY_MODE);
-}
-  */
-
 async function main() {
   await runPaimaEngine(
     gameStateTransitionRouter,
