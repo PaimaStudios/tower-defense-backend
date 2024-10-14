@@ -1,24 +1,24 @@
-/*  Blockheight queries  */ 
+/*  Blockheight queries  */
 
 /* @name getBlockHeight */
-SELECT * FROM block_heights 
+SELECT * FROM paima_blocks
 WHERE block_height = :block_height;
 
 /* @name getLatestBlockHeight */
-SELECT * FROM block_heights 
+SELECT * FROM paima_blocks
 ORDER BY block_height DESC
 LIMIT 1;
 
 /* @name getLatestProcessedBlockHeight */
-SELECT * FROM block_heights 
-WHERE done IS TRUE
+SELECT * FROM paima_blocks
+WHERE paima_block_hash IS NOT NULL
 ORDER BY block_height DESC
 LIMIT 1;
 
 /* @name getMatchSeeds */
 SELECT * FROM rounds
-INNER JOIN block_heights
-ON block_heights.block_height = rounds.execution_block_height
+INNER JOIN paima_blocks
+ON paima_blocks.block_height = rounds.execution_block_height
 WHERE rounds.lobby_id = :lobby_id;
 
 /*  Scheduled data  */
@@ -38,15 +38,15 @@ AND round_within_match = :round_number;
 /* @name getLatestRoundByMatchID */
 SELECT
 rounds.id,
-rounds.lobby_id, 
+rounds.lobby_id,
 rounds.round_within_match,
 lobbies.num_of_rounds AS final_round,
 lobbies.lobby_creator,
 lobbies.player_two,
-block_heights.block_height AS starting_block_height
+paima_blocks.block_height AS starting_block_height
 FROM rounds
-INNER JOIN block_heights 
-ON rounds.starting_block_height = block_heights.block_height
+INNER JOIN paima_blocks
+ON rounds.starting_block_height = paima_blocks.block_height
 INNER JOIN lobbies
 ON lobbies.lobby_id = rounds.lobby_id
 WHERE rounds.lobby_id = :lobby_id!
@@ -54,15 +54,15 @@ ORDER BY rounds.id DESC
 LIMIT 1;
 
 /* @name getAllUnexecutedRounds */
-SELECT 
+SELECT
 rounds.id,
-rounds.lobby_id, 
+rounds.lobby_id,
 rounds.round_within_match,
 lobbies.num_of_rounds AS final_round,
-block_heights.block_height AS starting_block_height
+paima_blocks.block_height AS starting_block_height
 FROM rounds
-INNER JOIN block_heights 
-ON rounds.starting_block_height = block_heights.block_height
+INNER JOIN paima_blocks
+ON rounds.starting_block_height = paima_blocks.block_height
 INNER JOIN lobbies
 ON lobbies.lobby_id = rounds.lobby_id
 WHERE execution_block_height IS NULL;
@@ -206,13 +206,13 @@ WHERE lobby_id = :lobby_id!
 AND   round = :round!;
 
 /* @name getCachedMoves */
-SELECT 
+SELECT
   match_moves.id,
   match_moves.lobby_id,
   move_type,
   move_target,
   round,
-  wallet 
+  wallet
 FROM match_moves
 INNER JOIN rounds
 ON match_moves.lobby_id = rounds.lobby_id

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prebuild": "npm -w api run prebuild",
+    "prebuild": "npm -w api run prebuild && npm -w db run prebuild",
     "build": "tsc --build tsconfig.build.json",
     "postbuild": "npm -w middleware run postbuild",
     "prestart": "npm run build && docker compose up --wait",

@@ -1,8 +1,11 @@
 -- paima general
-CREATE TABLE block_heights ( 
+CREATE TABLE paima_blocks (
   block_height INTEGER PRIMARY KEY,
+  ver INTEGER NOT NULL,
+  main_chain_block_hash BYTEA NOT NULL,
   seed TEXT NOT NULL,
-  done BOOLEAN NOT NULL DEFAULT false
+  ms_timestamp TIMESTAMP without time zone NOT NULL,
+  paima_block_hash BYTEA
 );
 CREATE TABLE scheduled_data (
   id SERIAL PRIMARY KEY,
@@ -26,7 +29,7 @@ CREATE TABLE nfts (
   timestamp TIMESTAMP,
   PRIMARY KEY (wallet, block_height)
 );
---  tower defense specific 
+--  tower defense specific
 CREATE TABLE maps (
   name TEXT PRIMARY KEY,
   layout TEXT NOT NULL
@@ -105,16 +108,16 @@ VALUES
 
 INSERT INTO configs(id, creator, version, content)
 VALUES
-('defaultdefault', '0x0', 1, 
+('defaultdefault', '0x0', 1,
 'gs10;bh25;gd100;ga100;md300;ma260;rv20;rc10;rp30;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d20;r2;3;p25;h18;c16;d25;r3;pt;1;p50;h50;c12;d2;r3;2;p25;h65;c10;d2;r4;3;p25;h80;c8;d3;r4;st;1;p50;h60;c30;d3;r2;2;p25;h80;c30;d4;r2;3;p25;h100;c25;d4;r2;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h20;r16;c13;d1;br3;bc1;s6;3;p35;h25;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r22;c16;d1;br3;bc1;s18;2;p35;h3;r22;c22;d2;br3;bc1;s27;3;p35;h4;r22;c28;d3;br2;bc30;s36;mc;1;p70;h4;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p35;h5;r16;c10;d1;br1;bc5;s10;ac55;ar3;3;p35;h6;r16;c13;d1;br3;bc30;s12;ac55;ar4'
 ),
-('FWJv579eJfdg0P','0x0', 1, 
+('FWJv579eJfdg0P','0x0', 1,
 'gs10;bh25;gd100;ga100;md300;ma260;rv20;rc10;rp30;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d20;r2;3;p25;h18;c16;d25;r3;pt;1;p50;h50;c12;d2;r3;2;p25;h65;c10;d2;r4;3;p25;h80;c8;d3;r4;st;1;p50;h60;c30;d3;r2;2;p25;h80;c30;d4;r2;3;p25;h100;c25;d4;r2;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h20;r16;c13;d1;br3;bc1;s6;3;p35;h25;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r22;c16;d1;br3;bc1;s18;2;p35;h3;r22;c22;d2;br3;bc1;s27;3;p35;h4;r22;c28;d3;br2;bc30;s36;mc;1;p70;h4;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p35;h5;r16;c10;d1;br1;bc5;s10;ac55;ar3;3;p35;h6;r16;c13;d1;br3;bc30;s12;ac55;ar4'
 ),
-('S6BZo8biAtrDp1', '0x0', 1, 
+('S6BZo8biAtrDp1', '0x0', 1,
 'gs10;bh25;gd100;ga100;md300;ma260;rv20;rc10;rp30;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d20;r2;3;p25;h18;c16;d25;r3;pt;1;p50;h50;c12;d2;r3;2;p25;h65;c10;d2;r4;3;p25;h80;c8;d3;r4;st;1;p50;h60;c30;d3;r2;2;p25;h80;c30;d4;r2;3;p25;h100;c25;d4;r2;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h20;r16;c13;d1;br3;bc1;s6;3;p35;h25;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r22;c16;d1;br3;bc1;s18;2;p35;h3;r22;c22;d2;br3;bc1;s27;3;p35;h4;r22;c28;d3;br2;bc30;s36;mc;1;p70;h4;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p35;h5;r16;c10;d1;br1;bc5;s10;ac55;ar3;3;p35;h6;r16;c13;d1;br3;bc30;s12;ac55;ar4'
 ),
-('sEyGPliPidNUzx', '0x0', 1, 
+('sEyGPliPidNUzx', '0x0', 1,
 'gs10;bh25;gd100;ga100;md300;ma260;rv20;rc10;rp30;hb5;sb10;at;1;p50;h12;c21;d15;r2;2;p25;h15;c16;d20;r2;3;p25;h18;c16;d25;r3;pt;1;p50;h50;c12;d2;r3;2;p25;h65;c10;d2;r4;3;p25;h80;c8;d3;r4;st;1;p50;h60;c30;d3;r2;2;p25;h80;c30;d4;r2;3;p25;h100;c25;d4;r2;gc;1;p70;h15;r20;c10;d1;br3;bc1;s4;2;p35;h20;r16;c13;d1;br3;bc1;s6;3;p35;h25;r12;c16;d1;br3;bc1;s8;jc;1;p70;h2;r22;c16;d1;br3;bc1;s18;2;p35;h3;r22;c22;d2;br3;bc1;s27;3;p35;h4;r22;c28;d3;br2;bc30;s36;mc;1;p70;h4;r18;c7;d1;br1;bc5;s8;ac60;ar2;2;p35;h5;r16;c10;d1;br1;bc5;s10;ac55;ar3;3;p35;h6;r16;c13;d1;br3;bc30;s12;ac55;ar4'
 );
 
@@ -125,13 +128,13 @@ CREATE TABLE rounds(
   lobby_id TEXT NOT NULL references lobbies(lobby_id) ON DELETE CASCADE,
   round_within_match INTEGER NOT NULL,
   match_state JSONB NOT NULL,
-  starting_block_height INTEGER NOT NULL references block_heights(block_height),
-  execution_block_Height INTEGER references block_heights(block_height)
+  starting_block_height INTEGER NOT NULL references paima_blocks(block_height),
+  execution_block_Height INTEGER references paima_blocks(block_height)
 );
 CREATE FUNCTION update_lobby_round() RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE lobbies 
-  SET 
+  UPDATE lobbies
+  SET
   current_round = NEW.round_within_match
   WHERE lobbies.lobby_id = NEW.lobby_id;
   RETURN NULL;
@@ -140,5 +143,5 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_current_round
 AFTER INSERT ON rounds
-FOR EACH ROW 
+FOR EACH ROW
 EXECUTE FUNCTION update_lobby_round();
