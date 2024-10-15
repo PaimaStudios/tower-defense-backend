@@ -1,4 +1,4 @@
-import Prando from 'paima-engine/paima-prando';
+import Prando from '@paima/prando';
 import { baseConfig } from './config';
 import { generateMatchState } from './map-processor';
 import { validateMoves } from './validation';

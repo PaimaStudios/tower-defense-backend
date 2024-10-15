@@ -6,17 +6,17 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "dev": "npx tsc && node --experimental-specifier-resolution=node build/testServer.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "npx tsoa routes"
+    "prebuild": "tsoa routes",
+    "dev": "npx tsc && node --experimental-specifier-resolution=node build/testServer.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tower-defense/utils": "1.0.0",
-    "@tower-defense/db": "1.0.0",
+    "@tower-defense/db": "../db",
+    "@tower-defense/game-logic": "../game-logic",
+    "@tower-defense/utils": "../utils",
     "fp-ts": "^2.12.3",
     "io-ts": "^2.2.18",
-    "tsoa": "^4.1.2"
+    "tsoa": "^6.4.0"
   }
 }

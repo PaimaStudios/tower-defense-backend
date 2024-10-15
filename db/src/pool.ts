@@ -1,4 +1,6 @@
 import type pg from 'pg';
+import { getConnection } from '@paima/db';
+
 /**
  * Pool of Postgres connections to avoid overhead of connecting on every request.
  */
@@ -11,15 +13,8 @@ export const creds = {
   port: parseInt(process.env.DB_PORT || '5432', 10),
 };
 
-let pool: pg.Pool | null;
-
-export function setPool(newPool: pg.Pool) {
-  pool = newPool;
-}
+let pool: pg.Pool | null = null;
 
 export function requirePool(): pg.Pool {
-  if (pool === null) {
-    throw new Error('Database connection not yet initialized!');
-  }
-  return pool;
+  return pool ??= getConnection(creds, false);
 }

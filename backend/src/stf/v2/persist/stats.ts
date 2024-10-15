@@ -1,10 +1,11 @@
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import { createScheduledData } from 'paima-engine/paima-db';
+import type { SQLUpdate } from '@paima/db';
+import { createScheduledData } from '@paima/db';
 import type { IGetUserStatsResult, INewStatsParams, IUpdateStatsParams } from '@tower-defense/db';
 import { updateStats } from '@tower-defense/db';
 import { newStats } from '@tower-defense/db';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from '@paima/chain-types';
 import type { Result, ResultConcise } from '@tower-defense/utils';
+import { precompiles } from '../../../index.js';
 
 // Generate blank/empty user stats
 export function blankStats(wallet: string): SQLUpdate {
@@ -38,9 +39,9 @@ export function persistStatsUpdate(
 export function scheduleStatsUpdate(
   wallet: WalletAddress,
   result: Result,
-  block_height: number
+  blockHeight: number
 ): SQLUpdate {
-  return createScheduledData(createStatsUpdateInput(wallet, result), block_height);
+  return createScheduledData(createStatsUpdateInput(wallet, result), { blockHeight }, { precompile: precompiles['scheduleStatsUpdate'] });
 }
 
 const conciseResult: Record<Result, ResultConcise> = {

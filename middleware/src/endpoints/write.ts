@@ -1,5 +1,5 @@
-import { retryPromise } from 'paima-engine/paima-utils';
-import { builder } from 'paima-engine/paima-concise';
+import { retryPromise } from '@paima/utils';
+import { builder } from '@paima/concise';
 
 import { buildEndpointErrorFxn, MiddlewareErrorCode } from '../errors';
 import {
@@ -17,20 +17,21 @@ import type {
   TurnAction,
   BotDifficulty,
 } from '@tower-defense/utils';
-import type { EndpointErrorFxn } from 'paima-engine/paima-mw-core';
+import type { EndpointErrorFxn } from '@paima/mw-core';
 import {
   awaitBlock,
   getActiveAddress,
   PaimaMiddlewareErrorCode,
   postConciseData,
-} from 'paima-engine/paima-mw-core';
+} from '@paima/mw-core';
+import { WalletMode } from '@paima/providers';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
 
 const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
   try {
-    const wallet = getActiveAddress();
+    const wallet = getActiveAddress(WalletMode.EvmInjected);
     if (wallet.length === 0) {
       return errorFxn(PaimaMiddlewareErrorCode.WALLET_NOT_CONNECTED);
     }

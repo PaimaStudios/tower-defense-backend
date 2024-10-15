@@ -1,11 +1,12 @@
 import { getLastScheduledWiping, getOldLobbies, wipeOldlobbies } from '@tower-defense/db';
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import { createScheduledData } from 'paima-engine/paima-db';
-import type { Pool } from 'pg';
+import type { SQLUpdate } from '@paima/db';
+import { createScheduledData } from '@paima/db';
+import type { PoolClient } from 'pg';
+import { precompiles } from '../../../index.js';
 
 const interval = Number(process.env.DB_WIPE_SCHEDULE) || 7;
 
-export async function wipeSchedule(blockHeight: number, dbConn: Pool): Promise<boolean> {
+export async function wipeSchedule(blockHeight: number, dbConn: PoolClient): Promise<boolean> {
   // weekly cleanup
   const blocksInDay = (60 * 60 * 24) / Number(process.env.BLOCK_TIME);
   // fetch last scheduled wiping from the db
@@ -20,8 +21,8 @@ export async function wipeSchedule(blockHeight: number, dbConn: Pool): Promise<b
   } else return false;
 }
 // Schedule a zombie round to be executed in the future
-export function scheduleWipeOldLobbies(block_height: number): SQLUpdate {
-  return createScheduledData(createWipeInput(interval), block_height);
+export function scheduleWipeOldLobbies(blockHeight: number): SQLUpdate {
+  return createScheduledData(createWipeInput(interval), { blockHeight }, { precompile: precompiles['scheduleWipeOldLobbies'] });
 }
 
 // Create the wipe old lobbies input

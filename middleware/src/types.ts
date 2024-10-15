@@ -1,4 +1,4 @@
-import type { FailedResult } from 'paima-engine/paima-mw-core';
+import type { FailedResult } from '@paima/utils';
 import type {
   ContractAddress,
   Hash,
@@ -7,7 +7,7 @@ import type {
   MatchConfig,
   URI,
 } from '@tower-defense/utils';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { WalletAddress } from '@paima/chain-types';
 
 export interface MiddlewareConnectionDetails {
   storageAddress: ContractAddress;

@@ -7,13 +7,13 @@ import type {
   TickEvent,
 } from '@tower-defense/utils';
 import type { AttackerStructure } from '@tower-defense/utils';
-import type { MatchExecutor, RoundExecutor } from 'paima-engine/paima-executors';
+import type { MatchExecutor, RoundExecutor } from '@paima/executors';
 import {
   matchExecutor as matchExecutorConstructor,
   roundExecutor as roundExecutorConstructor,
-} from 'paima-engine/paima-executors';
-import { pushLog } from 'paima-engine/paima-mw-core';
-import Prando from 'paima-engine/paima-prando';
+} from '@paima/executors';
+import { pushLog } from '@paima/mw-core';
+import Prando from '@paima/prando';
 
 // executor
 export async function buildRoundExecutor(

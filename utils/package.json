@@ -4,13 +4,12 @@
   "description": "Helper library for Paima Studios game Tower Defense",
   "main": "build/index.js",
   "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "parsimmon": "^1.18.1"
+    "parsimmon": "^1.18.1",
+    "@paima/utils": "5.0.0"
   },
   "devDependencies": {
     "@types/parsimmon": "^1.10.6"

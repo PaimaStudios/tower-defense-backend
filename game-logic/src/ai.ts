@@ -17,8 +17,8 @@ import {
   findCloseBySpawnTile,
   getPossibleStructures,
   getSurroundingCells,
-} from './utils';
-import type Prando from 'paima-engine/paima-prando';
+} from './utils.js';
+import type Prando from '@paima/prando';
 
 type Lane = {
   tiles: Set<number>;

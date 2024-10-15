@@ -1,4 +1,4 @@
-import Prando from 'paima-engine/paima-prando';
+import Prando from '@paima/prando';
 import processTick from './processTick';
 
 import { baseConfig, parseConfig } from './config';

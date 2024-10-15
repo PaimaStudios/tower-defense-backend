@@ -2,7 +2,8 @@ import { Controller, Get, Query, Route } from 'tsoa';
 import { requirePool, getLobbyById, getMatchConfig } from '@tower-defense/db';
 import { parseConfig } from '@tower-defense/game-logic';
 import type { MatchConfig } from '@tower-defense/utils';
-type Response = Config | Error;
+
+type ConfigResponse = Config | Error;
 
 interface Config {
   config: MatchConfig;
@@ -15,7 +16,7 @@ interface Error {
 @Route('config')
 export class configController extends Controller {
   @Get()
-  public async get(@Query() lobbyID: string): Promise<Response> {
+  public async get(@Query() lobbyID: string): Promise<ConfigResponse> {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
     if (!lobby) return { error: 'lobby not found' };

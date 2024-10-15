@@ -1,7 +1,7 @@
-import type { Pool } from 'pg';
-import type Prando from 'paima-engine/paima-prando';
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { PoolClient } from 'pg';
+import type Prando from '@paima/prando';
+import type { SQLUpdate } from '@paima/db';
+import type { WalletAddress } from '@paima/chain-types';
 import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams } from '@tower-defense/db';
 import {
   getLobbyById,
@@ -34,7 +34,7 @@ import processTick, {
   parseConfig,
   validateMoves,
 } from '@tower-defense/game-logic';
-import { roundExecutor } from 'paima-engine/paima-executors';
+import { roundExecutor } from '@paima/executors';
 import {
   persistCloseLobby,
   persistExecutedRound,
@@ -57,7 +57,7 @@ export const processCreateLobby = async (
   blockHeight: number,
   input: CreatedLobbyInput,
   randomnessGenerator: Prando,
-  dbConn: Pool
+  dbConn: PoolClient
 ): Promise<SQLUpdate[]> => {
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
@@ -82,7 +82,7 @@ export const processJoinLobby = async (
   blockHeight: number,
   input: JoinedLobbyInput,
   randomnessGenerator: Prando,
-  dbConn: Pool
+  dbConn: PoolClient
 ): Promise<SQLUpdate[]> => {
   const [lobbyState] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   // if Lobby doesn't exist, bail
@@ -99,7 +99,7 @@ export const processJoinLobby = async (
 export async function processCloseLobby(
   user: WalletAddress,
   input: ClosedLobbyInput,
-  dbConn: Pool
+  dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   const [lobbyState] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   if (!lobbyState) return [];
@@ -153,7 +153,7 @@ export async function processSubmittedTurn(
   user: string,
   input: SubmittedTurnInput,
   randomnessGenerator: Prando,
-  dbConn: Pool
+  dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   // if lobby not active or existing, bail
@@ -233,7 +233,7 @@ export async function processScheduledData(
   input: ScheduledDataInput,
   blockHeight: number,
   randomnessGenerator: Prando,
-  dbConn: Pool
+  dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   if (isZombieRound(input)) {
     return processZombieEffect(input, blockHeight, randomnessGenerator, dbConn);
@@ -249,7 +249,7 @@ export async function processZombieEffect(
   input: ZombieRound,
   blockHeight: number,
   randomnessGenerator: Prando,
-  dbConn: Pool
+  dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   const [lobby] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   if (!lobby) return [];
@@ -310,7 +310,7 @@ export async function processZombieEffect(
   return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
 }
 
-export async function processStatsEffect(input: UserStats, dbConn: Pool): Promise<SQLUpdate[]> {
+export async function processStatsEffect(input: UserStats, dbConn: PoolClient): Promise<SQLUpdate[]> {
   const [stats] = await getUserStats.run({ wallet: input.user }, dbConn);
   if (!stats) return [];
   const query = persistStatsUpdate(input.user, input.result, stats);

@@ -1,9 +1,9 @@
-import type { Pool } from 'pg';
-import type Prando from 'paima-engine/paima-prando';
-import type { SubmittedChainData } from 'paima-engine/paima-utils';
-import { SCHEDULED_DATA_ADDRESS } from 'paima-engine/paima-utils';
+import type { PoolClient } from 'pg';
+import type Prando from '@paima/prando';
+import type { PreExecutionBlockHeader, SubmittedChainData } from '@paima/chain-types';
+import { SCHEDULED_DATA_ADDRESS } from '@paima/utils';
 
-import type { SQLUpdate } from 'paima-engine/paima-db';
+import type { SQLUpdate } from '@paima/db';
 import parseInput from './parser.js';
 import {
   processCreateLobby,
@@ -18,12 +18,14 @@ import { scheduleWipeOldLobbies, wipeSchedule } from './persist/wipe.js';
 
 export default async function (
   inputData: SubmittedChainData,
-  blockHeight: number,
+  blockHeader: PreExecutionBlockHeader,
   randomnessGenerator: Prando,
-  dbConn: Pool
-): Promise<SQLUpdate[]> {
+  dbConn: PoolClient
+): Promise<{ stateTransitions: SQLUpdate[], events: [] }> {
+  const { blockHeight } = blockHeader;
+
   console.log(inputData, 'parsing input data');
-  const user = inputData.userAddress.toLowerCase();
+  const user = inputData.realAddress.toLowerCase();
   console.log(`Processing input string: ${inputData.inputData}`);
   const parsed = parseInput(inputData.inputData);
   console.log(`Input string parsed as: ${parsed.input}`);
@@ -42,5 +44,8 @@ export default async function (
     queries = await processConfig(user, parsed, randomnessGenerator);
   // add schedule data to wipe old lobbies on set schedule
   const wiping = await wipeSchedule(blockHeight, dbConn);
-  return wiping ? [...queries, scheduleWipeOldLobbies(blockHeight)] : queries;
+  return {
+    stateTransitions: wiping ? [...queries, scheduleWipeOldLobbies(blockHeight)] : queries,
+    events: [],
+  };
 }

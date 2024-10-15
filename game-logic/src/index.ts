@@ -1,11 +1,11 @@
-import type { MatchResults, MatchState, Result } from '@tower-defense/utils';
-import processTick from './processTick';
 import type { IGetLobbyByIdResult } from '@tower-defense/db';
+import type { MatchResults, MatchState, Result } from '@tower-defense/utils';
+import processTick from './processTick.js';
 export default processTick;
-export { getMap, generateMatchState } from './map-processor';
-export { baseConfig, parseConfig, conciseFactionMap } from './config';
-export { validateMoves } from './validation';
-export { generateRandomMoves, generateBotMoves, generateMoves } from './ai';
+export { generateBotMoves, generateMoves, generateRandomMoves } from './ai.js';
+export { baseConfig, conciseFactionMap, parseConfig } from './config.js';
+export { generateMatchState, getMap } from './map-processor.js';
+export { validateMoves } from './validation.js';
 
 const calculateResult = (isAttacker: boolean, defenderSurvived: boolean): Result => {
   return isAttacker ? (defenderSurvived ? 'loss' : 'win') : defenderSurvived ? 'win' : 'loss';

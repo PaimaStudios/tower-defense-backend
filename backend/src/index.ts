@@ -1,20 +1,41 @@
-import paimaFunnel from 'paima-engine/paima-funnel';
-import paimaRuntime from 'paima-engine/paima-runtime';
-import gameSM from './sm.js';
-import registerEndpoints from '@tower-defense/api';
-import { gameBackendVersion, GameENV } from '@tower-defense/utils';
-import { setPool } from '@tower-defense/db';
+import { runPaimaEngine } from '@paima/engine';
+import { generatePrecompiles } from '@paima/precompiles';
 
-const POLLING_RATE = 1;
+import RegisterRoutes from '@tower-defense/api';
+import { GameENV } from '@tower-defense/utils';
+
+import gameStateTransitionV1 from './stf/v1/index.js';
+import gameStateTransitionV2 from './stf/v2/index.js';
+
+function gameStateTransitionRouter(blockHeight: number) {
+  if (blockHeight >= 0 && blockHeight < GameENV.LOBBY_AUTOPLAY_BLOCKHEIGHT) {
+    return gameStateTransitionV1;
+  }
+  if (blockHeight >= GameENV.LOBBY_AUTOPLAY_BLOCKHEIGHT) {
+    return gameStateTransitionV2;
+  }
+  return gameStateTransitionV1;
+}
+
+export enum PrecompileNames {
+  ScheduleStatsUpdate = 'scheduleStatsUpdate',
+  ScheduleWipeOldLobbies = 'scheduleWipeOldLobbies',
+  ScheduleZombieRound = 'scheduleZombieRound',
+}
+export const precompiles = generatePrecompiles(PrecompileNames);
+
+const events = {};
 
 async function main() {
-  console.log(GameENV.CONTRACT_ADDRESS);
-  const chainFunnel = await paimaFunnel.initialize(GameENV.CHAIN_URI, GameENV.CONTRACT_ADDRESS);
-  setPool(gameSM.getReadonlyDbConn());
-  const engine = paimaRuntime.initialize(chainFunnel, gameSM, gameBackendVersion);
-  engine.setPollingRate(POLLING_RATE);
-  engine.addEndpoints(registerEndpoints);
-  engine.run(GameENV.STOP_BLOCKHEIGHT, GameENV.SERVER_ONLY_MODE);
+  await runPaimaEngine(
+    gameStateTransitionRouter,
+    precompiles,
+    events,
+    {}, // todo: openapi
+    {
+      default: RegisterRoutes,
+    }
+  );
 }
 
 main();

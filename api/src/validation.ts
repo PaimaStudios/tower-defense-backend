@@ -1,4 +1,4 @@
-import * as D from 'io-ts/Decoder';
+import * as D from 'io-ts/lib/Decoder.js';
 
 // io-ts Decoders take two type arguments, input and output type.
 // Usually the input type is `unknown`, but TSOA pre-validates basic types

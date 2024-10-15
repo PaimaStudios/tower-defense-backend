@@ -6,8 +6,7 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "sh scripts/build.sh",
+    "postbuild": "scripts/build.sh",
     "build:devnet": "cross-env NODE_ENV=devnet sh scripts/build.sh",
     "build:mainnet": "cross-env NODE_ENV=mainnet sh scripts/build.sh",
     "lint": "prettier --write '**/*.ts'"
@@ -15,14 +14,17 @@
   "keywords": [],
   "author": "PaimaStudios",
   "dependencies": {
-    "@tower-defense/game-logic": "1.0.0",
-    "@tower-defense/utils": "1.0.0"
+    "@paima/executors": "^5.0.0",
+    "@paima/mw-core": "5.0.0",
+    "@paima/providers": "^5.0.0",
+    "@tower-defense/game-logic": "../game-logic",
+    "@tower-defense/utils": "../utils"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "dotenv": "^16.0.3",
-    "esbuild": "^0.15.15",
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
-    "@esbuild-plugins/node-modules-polyfill": "^0.1.4"
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.1",
+    "esbuild": "^0.15.15"
   }
 }

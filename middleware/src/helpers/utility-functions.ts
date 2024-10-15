@@ -1,4 +1,4 @@
-import { pushLog } from 'paima-engine/paima-mw-core';
+import { pushLog } from '@paima/mw-core';
 import type {
   ActorsObject,
   MatchConfig,
@@ -21,9 +21,9 @@ import type {
   PackedLobbyState,
   RoundEnd,
 } from '../types';
-import { matchExecutor } from 'paima-engine/paima-executors';
+import { matchExecutor } from '@paima/executors';
 import processTick, { parseConfig } from '@tower-defense/game-logic';
-import type { NewRoundEvent } from 'paima-engine/paima-executors/build/types';
+import type { NewRoundEvent } from '@paima/executors/build/types';
 
 const conciseMap: Record<StructureType, StructureConcise> = {
   anacondaTower: 'at',

@@ -1,21 +1,21 @@
 import { Controller, Get, Query, Route } from 'tsoa';
 import { requirePool, getLobbyById, getRoundData } from '@tower-defense/db';
 
-type Response = RoundData | Error;
+type CurrentRoundResponse = RoundData | CurrentRoundError;
 
 interface RoundData {
   currentRound: number;
   roundStartHeight: number;
 }
 
-interface Error {
+interface CurrentRoundError {
   error: 'round not found' | 'lobby not found';
 }
 
 @Route('current_round')
 export class currentRoundController extends Controller {
   @Get()
-  public async get(@Query() lobbyID: string): Promise<Response> {
+  public async get(@Query() lobbyID: string): Promise<CurrentRoundResponse> {
     const pool = requirePool();
     const [lobby] = await getLobbyById.run({ lobby_id: lobbyID }, pool);
     if (!lobby) {

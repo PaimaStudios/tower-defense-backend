@@ -7,16 +7,18 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "npx pgtyped -w -c pgtypedconfig.json",
+    "prebuild": "./docker-with.sh pgtyped -c pgtypedconfig.json",
+    "watch": "./docker-with.sh pgtyped -c pgtypedconfig.json -w",
     "stats": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/stats.js",
     "winners": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/winners.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pgtyped/cli": "^1.0.2",
-    "@pgtyped/query": "1.0.1",
+    "@paima/db": "^5.0.0",
+    "@pgtyped/cli": "^2.3.0",
+    "@pgtyped/query": "^2.3.0",
+    "@pgtyped/runtime": "^2.3.0",
     "pg": "^8.7.3"
   },
   "devDependencies": {

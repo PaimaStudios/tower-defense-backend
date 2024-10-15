@@ -1,8 +1,8 @@
 import type { ICreateConfigParams } from '@tower-defense/db';
 import { createConfig } from '@tower-defense/db';
-import type { SQLUpdate } from 'paima-engine/paima-db';
-import type Prando from 'paima-engine/paima-prando';
-import type { WalletAddress } from 'paima-engine/paima-utils';
+import type { SQLUpdate } from '@paima/db';
+import type Prando from '@paima/prando';
+import type { WalletAddress } from '@paima/chain-types';
 import type { RegisteredConfigInput } from '../types';
 
 export function persistConfigRegistration(

@@ -7,7 +7,7 @@ import type {
   MatchState,
   UpgradeTier,
 } from '@tower-defense/utils';
-import Prando from 'paima-engine/paima-prando';
+import Prando from '@paima/prando';
 import {
   computeStartTiles,
   generateBotMoves,

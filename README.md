@@ -1,9 +1,8 @@
-<h1 align="center">
-  Tower Defense Backend
-</h1>
-<p align="center">
-This repo contains the backend and middleware implementations of TD (aka. Wrath Of The Jungle: Tower Defense).
-</p>
+# Tower Defense Backend
+
+This repo contains the backend and middleware implementations of [Wrath Of The Jungle: Tower Defense][td].
+
+[td]: https://paimastudios.com/tower-defense/
 
 # Building
 

@@ -12,7 +12,7 @@ import type {
   UpgradeTier,
   Macaw,
 } from '@tower-defense/utils';
-import { calculatePath, calculateRecoupGold, isDefenderStructure } from './utils';
+import { calculatePath, calculateRecoupGold, isDefenderStructure } from './utils.js';
 
 // function to mutate the match state after events are processed.
 export default function applyEvent(

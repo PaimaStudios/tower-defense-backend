@@ -10,7 +10,7 @@ DROP TABLE lobbies;
 DROP TABLE configs;
 DROP TABLE nfts;
 DROP TABLE maps;
-DROP TABLE block_heights;
+DROP TABLE paima_blocks;
 DROP TABLE global_user_state;
 
 DROP TYPE lobby_status;

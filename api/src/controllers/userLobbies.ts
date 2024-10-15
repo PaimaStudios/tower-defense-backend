@@ -2,10 +2,10 @@ import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
 import type { IGetPaginatedUserLobbiesResult } from '@tower-defense/db';
 import { getRoundData } from '@tower-defense/db';
 import { requirePool, getPaginatedUserLobbies, getRoundMoves } from '@tower-defense/db';
-import { isLeft } from 'fp-ts/Either';
+import { isLeft } from 'fp-ts/lib/Either.js';
 import { psqlNum } from '../validation.js';
 
-interface Response {
+interface UserLobbiesResponse {
   lobbies: UserLobby[];
 }
 
@@ -20,7 +20,7 @@ export class UserLobbiesController extends Controller {
     @Query() wallet: string,
     @Query() count?: number,
     @Query() page?: number
-  ): Promise<Response> {
+  ): Promise<UserLobbiesResponse> {
     const pool = requirePool();
     const valPage = psqlNum.decode(page || 1); // pass 1 if undefined (or 0)
     const valCount = psqlNum.decode(count || 10); // pass 10 if undefined (or 0)
