@@ -2,7 +2,7 @@
   //formatting is done by prettier ran by eslint
   "editor.formatOnSave": false,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "files.associations": {
     ".env.*": "properties"
