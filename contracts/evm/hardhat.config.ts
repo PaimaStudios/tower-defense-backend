@@ -34,7 +34,7 @@ const config: HardhatUserConfig = {
   dependencyCompiler: {
     paths: [
       '@paima/evm-contracts/contracts/PaimaL2Contract.sol',
-      // TODO: OpenZeppelin erc721 contract
+      '@paima/evm-contracts/contracts/AnnotatedMintNft.sol',
     ],
   },
   abiExporter: {
