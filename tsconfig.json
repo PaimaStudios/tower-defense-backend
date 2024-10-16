@@ -1,5 +1,4 @@
 {
-  "exclude": ["node-modules", "docker", "documentation", "WebGL"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
     /* Projects */
@@ -96,5 +95,26 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
-  }
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./db"
+    },
+    {
+      "path": "./utils"
+    },
+    {
+      "path": "./game-logic"
+    },
+    {
+      "path": "./api"
+    },
+    {
+      "path": "./backend"
+    },
+    {
+      "path": "./middleware"
+    }
+  ]
 }
