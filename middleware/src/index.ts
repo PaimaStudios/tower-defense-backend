@@ -15,14 +15,28 @@ import { writeEndpoints } from './endpoints/write';
 import { getMiddlewareConfig } from './endpoints/internal';
 import { WalletMode } from '@paima/providers';
 
+import { LocalWallet } from '@thirdweb-dev/wallets';
+
 initMiddlewareCore(GAME_NAME, gameBackendVersion);
+
+
+const localWallet = new LocalWallet({
+  walletId: 'paima-tower-defense-wallet'
+});
+const localWalletReady = localWallet.loadOrCreate({
+  strategy: 'privateKey',
+  encryption: {
+    password: 'paima-tower-defense-wallet-password',
+  }
+});
 
 const endpoints = {
   ...paimaEndpoints,
   ...queryEndpoints,
   ...writeEndpoints,
 
-  userWalletLogin(name: string) {
+  async userWalletLogin(name: string) {
+    /*
     let loginInfo: LoginInfo = {
       mode: WalletMode.EvmInjected,
       preferBatchedMode: false,
@@ -31,8 +45,24 @@ const endpoints = {
       },
       checkChainId: false,
     };
+    */
 
-    return paimaEndpoints.userWalletLogin(loginInfo);
+    await localWalletReady;
+
+    let loginInfo: LoginInfo = {
+      mode: WalletMode.EvmEthers,
+      preferBatchedMode: false,
+      connection: {
+        metadata: {
+          name: 'thirdweb.localwallet',
+          displayName: 'Local Wallet',
+        },
+        // type pun from ethers@5 to ethers@6 Signer
+        api: await localWallet.getSigner() as any,
+      }
+    };
+
+    return await paimaEndpoints.userWalletLogin(loginInfo);
   },
 };
 

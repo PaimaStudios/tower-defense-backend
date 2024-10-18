@@ -17,6 +17,7 @@
     "@paima/executors": "^5.0.0",
     "@paima/mw-core": "5.0.0",
     "@paima/providers": "^5.0.0",
+    "@thirdweb-dev/wallets": "^2.5.39",
     "@tower-defense/game-logic": "../game-logic",
     "@tower-defense/utils": "../utils"
   },
