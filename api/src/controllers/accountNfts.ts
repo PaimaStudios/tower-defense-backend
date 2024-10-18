@@ -27,8 +27,17 @@ export class AccountNftsController extends Controller {
     return {
       response: {
         pages: 1,
-        totalItems: 0,
-        result: [],
+        totalItems: 1,
+        result: [
+          {
+            metadata: {
+              name: "Foo",
+              image: "/cheese.png"
+            },
+            contract: "0x0",
+            tokenId: 1,
+          }
+        ],
       },
     };
   }

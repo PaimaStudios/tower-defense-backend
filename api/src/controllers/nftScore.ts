@@ -20,11 +20,12 @@ export class NftScoreController extends Controller {
     @Query() token_id: number
   ): Promise<NftScore> {
     console.log('nft-score', nft_contract, token_id);
+    // NB: ArgumentException in frontend if totalGames != wins+draws+losses
     return {
       data: {
         nft_contract,
         token_id,
-        total_games: 1,
+        total_games: 17+21+37,
         wins: 17,
         losses: 21,
         draws: 37,
