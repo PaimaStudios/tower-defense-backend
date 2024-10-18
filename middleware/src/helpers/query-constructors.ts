@@ -3,35 +3,25 @@ import type { QueryOptions } from '@paima/mw-core';
 import { buildQuery, getBackendUri } from '@paima/mw-core';
 import type { WalletAddress } from '@paima/chain-types';
 
-import { getIndexerUri, getStatefulUri } from '../state';
-
-function buildIndexerQuery(endpoint: string, options: QueryOptions): string {
-  return `${getIndexerUri()}/api/v1/${buildQuery(endpoint, options)}`;
-}
-
-function buildStatefulQuery(endpoint: string, options: QueryOptions): string {
-  return `${getStatefulUri()}/${buildQuery(endpoint, options)}`;
-}
-
 function buildBackendQuery(endpoint: string, options: QueryOptions): string {
   return `${getBackendUri()}/${buildQuery(endpoint, options)}`;
 }
+const buildIndexerQuery = buildBackendQuery;
+const buildStatefulQuery = buildBackendQuery;
 
 export function indexerQueryAccountNfts(account: string, size?: number, page?: number): string {
   const endpoint = 'account-nfts';
-  const optsStart: QueryOptions = {};
-  if (typeof size !== 'undefined') {
-    optsStart.size = size;
-  }
-  if (typeof page !== 'undefined') {
-    optsStart.page = page;
-  }
-  const options = {
-    ...optsStart,
+  const options: QueryOptions = {
+    account,
     metadata: true,
     traits: false,
-    account,
   };
+  if (typeof size !== 'undefined') {
+    options.size = size;
+  }
+  if (typeof page !== 'undefined') {
+    options.page = page;
+  }
   return buildIndexerQuery(endpoint, options);
 }
 
