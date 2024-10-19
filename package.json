@@ -6,7 +6,7 @@
     "prebuild": "npm -w api run prebuild && npm -w db run prebuild",
     "build": "tsc --build",
     "postbuild": "npm -w middleware run postbuild",
-    "prestart": "npm run build && docker compose up --build --wait",
+    "prestart": "npm run build && docker compose up --build --wait hardhat database",
     "start": "DOTENV_CONFIG_PATH=./.env.development node --require dotenv/config --enable-source-maps backend/build/index.js",
     "docker:cp": "cp ./docker/* ../ && cd ..",
     "docker": "npm run docker:cp && docker compose up",

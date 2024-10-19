@@ -51,7 +51,7 @@ const endpoints = {
 
     let loginInfo: LoginInfo = {
       mode: WalletMode.EvmEthers,
-      preferBatchedMode: false,
+      preferBatchedMode: true,
       connection: {
         metadata: {
           name: 'thirdweb.localwallet',
