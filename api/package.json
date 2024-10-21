@@ -12,11 +12,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@paima/utils-backend": "^5.0.0",
     "@tower-defense/db": "../db",
     "@tower-defense/game-logic": "../game-logic",
     "@tower-defense/utils": "../utils",
     "fp-ts": "^2.12.3",
     "io-ts": "^2.2.18",
-    "tsoa": "^6.4.0"
+    "tsoa": "^6.4.0",
+    "viem": "^2.21.32"
   }
 }
