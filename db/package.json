@@ -9,8 +9,8 @@
     "build": "tsc",
     "prebuild": "./docker-with.sh pgtyped -c pgtypedconfig.json",
     "watch": "./docker-with.sh pgtyped -c pgtypedconfig.json -w",
-    "stats": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/stats.js",
-    "winners": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config scripts/winners.js"
+    "stats": "DOTENV_CONFIG_PATH=../.env.localhost node --require dotenv/config scripts/stats.js",
+    "winners": "DOTENV_CONFIG_PATH=../.env.localhost node --require dotenv/config scripts/winners.js"
   },
   "author": "",
   "license": "ISC",

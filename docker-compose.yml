@@ -53,7 +53,7 @@ services:
       database:
         condition: service_healthy
     env_file:
-      - .env.development
+      - .env.localhost
     # Host network lets development and docker share port configs.
     network_mode: host
     healthcheck:
@@ -67,7 +67,7 @@ services:
   #     context: .
   #     target: backend
   #   env_file:
-  #     - ./.env.${NODE_ENV:-development}
+  #     - ./.env.${NODE_ENV:-localhost}
   #   environment:
   #     DB_HOST: database
   #   depends_on:
