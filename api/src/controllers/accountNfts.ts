@@ -1,7 +1,7 @@
-import { ENV } from '@paima/utils';
 import { getOwnedNfts } from '@paima/utils-backend';
 import { requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
+import { getNftMetadata } from '../genesisTrainer.js';
 
 // TODO: un-hardcode contract address.
 const contract = '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512';
@@ -32,7 +32,7 @@ export class AccountNftsController extends Controller {
     console.log('account-nfts', account, page, size);
 
     const pool = requirePool();
-    let tokenIds = await getOwnedNfts(pool, 'EVM Genesis Trainers', account);
+    let tokenIds = await getOwnedNfts(pool, 'EVM Genesis Trainer', account);
     const totalItems = tokenIds.length, pages = Math.ceil(totalItems / size);
     tokenIds = tokenIds.slice(page * size, (page + 1) * size);
 
@@ -41,13 +41,7 @@ export class AccountNftsController extends Controller {
         pages,
         totalItems,
         result: tokenIds.map(id => ({
-          // Save on having to hit IPFS here by hardcoding stuff.
-          metadata: {
-            // The frontend doesn't actually use this.
-            name: `Genesis Trainer #${id}`,
-            // See TrainerImageController.
-            image: `${ENV.BACKEND_URI}/trainer-image/${id}.png`,
-          },
+          metadata: getNftMetadata(id),
           contract,
           tokenId: Number(id),
         })),
