@@ -1,10 +1,7 @@
 import { getOwnedNfts } from '@paima/utils-backend';
 import { requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
-import { getNftMetadata } from '../genesisTrainer.js';
-
-// TODO: un-hardcode contract address.
-const contract = '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512';
+import { cdeName, getContractAddress, getNftMetadata } from '../genesisTrainer.js';
 
 interface AccountNftsResult {
   metadata: {
@@ -32,7 +29,7 @@ export class AccountNftsController extends Controller {
     console.log('account-nfts', account, page, size);
 
     const pool = requirePool();
-    let tokenIds = await getOwnedNfts(pool, 'EVM Genesis Trainer', account);
+    let tokenIds = await getOwnedNfts(pool, cdeName, account);
     const totalItems = tokenIds.length, pages = Math.ceil(totalItems / size);
     tokenIds = tokenIds.slice(page * size, (page + 1) * size);
 
@@ -42,7 +39,7 @@ export class AccountNftsController extends Controller {
         totalItems,
         result: tokenIds.map(id => ({
           metadata: getNftMetadata(id),
-          contract,
+          contract: getContractAddress(),
           tokenId: Number(id),
         })),
       },

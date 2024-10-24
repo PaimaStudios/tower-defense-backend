@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Route } from 'tsoa';
 import { getNftOwner } from '@paima/utils-backend';
 import { requirePool } from '@tower-defense/db';
+import { cdeName } from '../genesisTrainer';
 
 type HistoricalOwner =
   | {
@@ -24,7 +25,7 @@ export class HistoricalOwnerController extends Controller {
     // TODO: It also currently ignores the contract address.
 
     const pool = requirePool();
-    const value = await getNftOwner(pool, 'EVM Genesis Trainer', BigInt(tokenId));
+    const value = await getNftOwner(pool, cdeName, BigInt(tokenId));
 
     return value
       ? {
