@@ -1,6 +1,7 @@
 DROP TRIGGER update_current_round ON rounds;
 DROP FUNCTION update_lobby_round() CASCADE;
 
+DROP TABLE nft_score;
 DROP TABLE match_moves;
 DROP TABLE final_match_state;
 DROP TABLE rounds;

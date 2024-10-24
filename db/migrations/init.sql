@@ -68,15 +68,15 @@ CREATE TABLE match_moves(
 );
 CREATE TYPE match_result AS ENUM ('win', 'loss');
 CREATE TABLE final_match_state (
-   lobby_id TEXT NOT NULL,
-   player_one_wallet TEXT NOT NULL,
-   player_one_result match_result NOT NULL,
-   player_one_gold INTEGER NOT NULL,
-   player_two_wallet TEXT NOT NULL,
-   player_two_result match_result NOT NULL,
-   player_two_gold INTEGER NOT NULL,
-   final_health INTEGER NOT NULL,
-   UNIQUE (lobby_id)
+  lobby_id TEXT NOT NULL,
+  player_one_wallet TEXT NOT NULL,
+  player_one_result match_result NOT NULL,
+  player_one_gold INTEGER NOT NULL,
+  player_two_wallet TEXT NOT NULL,
+  player_two_result match_result NOT NULL,
+  player_two_gold INTEGER NOT NULL,
+  final_health INTEGER NOT NULL,
+  UNIQUE (lobby_id)
 );
 
 INSERT INTO maps(name, layout)
@@ -131,3 +131,12 @@ CREATE TRIGGER update_current_round
 AFTER INSERT ON rounds
 FOR EACH ROW
 EXECUTE FUNCTION update_lobby_round();
+
+CREATE TABLE nft_score(
+  -- like cde_erc721_data
+  cde_name TEXT NOT NULL,
+  token_id TEXT NOT NULL,
+  -- the real NFT state
+  wins INTEGER DEFAULT 0,
+  losses INTEGER DEFAULT 0
+);
