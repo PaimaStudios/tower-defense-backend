@@ -137,6 +137,7 @@ CREATE TABLE nft_score(
   cde_name TEXT NOT NULL,
   token_id TEXT NOT NULL,
   -- the real NFT state
-  wins INTEGER DEFAULT 0,
-  losses INTEGER DEFAULT 0
+  wins INTEGER NOT NULL DEFAULT 0,
+  losses INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (cde_name, token_id)
 );

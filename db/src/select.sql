@@ -242,3 +242,7 @@ LEFT JOIN rollup_input_future_block ON rollup_input_future_block.id = rollup_inp
 LEFT JOIN rollup_input_origin ON rollup_input_future_block.id = rollup_inputs.id
 WHERE contract_address = :precompile
 ORDER BY future_block_height DESC LIMIT 1;
+
+/* @name getNftScore */
+SELECT * FROM nft_score
+WHERE cde_name = :cde_name AND token_id = :token_id;
