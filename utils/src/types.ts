@@ -1,10 +1,10 @@
+import type { WalletAddress } from '@paima/chain-types';
+import type { IGetBlockHeightsResult } from '@paima/db';
 import type {
   IGetLobbyByIdResult,
   IGetRoundDataResult,
-  IGetBlockHeightResult,
   match_result,
 } from '@tower-defense/db';
-import type { WalletAddress } from '@paima/chain-types';
 
 export type Hash = string;
 export type URI = string;
@@ -352,7 +352,7 @@ type MatchResult = {
 export type MatchResults = [MatchResult, MatchResult];
 
 export interface RoundExecutorData {
-  block_height: IGetBlockHeightResult;
+  block_height: IGetBlockHeightsResult;
   lobby: IGetLobbyByIdResult;
   configString: string;
   moves: TurnAction[];
