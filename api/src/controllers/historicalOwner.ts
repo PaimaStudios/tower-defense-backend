@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Route } from 'tsoa';
 import { getNftOwner } from '@paima/utils-backend';
 import { requirePool } from '@tower-defense/db';
-import { cdeName } from '../genesisTrainer';
+import { cdeName } from '../genesisTrainer.js';
 
 type HistoricalOwner =
   | {

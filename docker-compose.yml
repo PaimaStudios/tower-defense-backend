@@ -31,8 +31,9 @@ services:
     volumes:
       # Don't mount the database as a volume, just let it die, because we have
       # to rebuild it any time hardhat restarts from block #0 anyways.
-      - "./db/migrations/init.sql:/docker-entrypoint-initdb.d/game-init.sql"
-      - "./db/migrations/batcher.sql:/docker-entrypoint-initdb.d/paima-batcher-up.sql"
+      - "./node_modules/@paima/db/migrations/up.sql:/docker-entrypoint-initdb.d/00-paima-init.sql"
+      - "./db/migrations/init.sql:/docker-entrypoint-initdb.d/01-game-init.sql"
+      - "./db/migrations/batcher.sql:/docker-entrypoint-initdb.d/99-paima-batcher-up.sql"
     healthcheck:
       # Use pg_isready to check postgres is running.
       test: pg_isready -U postgres -p 5432
