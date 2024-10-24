@@ -21,13 +21,6 @@ INNER JOIN paima_blocks
 ON paima_blocks.block_height = rounds.execution_block_height
 WHERE rounds.lobby_id = :lobby_id;
 
-/*  Scheduled data  */
-
-/* @name getScheduledDataByBlockHeight */
-SELECT * from scheduled_data
-WHERE block_height = :block_height!
-ORDER BY id ASC;
-
 /*  Rounds  */
 
 /* @name getRoundData */
@@ -244,6 +237,8 @@ WHERE lobby_state = 'finished'
 AND created_at < :date;
 
 /* @name getLastScheduledWiping */
-SELECT * FROM scheduled_data
-WHERE input_data LIKE 'w%'
-ORDER BY id DESC LIMIT 1;
+SELECT future_block_height AS block_height FROM rollup_inputs
+LEFT JOIN rollup_input_future_block ON rollup_input_future_block.id = rollup_inputs.id
+LEFT JOIN rollup_input_origin ON rollup_input_future_block.id = rollup_inputs.id
+WHERE contract_address = :precompile
+ORDER BY future_block_height DESC LIMIT 1;

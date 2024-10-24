@@ -1,9 +1,3 @@
-/*  Scheduled Data  */
-
-/* @name removeScheduledData */
-DELETE FROM scheduled_data
-WHERE block_height = :block_height!
-AND input_data = :input_data!;
 /*  Stats  */
 
 /* @name addWin */
@@ -33,7 +27,7 @@ AND rounds.round_within_match = :round!;
 
 /* @name startMatch */
 UPDATE lobbies
-SET  
+SET
 lobby_state = 'active',
 player_two = :player_two!,
 current_match_state = :current_match_state!,
@@ -66,5 +60,5 @@ WHERE lobby_id = :lobby_id!;
 
 /* @name wipeOldlobbies */
 DELETE from lobbies
-WHERE lobby_state = 'finished' 
+WHERE lobby_state = 'finished'
 AND created_at < :date;

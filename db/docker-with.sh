@@ -15,7 +15,7 @@ process() {
     echo "-- $1"
     docker compose exec -T database psql -v ON_ERROR_STOP=1 -f - <"$1" >/dev/null
 }
-#process ../node_modules/@paima/db/migrations/up.sql
+process ../node_modules/@paima/db/migrations/up.sql
 process migrations/init.sql
 for fname in migrations/[0-9].sql migrations/[0-9][0-9].sql; do
     process "$fname"

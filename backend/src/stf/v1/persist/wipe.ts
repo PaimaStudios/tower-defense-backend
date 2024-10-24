@@ -10,7 +10,7 @@ export async function wipeSchedule(blockHeight: number, dbConn: PoolClient): Pro
   // weekly cleanup
   const blocksInDay = (60 * 60 * 24) / Number(process.env.BLOCK_TIME);
   // fetch last scheduled wiping from the db
-  const [last] = await getLastScheduledWiping.run(undefined, dbConn);
+  const [last] = await getLastScheduledWiping.run({ precompile: precompiles['scheduleWipeOldLobbies'] }, dbConn);
   // Check that last wipe was before the set interval
   const wipeSchedule = last && blockHeight - last.block_height > blocksInDay * interval;
   if (wipeSchedule) {

@@ -1,12 +1,6 @@
-/*  Scheduled Data */
-
-/* @name newScheduledData */
-INSERT INTO scheduled_data(block_height, input_data)
-VALUES (:block_height!, :input_data!);
-
 /*  Rounds  */
 
-/* 
+/*
   @name newRound
 */
 INSERT INTO rounds(lobby_id, round_within_match, match_state, starting_block_height, execution_block_height)
@@ -23,7 +17,7 @@ VALUES :stats
 ON CONFLICT (wallet)
 DO NOTHING;
 
-/* 
+/*
   @name updateStats
   @param stats -> (wallet!, wins!, losses!)
 */
@@ -55,8 +49,8 @@ DO NOTHING;
 
 /*  Lobbies  */
 
-/* 
-  @name createLobby 
+/*
+  @name createLobby
 */
 INSERT INTO lobbies(
   lobby_id,
@@ -98,7 +92,7 @@ VALUES(
 
 /*  Moves  */
 
-/* 
+/*
   @name newMatchMove
   @param new_move -> (lobby_id!, wallet!, round!, move_type!, move_target!)
 */
