@@ -55,6 +55,7 @@ DO NOTHING;
 INSERT INTO lobbies(
   lobby_id,
   lobby_creator,
+  lobby_creator_token_id,
   creator_faction,
   num_of_rounds,
   round_length,
@@ -73,6 +74,7 @@ INSERT INTO lobbies(
 VALUES(
   :lobby_id!,
   :lobby_creator!,
+  :lobby_creator_token_id!,
   :creator_faction!,
   :num_of_rounds!,
   :round_length!,
@@ -106,3 +108,13 @@ VALUES :new_move;
 */
 INSERT INTO final_match_state(lobby_id, player_one_wallet, player_one_result, player_one_gold, player_two_wallet, player_two_result, player_two_gold, final_health)
 VALUES :final_state;
+
+/* NFT Score */
+
+/* @name addNftScore */
+INSERT INTO nft_score(cde_name, token_id, wins, losses)
+VALUES (:cde_name!, :token_id!, :wins!, :losses!)
+ON CONFLICT (cde_name, token_id)
+DO UPDATE SET
+  wins = nft_score.wins + EXCLUDED.wins,
+  losses = nft_score.losses + EXCLUDED.losses;

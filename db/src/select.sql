@@ -21,7 +21,7 @@ WHERE wallet = :wallet;
 
 /* @name getLatestUserNft */
 SELECT * FROM nfts
-WHERE wallet = :wallet
+WHERE wallet = :wallet!
 ORDER BY block_height DESC
 LIMIT 1;
 

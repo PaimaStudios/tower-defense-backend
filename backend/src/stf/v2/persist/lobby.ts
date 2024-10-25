@@ -23,6 +23,7 @@ import { generateMatchState } from '@tower-defense/game-logic';
 export function persistLobbyCreation(
   blockHeight: number,
   user: WalletAddress,
+  tokenId: number,
   inputData: CreatedLobbyInput,
   randomnessGenerator: Prando
 ): SQLUpdate[] {
@@ -30,6 +31,7 @@ export function persistLobbyCreation(
   const params: ICreateLobbyParams = {
     lobby_id: lobby_id,
     lobby_creator: user,
+    lobby_creator_token_id: tokenId,
     creator_faction: inputData.creatorFaction,
     num_of_rounds: inputData.numOfRounds,
     round_length: inputData.roundLength,
@@ -55,6 +57,7 @@ export function persistLobbyCreation(
 export function persistPracticeLobbyCreation(
   blockHeight: number,
   user: WalletAddress,
+  tokenId: number,
   inputData: CreatedLobbyInput,
   map: IGetMapLayoutResult,
   matchConfig: MatchConfig,
@@ -64,6 +67,7 @@ export function persistPracticeLobbyCreation(
   const params = {
     lobby_id: lobby_id,
     lobby_creator: user,
+    lobby_creator_token_id: tokenId,
     creator_faction: inputData.creatorFaction,
     num_of_rounds: inputData.numOfRounds,
     round_length: inputData.roundLength,
@@ -79,7 +83,7 @@ export function persistPracticeLobbyCreation(
     lobby_state: 'open',
     player_two: null,
     current_match_state: {},
-  } satisfies ICreateLobbyParams;
+  } satisfies ICreateLobbyParams satisfies IGetLobbyByIdResult;
   // create the lobby according to the input data.
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
@@ -87,6 +91,7 @@ export function persistPracticeLobbyCreation(
   const practiceLobbyTuples = persistLobbyJoin(
     blockHeight,
     PRACTICE_BOT_ADDRESS,
+    0,
     params,
     map,
     matchConfig,
@@ -99,6 +104,7 @@ export function persistPracticeLobbyCreation(
 export function persistLobbyJoin(
   blockHeight: number,
   user: WalletAddress,
+  tokenId: number,
   lobby: IGetLobbyByIdResult,
   map: IGetMapLayoutResult,
   matchConfig: MatchConfig,
@@ -111,7 +117,9 @@ export function persistLobbyJoin(
   const matchState = generateMatchState(
     lobby.creator_faction,
     lobby.lobby_creator,
+    lobby.lobby_creator_token_id,
     user,
+    tokenId,
     lobby.map,
     map.layout,
     matchConfig,

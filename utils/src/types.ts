@@ -79,9 +79,11 @@ export interface MatchState extends AnnotatedMap {
   attacker: WalletAddress;
   attackerGold: number;
   attackerBase: AttackerBase;
+  attackerTokenId: number;
   defender: WalletAddress;
   defenderGold: number;
   defenderBase: DefenderBase;
+  defenderTokenId: number;
   actors: ActorsObject;
   actorCount: number;
   currentRound: number;
@@ -348,6 +350,7 @@ type MatchResult = {
   gold: number;
   wallet: WalletAddress;
   result: Result;
+  tokenId: number;
 };
 export type MatchResults = [MatchResult, MatchResult];
 

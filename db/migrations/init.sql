@@ -39,6 +39,7 @@ CREATE TYPE bot_difficulty AS ENUM ('easy', 'hard');
 CREATE TABLE lobbies(
   lobby_id TEXT PRIMARY KEY,
   lobby_creator TEXT NOT NULL,
+  lobby_creator_token_id INTEGER NOT NULL,
   creator_faction role_setting NOT NULL,
   lobby_state lobby_status NOT NULL DEFAULT 'open',
   player_two TEXT,

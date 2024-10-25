@@ -18,6 +18,9 @@ export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState)
   const [p1Gold, p2Gold] = p1isAttacker
     ? [matchState.attackerGold, matchState.defenderGold]
     : [matchState.defenderGold, matchState.attackerGold];
+  const [p1Token, p2Token] = p1isAttacker
+    ? [matchState.attackerTokenId, matchState.defenderTokenId]
+    : [matchState.defenderTokenId, matchState.attackerTokenId];
 
   const p1Result = calculateResult(p1isAttacker, defenderSurvived);
   const p2Result = p1Result === 'win' ? 'loss' : 'win';
@@ -27,11 +30,13 @@ export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState)
       result: p1Result,
       gold: p1Gold,
       wallet: lobby.lobby_creator,
+      tokenId: p1Token,
     },
     {
       result: p2Result,
       gold: p2Gold,
       wallet: lobby.player_two!,
+      tokenId: p2Token,
     },
   ];
 }

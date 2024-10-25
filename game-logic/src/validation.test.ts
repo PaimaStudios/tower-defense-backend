@@ -31,7 +31,9 @@ describe('Validation', () => {
     const matchState = generateMatchState(
       'defender',
       'p1',
+      1,
       'p2',
+      2,
       'line',
       lineMap,
       baseConfig,
@@ -79,7 +81,9 @@ describe('Validation', () => {
     const matchState = generateMatchState(
       'defender',
       'p1',
+      1,
       'p2',
+      2,
       'line',
       lineMap,
       baseConfig,
@@ -105,7 +109,9 @@ describe('Validation', () => {
     const matchState = generateMatchState(
       'defender',
       'p1',
+      1,
       'p2',
+      2,
       'line',
       lineMap,
       baseConfig,
