@@ -401,7 +401,7 @@ function finalizeMatch(
   const nftScoreUpdate1: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[0].tokenId, wins: results[0].result === 'win' ? 1 : 0, losses: results[0].result === 'loss' ? 1 : 0 }];
   const nftScoreUpdate2: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[1].tokenId, wins: results[1].result === 'win' ? 1 : 0, losses: results[1].result === 'loss' ? 1 : 0 }];
   console.log('persisting match finalizing');
-  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2];
+  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2, nftScoreUpdate1, nftScoreUpdate2];
 }
 
 export async function processConfig(
