@@ -2,19 +2,12 @@ import { runPaimaEngine } from '@paima/engine';
 import { generatePrecompiles } from '@paima/precompiles';
 
 import RegisterRoutes from '@tower-defense/api';
-import { GameENV } from '@tower-defense/utils';
 
-import gameStateTransitionV1 from './stf/v1/index.js';
+// NOTE: v1 was retired during the 2024 Q4 state reset
 import gameStateTransitionV2 from './stf/v2/index.js';
 
 function gameStateTransitionRouter(blockHeight: number) {
-  if (blockHeight >= 0 && blockHeight < GameENV.LOBBY_AUTOPLAY_BLOCKHEIGHT) {
-    return gameStateTransitionV1;
-  }
-  if (blockHeight >= GameENV.LOBBY_AUTOPLAY_BLOCKHEIGHT) {
-    return gameStateTransitionV2;
-  }
-  return gameStateTransitionV1;
+  return gameStateTransitionV2;
 }
 
 export enum PrecompileNames {
