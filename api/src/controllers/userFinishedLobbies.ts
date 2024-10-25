@@ -3,6 +3,7 @@ import type { IGetPaginatedUserLobbiesResult } from '@tower-defense/db';
 import { requirePool, getUserFinishedLobbies } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/lib/Either.js';
 import { psqlNum } from '../validation.js';
+import { getMainAddress } from '@paima/db';
 
 interface UserFinishedLobbiesResponse {
   lobbies: IGetPaginatedUserLobbiesResult[];
@@ -29,7 +30,7 @@ export class UserFinishedLobbiesController extends Controller {
     }
 
     // after typecheck, valid data output is given in .right
-    wallet = wallet.toLowerCase();
+    wallet = (await getMainAddress(wallet, pool)).address;
     const p = valPage.right;
     const c = valCount.right;
     const offset = (p - 1) * c;

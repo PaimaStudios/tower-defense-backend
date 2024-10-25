@@ -2,6 +2,7 @@ import { getOwnedNfts } from '@paima/utils-backend';
 import { requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
 import { cdeName, getContractAddress, getNftMetadata } from '@tower-defense/utils';
+import { getMainAddress } from '@paima/db';
 
 interface AccountNftsResult {
   metadata: {
@@ -29,6 +30,7 @@ export class AccountNftsController extends Controller {
     console.log('account-nfts', account, page, size);
 
     const pool = requirePool();
+    account = (await getMainAddress(account, pool)).address;
     let tokenIds = await getOwnedNfts(pool, cdeName, account);
     const totalItems = tokenIds.length, pages = Math.ceil(totalItems / size);
     tokenIds = tokenIds.slice(page * size, (page + 1) * size);
