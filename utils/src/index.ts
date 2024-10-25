@@ -62,3 +62,5 @@ export function moveToAction(move: IGetMovesByLobbyResult, attacker: string): Tu
 }
 
 export { parser as configParser, builder as configToConcise } from './config-parser.js';
+
+export * from './genesisTrainer.js';

@@ -1,6 +1,6 @@
 import { getNftScore, requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
-import { cdeName } from '../genesisTrainer.js';
+import { cdeName } from '@tower-defense/utils';
 
 interface NftScore {
   data: {

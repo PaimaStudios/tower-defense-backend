@@ -1,7 +1,7 @@
 import { getOwnedNfts } from '@paima/utils-backend';
 import { requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
-import { cdeName, getContractAddress, getNftMetadata } from '../genesisTrainer.js';
+import { cdeName, getContractAddress, getNftMetadata } from '@tower-defense/utils';
 
 interface AccountNftsResult {
   metadata: {

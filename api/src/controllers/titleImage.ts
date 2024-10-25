@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import { getNftMetadata } from '../genesisTrainer.js';
+import { getNftMetadata } from '@tower-defense/utils';
 
 type TitleImage =
   | {

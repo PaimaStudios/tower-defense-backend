@@ -53,7 +53,7 @@ import {
   persistConfigRegistration,
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
-import { cdeName } from '@tower-defense/api/src/genesisTrainer.js';
+import { cdeName } from '@tower-defense/utils';
 
 export async function processCreateLobby(
   user: WalletAddress,
