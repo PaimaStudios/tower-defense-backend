@@ -30,13 +30,21 @@ export class AccountNftsController extends Controller {
     console.log('account-nfts', account, page, size);
 
     const pool = requirePool();
-    const related = await getRelatedWallets(account, pool);
-    console.log('related', related);
-
     account = (await getMainAddress(account, pool)).address;
 
-    let tokenIds = await getOwnedNfts(pool, cdeName, account);
-    const totalItems = tokenIds.length, pages = Math.ceil(totalItems / size);
+    const related = await getRelatedWallets(account, pool);
+    const allAddresses = [
+      ...related.from.map(x => x.to_address),
+      account,
+      ...related.to.map(x => x.from_address),
+    ];
+
+    let tokenIds = (await Promise.all(allAddresses.map(x => getOwnedNfts(pool, cdeName, x))))
+      .flat()
+      .sort();
+
+    const totalItems = tokenIds.length,
+      pages = Math.ceil(totalItems / size);
     tokenIds = tokenIds.slice(page * size, (page + 1) * size);
 
     return {
