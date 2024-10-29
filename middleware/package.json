@@ -22,10 +22,9 @@
     "@tower-defense/utils": "../utils"
   },
   "devDependencies": {
-    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.1",
-    "esbuild": "^0.15.15"
+    "esbuild": "^0.24.0"
   }
 }
