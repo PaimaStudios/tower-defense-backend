@@ -3,6 +3,7 @@ import type { IGetPaginatedOpenLobbiesResult } from '@tower-defense/db';
 import { requirePool, getPaginatedOpenLobbies } from '@tower-defense/db';
 import { isLeft } from 'fp-ts/lib/Either.js';
 import { psqlNum } from '../validation.js';
+import { getMainAddress } from '@paima/db';
 
 interface OpenLobbiesResponse {
   lobbies: IGetPaginatedOpenLobbiesResult[];
@@ -28,7 +29,7 @@ export class openLobbiesController extends Controller {
       throw new ValidateError({ count: { message: 'invalid number' } }, '');
     }
 
-    wallet = wallet.toLowerCase();
+    wallet = (await getMainAddress(wallet, pool)).address;
     const p = valPage.right;
     const c = valCount.right;
     const offset = (p - 1) * c;

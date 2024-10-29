@@ -12,8 +12,6 @@ import type { WalletAddress } from '@paima/chain-types';
 export interface MiddlewareConnectionDetails {
   storageAddress: ContractAddress;
   backendUri: URI;
-  indexerUri: URI;
-  statefulUri: URI;
   batcherUri: URI;
 }
 

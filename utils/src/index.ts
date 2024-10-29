@@ -31,9 +31,6 @@ export class GameENV extends ENV {
   static get LONG_CONFIG(): string {
     return process.env.LONG_CONFIG || 'defaultdefault';
   }
-  static get LOBBY_AUTOPLAY_BLOCKHEIGHT(): number {
-    return Number(process.env.LOBBY_AUTOPLAY_BLOCKHEIGHT);
-  }
 }
 
 // OTHER CONSTANTS
@@ -65,3 +62,5 @@ export function moveToAction(move: IGetMovesByLobbyResult, attacker: string): Tu
 }
 
 export { parser as configParser, builder as configToConcise } from './config-parser.js';
+
+export * from './genesisTrainer.js';

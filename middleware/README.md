@@ -23,10 +23,10 @@ npm install
 npm run build
 ```
 
-Before building the middleware, make sure there is a `.env.development` file in the repository's root directory, or set the `NODE_ENV` variable to a value specifying a different config (see [root directory's `README.md`](/README.md) for details.). The simplest way to achieve this is the following (however, make sure that the configuration inside conforms to your expectations):
+Before building the middleware, make sure there is a `.env.localhost` file in the repository's root directory, or set the `NODE_ENV` variable to a value specifying a different config (see [root directory's `README.md`](/README.md) for details.). The simplest way to achieve this is the following (however, make sure that the configuration inside conforms to your expectations):
 
 ```
-cp .env.test .env.development
+cp .env.test .env.localhost
 ```
 
 To finally build the middleware, navigate to this directory and execute the build script:

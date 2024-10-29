@@ -25,6 +25,7 @@ const config = {
   plugins: [global, modules],
   external: ['pg-native'],
   globalName: 'paimaMiddleware',
+  sourcemap: true
 };
 
 esbuild.build(config);

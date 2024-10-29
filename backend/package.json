@@ -5,9 +5,6 @@
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "type": "module",
-  "scripts": {
-    "dev": "DOTENV_CONFIG_PATH=../.env.development node --require dotenv/config --experimental-specifier-resolution=node build/index.js"
-  },
   "author": "",
   "license": "ISC",
   "dependencies": {

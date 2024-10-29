@@ -11,7 +11,9 @@ describe('Map functions', () => {
     const { pathMap, ...matchState } = generateMatchState(
       'defender',
       '0xdDA309096477b89D7066948b31aB05924981DF2B',
+      1,
       '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
+      2,
       'fork',
       backwards,
       baseConfig,

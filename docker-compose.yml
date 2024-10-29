@@ -31,8 +31,9 @@ services:
     volumes:
       # Don't mount the database as a volume, just let it die, because we have
       # to rebuild it any time hardhat restarts from block #0 anyways.
-      - "./db/migrations/init.sql:/docker-entrypoint-initdb.d/game-init.sql"
-      #- "./db/migrations/batcher.sql:/docker-entrypoint-initdb.d/paima-batcher-up.sql"
+      - "./node_modules/@paima/db/migrations/up.sql:/docker-entrypoint-initdb.d/00-paima-init.sql"
+      - "./db/migrations/init.sql:/docker-entrypoint-initdb.d/01-game-init.sql"
+      - "./db/migrations/batcher.sql:/docker-entrypoint-initdb.d/99-paima-batcher-up.sql"
     healthcheck:
       # Use pg_isready to check postgres is running.
       test: pg_isready -U postgres -p 5432
@@ -43,13 +44,31 @@ services:
       start_interval: 1s
     ports:
       - "54321:5432"
+  batcher:
+    image: ghcr.io/paimastudios/paima-batcher:latest
+    depends_on:
+      hardhat:
+        condition: service_healthy
+      #backend:
+      #  condition: service_healthy
+      database:
+        condition: service_healthy
+    env_file:
+      - .env.localhost
+    # Host network lets development and docker share port configs.
+    network_mode: host
+    healthcheck:
+      # Check that the port is open.
+      test: netstat -ltn | grep -c 3340
+      start_period: 30s
+      start_interval: 1s
   # The backend itself.
   # backend:
   #   build:
   #     context: .
   #     target: backend
   #   env_file:
-  #     - ./.env.${NODE_ENV:-development}
+  #     - ./.env.${NODE_ENV:-localhost}
   #   environment:
   #     DB_HOST: database
   #   depends_on:

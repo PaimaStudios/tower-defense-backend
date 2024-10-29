@@ -23,8 +23,17 @@ export default async function (
   dbConn: PoolClient
 ): Promise<{ stateTransitions: SQLUpdate[], events: [] }> {
   const { blockHeight } = blockHeader;
-
   console.log(inputData, 'parsing input data');
+
+  if (inputData.inputData.startsWith('&')) {
+    // DelegateWallet command, we can ignore it.
+    // If we cared, we could add them to the parser.
+    return {
+      stateTransitions: [],
+      events: [],
+    };
+  }
+
   const user = inputData.realAddress.toLowerCase();
   console.log(`Processing input string: ${inputData.inputData}`);
   const parsed = parseInput(inputData.inputData);

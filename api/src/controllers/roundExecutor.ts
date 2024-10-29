@@ -1,21 +1,21 @@
-import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
+import { getBlockHeights } from '@paima/db';
 import {
-  requirePool,
-  getBlockHeight,
   getLobbyById,
+  getMatchConfig,
   getRoundData,
   getRoundMoves,
-  getMatchConfig,
+  requirePool,
 } from '@tower-defense/db';
-import { isLeft } from 'fp-ts/lib/Either.js';
-import { psqlNum } from '../validation.js';
 import type { MatchState, RoundExecutorData } from '@tower-defense/utils';
 import { moveToAction } from '@tower-defense/utils';
+import { isLeft } from 'fp-ts/lib/Either.js';
+import { Controller, Get, Query, Route, ValidateError } from 'tsoa';
+import { psqlNum } from '../validation.js';
 
 type RoundExecutorResponse = RoundExecutorData | RoundExecutorError;
 
 interface RoundExecutorError {
-  error: 'lobby not found' | 'bad round number' | 'round not found';
+  error: 'lobby not found' | 'bad round number' | 'round not found' | 'round has no block height';
 }
 
 @Route('round_executor')
@@ -39,9 +39,10 @@ export class roundExecutorController extends Controller {
             pool
           );
           if (!round_data) return { error: 'round not found' };
+          else if (!round_data.execution_block_height) return { error: 'round has no block height' };
           else {
-            const [block_height] = await getBlockHeight.run(
-              { block_height: round_data.execution_block_height },
+            const [block_height] = await getBlockHeights.run(
+              { block_heights: [round_data.execution_block_height] },
               pool
             );
             const matchState = round_data.match_state as unknown as MatchState;

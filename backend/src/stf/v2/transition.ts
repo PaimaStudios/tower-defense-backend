@@ -10,6 +10,8 @@ import {
   getMapLayout,
   getMatchConfig,
   endMatch,
+  addNftScore,
+  getLatestUserNft,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -51,14 +53,18 @@ import {
   persistConfigRegistration,
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
+import { cdeName } from '@tower-defense/utils';
 
-export const processCreateLobby = async (
+export async function processCreateLobby(
   user: WalletAddress,
   blockHeight: number,
   input: CreatedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: PoolClient
-): Promise<SQLUpdate[]> => {
+): Promise<SQLUpdate[]> {
+  const [creatorNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
+  const tokenId = creatorNft?.token_id ?? 0;
+
   if (input.isPractice) {
     const [map] = await getMapLayout.run({ name: input.map }, dbConn);
     if (!map) return [];
@@ -68,22 +74,23 @@ export const processCreateLobby = async (
     return persistPracticeLobbyCreation(
       blockHeight,
       user,
+      tokenId,
       input,
       map,
       matchConfig,
       randomnessGenerator
     );
   }
-  return persistLobbyCreation(blockHeight, user, input, randomnessGenerator);
+  return persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
 };
 
-export const processJoinLobby = async (
+export async function processJoinLobby(
   user: WalletAddress,
   blockHeight: number,
   input: JoinedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: PoolClient
-): Promise<SQLUpdate[]> => {
+): Promise<SQLUpdate[]> {
   const [lobbyState] = await getLobbyById.run({ lobby_id: input.lobbyID }, dbConn);
   // if Lobby doesn't exist, bail
   if (!lobbyState) return [];
@@ -93,7 +100,8 @@ export const processJoinLobby = async (
   const [configString] = await getMatchConfig.run({ id: lobbyState.config_id }, dbConn);
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
-  return persistLobbyJoin(blockHeight, user, lobbyState, map, matchConfig, randomnessGenerator);
+  const [joinerNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
+  return persistLobbyJoin(blockHeight, user, joinerNft?.token_id ?? 0, lobbyState, map, matchConfig, randomnessGenerator);
 };
 
 export async function processCloseLobby(
@@ -390,8 +398,10 @@ function finalizeMatch(
   // Create the new scheduled data for updating user stats
   const statsUpdate1 = scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1);
   const statsUpdate2 = scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1);
+  const nftScoreUpdate1: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[0].tokenId, wins: results[0].result === 'win' ? 1 : 0, losses: results[0].result === 'loss' ? 1 : 0 }];
+  const nftScoreUpdate2: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[1].tokenId, wins: results[1].result === 'win' ? 1 : 0, losses: results[1].result === 'loss' ? 1 : 0 }];
   console.log('persisting match finalizing');
-  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2];
+  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2, nftScoreUpdate1, nftScoreUpdate2];
 }
 
 export async function processConfig(

@@ -3,6 +3,7 @@ import type { ISearchPaginatedOpenLobbiesResult } from '@tower-defense/db';
 import { requirePool, searchPaginatedOpenLobbies, getOpenLobbyById } from '@tower-defense/db';
 import { psqlNum } from '../validation.js';
 import { isLeft } from 'fp-ts/lib/Either.js';
+import { getMainAddress } from '@paima/db';
 
 interface SearchOpenLobbiesResponse {
   lobbies: ISearchPaginatedOpenLobbiesResult[];
@@ -25,7 +26,7 @@ export class SearchOpenLobbiesController extends Controller {
     if (searchQuery.length < MIN_SEARCH_LENGTH || searchQuery.length > LOBBY_ID_LENGTH)
       return emptyResponse;
 
-    wallet = wallet.toLowerCase();
+    wallet = (await getMainAddress(wallet, pool)).address;
 
     if (searchQuery.length == LOBBY_ID_LENGTH) {
       const lobbies = await getOpenLobbyById.run({ searchQuery, wallet }, pool);

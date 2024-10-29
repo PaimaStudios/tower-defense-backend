@@ -1,9 +1,10 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import type { IGetUserNfTsResult } from '@tower-defense/db';
+import type { IGetLatestUserNftResult } from '@tower-defense/db';
 import { requirePool, getLatestUserNft } from '@tower-defense/db';
+import { getMainAddress } from '@paima/db';
 
 interface UserNftResponse {
-  nft: IGetUserNfTsResult;
+  nft: IGetLatestUserNftResult;
 }
 
 @Route('user_nft')
@@ -11,7 +12,7 @@ export class userNFTController extends Controller {
   @Get()
   public async get(@Query() wallet: string): Promise<UserNftResponse> {
     const pool = requirePool();
-    wallet = wallet.toLowerCase();
+    wallet = (await getMainAddress(wallet, pool)).address;
     const [nft] = await getLatestUserNft.run({ wallet }, pool);
     return { nft };
   }

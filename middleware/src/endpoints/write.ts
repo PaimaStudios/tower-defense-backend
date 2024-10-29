@@ -20,18 +20,17 @@ import type {
 import type { EndpointErrorFxn } from '@paima/mw-core';
 import {
   awaitBlock,
-  getActiveAddress,
+  getDefaultActiveAddress,
   PaimaMiddlewareErrorCode,
   postConciseData,
 } from '@paima/mw-core';
-import { WalletMode } from '@paima/providers';
 
 const RETRY_PERIOD = 1000;
 const RETRIES_COUNT = 8;
 
 const getUserWallet = (errorFxn: EndpointErrorFxn): Result<string> => {
   try {
-    const wallet = getActiveAddress(WalletMode.EvmInjected);
+    const wallet = getDefaultActiveAddress();
     if (wallet.length === 0) {
       return errorFxn(PaimaMiddlewareErrorCode.WALLET_NOT_CONNECTED);
     }
