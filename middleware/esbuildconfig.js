@@ -15,7 +15,7 @@ await build({
   bundle: true,
   format: 'esm',
   define,
-  outfile: 'packaged/middleware.js',
+  outfile: 'packaged/paimaMiddleware.js',
   plugins: [modules],
   external: ['pg-native'],
   globalName: 'paimaMiddleware',
