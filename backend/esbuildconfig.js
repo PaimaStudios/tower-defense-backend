@@ -12,6 +12,7 @@ await build({
   minify: true,
   treeShaking: true,
   sourcemap: true,
+  // source map is just for crash stack traces, so source content isn't needed
   sourcesContent: false,
 
   define: {

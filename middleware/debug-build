@@ -1,4 +1,8 @@
 #!/bin/bash
+# middleware/debug-build: copy paimaMiddleware.js, source map, and env.js into
+# a Unity build output directory.
+# $1 = where to put the files
+# $NETWORK = what .env to use, default `localhost`
 set -euo pipefail
 
 dest="${1:?first argument should be destination directory}"

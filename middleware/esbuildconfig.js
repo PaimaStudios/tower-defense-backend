@@ -8,8 +8,12 @@ await build({
 
   bundle: true,
   format: 'esm',
-  sourcemap: true,
+
+  minify: true,
   treeShaking: true,
+  sourcemap: true,
+  // source map is for browser debugging, so include source content
+  sourcesContent: true,
 
   define: {
     global: 'window',
