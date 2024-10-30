@@ -1,4 +1,5 @@
-const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill');
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
+import { build } from 'esbuild';
 
 const modules = NodeModulesPolyfillPlugin();
 
@@ -8,9 +9,7 @@ for (const variable in process.env) {
   define[`process.env.${variable}`] = JSON.stringify(process.env[variable]);
 }
 
-const esbuild = require('esbuild');
-/** @type import('esbuild').BuildOptions */
-const config = {
+await build({
   // JS output from previous compilation step used here instead of index.ts to have more control over the TS build process
   entryPoints: ['build/index.js'],
   bundle: true,
@@ -21,6 +20,4 @@ const config = {
   external: ['pg-native'],
   globalName: 'paimaMiddleware',
   sourcemap: true,
-};
-
-esbuild.build(config);
+});

@@ -1,7 +1,6 @@
 import { build } from 'esbuild';
 
-/** @type import('esbuild').BuildOptions */
-const config = {
+await build({
   // JS output from previous compilation step used here instead of index.ts to have more control over the TS build process
   entryPoints: ['build/index.js'],
   bundle: true,
@@ -22,6 +21,4 @@ const config = {
   banner: {
     js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
   }
-};
-
-await build(config);
+});
