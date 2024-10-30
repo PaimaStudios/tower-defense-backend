@@ -12,6 +12,7 @@
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.1",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.1",
     "hardhat": "^2.19.4",
     "hardhat-abi-exporter": "github:paimaStudios/hardhat-abi-exporter#export-ts-wrapper",
     "hardhat-dependency-compiler": "^1.1.3",

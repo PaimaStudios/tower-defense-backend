@@ -9,6 +9,10 @@ import 'hardhat-dependency-compiler';
 import 'hardhat-interact';
 import { task, type HardhatUserConfig } from 'hardhat/config';
 import { type HardhatRuntimeEnvironment } from 'hardhat/types';
+import * as dotenv from 'dotenv';
+
+const xai: Record<string, string> = {};
+dotenv.config({ path: '../../.env.xai', processEnv: xai });
 
 const config: HardhatUserConfig = {
   solidity: '0.8.20',
@@ -29,6 +33,11 @@ const config: HardhatUserConfig = {
         auto: true,
         interval: 2000,
       },
+    },
+    xai: {
+      chainId: 660279,
+      url: 'https://xai-chain.net/rpc',
+      accounts: xai.DEPLOYER_PRIVATE_KEY ? [xai.DEPLOYER_PRIVATE_KEY] : [],
     },
   },
   dependencyCompiler: {
@@ -63,9 +72,11 @@ task('node').setAction(async (args, hre: HardhatRuntimeEnvironment, runSuper) =>
       'ignition',
       'deploy',
       './ignition/modules/deploy.ts',
-      '--parameters', './ignition/parameters.json',
-      '--network', 'localhost',
-      '--reset',  // So we don't have to manually rm -rf the deploy journal.
+      '--parameters',
+      './ignition/parameters.json',
+      '--network',
+      'localhost',
+      '--reset', // So we don't have to manually rm -rf the deploy journal.
     ],
     {
       stdio: 'inherit',

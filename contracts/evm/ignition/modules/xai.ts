@@ -1,5 +1,6 @@
-// A Hardhat module representing what should be deployed locally.
-// Includes a Genesis Trainer contract so we have something to test against.
+// A Hardhat module that represents what TD should actually deploy to Xai.
+// Excludes Tarochi Genesis Trainers because that contract's deployment is
+// not Tower Defense's responsibility.
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules';
 import type { IgnitionModuleBuilder } from '@nomicfoundation/ignition-core';
 
@@ -7,14 +8,5 @@ export default buildModule('L2Contract', (m: IgnitionModuleBuilder) => {
   // https://github.com/NomicFoundation/hardhat-ignition/issues/673
   const l2Contract = m.contract('PaimaL2Contract', [m.getAccount(0), 1]);
 
-  const annotatedMintNft = m.contract('AnnotatedMintNft', [
-    'GENESIS TRAINER',
-    'GT',
-    10000,
-    m.getAccount(0),
-  ], {
-    after: [l2Contract]
-  });
-
-  return { l2Contract, annotatedMintNft };
+  return { l2Contract };
 });
