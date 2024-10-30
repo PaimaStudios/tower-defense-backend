@@ -13,6 +13,15 @@ const config = {
   treeShaking: true,
   sourcemap: true,
   sourcesContent: false,
+
+  define: {
+    '__dirname': 'import.meta.dirname',
+    '__filename': 'import.meta.filename',
+  },
+
+  banner: {
+    js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
+  }
 };
 
-build(config);
+await build(config);
