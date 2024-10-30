@@ -13,7 +13,7 @@ export class userConfigsController extends Controller {
   @Get()
   public async get(@Query() creator: string): Promise<UserConfigsResponse> {
     const pool = requirePool();
-    creator = (await getMainAddress(creator, pool)).address;
+    //creator = (await getMainAddress(creator, pool)).address;
     const configs = await getUserConfigs.run({ creator }, pool);
     return { configs };
   }

@@ -12,7 +12,7 @@ export class userStatsController extends Controller {
   @Get()
   public async get(@Query() wallet: string): Promise<UserStatsResponse> {
     const pool = requirePool();
-    wallet = (await getMainAddress(wallet, pool)).address;
+    //wallet = (await getMainAddress(wallet, pool)).address;
     const [stats] = await getUserStats.run({ wallet }, pool);
     return { stats };
   }

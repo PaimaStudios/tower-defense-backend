@@ -29,7 +29,7 @@ export class openLobbiesController extends Controller {
       throw new ValidateError({ count: { message: 'invalid number' } }, '');
     }
 
-    wallet = (await getMainAddress(wallet, pool)).address;
+    //wallet = (await getMainAddress(wallet, pool)).address;
     const p = valPage.right;
     const c = valCount.right;
     const offset = (p - 1) * c;
