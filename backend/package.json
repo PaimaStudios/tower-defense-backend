@@ -2,11 +2,16 @@
   "name": "@tower-defense/backend",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
   "type": "module",
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "prepack": "node ./esbuildconfig.js"
+  },
+  "files": [
+    "build/index.bundle.js",
+    "build/index.bundle.js.map"
+  ],
   "dependencies": {
     "@paima/db": "5.0.0",
     "@paima/executors": "^5.0.0",
