@@ -18,6 +18,7 @@ import { blankStats } from './stats.js';
 import { practiceRound } from '../transition.js';
 import { persistNewRound } from './match.js';
 import { generateMatchState } from '@tower-defense/game-logic';
+import { ENV } from '@paima/utils';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
@@ -34,7 +35,7 @@ export function persistLobbyCreation(
     lobby_creator_token_id: tokenId,
     creator_faction: inputData.creatorFaction,
     num_of_rounds: inputData.numOfRounds,
-    round_length: inputData.roundLength,
+    round_length: inputData.roundLength * 2 / ENV.BLOCK_TIME,  // convert from 2-second units to BLOCK_TIME-second units
     current_round: 0,
     creation_block_height: blockHeight,
     map: inputData.map,
@@ -70,7 +71,7 @@ export function persistPracticeLobbyCreation(
     lobby_creator_token_id: tokenId,
     creator_faction: inputData.creatorFaction,
     num_of_rounds: inputData.numOfRounds,
-    round_length: inputData.roundLength,
+    round_length: inputData.roundLength * 2 / ENV.BLOCK_TIME,  // convert from 2-second units to BLOCK_TIME-second units
     current_round: 0,
     creation_block_height: blockHeight,
     map: inputData.map,
