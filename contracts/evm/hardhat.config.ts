@@ -31,7 +31,11 @@ const config: HardhatUserConfig = {
       chainId: 31337,
       mining: {
         auto: true,
-        interval: 2000,
+        // Xai runs at *approximately* 250ms per block, but if we ask Hardhat to
+        // produce multiple blocks per second, it pushes timestamps into the future
+        // instead of allowing them to repeat like Xai does, causing the emulated
+        // funnel to also run into the future, so we can't simulate Xai exactly.
+        interval: 1000,
       },
     },
     xai: {
