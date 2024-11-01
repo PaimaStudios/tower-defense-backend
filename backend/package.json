@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "prepack": "node ./esbuildconfig.js && cp $(npm ls --parseable @dcspark/cardano-multiplatform-lib-nodejs | head -1)/cardano_multiplatform_lib_bg.wasm build/"
+    "prepack": "(cd .. && npm run build) && node ./esbuildconfig.js && cp $(npm ls --parseable @dcspark/cardano-multiplatform-lib-nodejs | head -1)/cardano_multiplatform_lib_bg.wasm build/"
   },
   "files": [
     "build/index.bundle.js",
