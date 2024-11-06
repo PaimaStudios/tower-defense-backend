@@ -35,7 +35,7 @@ export class UserLobbiesController extends Controller {
     }
 
     // after typecheck, valid data output is given in .right
-    wallet = (await getMainAddress(wallet, pool)).address;
+    //wallet = (await getMainAddress(wallet, pool)).address;
     const p = valPage.right;
     const c = valCount.right;
     const offset = (p - 1) * c;

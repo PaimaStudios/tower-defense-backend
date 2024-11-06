@@ -12,7 +12,7 @@ export class userNFTController extends Controller {
   @Get()
   public async get(@Query() wallet: string): Promise<UserNftResponse> {
     const pool = requirePool();
-    wallet = (await getMainAddress(wallet, pool)).address;
+    //wallet = (await getMainAddress(wallet, pool)).address;
     const [nft] = await getLatestUserNft.run({ wallet }, pool);
     return { nft };
   }

@@ -50,7 +50,7 @@ const createdLobby: ParserRecord<CreatedLobbyInput> = {
     value => conciseFactionMap[value as RoleSettingConcise]
   ),
   numOfRounds: PaimaParser.NumberParser(3, 1000),
-  roundLength: PaimaParser.DefaultRoundLength(parseInt(process.env.BLOCK_TIME || '4', 0)),
+  roundLength: PaimaParser.DefaultRoundLength(/* always in units of 2s regardless of real block speed */ 2),
   isHidden: PaimaParser.TrueFalseParser(false),
   map: PaimaParser.EnumParser(maps),
   isPractice: PaimaParser.TrueFalseParser(false),

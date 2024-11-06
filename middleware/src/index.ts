@@ -20,7 +20,7 @@ import { queryEndpoints } from './endpoints/queries';
 import { writeEndpoints } from './endpoints/write';
 
 import { getMiddlewareConfig } from './endpoints/internal';
-import { WalletMode } from '@paima/providers';
+import { allInjectedWallets, WalletMode } from '@paima/providers';
 
 import { LocalWallet } from '@thirdweb-dev/wallets';
 import { AddressType, Result } from '@paima/utils';
@@ -61,8 +61,25 @@ const endpoints = {
   ...queryEndpoints,
   ...writeEndpoints,
 
-  async userWalletLogin(name: string): Promise<Result<Wallet>> {
-    return localWalletResult;
+  async userWalletLogin(name: string): Promise<Result<Wallet & { detectedWallets: string[] }>> {
+    const result = await localWalletResult;
+    if (!result.success) {
+      return result;
+    }
+
+    const all = await allInjectedWallets({
+      gameName: GAME_NAME,
+      gameChainId: undefined,
+    });
+    console.log('allInjectedWallets =', all);
+
+    return {
+      success: true,
+      result: {
+        ...result.result,
+        detectedWallets: all[WalletMode.EvmInjected].map(w => w.metadata.displayName),
+      }
+    };
   },
 
   async externalWalletConnect(name: string): Promise<Result<PostDataResponse>> {

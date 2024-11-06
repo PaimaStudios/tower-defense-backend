@@ -14,7 +14,7 @@ export class UserLobbiesBlockheightController extends Controller {
   @Get()
   public async get(@Query() wallet: string, @Query() blockHeight: number): Promise<UserLobbiesBlockheightResponse> {
     const pool = requirePool();
-    wallet = (await getMainAddress(wallet, pool)).address;
+    //wallet = (await getMainAddress(wallet, pool)).address;
     const valBH = psqlNum.decode(blockHeight);
     if (isLeft(valBH)) {
       throw new ValidateError({ blockHeight: { message: 'invalid number' } }, '');

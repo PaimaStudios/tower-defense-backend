@@ -13,15 +13,6 @@ export const GAME_NAME = 'Wrath of the Jungle';
 
 // CONFIG VALUES
 export class GameENV extends ENV {
-  static get INDEXER_URI(): string {
-    return process.env.INDEXER_URI || '';
-  }
-  static get STATEFUL_URI(): string {
-    return process.env.STATEFUL_URI || '';
-  }
-  static get NFT_CONTRACT(): string {
-    return process.env.NFT_CONTRACT || '';
-  }
   static get SHORT_CONFIG(): string {
     return process.env.SHORT_CONFIG || 'defaultdefault';
   }

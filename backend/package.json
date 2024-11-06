@@ -2,11 +2,17 @@
   "name": "@tower-defense/backend",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
   "type": "module",
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "prepack": "(cd .. && npm run build) && node ./esbuildconfig.js && cp $(npm ls --parseable @dcspark/cardano-multiplatform-lib-nodejs | head -1)/cardano_multiplatform_lib_bg.wasm build/"
+  },
+  "files": [
+    "build/index.bundle.js",
+    "build/index.bundle.js.map",
+    "build/cardano_multiplatform_lib_bg.wasm"
+  ],
   "dependencies": {
     "@paima/db": "5.0.0",
     "@paima/executors": "^5.0.0",
