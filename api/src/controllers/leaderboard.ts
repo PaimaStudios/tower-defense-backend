@@ -25,12 +25,21 @@ interface LeaderboardEntryProps extends LeaderboardEntryType {
 @Route('leaderboards')
 export class LeaderboardsController extends Controller {
   @Get()
-  public async get(@Request() request: ExpressRequest, @Query() frequency: string, @Query() previous: boolean): Promise<LeaderboardEntryProps[]> {
-    console.log('/leaderboard', frequency, previous);
+  public async get(@Query() frequency: string, @Query() previous: boolean): Promise<LeaderboardEntryProps[]> {
+    // Note: the frontend only has two tabs, "Global" and "All-time Streak",
+    // and both send frequency=weekly&previous=false, so we can be simple here.
     const pool = requirePool();
 
     const nfts = await getNftLeaderboards.run(undefined, pool);
+    let [position, position_score] = [0, Infinity];
     return nfts.map((nft, index) => {
+      // Give those with the same score the same ordinal position.
+      const score = nft.wins * 10 - nft.losses;
+      if (score < position_score) {
+        position = index + 1;
+        position_score = score;
+      }
+
       return {
         token_id: Number(nft.token_id),
         nft_contract: 'TODO',
@@ -38,14 +47,14 @@ export class LeaderboardsController extends Controller {
         draws: 0,
         losses: nft.losses,
         total_games: nft.wins + nft.losses,
-        score: nft.wins * 10,  // TODO
-        current_streak: 17,  // TODO
-        longest_streak: 21,  // TODO
+        score: nft.wins * 10 - nft.losses,
+        current_streak: nft.streak,
+        longest_streak: nft.best_streak,
 
-        position: index + 1,  // TODO: ties
+        position,
         avatar_url: `/trainer-image/${nft.token_id}.png`,
-        name: 'MY NAME',
-        wallet_address: nft.nft_owner,
+        name: `Tarochi Genesis Trainer #${nft.token_id}`,
+        wallet_address: nft.nft_owner ?? '',
       }
     });
   }
