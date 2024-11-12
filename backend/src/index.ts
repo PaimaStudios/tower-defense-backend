@@ -5,6 +5,7 @@ import RegisterRoutes from '@tower-defense/api';
 
 // NOTE: v1 was retired during the 2024 Q4 state reset
 import gameStateTransitionV2 from './stf/v2/index.js';
+import { metadata } from './achievements.js';
 
 function gameStateTransitionRouter(blockHeight: number) {
   return gameStateTransitionV2;
@@ -27,6 +28,7 @@ async function main() {
     {}, // todo: openapi
     {
       default: RegisterRoutes,
+      achievements: Promise.resolve(metadata),
     }
   );
 }
