@@ -22,6 +22,13 @@ export class GameENV extends ENV {
   static get LONG_CONFIG(): string {
     return process.env.LONG_CONFIG || 'defaultdefault';
   }
+
+  static get DISCORD_WEBHOOK_URL(): string | undefined {
+    return process.env.DISCORD_WEBHOOK_URL;
+  }
+  static get DISCORD_NFT_EMOJI(): string | undefined {
+    return process.env.DISCORD_NFT_EMOJI;
+  }
 }
 
 // OTHER CONSTANTS
