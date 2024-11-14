@@ -116,7 +116,7 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string {
         random: 'Random',
       }[lobby.creator_faction];
       return `
-        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} is looking for a game!
+        *${username(lobby.lobby_creator, lobby.lobby_creator_token_id)}* is looking for a game!
         Map: ${mapName(lobby.map)} | Rounds: ${lobby.num_of_rounds} | Round time: ${round_length_minutes}m
         You would play: ${opponent_faction}
         https://join.example/${lobby.lobby_id}
@@ -130,6 +130,7 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string {
       const verb = {
         attacker: 'attacking',
         defender: 'defending against',
+        // Not supposed to happen:
         random: 'facing',
       }[lobby.creator_faction];
       const matchState = lobby.current_match_state as unknown as MatchState;
@@ -138,7 +139,7 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string {
           ? matchState.attackerTokenId
           : matchState.defenderTokenId;
       return `
-        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} is ${verb} ${username(lobby.player_two!, playerTwoTokenId)}!
+        *${username(lobby.lobby_creator, lobby.lobby_creator_token_id)}* is ${verb} *${username(lobby.player_two!, playerTwoTokenId)}*!
         Map: ${mapName(lobby.map)} | Round: ${lobby.current_round}/${lobby.num_of_rounds}
       `;
     }
@@ -150,14 +151,23 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string {
       WATERLOGGED PAPAYA :genesistrainer: was repelled by DRINKABLE BUCKBEAN!
       Map: Wavy | Rounds: 7
       */
-      const outcome = 'TODO OUTCOME';
       const matchState = lobby.current_match_state as unknown as MatchState;
+      const defenderWon = matchState.defenderBase.health > 0;
+      const outcome = {
+        attacker_false: 'broke the defenses of',
+        defender_true: 'defended against',
+        attacker_true: 'was repelled by',
+        defender_false: 'fell to',
+        // Not supposed to happen:
+        random_true: 'finished playing against',
+        random_false: 'finished playing against',
+      }[`${lobby.creator_faction}_${defenderWon}`];
       const playerTwoTokenId =
         lobby.player_two === matchState.attacker
           ? matchState.attackerTokenId
           : matchState.defenderTokenId;
       return `
-        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} ${outcome} ${username(lobby.player_two!, playerTwoTokenId)}!
+        *${username(lobby.lobby_creator, lobby.lobby_creator_token_id)}* ${outcome} *${username(lobby.player_two!, playerTwoTokenId)}*!
         Map: ${mapName(lobby.map)} | Rounds: ${lobby.current_round}
       `;
     }
