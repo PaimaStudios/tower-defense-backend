@@ -1,14 +1,13 @@
-import { doLog, ENV } from '@paima/utils';
-import { requirePool, role_setting } from '@tower-defense/db';
-import { GameENV, MatchState } from '@tower-defense/utils';
-
-// Evil import but we want this behavior.
 import { run } from '@paima/runtime/build/run-flag.js';
+import { doLog, ENV } from '@paima/utils';
+import { requirePool } from '@tower-defense/db';
 import {
   getNewLobbiesForDiscord,
   IGetNewLobbiesForDiscordResult,
   setLobbyForDiscord,
 } from '@tower-defense/db/build/discord.queries.js';
+import { GameENV, MatchState } from '@tower-defense/utils';
+import { generateNameFromString } from './name_generator.js';
 
 // ----------------------------------------------------------------------------
 
@@ -81,16 +80,11 @@ async function upsertDiscordMessage(id: string | null, content: string): Promise
 
 // ----------------------------------------------------------------------------
 
-function nickname(wallet: string): string {
-  // TODO: clone logic from frontend
-  return wallet;
-}
-
 function username(wallet: string, nft: number): string {
   if (nft && GameENV.DISCORD_NFT_EMOJI) {
-    return `${nickname(wallet)} ${GameENV.DISCORD_NFT_EMOJI}`;
+    return `${generateNameFromString(wallet)} ${GameENV.DISCORD_NFT_EMOJI}`;
   } else {
-    return nickname(wallet);
+    return generateNameFromString(wallet);
   }
 }
 
