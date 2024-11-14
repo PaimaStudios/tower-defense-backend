@@ -6,6 +6,7 @@ import RegisterRoutes from '@tower-defense/api';
 // NOTE: v1 was retired during the 2024 Q4 state reset
 import gameStateTransitionV2 from './stf/v2/index.js';
 import { metadata } from './achievements.js';
+import { discordMain } from './discord.js';
 
 function gameStateTransitionRouter(blockHeight: number) {
   return gameStateTransitionV2;
@@ -21,6 +22,7 @@ export const precompiles = generatePrecompiles(PrecompileNames);
 const events = {};
 
 async function main() {
+  // Note: returns as soon as the engine has booted.
   await runPaimaEngine(
     gameStateTransitionRouter,
     precompiles,
@@ -31,6 +33,9 @@ async function main() {
       achievements: Promise.resolve(metadata),
     }
   );
+
+  console.log('start discord');
+  void discordMain();
 }
 
 main();

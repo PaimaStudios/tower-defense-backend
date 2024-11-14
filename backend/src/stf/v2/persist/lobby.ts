@@ -19,7 +19,6 @@ import { practiceRound } from '../transition.js';
 import { persistNewRound } from './match.js';
 import { generateMatchState } from '@tower-defense/game-logic';
 import { ENV } from '@paima/utils';
-import { onLobbyLfg } from '../../../discord.js';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
@@ -54,20 +53,6 @@ export function persistLobbyCreation(
   const createLobbyTuple: SQLUpdate = [createLobby, params];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
-
-  // tell Discord now?
-  if (!inputData.isHidden && !inputData.isPractice) {
-    onLobbyLfg({
-      lobby_id,
-      lobby_creator: user,
-      lobby_creator_token_id: tokenId,
-      creator_faction: inputData.creatorFaction,
-      num_of_rounds: inputData.numOfRounds,
-      round_length_seconds: inputData.roundLength * 2,
-      map: inputData.map,
-    });
-  }
-
   return [createLobbyTuple, blankStatsTuple];
 }
 export function persistPracticeLobbyCreation(
@@ -99,9 +84,9 @@ export function persistPracticeLobbyCreation(
     lobby_state: 'open',
     player_two: null,
     current_match_state: {},
-  } satisfies ICreateLobbyParams satisfies IGetLobbyByIdResult;
+  } as const;
   // create the lobby according to the input data.
-  const createLobbyTuple: SQLUpdate = [createLobby, params];
+  const createLobbyTuple: SQLUpdate = [createLobby, params satisfies ICreateLobbyParams];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
   const practiceLobbyTuples = persistLobbyJoin(
