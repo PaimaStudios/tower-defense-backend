@@ -1,10 +1,14 @@
 import { doLog, ENV } from '@paima/utils';
 import { requirePool, role_setting } from '@tower-defense/db';
-import { GameENV } from '@tower-defense/utils';
+import { GameENV, MatchState } from '@tower-defense/utils';
 
 // Evil import but we want this behavior.
 import { run } from '@paima/runtime/build/run-flag.js';
-import { getNewLobbiesForDiscord, IGetNewLobbiesForDiscordResult, setLobbyForDiscord } from '@tower-defense/db/build/discord.queries.js';
+import {
+  getNewLobbiesForDiscord,
+  IGetNewLobbiesForDiscordResult,
+  setLobbyForDiscord,
+} from '@tower-defense/db/build/discord.queries.js';
 
 // ----------------------------------------------------------------------------
 
@@ -52,7 +56,7 @@ async function deleteMessage(id: string) {
   });
 }
 
-async function upsertDiscordMessage(id: string | null, content: string | null): Promise<string> {
+async function upsertDiscordMessage(id: string | null, content: string): Promise<string> {
   if (id === '') {
     // We originally declined to post a message ever.
     return id;
@@ -90,11 +94,15 @@ function username(wallet: string, nft: number): string {
   }
 }
 
+function mapName(map: string): string {
+  return map.substring(0, 1).toUpperCase() + map.substring(1);
+}
+
 // ----------------------------------------------------------------------------
 
-function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string | null {
+function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string {
   switch (lobby.lobby_state) {
-    case 'open':
+    case 'open': {
       /*
       WATERLOGGED PAPAYA :genesistrainer: is looking for a game!
       Map: Wavy | Rounds: 10 | Round time: 30m
@@ -103,29 +111,38 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string | n
       */
       const round_length_minutes = (lobby.round_length * ENV.BLOCK_TIME) / 60;
       const opponent_faction = {
-        'attacker': 'Defender',
-        'defender': 'Attacker',
-        'random': 'Random',
+        attacker: 'Defender',
+        defender: 'Attacker',
+        random: 'Random',
       }[lobby.creator_faction];
-      return `\
-        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} is looking for a game!\n\
-        Map: ${lobby.map} | Rounds: ${lobby.num_of_rounds} | Round time: ${round_length_minutes}m\n\
-        You would play: ${opponent_faction}\n\
-        https://join.example/${lobby.lobby_id}\n\
+      return `
+        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} is looking for a game!
+        Map: ${mapName(lobby.map)} | Rounds: ${lobby.num_of_rounds} | Round time: ${round_length_minutes}m
+        You would play: ${opponent_faction}
+        https://join.example/${lobby.lobby_id}
       `;
-    case 'active':
+    }
+    case 'active': {
       /*
       WATERLOGGED PAPAYA :genesistrainer: is defending against DRINKABLE BUCKBEAN
       Map: Wavy | Round: 1/10
       */
       const verb = {
-        'attacker': 'attacking', 'defender': 'defending against', 'random': 'facing'
+        attacker: 'attacking',
+        defender: 'defending against',
+        random: 'facing',
       }[lobby.creator_faction];
-      return `\
-        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} is ${verb} TODO OPPONENT!\n\
-        Map: ${lobby.map} | Round: ${lobby.current_round}/${lobby.num_of_rounds}\n\
+      const matchState = lobby.current_match_state as unknown as MatchState;
+      const playerTwoTokenId =
+        lobby.player_two === matchState.attacker
+          ? matchState.attackerTokenId
+          : matchState.defenderTokenId;
+      return `
+        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} is ${verb} ${username(lobby.player_two!, playerTwoTokenId)}!
+        Map: ${mapName(lobby.map)} | Round: ${lobby.current_round}/${lobby.num_of_rounds}
       `;
-    case 'finished':
+    }
+    case 'finished': {
       /*
       WATERLOGGED PAPAYA :genesistrainer: defended against DRINKABLE BUCKBEAN!
       WATERLOGGED PAPAYA :genesistrainer: broke the defenses of DRINKABLE BUCKBEAN!
@@ -133,10 +150,17 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string | n
       WATERLOGGED PAPAYA :genesistrainer: was repelled by DRINKABLE BUCKBEAN!
       Map: Wavy | Rounds: 7
       */
-      return `\
-        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} TODO OUTCOME TODO OPPONENT!\n\
-        Map: ${lobby.map} | Rounds: ${lobby.current_round}\n\
+      const outcome = 'TODO OUTCOME';
+      const matchState = lobby.current_match_state as unknown as MatchState;
+      const playerTwoTokenId =
+        lobby.player_two === matchState.attacker
+          ? matchState.attackerTokenId
+          : matchState.defenderTokenId;
+      return `
+        ${username(lobby.lobby_creator, lobby.lobby_creator_token_id)} ${outcome} ${username(lobby.player_two!, playerTwoTokenId)}!
+        Map: ${mapName(lobby.map)} | Rounds: ${lobby.current_round}
       `;
+    }
     case 'closed':
       return '';
   }
@@ -153,9 +177,7 @@ export async function discordMain() {
     const newLobbies = await getNewLobbiesForDiscord.run(undefined, pool);
     for (let lobby of newLobbies) {
       try {
-        console.log(lobby);
-
-        const text = calculateMessageText(lobby);
+        const text = calculateMessageText(lobby).replaceAll(/\n\s*/g, '\n').trim();
         const newId = await upsertDiscordMessage(lobby.discord_message_id, text);
         await setLobbyForDiscord.run({ ...lobby, discord_message_id: newId }, pool);
       } catch (e) {

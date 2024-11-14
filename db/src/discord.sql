@@ -1,7 +1,8 @@
 /* @name getNewLobbiesForDiscord */
 SELECT
-  lobbies.lobby_id, lobby_creator, lobby_creator_token_id, num_of_rounds,
-  round_length, creator_faction, map, lobbies.lobby_state, lobbies.current_round,
+  lobbies.lobby_id, lobbies.lobby_state, lobbies.current_round,
+  lobby_creator, lobby_creator_token_id, num_of_rounds, round_length,
+  creator_faction, map, player_two, current_match_state,
   discord_message_id
 FROM
   lobbies
