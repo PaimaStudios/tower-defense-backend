@@ -23,6 +23,9 @@ export class GameENV extends ENV {
     return process.env.LONG_CONFIG || 'defaultdefault';
   }
 
+  static get FRONTEND_URI(): string | undefined {
+    return process.env.FRONTEND_URI;
+  }
   static get DISCORD_WEBHOOK_URL(): string | undefined {
     return process.env.DISCORD_WEBHOOK_URL;
   }

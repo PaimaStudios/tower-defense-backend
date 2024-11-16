@@ -15,7 +15,7 @@ async function createMessage(body: { content: string }): Promise<string> {
   if (!GameENV.DISCORD_WEBHOOK_URL || !body.content) {
     return '';
   }
-  var url = new URL(GameENV.DISCORD_WEBHOOK_URL);
+  const url = new URL(GameENV.DISCORD_WEBHOOK_URL);
   url.searchParams.set('wait', 'true');
   const response = await fetch(url, {
     method: 'POST',
@@ -33,8 +33,8 @@ async function editMessage(id: string, body: { content: string }) {
   if (!GameENV.DISCORD_WEBHOOK_URL || !body.content) {
     return '';
   }
-  var url = new URL(GameENV.DISCORD_WEBHOOK_URL);
-  url.pathname = `${url.pathname}/messages/${id}`;
+  const url = new URL(GameENV.DISCORD_WEBHOOK_URL);
+  url.pathname += `/messages/${id}`;
   await fetch(url, {
     method: 'PATCH',
     headers: {
@@ -48,8 +48,8 @@ async function deleteMessage(id: string) {
   if (!GameENV.DISCORD_WEBHOOK_URL) {
     return '';
   }
-  var url = new URL(GameENV.DISCORD_WEBHOOK_URL);
-  url.pathname = `${url.pathname}/messages/${id}`;
+  const url = new URL(GameENV.DISCORD_WEBHOOK_URL);
+  url.pathname += `/messages/${id}`;
   await fetch(url, {
     method: 'DELETE',
   });
@@ -109,11 +109,19 @@ function calculateMessageText(lobby: IGetNewLobbiesForDiscordResult): string {
         defender: 'Attacker',
         random: 'Random',
       }[lobby.creator_faction];
+
+      let joinUrl = '';
+      if (GameENV.FRONTEND_URI) {
+        const url = new URL(GameENV.FRONTEND_URI);
+        url.searchParams.set('lobby', lobby.lobby_id);
+        joinUrl = url.toString();
+      }
+
       return `
         *${username(lobby.lobby_creator, lobby.lobby_creator_token_id)}* is looking for a game!
         Map: ${mapName(lobby.map)} | Rounds: ${lobby.num_of_rounds} | Round time: ${round_length_minutes}m
         You would play: ${opponent_faction}
-        https://join.example/${lobby.lobby_id}
+        ${joinUrl}
       `;
     }
     case 'active': {
