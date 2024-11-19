@@ -143,3 +143,13 @@ ORDER BY future_block_height DESC LIMIT 1;
 /* @name getNftScore */
 SELECT * FROM nft_score
 WHERE cde_name = :cde_name AND token_id = :token_id;
+
+/* @name getNftLeaderboards */
+SELECT nft_score.cde_name, nft_score.token_id, wins, losses, streak, best_streak, nft_owner
+FROM nft_score
+LEFT JOIN cde_erc721_data
+ON
+    nft_score.cde_name = cde_erc721_data.cde_name AND
+    nft_score.token_id = cde_erc721_data.token_id
+WHERE nft_score.token_id::INTEGER != 0
+ORDER BY wins DESC;

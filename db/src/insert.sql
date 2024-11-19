@@ -112,9 +112,11 @@ VALUES :final_state;
 /* NFT Score */
 
 /* @name addNftScore */
-INSERT INTO nft_score(cde_name, token_id, wins, losses)
-VALUES (:cde_name!, :token_id!, :wins!, :losses!)
+INSERT INTO nft_score(cde_name, token_id, wins, losses, streak, best_streak)
+VALUES (:cde_name!, :token_id!, :wins!, :losses!, :wins!, :wins!)
 ON CONFLICT (cde_name, token_id)
 DO UPDATE SET
   wins = nft_score.wins + EXCLUDED.wins,
-  losses = nft_score.losses + EXCLUDED.losses;
+  losses = nft_score.losses + EXCLUDED.losses,
+  streak = (CASE WHEN EXCLUDED.wins > 0 THEN nft_score.streak + EXCLUDED.wins ELSE 0 END),
+  best_streak = GREATEST(nft_score.best_streak, (CASE WHEN EXCLUDED.wins > 0 THEN nft_score.streak + EXCLUDED.wins ELSE 0 END));

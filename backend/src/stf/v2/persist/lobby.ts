@@ -84,9 +84,9 @@ export function persistPracticeLobbyCreation(
     lobby_state: 'open',
     player_two: null,
     current_match_state: {},
-  } satisfies ICreateLobbyParams satisfies IGetLobbyByIdResult;
+  } as const;
   // create the lobby according to the input data.
-  const createLobbyTuple: SQLUpdate = [createLobby, params];
+  const createLobbyTuple: SQLUpdate = [createLobby, params satisfies ICreateLobbyParams];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
   const practiceLobbyTuples = persistLobbyJoin(
