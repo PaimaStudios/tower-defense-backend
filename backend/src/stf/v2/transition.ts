@@ -1,8 +1,13 @@
 import type { PoolClient } from 'pg';
 import type Prando from '@paima/prando';
-import type { SQLUpdate } from '@paima/db';
+import { type SQLUpdate } from '@paima/db';
 import type { WalletAddress } from '@paima/chain-types';
-import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams } from '@tower-defense/db';
+import type {
+  IGetLobbyByIdResult,
+  IGetRoundDataResult,
+  IEndMatchParams,
+  IAddNftScoreParams,
+} from '@tower-defense/db';
 import {
   getLobbyById,
   getRoundData,
@@ -82,7 +87,7 @@ export async function processCreateLobby(
     );
   }
   return persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
-};
+}
 
 export async function processJoinLobby(
   user: WalletAddress,
@@ -101,8 +106,16 @@ export async function processJoinLobby(
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
   const [joinerNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
-  return persistLobbyJoin(blockHeight, user, joinerNft?.token_id ?? 0, lobbyState, map, matchConfig, randomnessGenerator);
-};
+  return persistLobbyJoin(
+    blockHeight,
+    user,
+    joinerNft?.token_id ?? 0,
+    lobbyState,
+    map,
+    matchConfig,
+    randomnessGenerator
+  );
+}
 
 export async function processCloseLobby(
   user: WalletAddress,
@@ -318,7 +331,10 @@ export async function processZombieEffect(
   return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
 }
 
-export async function processStatsEffect(input: UserStats, dbConn: PoolClient): Promise<SQLUpdate[]> {
+export async function processStatsEffect(
+  input: UserStats,
+  dbConn: PoolClient
+): Promise<SQLUpdate[]> {
   const [stats] = await getUserStats.run({ wallet: input.user }, dbConn);
   if (!stats) return [];
   const query = persistStatsUpdate(input.user, input.result, stats);
@@ -383,25 +399,48 @@ function finalizeMatch(
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
 ): SQLUpdate[] {
-  const params: IEndMatchParams = {
-    lobby_id: lobby.lobby_id,
-    current_match_state: matchState as any,
-  };
-  const endMatchTuple: SQLUpdate = [endMatch, params];
+  const updates: SQLUpdate[] = [];
+
+  updates.push([
+    endMatch,
+    {
+      lobby_id: lobby.lobby_id,
+      current_match_state: matchState as any,
+    } satisfies IEndMatchParams,
+  ]);
+
   if (lobby.practice) {
-    console.log(`Practice match ended, ignoring results`);
-    return [endMatchTuple];
+    return updates;
   }
+
   const results = matchResults(lobby, matchState);
-  const resultsUpdate = persistMatchResults(lobby.lobby_id, results, matchState);
+  updates.push(persistMatchResults(lobby.lobby_id, results, matchState));
 
   // Create the new scheduled data for updating user stats
-  const statsUpdate1 = scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1);
-  const statsUpdate2 = scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1);
-  const nftScoreUpdate1: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[0].tokenId, wins: results[0].result === 'win' ? 1 : 0, losses: results[0].result === 'loss' ? 1 : 0 }];
-  const nftScoreUpdate2: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[1].tokenId, wins: results[1].result === 'win' ? 1 : 0, losses: results[1].result === 'loss' ? 1 : 0 }];
-  console.log('persisting match finalizing');
-  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2, nftScoreUpdate1, nftScoreUpdate2];
+  updates.push(
+    scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1),
+    scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1),
+    [
+      addNftScore,
+      {
+        cde_name: cdeName,
+        token_id: String(results[0].tokenId),
+        wins: results[0].result === 'win' ? 1 : 0,
+        losses: results[0].result === 'loss' ? 1 : 0,
+      } satisfies IAddNftScoreParams,
+    ],
+    [
+      addNftScore,
+      {
+        cde_name: cdeName,
+        token_id: String(results[1].tokenId),
+        wins: results[1].result === 'win' ? 1 : 0,
+        losses: results[1].result === 'loss' ? 1 : 0,
+      } satisfies IAddNftScoreParams,
+    ]
+  );
+
+  return updates;
 }
 
 export async function processConfig(
