@@ -17,7 +17,7 @@ export enum AchievementNames {
   ranked_win_every_position = 'ranked_win_every_position',
 }
 
-export const ranked_destroy_towers_amount = 15;
+export const ranked_destroy_towers_amount = 20;
 export const ranked_games_played_amount = 25;
 export const ranked_kill_undead_amount = 10_000; // 700ish in a match is typical
 export const ranked_spend_less_gold_amount = 900;
@@ -33,7 +33,7 @@ export const metadata = {
       name: AchievementNames.win_first_match,
       isActive: true,
       displayName: 'Welcome to the Jungle',
-      description: 'Secure your first win.',
+      description: 'Secure your first win (singleplayer and unranked included).',
     },
     // Medium free
     {
@@ -45,7 +45,7 @@ export const metadata = {
     {
       name: AchievementNames.attack_before_final_round,
       isActive: true,
-      displayName: 'Undead Lightning',
+      displayName: 'Like Undead Lightning',
       description: 'Win as attacker before the final round.',
     },
     // Medium paid
