@@ -40,13 +40,13 @@ export const metadata = {
       name: AchievementNames.defend_with_half_hp,
       isActive: true,
       displayName: 'The Best Defense',
-      description: 'Win as defender with at least half your health remaining.',
+      description: 'Win as defender with at least half your health remaining (unranked included).',
     },
     {
       name: AchievementNames.attack_before_final_round,
       isActive: true,
       displayName: 'Like Undead Lightning',
-      description: 'Win as attacker before the final round.',
+      description: 'Win as attacker before the final round (unranked included).',
     },
     // Medium paid
     {

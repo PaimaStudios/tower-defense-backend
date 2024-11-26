@@ -1,6 +1,12 @@
 import type { PoolClient } from 'pg';
 import type Prando from '@paima/prando';
-import { type SQLUpdate } from '@paima/db';
+import {
+  getMainAddress,
+  ISetAchievementProgressParams,
+  setAchievementProgress,
+  WalletDelegate,
+  type SQLUpdate,
+} from '@paima/db';
 import type { WalletAddress } from '@paima/chain-types';
 import type {
   IGetLobbyByIdResult,
@@ -31,7 +37,7 @@ import type {
 } from './types.js';
 import { isWipeOldLobbies } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
+import type { MatchConfig, MatchResults, MatchState, TurnAction } from '@tower-defense/utils';
 import { configParser } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
@@ -59,6 +65,7 @@ import {
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
 import { cdeName } from '@tower-defense/utils';
+import { AchievementNames, ranked_spend_less_gold_amount } from '../../achievements.js';
 
 export async function processCreateLobby(
   user: WalletAddress,
@@ -135,13 +142,13 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
   return [query];
 }
 
-export function practiceRound(
+export async function practiceRound(
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   // updates that would've been done during persist.
   const newRound = roundData.round_within_match + 1;
   const newStartingBlockHeight = blockHeight;
@@ -153,7 +160,7 @@ export function practiceRound(
   const movesFunction = generateMoves[lobbyState.bot_difficulty];
   const moves = movesFunction(matchConfig, matchState, faction, newRound, randomnessGenerator);
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
-  const roundExecutionTuples = executeRound(
+  const roundExecutionTuples = await executeRound(
     blockHeight,
     lobbyState,
     matchConfig,
@@ -226,7 +233,7 @@ export async function processSubmittedTurn(
   // Save the moves to the database;
   const movesTuples = input.actions.map(action => persistMove(lobby.lobby_id, user, action));
   // Execute the round after moves come in. Pass the moves in database params format to the round executor.
-  const roundExecutionTuples = executeRound(
+  const roundExecutionTuples = await executeRound(
     blockHeight,
     lobby,
     matchConfig,
@@ -238,7 +245,7 @@ export async function processSubmittedTurn(
     (round.match_state as any).defenderBase.health <= 0 ||
     lobby.current_round === lobby.num_of_rounds;
   if (lobby.practice && !matchEnded) {
-    const practiceTuples = practiceRound(
+    const practiceTuples = await practiceRound(
       blockHeight,
       { ...lobby, current_round: lobby.current_round + 1 },
       matchConfig,
@@ -307,7 +314,7 @@ export async function processZombieEffect(
   const movesTuples = moves.map(action => persistMove(lobby.lobby_id, user, action));
 
   // Proceed to the next round
-  const roundExecutionTuples = executeRound(
+  const roundExecutionTuples = await executeRound(
     blockHeight,
     lobby,
     matchConfig,
@@ -320,7 +327,7 @@ export async function processZombieEffect(
     lobby.current_round === lobby.num_of_rounds;
   const practiceTuples =
     lobby.practice && !matchEnded
-      ? practiceRound(
+      ? await practiceRound(
           blockHeight,
           { ...lobby, current_round: lobby.current_round + 1 },
           matchConfig,
@@ -342,14 +349,14 @@ export async function processStatsEffect(
 }
 
 // Runs the 'round executor' and produces the necessary SQL updates as a result
-export function executeRound(
+export async function executeRound(
   blockHeight: number,
   lobby: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   moves: TurnAction[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   const matchState = roundData.match_state as unknown as MatchState;
   const executor = roundExecutor.initialize(
     matchConfig,
@@ -377,7 +384,7 @@ export function executeRound(
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);
+    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(blockHeight, lobby, newState);
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
   // Create a new round and update match state if not at final round
@@ -394,11 +401,11 @@ export function executeRound(
 }
 
 // Finalizes the match and updates user statistics according to final score of the match
-function finalizeMatch(
+async function finalizeMatch(
   blockHeight: number,
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   const updates: SQLUpdate[] = [];
 
   updates.push([
@@ -409,12 +416,31 @@ function finalizeMatch(
     } satisfies IEndMatchParams,
   ]);
 
+  const results = matchResults(lobby, matchState);
+
   if (lobby.practice) {
+    // A practice lobby is still good for win_first_match, but not the rest.
+    if (results[0].result === 'win') {
+      const main = await getMainAddress(results[0].wallet, null! /* TODO */);
+      updates.push([
+        setAchievementProgress,
+        {
+          wallet: main.id,
+          name: AchievementNames.win_first_match,
+          completed_date: new Date(),
+        } satisfies ISetAchievementProgressParams,
+      ]);
+    }
+
     return updates;
   }
 
-  const results = matchResults(lobby, matchState);
   updates.push(persistMatchResults(lobby.lobby_id, results, matchState));
+
+  // Handle achievement progress and awarding.
+  const winner = results[0].result === 'win' ? results[0] : results[1];
+  const main = await getMainAddress(winner.wallet, null! /* TODO */);
+  updates.push(...await wonGameAchievements(lobby, matchState, winner, main));
 
   // Create the new scheduled data for updating user stats
   updates.push(
@@ -451,4 +477,80 @@ export async function processConfig(
   const parsedConfig = configParser(input.content);
   if ('error' in parsedConfig) return [];
   else return [persistConfigRegistration(user, input, randomnessGenerator)];
+}
+
+// Covers achievements that have "Win" as a condition.
+// General progression/"grinding" achievements are handled where they are.
+async function wonGameAchievements(lobby: IGetLobbyByIdResult, matchState: MatchState, winner: MatchResults[0]): Promise<SQLUpdate[]> {
+  const updates: SQLUpdate[] = [];
+
+  const main = await getMainAddress(winner.wallet);
+
+  // Welcome to the Jungle
+  updates.push([
+    setAchievementProgress,
+    {
+      wallet: main.id,
+      name: AchievementNames.win_first_match,
+      completed_date: new Date(),
+    } satisfies ISetAchievementProgressParams,
+  ]);
+
+  // The Best Defense
+  if (winner.wallet === matchState.defender && matchState.defenderBase.health >= 25/2) {
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.defend_with_half_hp
+      } satisfies ISetAchievementProgressParams
+    ]);
+  }
+
+  // Like Undead Lightning
+  if (winner.wallet === matchState.attacker && lobby.current_round < lobby.num_of_rounds) {
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.attack_before_final_round
+      } satisfies ISetAchievementProgressParams
+    ]);
+  }
+
+  // Ranked achievements are NFT vs NFT only:
+  // NFT vs NFT: matchState.attackerTokenId && matchState.defenderTokenId
+  // Winner has NFT: winner.wallet === matchState.attacker ? matchState.attackerTokenId : matchState.defenderTokenId
+  if (matchState.attackerTokenId && matchState.defenderTokenId) {
+    // Rope Ladder Climber
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.ranked_win,
+        completed_date: new Date(),
+      } satisfies ISetAchievementProgressParams,
+    ]);
+
+    // Combat Conservationist
+    const goldSpent = 9999; // TODO
+    if (goldSpent < ranked_spend_less_gold_amount) {
+      updates.push([
+        setAchievementProgress,
+        {
+          wallet: main.id,
+          name: AchievementNames.ranked_spend_less_gold,
+          completed_date: new Date(),
+        } satisfies ISetAchievementProgressParams,
+      ]);
+    }
+
+    // Mask Trick
+    // TODO
+
+    // Jungle World Tour
+    // TODO
+  }
+
+  return updates;
 }
