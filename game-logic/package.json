@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@paima/executors": "5.0.0",
     "@paima/prando": "5.0.0",
     "@tower-defense/utils": "../utils",
     "astar-typescript": "^1.2.6"

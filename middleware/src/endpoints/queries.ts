@@ -15,7 +15,7 @@ import {
   verifyNft,
   getNftStats as getNftStatsInternal,
 } from '../helpers/auxiliary-queries';
-import { calculateMatchStats, calculateRoundEnd } from '../helpers/utility-functions';
+import { calculateRoundEnd } from '../helpers/utility-functions';
 import { buildMatchExecutor, buildRoundExecutor } from '../helpers/executors';
 import {
   backendQueryCurrentRound,
@@ -57,6 +57,7 @@ import type { FailedResult } from '@paima/utils';
 import { getBlockNumber, PaimaMiddlewareErrorCode } from '@paima/mw-core';
 import type { MatchExecutor, RoundExecutor } from '@paima/executors';
 import type { WalletAddress } from '@paima/chain-types';
+import { calculateMatchStats } from '@tower-defense/game-logic';
 
 async function getLobbyState(lobbyID: string): Promise<PackedLobbyState | FailedResult> {
   const errorFxn = buildEndpointErrorFxn('getLobbyState');
