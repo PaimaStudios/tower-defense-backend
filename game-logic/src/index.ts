@@ -50,6 +50,7 @@ export type MatchStats = {
   p2GoldSpent: number;
   unitsSpawned: number;
   unitsDestroyed: number;
+  towersDestroyed: number;
 };
 
 export function calculateMatchStats(data: MatchExecutorData): MatchStats {
@@ -88,6 +89,7 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
     unitsDestroyed: 0,
     unitsSpawned: 0,
     rounds: 1,
+    towersDestroyed: 0,
   };
 
   const stats = events.reduce((stats, event, i) => {
@@ -100,6 +102,8 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
           const previous = events[i - 1];
           if (previous.eventType === 'defenderBaseUpdate') return stats;
           else return { ...stats, unitsDestroyed: stats.unitsDestroyed + 1 };
+        } else if (event.faction === 'defender') {
+          return { ...stats, towersDestroyed: stats.towersDestroyed + 1 };
         }
         return stats;
       case 'build':
@@ -129,16 +133,19 @@ export function calculateMatchStats(data: MatchExecutorData): MatchStats {
       p2GoldSpent: stats.defenderGoldSpent,
       unitsDestroyed: stats.unitsDestroyed,
       unitsSpawned: stats.unitsSpawned,
+      towersDestroyed: stats.towersDestroyed,
+    };
+  } else {
+    return {
+      p1StructuresBuilt: stats.defenderStructuresBuilt,
+      p2StructuresBuilt: stats.attackerStructuresBuilt,
+      p1GoldSpent: stats.defenderGoldSpent,
+      p2GoldSpent: stats.attackerGoldSpent,
+      unitsDestroyed: stats.unitsDestroyed,
+      unitsSpawned: stats.unitsSpawned,
+      towersDestroyed: stats.towersDestroyed,
     };
   }
-  return {
-    p1StructuresBuilt: stats.defenderStructuresBuilt,
-    p2StructuresBuilt: stats.attackerStructuresBuilt,
-    p1GoldSpent: stats.defenderGoldSpent,
-    p2GoldSpent: stats.attackerGoldSpent,
-    unitsDestroyed: stats.unitsDestroyed,
-    unitsSpawned: stats.unitsSpawned,
-  };
 }
 
 function isTickEvents(events: TickEvent[] | NewRoundEvent[] | null): events is TickEvent[] {

@@ -1,7 +1,9 @@
 import type { PoolClient } from 'pg';
 import type Prando from '@paima/prando';
 import {
+  getAchievementProgress,
   getMainAddress,
+  IGetAchievementProgressResult,
   ISetAchievementProgressParams,
   setAchievementProgress,
   WalletDelegate,
@@ -44,6 +46,7 @@ import processTick, {
   generateMoves,
   generateRandomMoves,
   matchResults,
+  MatchStats,
   parseConfig,
   validateMoves,
 } from '@tower-defense/game-logic';
@@ -65,7 +68,12 @@ import {
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
 import { cdeName } from '@tower-defense/utils';
-import { AchievementNames, ranked_spend_less_gold_amount } from '../../achievements.js';
+import {
+  AchievementNames,
+  ranked_destroy_towers_amount,
+  ranked_kill_undead_amount,
+  ranked_spend_less_gold_amount,
+} from '../../achievements.js';
 
 export async function processCreateLobby(
   user: WalletAddress,
@@ -83,7 +91,7 @@ export async function processCreateLobby(
     const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
     if (!configString) return [];
     const matchConfig = parseConfig(configString.content);
-    return persistPracticeLobbyCreation(
+    return await persistPracticeLobbyCreation(
       blockHeight,
       user,
       tokenId,
@@ -93,7 +101,7 @@ export async function processCreateLobby(
       randomnessGenerator
     );
   }
-  return persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
+  return await persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
 }
 
 export async function processJoinLobby(
@@ -113,7 +121,7 @@ export async function processJoinLobby(
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
   const [joinerNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
-  return persistLobbyJoin(
+  return await persistLobbyJoin(
     blockHeight,
     user,
     joinerNft?.token_id ?? 0,
@@ -408,6 +416,8 @@ async function finalizeMatch(
 ): Promise<SQLUpdate[]> {
   const updates: SQLUpdate[] = [];
 
+  const db: PoolClient = {};
+
   updates.push([
     endMatch,
     {
@@ -421,7 +431,7 @@ async function finalizeMatch(
   if (lobby.practice) {
     // A practice lobby is still good for win_first_match, but not the rest.
     if (results[0].result === 'win') {
-      const main = await getMainAddress(results[0].wallet, null! /* TODO */);
+      const main = await getMainAddress(results[0].wallet, db);
       updates.push([
         setAchievementProgress,
         {
@@ -434,13 +444,56 @@ async function finalizeMatch(
 
     return updates;
   }
+  // After here, not a practice lobby.
 
   updates.push(persistMatchResults(lobby.lobby_id, results, matchState));
 
-  // Handle achievement progress and awarding.
-  const winner = results[0].result === 'win' ? results[0] : results[1];
-  const main = await getMainAddress(winner.wallet, null! /* TODO */);
-  updates.push(...await wonGameAchievements(lobby, matchState, winner, main));
+  // Compute match stats for achievement use.
+  const stats: MatchStats = {};
+  const mains = [
+    await getMainAddress(results[0].wallet, db),
+    await getMainAddress(results[1].wallet, db),
+  ];
+
+  // Handle achievement progress and awarding for the winner.
+  if (results[0].result === 'win') {
+    updates.push(
+      ...(await wonGameAchievements(lobby, matchState, results[0], mains[0], stats.p1GoldSpent))
+    );
+  } else if (results[1].result === 'win') {
+    updates.push(
+      ...(await wonGameAchievements(lobby, matchState, results[1], mains[1], stats.p2GoldSpent))
+    );
+  }
+
+  // For both winner and loser, handle all-time progressive achievements.
+  for (let i = 0; i < 2; ++i) {
+    const map = await fetchProgress(db, mains[i].id, [
+      AchievementNames.ranked_destroy_towers,
+      AchievementNames.ranked_kill_undead,
+      AchievementNames.ranked_games_played,
+    ]);
+
+    if (results[i].wallet === matchState.attacker) {
+      // Attacker gets credit for towers destroyed with Macaws.
+      const prog = getProgress(mains[i].id, map, AchievementNames.ranked_destroy_towers);
+      prog.progress = (prog.progress ?? 0) + stats.towersDestroyed;
+      prog.total = ranked_destroy_towers_amount;
+      if (prog.progress >= prog.total) {
+        prog.completed_date = new Date();
+      }
+      updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
+    } else if (results[i].wallet === matchState.defender) {
+      // Defender gets credit for undead killed.
+      const prog = getProgress(mains[i].id, map, AchievementNames.ranked_kill_undead);
+      prog.progress = (prog.progress ?? 0) + stats.unitsDestroyed;
+      prog.total = ranked_kill_undead_amount;
+      if (prog.progress >= prog.total) {
+        prog.completed_date = new Date();
+      }
+      updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
+    }
+  }
 
   // Create the new scheduled data for updating user stats
   updates.push(
@@ -481,10 +534,14 @@ export async function processConfig(
 
 // Covers achievements that have "Win" as a condition.
 // General progression/"grinding" achievements are handled where they are.
-async function wonGameAchievements(lobby: IGetLobbyByIdResult, matchState: MatchState, winner: MatchResults[0]): Promise<SQLUpdate[]> {
+async function wonGameAchievements(
+  lobby: IGetLobbyByIdResult,
+  matchState: MatchState,
+  winner: MatchResults[0],
+  main: WalletDelegate,
+  goldSpent: number
+): Promise<SQLUpdate[]> {
   const updates: SQLUpdate[] = [];
-
-  const main = await getMainAddress(winner.wallet);
 
   // Welcome to the Jungle
   updates.push([
@@ -497,13 +554,13 @@ async function wonGameAchievements(lobby: IGetLobbyByIdResult, matchState: Match
   ]);
 
   // The Best Defense
-  if (winner.wallet === matchState.defender && matchState.defenderBase.health >= 25/2) {
+  if (winner.wallet === matchState.defender && matchState.defenderBase.health >= 25 / 2) {
     updates.push([
       setAchievementProgress,
       {
         wallet: main.id,
-        name: AchievementNames.defend_with_half_hp
-      } satisfies ISetAchievementProgressParams
+        name: AchievementNames.defend_with_half_hp,
+      } satisfies ISetAchievementProgressParams,
     ]);
   }
 
@@ -513,8 +570,8 @@ async function wonGameAchievements(lobby: IGetLobbyByIdResult, matchState: Match
       setAchievementProgress,
       {
         wallet: main.id,
-        name: AchievementNames.attack_before_final_round
-      } satisfies ISetAchievementProgressParams
+        name: AchievementNames.attack_before_final_round,
+      } satisfies ISetAchievementProgressParams,
     ]);
   }
 
@@ -533,7 +590,6 @@ async function wonGameAchievements(lobby: IGetLobbyByIdResult, matchState: Match
     ]);
 
     // Combat Conservationist
-    const goldSpent = 9999; // TODO
     if (goldSpent < ranked_spend_less_gold_amount) {
       updates.push([
         setAchievementProgress,
@@ -553,4 +609,34 @@ async function wonGameAchievements(lobby: IGetLobbyByIdResult, matchState: Match
   }
 
   return updates;
+}
+
+async function fetchProgress<Names extends string>(db: PoolClient, wallet: number, names: Names[]) {
+  return Object.fromEntries(
+    (
+      await getAchievementProgress.run(
+        {
+          wallet,
+          names,
+        },
+        db
+      )
+    ).map(x => [x.name, x])
+  ) as { [x in Names]: IGetAchievementProgressResult | undefined };
+}
+
+function getProgress<Name extends string>(
+  wallet: number,
+  map: Record<Name, IGetAchievementProgressResult | undefined>,
+  name: Name
+): IGetAchievementProgressResult {
+  return (
+    map[name] ?? {
+      name,
+      completed_date: null,
+      progress: null,
+      total: null,
+      wallet,
+    }
+  );
 }
