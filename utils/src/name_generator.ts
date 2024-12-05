@@ -3,11 +3,9 @@ const maxCharacters = 20;
 // See NameGenerator.cs in the frontend
 export function generateNameFromString(str: string) {
   const hash = murmurHash(new TextEncoder().encode(str), 0n);
-  console.log(hash);
   const rng = xorShift64(hash);
   while (true) {
     const a = rng(), b = rng();
-    console.log(a, b);
     const result = `${adjectives[Math.floor(a * adjectives.length)]} ${nouns[Math.floor(b * nouns.length)]}`;
     if (result.length <= maxCharacters) {
       return result;
