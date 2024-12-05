@@ -1,6 +1,6 @@
 import { getNftLeaderboards, requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Request, Route } from 'tsoa';
-import { Request as ExpressRequest } from 'express';
+import { cdeName, generateNameFromString } from '@tower-defense/utils';
 
 interface LeaderboardEntryType {
   token_id: number;
@@ -19,6 +19,7 @@ interface LeaderboardEntryProps extends LeaderboardEntryType {
   avatar_url?: string;
   name?: string;
   wallet_address: string;
+  wallet_alias?: string;
   wrapperClassname?: string;
 }
 
@@ -40,9 +41,9 @@ export class LeaderboardsController extends Controller {
         position_score = score;
       }
 
-      return {
+      const result: LeaderboardEntryProps = {
         token_id: Number(nft.token_id),
-        nft_contract: 'TODO',
+        nft_contract: nft.cde_name,  // Not really used, just send something.
         wins: nft.wins,
         draws: 0,
         losses: nft.losses,
@@ -52,10 +53,20 @@ export class LeaderboardsController extends Controller {
         longest_streak: nft.best_streak,
 
         position,
-        avatar_url: `/trainer-image/${nft.token_id}.png`,
-        name: `Tarochi Genesis Trainer #${nft.token_id}`,
         wallet_address: nft.nft_owner ?? '',
+      };
+
+      switch (nft.cde_name) {
+        case cdeName:
+          result.avatar_url = `/trainer-image/${nft.token_id}.png`;
+          result.name = `Tarochi Genesis Trainer #${nft.token_id}`;
+          if (nft.nft_owner) {
+            result.wallet_alias = generateNameFromString(nft.nft_owner);
+          }
+          break;
       }
+
+      return result;
     });
   }
 }
