@@ -17,10 +17,12 @@ export enum AchievementNames {
   ranked_win_every_position = 'ranked_win_every_position',
 }
 
-export const ranked_destroy_towers_amount = 20;
-export const ranked_games_played_amount = 25;
-export const ranked_kill_undead_amount = 10_000; // 700ish in a match is typical
-export const ranked_spend_less_gold_amount = 900;
+export const AchievementAmounts = {
+  ranked_destroy_towers: 20,
+  ranked_games_played: 25,
+  ranked_kill_undead: 10_000, // 700ish in a match is typical, so this is ~15 matches
+  ranked_spend_less_gold: 900,
+} as const;
 
 export const metadata = {
   game: {
@@ -59,25 +61,25 @@ export const metadata = {
       name: AchievementNames.ranked_spend_less_gold,
       isActive: true,
       displayName: 'Combat Conservationist',
-      description: `Win a ranked game spending less than ${ranked_spend_less_gold_amount} gold.`,
+      description: `Win a ranked game spending less than ${AchievementAmounts.ranked_spend_less_gold} gold.`,
     },
     {
       name: AchievementNames.ranked_destroy_towers,
       isActive: true,
       displayName: 'Parrot Patton',
-      description: `Destroy ${ranked_destroy_towers_amount} total towers with Macaws in ranked games.`,
+      description: `Destroy ${AchievementAmounts.ranked_destroy_towers} total towers with Macaws in ranked games.`,
     },
     {
       name: AchievementNames.ranked_kill_undead,
       isActive: true,
       displayName: 'Hold The Line!',
-      description: `Kill ${ranked_kill_undead_amount} total undead in ranked games.`,
+      description: `Kill ${AchievementAmounts.ranked_kill_undead} total undead in ranked games.`,
     },
     {
       name: AchievementNames.ranked_games_played,
       isActive: true,
       displayName: 'Tropical Trooper',
-      description: `Finish ${ranked_games_played_amount} ranked games (win or lose) on a single NFT.`,
+      description: `Finish ${AchievementAmounts.ranked_games_played} ranked games (win or lose) on a single NFT.`,
     },
     // Hard paid
     {

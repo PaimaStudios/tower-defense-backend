@@ -81,10 +81,8 @@ import {
 import { wipeOldLobbies } from './persist/wipe.js';
 import { cdeName } from '@tower-defense/utils';
 import {
+  AchievementAmounts,
   AchievementNames,
-  ranked_destroy_towers_amount,
-  ranked_kill_undead_amount,
-  ranked_spend_less_gold_amount,
 } from '../../achievements.js';
 
 export async function processCreateLobby(
@@ -502,7 +500,7 @@ async function finalizeMatch(
       // Attacker gets credit for towers destroyed with Macaws.
       const prog = getProgress(mains[i].id, map, AchievementNames.ranked_destroy_towers);
       prog.progress = (prog.progress ?? 0) + stats.towersDestroyed;
-      prog.total = ranked_destroy_towers_amount;
+      prog.total = AchievementAmounts.ranked_destroy_towers;
       if (prog.progress >= prog.total) {
         prog.completed_date = new Date();
       }
@@ -512,7 +510,7 @@ async function finalizeMatch(
       // Defender gets credit for undead killed.
       const prog = getProgress(mains[i].id, map, AchievementNames.ranked_kill_undead);
       prog.progress = (prog.progress ?? 0) + stats.unitsDestroyed;
-      prog.total = ranked_kill_undead_amount;
+      prog.total = AchievementAmounts.ranked_kill_undead;
       if (prog.progress >= prog.total) {
         prog.completed_date = new Date();
       }
@@ -640,7 +638,7 @@ async function wonGameAchievements(
     ]);
 
     // Combat Conservationist
-    if (goldSpent < ranked_spend_less_gold_amount) {
+    if (goldSpent < AchievementAmounts.ranked_spend_less_gold) {
       updates.push([
         setAchievementProgress,
         {
