@@ -25,6 +25,8 @@ import {
   endMatch,
   addNftScore,
   getLatestUserNft,
+  getMatchSeeds,
+  getMovesByLobby,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -39,10 +41,17 @@ import type {
 } from './types.js';
 import { isWipeOldLobbies } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import type { MatchConfig, MatchResults, MatchState, TurnAction } from '@tower-defense/utils';
-import { configParser } from '@tower-defense/utils';
+import type {
+  MatchConfig,
+  MatchExecutorData,
+  MatchResults,
+  MatchState,
+  TurnAction,
+} from '@tower-defense/utils';
+import { configParser, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
+  calculateMatchStats,
   generateMoves,
   generateRandomMoves,
   matchResults,
@@ -50,7 +59,7 @@ import processTick, {
   parseConfig,
   validateMoves,
 } from '@tower-defense/game-logic';
-import { roundExecutor } from '@paima/executors';
+import { MatchExecutor, roundExecutor } from '@paima/executors';
 import {
   persistCloseLobby,
   persistExecutedRound,
@@ -457,7 +466,8 @@ async function finalizeMatch(
   updates.push(persistMatchResults(lobby.lobby_id, results, matchState));
 
   // Compute match stats for achievement use.
-  const stats: MatchStats = {};
+  const executor = await getMatchExecutor(db, lobby);
+  const stats: MatchStats = calculateMatchStats(executor);
   const mains = [
     await getMainAddress(results[0].wallet, db),
     await getMainAddress(results[1].wallet, db),
@@ -528,6 +538,28 @@ async function finalizeMatch(
   );
 
   return updates;
+}
+
+// Evil copy-pasta from /api/src/controllers/matchExecutor.ts
+async function getMatchExecutor(
+  pool: PoolClient,
+  lobby: IGetLobbyByIdResult
+): Promise<MatchExecutorData> {
+  const [config] = await getMatchConfig.run({ id: lobby.config_id }, pool);
+  const configString = config.content;
+  const rounds = await getMatchSeeds.run({ lobby_id: lobby.lobby_id }, pool);
+  const seeds = rounds.map(r => {
+    return {
+      seed: r.seed,
+      block_height: r.block_height,
+      round: r.round_within_match,
+    };
+  });
+  const initialState = rounds.find(r => r.round_within_match === 1)
+    ?.match_state as unknown as MatchState;
+  const dbMoves = await getMovesByLobby.run({ lobby_id: lobby.lobby_id }, pool);
+  const moves = dbMoves.map(m => moveToAction(m, initialState.attacker));
+  return { lobby, configString, seeds, initialState, moves };
 }
 
 export async function processConfig(
