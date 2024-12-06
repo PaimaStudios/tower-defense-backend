@@ -5,6 +5,7 @@ import {
   getMainAddress,
   IGetAchievementProgressResult,
   ISetAchievementProgressParams,
+  Json,
   setAchievementProgress,
   WalletDelegate,
   type SQLUpdate,
@@ -27,6 +28,7 @@ import {
   getLatestUserNft,
   getMatchSeeds,
   getMovesByLobby,
+  getUserFinishedLobbies,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -48,7 +50,7 @@ import type {
   MatchState,
   TurnAction,
 } from '@tower-defense/utils';
-import { configParser, moveToAction } from '@tower-defense/utils';
+import { configParser, maps, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   calculateMatchStats,
@@ -58,6 +60,7 @@ import processTick, {
   MatchStats,
   parseConfig,
   validateMoves,
+  winnerOf,
 } from '@tower-defense/game-logic';
 import { MatchExecutor, roundExecutor } from '@paima/executors';
 import {
@@ -476,11 +479,11 @@ async function finalizeMatch(
   // Handle achievement progress and awarding for the winner.
   if (results[0].result === 'win') {
     updates.push(
-      ...(await wonGameAchievements(lobby, matchState, results[0], mains[0], stats.p1GoldSpent))
+      ...(await wonGameAchievements(db, lobby, matchState, results[0], mains[0], stats.p1GoldSpent))
     );
   } else if (results[1].result === 'win') {
     updates.push(
-      ...(await wonGameAchievements(lobby, matchState, results[1], mains[1], stats.p2GoldSpent))
+      ...(await wonGameAchievements(db, lobby, matchState, results[1], mains[1], stats.p2GoldSpent))
     );
   }
 
@@ -492,7 +495,10 @@ async function finalizeMatch(
       AchievementNames.ranked_games_played,
     ]);
 
+    // TODO: Only progress if ranked
+
     if (results[i].wallet === matchState.attacker) {
+      // Parrot Patton
       // Attacker gets credit for towers destroyed with Macaws.
       const prog = getProgress(mains[i].id, map, AchievementNames.ranked_destroy_towers);
       prog.progress = (prog.progress ?? 0) + stats.towersDestroyed;
@@ -502,6 +508,7 @@ async function finalizeMatch(
       }
       updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
     } else if (results[i].wallet === matchState.defender) {
+      // Hold The Line!
       // Defender gets credit for undead killed.
       const prog = getProgress(mains[i].id, map, AchievementNames.ranked_kill_undead);
       prog.progress = (prog.progress ?? 0) + stats.unitsDestroyed;
@@ -512,6 +519,8 @@ async function finalizeMatch(
       updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
     }
   }
+
+  // TODO: Tropical Trooper
 
   // Create the new scheduled data for updating user stats
   updates.push(
@@ -575,6 +584,7 @@ export async function processConfig(
 // Covers achievements that have "Win" as a condition.
 // General progression/"grinding" achievements are handled where they are.
 async function wonGameAchievements(
+  db: PoolClient,
   lobby: IGetLobbyByIdResult,
   matchState: MatchState,
   winner: MatchResults[0],
@@ -641,11 +651,48 @@ async function wonGameAchievements(
       ]);
     }
 
+    // Get all finished lobbies, recent first.
+    let finished = await getUserFinishedLobbies.run({
+      wallet: main.address,
+    }, db);
+    // Filter to ranked games only.
+    finished = finished.filter(l => {
+      let ms = l.current_match_state as unknown as MatchState;
+      return ms.attackerTokenId && ms.defenderTokenId;
+    });
+    // Sneak ours in at the front.
+    finished.splice(0, 0, { ...lobby, current_match_state: matchState as unknown as Json });
+
     // Mask Trick
-    // TODO
+    if (finished.slice(0, 3).every(lobby => winnerOf(lobby) === main.address)) {
+      updates.push([
+        setAchievementProgress,
+        {
+          wallet: main.id,
+          name: AchievementNames.ranked_three_in_a_row,
+          completed_date: new Date(),
+        } satisfies ISetAchievementProgressParams,
+      ]);
+    }
 
     // Jungle World Tour
-    // TODO
+    const uniques = new Set();
+    for (const finishedLobby of finished) {
+      const map = finishedLobby.map;
+      const position = selectFaction(finishedLobby, main.address);
+      uniques.add(`${map}_${position}`);
+    }
+    const total = 2 * maps.length;
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.ranked_win_every_position,
+        completed_date: uniques.size >= total ? new Date() : null,
+        progress: uniques.size,
+        total,
+      } satisfies ISetAchievementProgressParams,
+    ]);
   }
 
   return updates;
@@ -679,4 +726,26 @@ function getProgress<Name extends string>(
       wallet,
     }
   );
+}
+
+function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' | 'defender' {
+  if (wallet === lobby.lobby_creator) {
+    if (lobby.creator_faction === 'random') {
+      console.error('selectFaction', lobby, wallet);
+      throw new Error("selectFaction: cannot accept still-random lobbies");
+    }
+    return lobby.creator_faction;
+  } else if (wallet === lobby.player_two) {
+    if (lobby.creator_faction === 'attacker') {
+      return 'defender';
+    } else if (lobby.creator_faction === 'defender') {
+      return 'attacker';
+    } else {
+      console.error('selectFaction', lobby, wallet);
+      throw new Error("selectFaction: cannot accept still-random lobbies");
+    }
+  } else {
+    console.error('selectFaction', lobby, wallet);
+    throw new Error("selectFaction: asked for faction of non-participant");
+  }
 }

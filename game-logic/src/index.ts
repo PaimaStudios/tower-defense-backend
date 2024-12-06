@@ -13,6 +13,13 @@ const calculateResult = (isAttacker: boolean, defenderSurvived: boolean): Result
   return isAttacker ? (defenderSurvived ? 'loss' : 'win') : defenderSurvived ? 'win' : 'loss';
 };
 
+export function winnerOf(lobby: IGetLobbyByIdResult): string | null {
+  const matchState = lobby.current_match_state as unknown as MatchState;
+  const p1isAttacker = matchState.attacker === lobby.lobby_creator;
+  const defenderSurvived = matchState.defenderBase.health > 0;
+  return p1isAttacker ? (defenderSurvived ? lobby.player_two : lobby.lobby_creator) : defenderSurvived ? lobby.lobby_creator : lobby.player_two;
+}
+
 export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState): MatchResults {
   const p1isAttacker = matchState.attacker === lobby.lobby_creator;
   const defenderSurvived = matchState.defenderBase.health > 0;
