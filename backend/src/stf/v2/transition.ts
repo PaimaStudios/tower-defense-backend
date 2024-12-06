@@ -29,6 +29,7 @@ import {
   getMatchSeeds,
   getMovesByLobby,
   getUserFinishedLobbies,
+  getNftScore,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -490,35 +491,56 @@ async function finalizeMatch(
     const map = await fetchProgress(db, mains[i].id, [
       AchievementNames.ranked_destroy_towers,
       AchievementNames.ranked_kill_undead,
-      AchievementNames.ranked_games_played,
     ]);
 
-    // TODO: Only progress if ranked
-
+    let nft;
     if (results[i].wallet === matchState.attacker) {
-      // Parrot Patton
-      // Attacker gets credit for towers destroyed with Macaws.
-      const prog = getProgress(mains[i].id, map, AchievementNames.ranked_destroy_towers);
-      prog.progress = (prog.progress ?? 0) + stats.towersDestroyed;
-      prog.total = AchievementAmounts.ranked_destroy_towers;
-      if (prog.progress >= prog.total) {
-        prog.completed_date = new Date();
+      nft = matchState.attackerTokenId;
+      if (nft && matchState.defenderTokenId) {
+        // Parrot Patton
+        // Attacker gets credit for towers destroyed with Macaws.
+        const prog = getProgress(mains[i].id, map, AchievementNames.ranked_destroy_towers);
+        prog.progress = (prog.progress ?? 0) + stats.towersDestroyed;
+        prog.total = AchievementAmounts.ranked_destroy_towers;
+        if (prog.progress >= prog.total) {
+          prog.completed_date = new Date();
+        }
+        updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
       }
-      updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
     } else if (results[i].wallet === matchState.defender) {
-      // Hold The Line!
-      // Defender gets credit for undead killed.
-      const prog = getProgress(mains[i].id, map, AchievementNames.ranked_kill_undead);
-      prog.progress = (prog.progress ?? 0) + stats.unitsDestroyed;
-      prog.total = AchievementAmounts.ranked_kill_undead;
-      if (prog.progress >= prog.total) {
-        prog.completed_date = new Date();
+      nft = matchState.defenderTokenId;
+      if (nft && matchState.attackerTokenId) {
+        // Hold The Line!
+        // Defender gets credit for undead killed.
+        const prog = getProgress(mains[i].id, map, AchievementNames.ranked_kill_undead);
+        prog.progress = (prog.progress ?? 0) + stats.unitsDestroyed;
+        prog.total = AchievementAmounts.ranked_kill_undead;
+        if (prog.progress >= prog.total) {
+          prog.completed_date = new Date();
+        }
+        updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
       }
-      updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
+    }
+
+    // Tropical Trooper
+    if (nft) {
+      const nftScore = await getNftScore.run({ cde_name: cdeName, token_id: String(nft) }, db);
+      if (nftScore.length > 0 && (nftScore[0].wins + nftScore[0].losses) === 24) {
+        // wins + losses *was* 24, so this is the 25th finished game, so award.
+        // Effectively the achievement goes to the owner of the NFT at the time
+        // of its 25th win, so this achievement can only be awarded once per NFT
+        // that exists.
+        updates.push([
+          setAchievementProgress,
+          {
+            wallet: mains[i].id,
+            name: AchievementNames.ranked_games_played,
+            completed_date: new Date(),
+          } satisfies ISetAchievementProgressParams,
+        ]);
+      }
     }
   }
-
-  // TODO: Tropical Trooper
 
   // Create the new scheduled data for updating user stats
   updates.push(
