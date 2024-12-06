@@ -1,8 +1,22 @@
 import type { PoolClient } from 'pg';
 import type Prando from '@paima/prando';
-import type { SQLUpdate } from '@paima/db';
+import {
+  getAchievementProgress,
+  getMainAddress,
+  IGetAchievementProgressResult,
+  ISetAchievementProgressParams,
+  Json,
+  setAchievementProgress,
+  WalletDelegate,
+  type SQLUpdate,
+} from '@paima/db';
 import type { WalletAddress } from '@paima/chain-types';
-import type { IGetLobbyByIdResult, IGetRoundDataResult, IEndMatchParams } from '@tower-defense/db';
+import type {
+  IGetLobbyByIdResult,
+  IGetRoundDataResult,
+  IEndMatchParams,
+  IAddNftScoreParams,
+} from '@tower-defense/db';
 import {
   getLobbyById,
   getRoundData,
@@ -12,6 +26,10 @@ import {
   endMatch,
   addNftScore,
   getLatestUserNft,
+  getMatchSeeds,
+  getMovesByLobby,
+  getUserFinishedLobbies,
+  getNftScore,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -26,17 +44,26 @@ import type {
 } from './types.js';
 import { isWipeOldLobbies } from './types.js';
 import { isUserStats, isZombieRound } from './types.js';
-import type { MatchConfig, MatchState, TurnAction } from '@tower-defense/utils';
-import { configParser } from '@tower-defense/utils';
+import type {
+  MatchConfig,
+  MatchExecutorData,
+  MatchResults,
+  MatchState,
+  TurnAction,
+} from '@tower-defense/utils';
+import { configParser, maps, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
+  calculateMatchStats,
   generateMoves,
   generateRandomMoves,
   matchResults,
+  MatchStats,
   parseConfig,
   validateMoves,
+  winnerOf,
 } from '@tower-defense/game-logic';
-import { roundExecutor } from '@paima/executors';
+import { MatchExecutor, roundExecutor } from '@paima/executors';
 import {
   persistCloseLobby,
   persistExecutedRound,
@@ -54,6 +81,10 @@ import {
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
 import { cdeName } from '@tower-defense/utils';
+import {
+  AchievementAmounts,
+  AchievementNames,
+} from '../../achievements.js';
 
 export async function processCreateLobby(
   user: WalletAddress,
@@ -71,7 +102,8 @@ export async function processCreateLobby(
     const [configString] = await getMatchConfig.run({ id: input.matchConfigID }, dbConn);
     if (!configString) return [];
     const matchConfig = parseConfig(configString.content);
-    return persistPracticeLobbyCreation(
+    return await persistPracticeLobbyCreation(
+      dbConn,
       blockHeight,
       user,
       tokenId,
@@ -81,8 +113,8 @@ export async function processCreateLobby(
       randomnessGenerator
     );
   }
-  return persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
-};
+  return await persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
+}
 
 export async function processJoinLobby(
   user: WalletAddress,
@@ -101,8 +133,17 @@ export async function processJoinLobby(
   if (!configString) return [];
   const matchConfig = parseConfig(configString.content);
   const [joinerNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
-  return persistLobbyJoin(blockHeight, user, joinerNft?.token_id ?? 0, lobbyState, map, matchConfig, randomnessGenerator);
-};
+  return await persistLobbyJoin(
+    dbConn,
+    blockHeight,
+    user,
+    joinerNft?.token_id ?? 0,
+    lobbyState,
+    map,
+    matchConfig,
+    randomnessGenerator
+  );
+}
 
 export async function processCloseLobby(
   user: WalletAddress,
@@ -122,13 +163,14 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
   return [query];
 }
 
-export function practiceRound(
+export async function practiceRound(
+  db: PoolClient,
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   // updates that would've been done during persist.
   const newRound = roundData.round_within_match + 1;
   const newStartingBlockHeight = blockHeight;
@@ -140,7 +182,8 @@ export function practiceRound(
   const movesFunction = generateMoves[lobbyState.bot_difficulty];
   const moves = movesFunction(matchConfig, matchState, faction, newRound, randomnessGenerator);
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
-  const roundExecutionTuples = executeRound(
+  const roundExecutionTuples = await executeRound(
+    db,
     blockHeight,
     lobbyState,
     matchConfig,
@@ -213,7 +256,8 @@ export async function processSubmittedTurn(
   // Save the moves to the database;
   const movesTuples = input.actions.map(action => persistMove(lobby.lobby_id, user, action));
   // Execute the round after moves come in. Pass the moves in database params format to the round executor.
-  const roundExecutionTuples = executeRound(
+  const roundExecutionTuples = await executeRound(
+    dbConn,
     blockHeight,
     lobby,
     matchConfig,
@@ -225,7 +269,8 @@ export async function processSubmittedTurn(
     (round.match_state as any).defenderBase.health <= 0 ||
     lobby.current_round === lobby.num_of_rounds;
   if (lobby.practice && !matchEnded) {
-    const practiceTuples = practiceRound(
+    const practiceTuples = await practiceRound(
+      dbConn,
       blockHeight,
       { ...lobby, current_round: lobby.current_round + 1 },
       matchConfig,
@@ -294,7 +339,8 @@ export async function processZombieEffect(
   const movesTuples = moves.map(action => persistMove(lobby.lobby_id, user, action));
 
   // Proceed to the next round
-  const roundExecutionTuples = executeRound(
+  const roundExecutionTuples = await executeRound(
+    dbConn,
     blockHeight,
     lobby,
     matchConfig,
@@ -307,7 +353,8 @@ export async function processZombieEffect(
     lobby.current_round === lobby.num_of_rounds;
   const practiceTuples =
     lobby.practice && !matchEnded
-      ? practiceRound(
+      ? await practiceRound(
+          dbConn,
           blockHeight,
           { ...lobby, current_round: lobby.current_round + 1 },
           matchConfig,
@@ -318,7 +365,10 @@ export async function processZombieEffect(
   return [...movesTuples, ...roundExecutionTuples, ...practiceTuples];
 }
 
-export async function processStatsEffect(input: UserStats, dbConn: PoolClient): Promise<SQLUpdate[]> {
+export async function processStatsEffect(
+  input: UserStats,
+  dbConn: PoolClient
+): Promise<SQLUpdate[]> {
   const [stats] = await getUserStats.run({ wallet: input.user }, dbConn);
   if (!stats) return [];
   const query = persistStatsUpdate(input.user, input.result, stats);
@@ -326,14 +376,15 @@ export async function processStatsEffect(input: UserStats, dbConn: PoolClient): 
 }
 
 // Runs the 'round executor' and produces the necessary SQL updates as a result
-export function executeRound(
+export async function executeRound(
+  db: PoolClient,
   blockHeight: number,
   lobby: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   moves: TurnAction[],
   roundData: IGetRoundDataResult,
   randomnessGenerator: Prando
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   const matchState = roundData.match_state as unknown as MatchState;
   const executor = roundExecutor.initialize(
     matchConfig,
@@ -361,7 +412,7 @@ export function executeRound(
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = finalizeMatch(blockHeight, lobby, newState);
+    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(db, blockHeight, lobby, newState);
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
   // Create a new round and update match state if not at final round
@@ -378,30 +429,166 @@ export function executeRound(
 }
 
 // Finalizes the match and updates user statistics according to final score of the match
-function finalizeMatch(
+async function finalizeMatch(
+  db: PoolClient,
   blockHeight: number,
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
-): SQLUpdate[] {
-  const params: IEndMatchParams = {
-    lobby_id: lobby.lobby_id,
-    current_match_state: matchState as any,
-  };
-  const endMatchTuple: SQLUpdate = [endMatch, params];
-  if (lobby.practice) {
-    console.log(`Practice match ended, ignoring results`);
-    return [endMatchTuple];
-  }
+): Promise<SQLUpdate[]> {
+  const updates: SQLUpdate[] = [];
+
+  updates.push([
+    endMatch,
+    {
+      lobby_id: lobby.lobby_id,
+      current_match_state: matchState as any,
+    } satisfies IEndMatchParams,
+  ]);
+
   const results = matchResults(lobby, matchState);
-  const resultsUpdate = persistMatchResults(lobby.lobby_id, results, matchState);
+
+  if (lobby.practice) {
+    // A practice lobby is still good for win_first_match, but not the rest.
+    if (results[0].result === 'win') {
+      const main = await getMainAddress(results[0].wallet, db);
+      updates.push([
+        setAchievementProgress,
+        {
+          wallet: main.id,
+          name: AchievementNames.win_first_match,
+          completed_date: new Date(),
+        } satisfies ISetAchievementProgressParams,
+      ]);
+    }
+
+    return updates;
+  }
+  // After here, not a practice lobby.
+
+  updates.push(persistMatchResults(lobby.lobby_id, results, matchState));
+
+  // Compute match stats for achievement use.
+  const executor = await getMatchExecutor(db, lobby);
+  const stats: MatchStats = calculateMatchStats(executor);
+  const mains = [
+    await getMainAddress(results[0].wallet, db),
+    await getMainAddress(results[1].wallet, db),
+  ];
+
+  // Handle achievement progress and awarding for the winner.
+  if (results[0].result === 'win') {
+    updates.push(
+      ...(await wonGameAchievements(db, lobby, matchState, results[0], mains[0], stats.p1GoldSpent))
+    );
+  } else if (results[1].result === 'win') {
+    updates.push(
+      ...(await wonGameAchievements(db, lobby, matchState, results[1], mains[1], stats.p2GoldSpent))
+    );
+  }
+
+  // For both winner and loser, handle all-time progressive achievements.
+  for (let i = 0; i < 2; ++i) {
+    const map = await fetchProgress(db, mains[i].id, [
+      AchievementNames.ranked_destroy_towers,
+      AchievementNames.ranked_kill_undead,
+    ]);
+
+    let nft;
+    if (results[i].wallet === matchState.attacker) {
+      nft = matchState.attackerTokenId;
+      if (nft && matchState.defenderTokenId) {
+        // Parrot Patton
+        // Attacker gets credit for towers destroyed with Macaws.
+        const prog = getProgress(mains[i].id, map, AchievementNames.ranked_destroy_towers);
+        prog.progress = (prog.progress ?? 0) + stats.towersDestroyed;
+        prog.total = AchievementAmounts.ranked_destroy_towers;
+        if (prog.progress >= prog.total) {
+          prog.completed_date = new Date();
+        }
+        updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
+      }
+    } else if (results[i].wallet === matchState.defender) {
+      nft = matchState.defenderTokenId;
+      if (nft && matchState.attackerTokenId) {
+        // Hold The Line!
+        // Defender gets credit for undead killed.
+        const prog = getProgress(mains[i].id, map, AchievementNames.ranked_kill_undead);
+        prog.progress = (prog.progress ?? 0) + stats.unitsDestroyed;
+        prog.total = AchievementAmounts.ranked_kill_undead;
+        if (prog.progress >= prog.total) {
+          prog.completed_date = new Date();
+        }
+        updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
+      }
+    }
+
+    // Tropical Trooper
+    if (nft) {
+      const nftScore = await getNftScore.run({ cde_name: cdeName, token_id: String(nft) }, db);
+      if (nftScore.length > 0 && (nftScore[0].wins + nftScore[0].losses) === 24) {
+        // wins + losses *was* 24, so this is the 25th finished game, so award.
+        // Effectively the achievement goes to the owner of the NFT at the time
+        // of its 25th win, so this achievement can only be awarded once per NFT
+        // that exists.
+        updates.push([
+          setAchievementProgress,
+          {
+            wallet: mains[i].id,
+            name: AchievementNames.ranked_games_played,
+            completed_date: new Date(),
+          } satisfies ISetAchievementProgressParams,
+        ]);
+      }
+    }
+  }
 
   // Create the new scheduled data for updating user stats
-  const statsUpdate1 = scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1);
-  const statsUpdate2 = scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1);
-  const nftScoreUpdate1: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[0].tokenId, wins: results[0].result === 'win' ? 1 : 0, losses: results[0].result === 'loss' ? 1 : 0 }];
-  const nftScoreUpdate2: SQLUpdate = [addNftScore, { cde_name: cdeName, token_id: results[1].tokenId, wins: results[1].result === 'win' ? 1 : 0, losses: results[1].result === 'loss' ? 1 : 0 }];
-  console.log('persisting match finalizing');
-  return [endMatchTuple, resultsUpdate, statsUpdate1, statsUpdate2, nftScoreUpdate1, nftScoreUpdate2];
+  updates.push(
+    scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1),
+    scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1),
+    [
+      addNftScore,
+      {
+        cde_name: cdeName,
+        token_id: String(results[0].tokenId),
+        wins: results[0].result === 'win' ? 1 : 0,
+        losses: results[0].result === 'loss' ? 1 : 0,
+      } satisfies IAddNftScoreParams,
+    ],
+    [
+      addNftScore,
+      {
+        cde_name: cdeName,
+        token_id: String(results[1].tokenId),
+        wins: results[1].result === 'win' ? 1 : 0,
+        losses: results[1].result === 'loss' ? 1 : 0,
+      } satisfies IAddNftScoreParams,
+    ]
+  );
+
+  return updates;
+}
+
+// Evil copy-pasta from /api/src/controllers/matchExecutor.ts
+async function getMatchExecutor(
+  pool: PoolClient,
+  lobby: IGetLobbyByIdResult
+): Promise<MatchExecutorData> {
+  const [config] = await getMatchConfig.run({ id: lobby.config_id }, pool);
+  const configString = config.content;
+  const rounds = await getMatchSeeds.run({ lobby_id: lobby.lobby_id }, pool);
+  const seeds = rounds.map(r => {
+    return {
+      seed: r.seed,
+      block_height: r.block_height,
+      round: r.round_within_match,
+    };
+  });
+  const initialState = rounds.find(r => r.round_within_match === 1)
+    ?.match_state as unknown as MatchState;
+  const dbMoves = await getMovesByLobby.run({ lobby_id: lobby.lobby_id }, pool);
+  const moves = dbMoves.map(m => moveToAction(m, initialState.attacker));
+  return { lobby, configString, seeds, initialState, moves };
 }
 
 export async function processConfig(
@@ -412,4 +599,173 @@ export async function processConfig(
   const parsedConfig = configParser(input.content);
   if ('error' in parsedConfig) return [];
   else return [persistConfigRegistration(user, input, randomnessGenerator)];
+}
+
+// Covers achievements that have "Win" as a condition.
+// General progression/"grinding" achievements are handled where they are.
+async function wonGameAchievements(
+  db: PoolClient,
+  lobby: IGetLobbyByIdResult,
+  matchState: MatchState,
+  winner: MatchResults[0],
+  main: WalletDelegate,
+  goldSpent: number
+): Promise<SQLUpdate[]> {
+  const updates: SQLUpdate[] = [];
+
+  // Welcome to the Jungle
+  updates.push([
+    setAchievementProgress,
+    {
+      wallet: main.id,
+      name: AchievementNames.win_first_match,
+      completed_date: new Date(),
+    } satisfies ISetAchievementProgressParams,
+  ]);
+
+  // The Best Defense
+  if (winner.wallet === matchState.defender && matchState.defenderBase.health >= 25 / 2) {
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.defend_with_half_hp,
+      } satisfies ISetAchievementProgressParams,
+    ]);
+  }
+
+  // Like Undead Lightning
+  if (winner.wallet === matchState.attacker && lobby.current_round < lobby.num_of_rounds) {
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.attack_before_final_round,
+      } satisfies ISetAchievementProgressParams,
+    ]);
+  }
+
+  // Ranked achievements are NFT vs NFT only:
+  // NFT vs NFT: matchState.attackerTokenId && matchState.defenderTokenId
+  // Winner has NFT: winner.wallet === matchState.attacker ? matchState.attackerTokenId : matchState.defenderTokenId
+  if (matchState.attackerTokenId && matchState.defenderTokenId) {
+    // Rope Ladder Climber
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.ranked_win,
+        completed_date: new Date(),
+      } satisfies ISetAchievementProgressParams,
+    ]);
+
+    // Combat Conservationist
+    if (goldSpent < AchievementAmounts.ranked_spend_less_gold) {
+      updates.push([
+        setAchievementProgress,
+        {
+          wallet: main.id,
+          name: AchievementNames.ranked_spend_less_gold,
+          completed_date: new Date(),
+        } satisfies ISetAchievementProgressParams,
+      ]);
+    }
+
+    // Get all finished lobbies, recent first.
+    let finished = await getUserFinishedLobbies.run({
+      wallet: main.address,
+    }, db);
+    // Filter to ranked games only.
+    finished = finished.filter(l => {
+      let ms = l.current_match_state as unknown as MatchState;
+      return ms.attackerTokenId && ms.defenderTokenId;
+    });
+    // Sneak ours in at the front.
+    finished.splice(0, 0, { ...lobby, current_match_state: matchState as unknown as Json });
+
+    // Mask Trick
+    if (finished.slice(0, 3).every(lobby => winnerOf(lobby) === main.address)) {
+      updates.push([
+        setAchievementProgress,
+        {
+          wallet: main.id,
+          name: AchievementNames.ranked_three_in_a_row,
+          completed_date: new Date(),
+        } satisfies ISetAchievementProgressParams,
+      ]);
+    }
+
+    // Jungle World Tour
+    const uniques = new Set();
+    for (const finishedLobby of finished) {
+      const map = finishedLobby.map;
+      const position = selectFaction(finishedLobby, main.address);
+      uniques.add(`${map}_${position}`);
+    }
+    const total = 2 * maps.length;
+    updates.push([
+      setAchievementProgress,
+      {
+        wallet: main.id,
+        name: AchievementNames.ranked_win_every_position,
+        completed_date: uniques.size >= total ? new Date() : null,
+        progress: uniques.size,
+        total,
+      } satisfies ISetAchievementProgressParams,
+    ]);
+  }
+
+  return updates;
+}
+
+async function fetchProgress<Names extends string>(db: PoolClient, wallet: number, names: Names[]) {
+  return Object.fromEntries(
+    (
+      await getAchievementProgress.run(
+        {
+          wallet,
+          names,
+        },
+        db
+      )
+    ).map(x => [x.name, x])
+  ) as { [x in Names]: IGetAchievementProgressResult | undefined };
+}
+
+function getProgress<Name extends string>(
+  wallet: number,
+  map: Record<Name, IGetAchievementProgressResult | undefined>,
+  name: Name
+): IGetAchievementProgressResult {
+  return (
+    map[name] ?? {
+      name,
+      completed_date: null,
+      progress: null,
+      total: null,
+      wallet,
+    }
+  );
+}
+
+function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' | 'defender' {
+  if (wallet === lobby.lobby_creator) {
+    if (lobby.creator_faction === 'random') {
+      console.error('selectFaction', lobby, wallet);
+      throw new Error("selectFaction: cannot accept still-random lobbies");
+    }
+    return lobby.creator_faction;
+  } else if (wallet === lobby.player_two) {
+    if (lobby.creator_faction === 'attacker') {
+      return 'defender';
+    } else if (lobby.creator_faction === 'defender') {
+      return 'attacker';
+    } else {
+      console.error('selectFaction', lobby, wallet);
+      throw new Error("selectFaction: cannot accept still-random lobbies");
+    }
+  } else {
+    console.error('selectFaction', lobby, wallet);
+    throw new Error("selectFaction: asked for faction of non-participant");
+  }
 }

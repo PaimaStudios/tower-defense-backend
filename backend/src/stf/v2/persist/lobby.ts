@@ -19,6 +19,7 @@ import { practiceRound } from '../transition.js';
 import { persistNewRound } from './match.js';
 import { generateMatchState } from '@tower-defense/game-logic';
 import { ENV } from '@paima/utils';
+import { PoolClient } from 'pg';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
@@ -55,7 +56,8 @@ export function persistLobbyCreation(
   const blankStatsTuple: SQLUpdate = blankStats(user);
   return [createLobbyTuple, blankStatsTuple];
 }
-export function persistPracticeLobbyCreation(
+export async function persistPracticeLobbyCreation(
+  db: PoolClient,
   blockHeight: number,
   user: WalletAddress,
   tokenId: number,
@@ -63,7 +65,7 @@ export function persistPracticeLobbyCreation(
   map: IGetMapLayoutResult,
   matchConfig: MatchConfig,
   randomnessGenerator: Prando
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   const lobby_id = randomnessGenerator.nextString(12);
   const params = {
     lobby_id: lobby_id,
@@ -89,7 +91,8 @@ export function persistPracticeLobbyCreation(
   const createLobbyTuple: SQLUpdate = [createLobby, params satisfies ICreateLobbyParams];
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
-  const practiceLobbyTuples = persistLobbyJoin(
+  const practiceLobbyTuples = await persistLobbyJoin(
+    db,
     blockHeight,
     PRACTICE_BOT_ADDRESS,
     0,
@@ -102,7 +105,8 @@ export function persistPracticeLobbyCreation(
 }
 
 // Persist joining a lobby
-export function persistLobbyJoin(
+export async function persistLobbyJoin(
+  db: PoolClient,
   blockHeight: number,
   user: WalletAddress,
   tokenId: number,
@@ -110,7 +114,7 @@ export function persistLobbyJoin(
   map: IGetMapLayoutResult,
   matchConfig: MatchConfig,
   randomnessGenerator: Prando
-): SQLUpdate[] {
+): Promise<SQLUpdate[]> {
   if (lobby.player_two || lobby.lobby_state !== 'open' || lobby.lobby_creator === user) {
     return [];
   }
@@ -136,7 +140,8 @@ export function persistLobbyJoin(
   // If it's a practice lobby and it's the bot's turn first we run that turn too.
   const firstRound =
     lobby.practice && creator_role === 'attacker'
-      ? practiceRound(
+      ? await practiceRound(
+          db,
           blockHeight,
           { ...lobby, current_round: 1 },
           matchConfig,
