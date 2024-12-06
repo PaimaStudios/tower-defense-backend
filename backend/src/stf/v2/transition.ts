@@ -92,6 +92,7 @@ export async function processCreateLobby(
     if (!configString) return [];
     const matchConfig = parseConfig(configString.content);
     return await persistPracticeLobbyCreation(
+      dbConn,
       blockHeight,
       user,
       tokenId,
@@ -122,6 +123,7 @@ export async function processJoinLobby(
   const matchConfig = parseConfig(configString.content);
   const [joinerNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
   return await persistLobbyJoin(
+    dbConn,
     blockHeight,
     user,
     joinerNft?.token_id ?? 0,
@@ -151,6 +153,7 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
 }
 
 export async function practiceRound(
+  db: PoolClient,
   blockHeight: number,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
@@ -169,6 +172,7 @@ export async function practiceRound(
   const moves = movesFunction(matchConfig, matchState, faction, newRound, randomnessGenerator);
   const movesTuples = moves.map(a => persistMove(lobbyState.lobby_id, user, a));
   const roundExecutionTuples = await executeRound(
+    db,
     blockHeight,
     lobbyState,
     matchConfig,
@@ -242,6 +246,7 @@ export async function processSubmittedTurn(
   const movesTuples = input.actions.map(action => persistMove(lobby.lobby_id, user, action));
   // Execute the round after moves come in. Pass the moves in database params format to the round executor.
   const roundExecutionTuples = await executeRound(
+    dbConn,
     blockHeight,
     lobby,
     matchConfig,
@@ -254,6 +259,7 @@ export async function processSubmittedTurn(
     lobby.current_round === lobby.num_of_rounds;
   if (lobby.practice && !matchEnded) {
     const practiceTuples = await practiceRound(
+      dbConn,
       blockHeight,
       { ...lobby, current_round: lobby.current_round + 1 },
       matchConfig,
@@ -323,6 +329,7 @@ export async function processZombieEffect(
 
   // Proceed to the next round
   const roundExecutionTuples = await executeRound(
+    dbConn,
     blockHeight,
     lobby,
     matchConfig,
@@ -336,6 +343,7 @@ export async function processZombieEffect(
   const practiceTuples =
     lobby.practice && !matchEnded
       ? await practiceRound(
+          dbConn,
           blockHeight,
           { ...lobby, current_round: lobby.current_round + 1 },
           matchConfig,
@@ -358,6 +366,7 @@ export async function processStatsEffect(
 
 // Runs the 'round executor' and produces the necessary SQL updates as a result
 export async function executeRound(
+  db: PoolClient,
   blockHeight: number,
   lobby: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
@@ -392,7 +401,7 @@ export async function executeRound(
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(blockHeight, lobby, newState);
+    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(db, blockHeight, lobby, newState);
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
   // Create a new round and update match state if not at final round
@@ -410,13 +419,12 @@ export async function executeRound(
 
 // Finalizes the match and updates user statistics according to final score of the match
 async function finalizeMatch(
+  db: PoolClient,
   blockHeight: number,
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
 ): Promise<SQLUpdate[]> {
   const updates: SQLUpdate[] = [];
-
-  const db: PoolClient = {};
 
   updates.push([
     endMatch,

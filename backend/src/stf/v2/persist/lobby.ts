@@ -19,6 +19,7 @@ import { practiceRound } from '../transition.js';
 import { persistNewRound } from './match.js';
 import { generateMatchState } from '@tower-defense/game-logic';
 import { ENV } from '@paima/utils';
+import { PoolClient } from 'pg';
 
 // Persist creation of a lobby
 export function persistLobbyCreation(
@@ -56,6 +57,7 @@ export function persistLobbyCreation(
   return [createLobbyTuple, blankStatsTuple];
 }
 export async function persistPracticeLobbyCreation(
+  db: PoolClient,
   blockHeight: number,
   user: WalletAddress,
   tokenId: number,
@@ -90,6 +92,7 @@ export async function persistPracticeLobbyCreation(
   // create user metadata if non existent
   const blankStatsTuple: SQLUpdate = blankStats(user);
   const practiceLobbyTuples = await persistLobbyJoin(
+    db,
     blockHeight,
     PRACTICE_BOT_ADDRESS,
     0,
@@ -103,6 +106,7 @@ export async function persistPracticeLobbyCreation(
 
 // Persist joining a lobby
 export async function persistLobbyJoin(
+  db: PoolClient,
   blockHeight: number,
   user: WalletAddress,
   tokenId: number,
@@ -137,6 +141,7 @@ export async function persistLobbyJoin(
   const firstRound =
     lobby.practice && creator_role === 'attacker'
       ? await practiceRound(
+          db,
           blockHeight,
           { ...lobby, current_round: 1 },
           matchConfig,
