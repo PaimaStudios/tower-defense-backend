@@ -35,7 +35,7 @@ export class LeaderboardsController extends Controller {
     let [position, position_score] = [0, Infinity];
     return nfts.map((nft, index) => {
       // Give those with the same score the same ordinal position.
-      const score = nft.wins * 10 - nft.losses;
+      const score = nft.score ?? 0;  // Calc'd in SQL for ordering purposes.
       if (score < position_score) {
         position = index + 1;
         position_score = score;
@@ -48,7 +48,7 @@ export class LeaderboardsController extends Controller {
         draws: 0,
         losses: nft.losses,
         total_games: nft.wins + nft.losses,
-        score: nft.wins * 10 - nft.losses,
+        score,
         current_streak: nft.streak,
         longest_streak: nft.best_streak,
 
