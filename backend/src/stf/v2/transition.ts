@@ -702,7 +702,7 @@ async function wonGameAchievements(
       const position = selectFaction(finishedLobby, main.address);
       uniques.add(`${map}_${position}`);
     }
-    const total = 2 * maps.length;
+    const total = 2 * 8; // maps.length is 12 but 4 are unused, so 8 real maps
     updates.push([
       setAchievementProgress,
       {
