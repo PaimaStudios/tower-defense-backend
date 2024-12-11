@@ -6,6 +6,7 @@ export * from './insert.queries.js';
 export * from './select.queries.js';
 export * from './update.queries.js';
 export * from './discord.queries.js';
+export * from './cardano.queries.js';
 //to resolve clashing exports (contained in multiple queries.js files but identical)
 export {
   Json,

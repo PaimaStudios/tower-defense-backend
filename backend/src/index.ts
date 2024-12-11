@@ -7,6 +7,7 @@ import RegisterRoutes from '@tower-defense/api';
 import gameStateTransitionV2 from './stf/v2/index.js';
 import { metadata } from './achievements.js';
 import { discordMain } from './discord.js';
+import { cardanoCronJob } from './cardano_cron.js';
 
 function gameStateTransitionRouter(blockHeight: number) {
   return gameStateTransitionV2;
@@ -38,4 +39,8 @@ async function main() {
   void discordMain();
 }
 
-main();
+if (process.argv[2] === '--cardano') {
+  cardanoCronJob();
+} else {
+  main();
+}
