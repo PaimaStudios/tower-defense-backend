@@ -22,7 +22,8 @@ export default async function (
   randomnessGenerator: Prando,
   dbConn: PoolClient
 ): Promise<{ stateTransitions: SQLUpdate[], events: [] }> {
-  const { blockHeight } = blockHeader;
+  const { blockHeight, msTimestamp } = blockHeader;
+  const blockTimestamp = new Date(msTimestamp);
   console.log(inputData, 'parsing input data');
 
   if (inputData.inputData.startsWith('&')) {
@@ -40,15 +41,15 @@ export default async function (
   console.log(`Input string parsed as: ${parsed.input}`);
   let queries: SQLUpdate[] = [];
   if (parsed.input === 'createdLobby')
-    queries = await processCreateLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
+    queries = await processCreateLobby(user, blockHeight, blockTimestamp, parsed, randomnessGenerator, dbConn);
   else if (parsed.input === 'joinedLobby')
-    queries = await processJoinLobby(user, blockHeight, parsed, randomnessGenerator, dbConn);
+    queries = await processJoinLobby(user, blockHeight, blockTimestamp, parsed, randomnessGenerator, dbConn);
   else if (parsed.input === 'closedLobby') queries = await processCloseLobby(user, parsed, dbConn);
   else if (parsed.input === 'submittedTurn')
-    queries = await processSubmittedTurn(blockHeight, user, parsed, randomnessGenerator, dbConn);
+    queries = await processSubmittedTurn(blockHeight, blockTimestamp, user, parsed, randomnessGenerator, dbConn);
   else if (parsed.input === 'setNFT') queries = await processSetNFT(user, blockHeight, parsed);
   else if (parsed.input === 'scheduledData' && user === SCHEDULED_DATA_ADDRESS)
-    queries = await processScheduledData(parsed, blockHeight, randomnessGenerator, dbConn);
+    queries = await processScheduledData(parsed, blockHeight, blockTimestamp, randomnessGenerator, dbConn);
   else if (parsed.input === 'registeredConfig')
     queries = await processConfig(user, parsed, randomnessGenerator);
   // add schedule data to wipe old lobbies on set schedule

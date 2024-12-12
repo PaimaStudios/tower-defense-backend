@@ -16,6 +16,7 @@ import type {
   IGetRoundDataResult,
   IEndMatchParams,
   IAddNftScoreParams,
+  IAddNftScoreWeekParams,
 } from '@tower-defense/db';
 import {
   getLobbyById,
@@ -30,6 +31,7 @@ import {
   getMovesByLobby,
   getUserFinishedLobbies,
   getNftScore,
+  addNftScoreWeek,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -51,7 +53,7 @@ import type {
   MatchState,
   TurnAction,
 } from '@tower-defense/utils';
-import { configParser, maps, moveToAction } from '@tower-defense/utils';
+import { configParser, iso8601YearAndWeek, maps, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   calculateMatchStats,
@@ -89,6 +91,7 @@ import {
 export async function processCreateLobby(
   user: WalletAddress,
   blockHeight: number,
+  blockTimestamp: Date,
   input: CreatedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: PoolClient
@@ -105,6 +108,7 @@ export async function processCreateLobby(
     return await persistPracticeLobbyCreation(
       dbConn,
       blockHeight,
+      blockTimestamp,
       user,
       tokenId,
       input,
@@ -119,6 +123,7 @@ export async function processCreateLobby(
 export async function processJoinLobby(
   user: WalletAddress,
   blockHeight: number,
+  blockTimestamp: Date,
   input: JoinedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: PoolClient
@@ -136,6 +141,7 @@ export async function processJoinLobby(
   return await persistLobbyJoin(
     dbConn,
     blockHeight,
+    blockTimestamp,
     user,
     joinerNft?.token_id ?? 0,
     lobbyState,
@@ -166,6 +172,7 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
 export async function practiceRound(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   roundData: IGetRoundDataResult,
@@ -185,6 +192,7 @@ export async function practiceRound(
   const roundExecutionTuples = await executeRound(
     db,
     blockHeight,
+    blockTimestamp,
     lobbyState,
     matchConfig,
     moves,
@@ -201,6 +209,7 @@ export async function practiceRound(
 
 export async function processSubmittedTurn(
   blockHeight: number,
+  blockTimestamp: Date,
   user: string,
   input: SubmittedTurnInput,
   randomnessGenerator: Prando,
@@ -259,6 +268,7 @@ export async function processSubmittedTurn(
   const roundExecutionTuples = await executeRound(
     dbConn,
     blockHeight,
+    blockTimestamp,
     lobby,
     matchConfig,
     input.actions,
@@ -272,6 +282,7 @@ export async function processSubmittedTurn(
     const practiceTuples = await practiceRound(
       dbConn,
       blockHeight,
+      blockTimestamp,
       { ...lobby, current_round: lobby.current_round + 1 },
       matchConfig,
       round, // match state here should have been mutated by the previous round execution...
@@ -285,11 +296,12 @@ export async function processSubmittedTurn(
 export async function processScheduledData(
   input: ScheduledDataInput,
   blockHeight: number,
+  blockTimestamp: Date,
   randomnessGenerator: Prando,
   dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   if (isZombieRound(input)) {
-    return processZombieEffect(input, blockHeight, randomnessGenerator, dbConn);
+    return processZombieEffect(input, blockHeight, blockTimestamp, randomnessGenerator, dbConn);
   }
   if (isUserStats(input)) {
     return processStatsEffect(input, dbConn);
@@ -301,6 +313,7 @@ export async function processScheduledData(
 export async function processZombieEffect(
   input: ZombieRound,
   blockHeight: number,
+  blockTimestamp: Date,
   randomnessGenerator: Prando,
   dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
@@ -342,6 +355,7 @@ export async function processZombieEffect(
   const roundExecutionTuples = await executeRound(
     dbConn,
     blockHeight,
+    blockTimestamp,
     lobby,
     matchConfig,
     moves,
@@ -356,6 +370,7 @@ export async function processZombieEffect(
       ? await practiceRound(
           dbConn,
           blockHeight,
+          blockTimestamp,
           { ...lobby, current_round: lobby.current_round + 1 },
           matchConfig,
           round, // match state here should have been mutated by the previous round execution...
@@ -379,6 +394,7 @@ export async function processStatsEffect(
 export async function executeRound(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   lobby: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   moves: TurnAction[],
@@ -412,7 +428,7 @@ export async function executeRound(
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(db, blockHeight, lobby, newState);
+    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(db, blockHeight, blockTimestamp, lobby, newState);
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
   // Create a new round and update match state if not at final round
@@ -432,6 +448,7 @@ export async function executeRound(
 async function finalizeMatch(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
 ): Promise<SQLUpdate[]> {
@@ -543,6 +560,7 @@ async function finalizeMatch(
   }
 
   // Create the new scheduled data for updating user stats
+  const week = iso8601YearAndWeek(blockTimestamp);
   updates.push(
     scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1),
     scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1),
@@ -563,6 +581,26 @@ async function finalizeMatch(
         wins: results[1].result === 'win' ? 1 : 0,
         losses: results[1].result === 'loss' ? 1 : 0,
       } satisfies IAddNftScoreParams,
+    ],
+    [
+      addNftScoreWeek,
+      {
+        cde_name: cdeName, // TODO: use correct cdeName
+        token_id: String(results[0].tokenId),
+        week,
+        wins: results[0].result === 'win' ? 1 : 0,
+        losses: results[0].result === 'loss' ? 1 : 0,
+      } satisfies IAddNftScoreWeekParams,
+    ],
+    [
+      addNftScoreWeek,
+      {
+        cde_name: cdeName, // TODO: use correct cdeName
+        token_id: String(results[1].tokenId),
+        week,
+        wins: results[1].result === 'win' ? 1 : 0,
+        losses: results[1].result === 'loss' ? 1 : 0,
+      } satisfies IAddNftScoreWeekParams,
     ]
   );
 

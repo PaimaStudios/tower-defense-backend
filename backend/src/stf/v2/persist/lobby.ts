@@ -59,6 +59,7 @@ export function persistLobbyCreation(
 export async function persistPracticeLobbyCreation(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   user: WalletAddress,
   tokenId: number,
   inputData: CreatedLobbyInput,
@@ -94,6 +95,7 @@ export async function persistPracticeLobbyCreation(
   const practiceLobbyTuples = await persistLobbyJoin(
     db,
     blockHeight,
+    blockTimestamp,
     PRACTICE_BOT_ADDRESS,
     0,
     params,
@@ -108,6 +110,7 @@ export async function persistPracticeLobbyCreation(
 export async function persistLobbyJoin(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   user: WalletAddress,
   tokenId: number,
   lobby: IGetLobbyByIdResult,
@@ -143,6 +146,7 @@ export async function persistLobbyJoin(
       ? await practiceRound(
           db,
           blockHeight,
+          blockTimestamp,
           { ...lobby, current_round: 1 },
           matchConfig,
           // We have to pass it fake round data as the round hasn't been persisted yet.

@@ -1,6 +1,12 @@
-import { getNftLeaderboards, requirePool } from '@tower-defense/db';
-import { Controller, Get, Query, Request, Route } from 'tsoa';
-import { cdeName, generateNameFromString } from '@tower-defense/utils';
+import { getNftLeaderboards, getNftLeaderboardsWeek, requirePool } from '@tower-defense/db';
+import { Controller, Get, Query, Route } from 'tsoa';
+import {
+  cardanoCdeName,
+  cdeName,
+  generateNameFromString,
+  iso8601YearAndWeek,
+  xaiSentryKeyCdeName,
+} from '@tower-defense/utils';
 
 interface LeaderboardEntryType {
   token_id: number;
@@ -26,16 +32,37 @@ interface LeaderboardEntryProps extends LeaderboardEntryType {
 @Route('leaderboards')
 export class LeaderboardsController extends Controller {
   @Get()
-  public async get(@Query() frequency: string, @Query() previous: boolean): Promise<LeaderboardEntryProps[]> {
-    // Note: the frontend only has two tabs, "Global" and "All-time Streak",
-    // and both send frequency=weekly&previous=false, so we can be simple here.
+  public async get(
+    @Query() frequency: string,
+    @Query() previous: boolean
+  ): Promise<LeaderboardEntryProps[]> {
     const pool = requirePool();
 
-    const nfts = await getNftLeaderboards.run(undefined, pool);
+    const date = new Date();
+    const week = iso8601YearAndWeek(date);
+    date.setUTCDate(date.getUTCDate() - 7);
+    const lastWeek = iso8601YearAndWeek(date);
+
+    let nfts;
+    switch (frequency) {
+      case 'global':
+      case 'streak':
+        nfts = await getNftLeaderboards.run(undefined, pool);
+        break;
+      case 'weekly-genesis-trainer':
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [cdeName, cardanoCdeName] }, pool);
+        break;
+      case 'weekly-xai-sentry':
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [xaiSentryKeyCdeName] }, pool);
+        break;
+      default:
+        return [];
+    }
+
     let [position, position_score] = [0, Infinity];
     return nfts.map((nft, index) => {
       // Give those with the same score the same ordinal position.
-      const score = nft.score ?? 0;  // Calc'd in SQL for ordering purposes.
+      const score = nft.score ?? 0; // Calc'd in SQL for ordering purposes.
       if (score < position_score) {
         position = index + 1;
         position_score = score;
@@ -43,14 +70,14 @@ export class LeaderboardsController extends Controller {
 
       const result: LeaderboardEntryProps = {
         token_id: Number(nft.token_id),
-        nft_contract: nft.cde_name,  // Not really used, just send something.
+        nft_contract: nft.cde_name, // Not really used, just send something.
         wins: nft.wins,
         draws: 0,
         losses: nft.losses,
         total_games: nft.wins + nft.losses,
         score,
-        current_streak: nft.streak,
-        longest_streak: nft.best_streak,
+        current_streak: 'streak' in nft ? nft.streak : -1,
+        longest_streak: 'best_streak' in nft ? nft.best_streak : -1,
 
         position,
         wallet_address: nft.nft_owner ?? '',

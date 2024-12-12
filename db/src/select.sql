@@ -153,3 +153,18 @@ ON
     nft_score.token_id = cde_erc721_data.token_id
 WHERE nft_score.token_id::INTEGER != 0
 ORDER BY score DESC;
+
+/*
+    @name getNftLeaderboardsWeek
+    @param cde -> (...)
+*/
+SELECT nft_score_week.cde_name, nft_score_week.token_id, nft_score_week.week, wins, losses, nft_owner, 5 * wins - 4 * losses AS score
+FROM nft_score_week
+LEFT JOIN cde_erc721_data
+ON
+    nft_score_week.cde_name = cde_erc721_data.cde_name AND
+    nft_score_week.token_id = cde_erc721_data.token_id
+WHERE nft_score_week.token_id::INTEGER != 0
+AND nft_score_week.week = :week!
+AND nft_score_week.cde_name IN :cde
+ORDER BY score DESC;

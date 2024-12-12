@@ -120,3 +120,11 @@ DO UPDATE SET
   losses = nft_score.losses + EXCLUDED.losses,
   streak = (CASE WHEN EXCLUDED.wins > 0 THEN nft_score.streak + EXCLUDED.wins ELSE 0 END),
   best_streak = GREATEST(nft_score.best_streak, (CASE WHEN EXCLUDED.wins > 0 THEN nft_score.streak + EXCLUDED.wins ELSE 0 END));
+
+/* @name addNftScoreWeek */
+INSERT INTO nft_score_week(cde_name, token_id, week, wins, losses)
+VALUES (:cde_name!, :token_id!, :week!, :wins!, :losses!)
+ON CONFLICT (cde_name, token_id, week)
+DO UPDATE SET
+  wins = nft_score_week.wins + EXCLUDED.wins,
+  losses = nft_score_week.losses + EXCLUDED.losses;

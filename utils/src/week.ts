@@ -1,11 +1,12 @@
 /**
  * Get the UTC ISO-8601 year and week number of a given datetime.
- * @param date The datetime to get the year and week of.
+ * @param input The datetime to get the year and week of.
  * @returns A string like `2024w50`.
  */
-export function iso8601YearAndWeek(date: Date): `${number}w${number}` {
+export function iso8601YearAndWeek(input: Date): `${number}w${number}` {
   // From https://stackoverflow.com/a/14127528, itself based on jQuery-UI
   // Find Thursday of this week starting on Monday
+  const date = new Date(input.valueOf());
   date.setDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
   const thursday = date.getTime();
 
