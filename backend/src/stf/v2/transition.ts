@@ -549,7 +549,7 @@ async function finalizeMatch(
     [
       addNftScore,
       {
-        cde_name: cdeName,
+        cde_name: cdeName, // TODO: use correct cdeName
         token_id: String(results[0].tokenId),
         wins: results[0].result === 'win' ? 1 : 0,
         losses: results[0].result === 'loss' ? 1 : 0,
@@ -558,7 +558,7 @@ async function finalizeMatch(
     [
       addNftScore,
       {
-        cde_name: cdeName,
+        cde_name: cdeName, // TODO: use correct cdeName
         token_id: String(results[1].tokenId),
         wins: results[1].result === 'win' ? 1 : 0,
         losses: results[1].result === 'loss' ? 1 : 0,

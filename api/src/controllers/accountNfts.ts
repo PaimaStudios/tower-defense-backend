@@ -1,13 +1,8 @@
 import { getOwnedNfts } from '@paima/utils-backend';
 import { getCardanoGenesisTrainersByOwner, requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
-import { cdeName, getNftMetadata } from '@tower-defense/utils';
+import { cdeName, getNftMetadata, SyntheticContractAddress } from '@tower-defense/utils';
 import { getMainAddress, getRelatedWallets } from '@paima/db';
-
-enum SyntheticContractAddress {
-  EVM_GENESIS_TRAINER = '0x1',
-  CARDANO_GENESIS_TRAINER = '0x2',
-}
 
 interface AccountNftsResult {
   metadata: {
