@@ -82,11 +82,7 @@ import {
   persistConfigRegistration,
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
-import { cdeName } from '@tower-defense/utils';
-import {
-  AchievementAmounts,
-  AchievementNames,
-} from '../../achievements.js';
+import { AchievementAmounts, AchievementNames } from '../../achievements.js';
 
 export async function processCreateLobby(
   user: WalletAddress,
@@ -97,6 +93,7 @@ export async function processCreateLobby(
   dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   const [creatorNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
+  const cdeName = creatorNft?.cde_name ?? null;
   const tokenId = creatorNft?.token_id ?? 0;
 
   if (input.isPractice) {
@@ -110,6 +107,7 @@ export async function processCreateLobby(
       blockHeight,
       blockTimestamp,
       user,
+      cdeName,
       tokenId,
       input,
       map,
@@ -117,7 +115,7 @@ export async function processCreateLobby(
       randomnessGenerator
     );
   }
-  return await persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
+  return persistLobbyCreation(blockHeight, user, cdeName, tokenId, input, randomnessGenerator);
 }
 
 export async function processJoinLobby(
@@ -143,6 +141,7 @@ export async function processJoinLobby(
     blockHeight,
     blockTimestamp,
     user,
+    joinerNft?.cde_name,
     joinerNft?.token_id ?? 0,
     lobbyState,
     map,
@@ -428,7 +427,13 @@ export async function executeRound(
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(db, blockHeight, blockTimestamp, lobby, newState);
+    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(
+      db,
+      blockHeight,
+      blockTimestamp,
+      lobby,
+      newState
+    );
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
   // Create a new round and update match state if not at final round
@@ -512,7 +517,7 @@ async function finalizeMatch(
 
     let nft;
     if (results[i].wallet === matchState.attacker) {
-      nft = matchState.attackerTokenId;
+      nft = { cde_name: matchState.attackerCdeName, token_id: String(matchState.attackerTokenId) };
       if (nft && matchState.defenderTokenId) {
         // Parrot Patton
         // Attacker gets credit for towers destroyed with Macaws.
@@ -525,7 +530,7 @@ async function finalizeMatch(
         updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
       }
     } else if (results[i].wallet === matchState.defender) {
-      nft = matchState.defenderTokenId;
+      nft = { cde_name: matchState.defenderCdeName, token_id: String(matchState.defenderTokenId) };
       if (nft && matchState.attackerTokenId) {
         // Hold The Line!
         // Defender gets credit for undead killed.
@@ -541,8 +546,8 @@ async function finalizeMatch(
 
     // Tropical Trooper
     if (nft) {
-      const nftScore = await getNftScore.run({ cde_name: cdeName, token_id: String(nft) }, db);
-      if (nftScore.length > 0 && (nftScore[0].wins + nftScore[0].losses) === 24) {
+      const nftScore = await getNftScore.run(nft, db);
+      if (nftScore.length > 0 && nftScore[0].wins + nftScore[0].losses === 24) {
         // wins + losses *was* 24, so this is the 25th finished game, so award.
         // Effectively the achievement goes to the owner of the NFT at the time
         // of its 25th win, so this achievement can only be awarded once per NFT
@@ -563,46 +568,54 @@ async function finalizeMatch(
   const week = iso8601YearAndWeek(blockTimestamp);
   updates.push(
     scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1),
-    scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1),
-    [
-      addNftScore,
-      {
-        cde_name: cdeName, // TODO: use correct cdeName
-        token_id: String(results[0].tokenId),
-        wins: results[0].result === 'win' ? 1 : 0,
-        losses: results[0].result === 'loss' ? 1 : 0,
-      } satisfies IAddNftScoreParams,
-    ],
-    [
-      addNftScore,
-      {
-        cde_name: cdeName, // TODO: use correct cdeName
-        token_id: String(results[1].tokenId),
-        wins: results[1].result === 'win' ? 1 : 0,
-        losses: results[1].result === 'loss' ? 1 : 0,
-      } satisfies IAddNftScoreParams,
-    ],
-    [
-      addNftScoreWeek,
-      {
-        cde_name: cdeName, // TODO: use correct cdeName
-        token_id: String(results[0].tokenId),
-        week,
-        wins: results[0].result === 'win' ? 1 : 0,
-        losses: results[0].result === 'loss' ? 1 : 0,
-      } satisfies IAddNftScoreWeekParams,
-    ],
-    [
-      addNftScoreWeek,
-      {
-        cde_name: cdeName, // TODO: use correct cdeName
-        token_id: String(results[1].tokenId),
-        week,
-        wins: results[1].result === 'win' ? 1 : 0,
-        losses: results[1].result === 'loss' ? 1 : 0,
-      } satisfies IAddNftScoreWeekParams,
-    ]
+    scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1)
   );
+  if (results[0].cdeName) {
+    updates.push(
+      [
+        addNftScore,
+        {
+          cde_name: results[0].cdeName,
+          token_id: String(results[0].tokenId),
+          wins: results[0].result === 'win' ? 1 : 0,
+          losses: results[0].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreParams,
+      ],
+      [
+        addNftScoreWeek,
+        {
+          cde_name: results[0].cdeName,
+          token_id: String(results[0].tokenId),
+          week,
+          wins: results[0].result === 'win' ? 1 : 0,
+          losses: results[0].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreWeekParams,
+      ]
+    );
+  }
+  if (results[1].cdeName) {
+    updates.push(
+      [
+        addNftScore,
+        {
+          cde_name: results[1].cdeName,
+          token_id: String(results[1].tokenId),
+          wins: results[1].result === 'win' ? 1 : 0,
+          losses: results[1].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreParams,
+      ],
+      [
+        addNftScoreWeek,
+        {
+          cde_name: results[1].cdeName,
+          token_id: String(results[1].tokenId),
+          week,
+          wins: results[1].result === 'win' ? 1 : 0,
+          losses: results[1].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreWeekParams,
+      ],
+    );
+  }
 
   return updates;
 }
@@ -710,9 +723,12 @@ async function wonGameAchievements(
     }
 
     // Get all finished lobbies, recent first.
-    let finished = await getUserFinishedLobbies.run({
-      wallet: main.address,
-    }, db);
+    let finished = await getUserFinishedLobbies.run(
+      {
+        wallet: main.address,
+      },
+      db
+    );
     // Filter to ranked games only.
     finished = finished.filter(l => {
       let ms = l.current_match_state as unknown as MatchState;
@@ -790,7 +806,7 @@ function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' |
   if (wallet === lobby.lobby_creator) {
     if (lobby.creator_faction === 'random') {
       console.error('selectFaction', lobby, wallet);
-      throw new Error("selectFaction: cannot accept still-random lobbies");
+      throw new Error('selectFaction: cannot accept still-random lobbies');
     }
     return lobby.creator_faction;
   } else if (wallet === lobby.player_two) {
@@ -800,10 +816,10 @@ function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' |
       return 'attacker';
     } else {
       console.error('selectFaction', lobby, wallet);
-      throw new Error("selectFaction: cannot accept still-random lobbies");
+      throw new Error('selectFaction: cannot accept still-random lobbies');
     }
   } else {
     console.error('selectFaction', lobby, wallet);
-    throw new Error("selectFaction: asked for faction of non-participant");
+    throw new Error('selectFaction: asked for faction of non-participant');
   }
 }

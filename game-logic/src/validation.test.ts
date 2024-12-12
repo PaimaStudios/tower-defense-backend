@@ -31,8 +31,10 @@ describe('Validation', () => {
     const matchState = generateMatchState(
       'defender',
       'p1',
+      'Test NFTs',
       1,
       'p2',
+      'Test NFTs',
       2,
       'line',
       lineMap,
@@ -81,8 +83,10 @@ describe('Validation', () => {
     const matchState = generateMatchState(
       'defender',
       'p1',
+      'Test NFTs',
       1,
       'p2',
+      'Test NFTs',
       2,
       'line',
       lineMap,
@@ -109,8 +113,10 @@ describe('Validation', () => {
     const matchState = generateMatchState(
       'defender',
       'p1',
+      'Test NFTs',
       1,
       'p2',
+      'Test NFTs',
       2,
       'line',
       lineMap,

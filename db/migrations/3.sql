@@ -9,3 +9,9 @@ CREATE TABLE nft_score_week(
   losses INTEGER NOT NULL DEFAULT 0,
   UNIQUE (cde_name, token_id)
 );
+
+-- cde_name for lobby creator
+ALTER TABLE nfts
+  ADD cde_name TEXT NOT NULL;
+ALTER TABLE lobbies
+  ADD lobby_creator_cde_name TEXT NULL;

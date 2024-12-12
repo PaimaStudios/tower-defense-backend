@@ -164,8 +164,10 @@ function getMatchState(): MatchState {
   return generateMatchState(
     'defender',
     '0xdDA309096477b89D7066948b31aB05924981DF2B',
+    'Test NFTs',
     1,
     '0xcede5F9E2F8eDa3B6520779427AF0d052B106B57',
+    'Test NFTs',
     2,
     'fork',
     maps[Math.floor(Math.random() * maps.length)],

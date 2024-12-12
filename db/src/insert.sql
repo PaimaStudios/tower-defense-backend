@@ -55,6 +55,7 @@ DO NOTHING;
 INSERT INTO lobbies(
   lobby_id,
   lobby_creator,
+  lobby_creator_cde_name,
   lobby_creator_token_id,
   creator_faction,
   num_of_rounds,
@@ -74,6 +75,7 @@ INSERT INTO lobbies(
 VALUES(
   :lobby_id!,
   :lobby_creator!,
+  :lobby_creator_cde_name,
   :lobby_creator_token_id!,
   :creator_faction!,
   :num_of_rounds!,
