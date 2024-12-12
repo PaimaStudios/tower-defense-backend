@@ -12,6 +12,6 @@ CREATE TABLE nft_score_week(
 
 -- cde_name for lobby creator
 ALTER TABLE nfts
-  ADD cde_name TEXT NOT NULL;
+  ADD cde_name TEXT NOT NULL DEFAULT 'EVM Genesis Trainer';
 ALTER TABLE lobbies
   ADD lobby_creator_cde_name TEXT NULL;
