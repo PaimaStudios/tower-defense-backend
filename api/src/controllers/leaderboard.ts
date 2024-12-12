@@ -1,11 +1,12 @@
 import { getNftLeaderboards, getNftLeaderboardsWeek, requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
 import {
-  cardanoCdeName,
-  cdeName,
+  CDE_CARDANO_GENESIS_TRAINER,
+  CDE_EVM_GENESIS_TRAINER,
   generateNameFromString,
   iso8601YearAndWeek,
-  xaiSentryKeyCdeName,
+  CDE_XAI_SENTRY_KEY,
+  getNftMetadata,
 } from '@tower-defense/utils';
 import { ENV } from '@paima/utils';
 
@@ -51,10 +52,10 @@ export class LeaderboardsController extends Controller {
         nfts = await getNftLeaderboards.run(undefined, pool);
         break;
       case 'weekly-genesis-trainer':
-        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [cdeName, cardanoCdeName] }, pool);
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [CDE_EVM_GENESIS_TRAINER, CDE_CARDANO_GENESIS_TRAINER] }, pool);
         break;
       case 'weekly-xai-sentry':
-        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [xaiSentryKeyCdeName] }, pool);
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [CDE_XAI_SENTRY_KEY] }, pool);
         break;
       default:
         return [];
@@ -84,22 +85,13 @@ export class LeaderboardsController extends Controller {
         wallet_address: nft.nft_owner ?? '',
       };
 
-      switch (nft.cde_name) {
-        case cdeName:
-        case cardanoCdeName:
-          result.avatar_url = `${ENV.BACKEND_URI}/trainer-image/${nft.token_id}.png`;
-          result.name = `Tarochi Genesis Trainer #${nft.token_id}`;
-          if (nft.nft_owner) {
-            result.wallet_alias = generateNameFromString(nft.nft_owner);
-          }
-          break;
-        case xaiSentryKeyCdeName:
-          result.avatar_url = `/images/xai-square.png`;
-          result.name = `Xai Sentry Key #${nft.token_id}`;
-          if (nft.nft_owner) {
-            result.wallet_alias = generateNameFromString(nft.nft_owner);
-          }
-          break;
+      const meta = getNftMetadata(nft.cde_name, Number(nft.token_id));
+      if (meta) {
+        result.avatar_url = meta.image;
+        result.name = meta.name;
+      }
+      if (nft.nft_owner) {
+        result.wallet_alias = generateNameFromString(nft.nft_owner);
       }
 
       return result;

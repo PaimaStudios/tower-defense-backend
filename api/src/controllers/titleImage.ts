@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Route } from 'tsoa';
-import { getNftMetadata } from '@tower-defense/utils';
+import { getNftMetadata, synthAddressToCdeName } from '@tower-defense/utils';
 
 type TitleImage =
   | {
@@ -16,8 +16,7 @@ export class TitleImageController extends Controller {
   @Get()
   public async get(@Query() contract: string, @Query() tokenId: number): Promise<TitleImage> {
     console.log('title-image', contract, tokenId);
-    // TODO: verify contract == what we expect.
-    const m = getNftMetadata(tokenId);
+    const m = getNftMetadata(synthAddressToCdeName(contract), tokenId);
     return {
       success: true,
       result: {

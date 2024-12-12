@@ -1,7 +1,7 @@
 import { getOwnedNfts } from '@paima/utils-backend';
 import { getCardanoGenesisTrainersByOwner, requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
-import { cdeName, getNftMetadata, SyntheticContractAddress } from '@tower-defense/utils';
+import { CDE_CARDANO_GENESIS_TRAINER, CDE_EVM_GENESIS_TRAINER, getNftMetadata, SyntheticContractAddress } from '@tower-defense/utils';
 import { getMainAddress, getRelatedWallets } from '@paima/db';
 
 interface AccountNftsResult {
@@ -39,7 +39,7 @@ export class AccountNftsController extends Controller {
       ...related.to.map(x => x.from_address),
     ];
 
-    let evmTokenIds = (await Promise.all(allAddresses.map(x => getOwnedNfts(pool, cdeName, x))))
+    let evmTokenIds = (await Promise.all(allAddresses.map(x => getOwnedNfts(pool, CDE_EVM_GENESIS_TRAINER, x))))
       .flat()
       .sort();
 
@@ -47,12 +47,12 @@ export class AccountNftsController extends Controller {
 
     let result = [
       ...evmTokenIds.map(id => ({
-        metadata: getNftMetadata(id),
+        metadata: getNftMetadata(CDE_EVM_GENESIS_TRAINER, id),
         contract: SyntheticContractAddress.EVM_GENESIS_TRAINER,
         tokenId: Number(id),
       })),
       ...cardanoTokens.map(row => ({
-        metadata: getNftMetadata(row.token_id),
+        metadata: getNftMetadata(CDE_CARDANO_GENESIS_TRAINER, row.token_id),
         contract: SyntheticContractAddress.CARDANO_GENESIS_TRAINER,
         tokenId: Number(row.token_id),
       })),
