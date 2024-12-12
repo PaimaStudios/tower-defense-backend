@@ -1,5 +1,5 @@
-import { builder, parser } from './config-parser';
-import type { MatchConfig } from './types';
+import { builder, parser } from './config-parser.js';
+import type { MatchConfig } from './types.js';
 
 describe('Input parsing', () => {
   const randomTower = () => ({

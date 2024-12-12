@@ -66,3 +66,4 @@ export { parser as configParser, builder as configToConcise } from './config-par
 export { generateNameFromString } from './name_generator.js';
 
 export * from './genesisTrainer.js';
+export * from './week.js'
