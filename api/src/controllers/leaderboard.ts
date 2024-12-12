@@ -7,6 +7,7 @@ import {
   iso8601YearAndWeek,
   xaiSentryKeyCdeName,
 } from '@tower-defense/utils';
+import { ENV } from '@paima/utils';
 
 interface LeaderboardEntryType {
   token_id: number;
@@ -85,8 +86,16 @@ export class LeaderboardsController extends Controller {
 
       switch (nft.cde_name) {
         case cdeName:
-          result.avatar_url = `/trainer-image/${nft.token_id}.png`;
+        case cardanoCdeName:
+          result.avatar_url = `${ENV.BACKEND_URI}/trainer-image/${nft.token_id}.png`;
           result.name = `Tarochi Genesis Trainer #${nft.token_id}`;
+          if (nft.nft_owner) {
+            result.wallet_alias = generateNameFromString(nft.nft_owner);
+          }
+          break;
+        case xaiSentryKeyCdeName:
+          result.avatar_url = `/images/xai-square.png`;
+          result.name = `Xai Sentry Key #${nft.token_id}`;
           if (nft.nft_owner) {
             result.wallet_alias = generateNameFromString(nft.nft_owner);
           }
