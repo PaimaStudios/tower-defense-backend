@@ -10,7 +10,11 @@ SELECT *
 FROM cardano_genesis_trainer
 WHERE owner = :owner!;
 
-/* @name getCardanoGenesisTrainersByOwner */
+/*
+  @name getCardanoGenesisTrainersByOwner
+  @param owners -> (...)
+*/
 SELECT *
 FROM cardano_genesis_trainer
-WHERE owner = :owner!;
+WHERE owner IN :owners
+ORDER BY token_id ASC;

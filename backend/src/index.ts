@@ -40,7 +40,8 @@ async function main() {
 }
 
 if (process.argv[2] === '--cardano') {
-  cardanoCronJob();
+  await cardanoCronJob();
+  process.exit(0);
 } else {
   main();
 }
