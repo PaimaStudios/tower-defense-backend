@@ -7,7 +7,7 @@ CREATE TABLE nft_score_week(
   -- the real NFT state
   wins INTEGER NOT NULL DEFAULT 0,
   losses INTEGER NOT NULL DEFAULT 0,
-  UNIQUE (cde_name, token_id)
+  UNIQUE (cde_name, token_id, week)
 );
 
 -- cde_name for lobby creator
