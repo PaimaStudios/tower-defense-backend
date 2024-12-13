@@ -1,6 +1,14 @@
-import { getNftLeaderboards, requirePool } from '@tower-defense/db';
-import { Controller, Get, Query, Request, Route } from 'tsoa';
-import { Request as ExpressRequest } from 'express';
+import { getNftLeaderboards, getNftLeaderboardsWeek, requirePool } from '@tower-defense/db';
+import { Controller, Get, Query, Route } from 'tsoa';
+import {
+  CDE_CARDANO_GENESIS_TRAINER,
+  CDE_EVM_GENESIS_TRAINER,
+  generateNameFromString,
+  iso8601YearAndWeek,
+  CDE_XAI_SENTRY_KEY,
+  getNftMetadata,
+} from '@tower-defense/utils';
+import { ENV } from '@paima/utils';
 
 interface LeaderboardEntryType {
   token_id: number;
@@ -19,43 +27,74 @@ interface LeaderboardEntryProps extends LeaderboardEntryType {
   avatar_url?: string;
   name?: string;
   wallet_address: string;
+  wallet_alias?: string;
   wrapperClassname?: string;
 }
 
 @Route('leaderboards')
 export class LeaderboardsController extends Controller {
   @Get()
-  public async get(@Query() frequency: string, @Query() previous: boolean): Promise<LeaderboardEntryProps[]> {
-    // Note: the frontend only has two tabs, "Global" and "All-time Streak",
-    // and both send frequency=weekly&previous=false, so we can be simple here.
+  public async get(
+    @Query() frequency: string,
+    @Query() previous: boolean
+  ): Promise<LeaderboardEntryProps[]> {
     const pool = requirePool();
 
-    const nfts = await getNftLeaderboards.run(undefined, pool);
+    const date = new Date();
+    const week = iso8601YearAndWeek(date);
+    date.setUTCDate(date.getUTCDate() - 7);
+    const lastWeek = iso8601YearAndWeek(date);
+
+    let nfts;
+    switch (frequency) {
+      case 'global':
+      case 'streak':
+        nfts = await getNftLeaderboards.run(undefined, pool);
+        break;
+      case 'weekly-genesis-trainer':
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [CDE_EVM_GENESIS_TRAINER, CDE_CARDANO_GENESIS_TRAINER] }, pool);
+        break;
+      case 'weekly-xai-sentry':
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [CDE_XAI_SENTRY_KEY] }, pool);
+        break;
+      default:
+        return [];
+    }
+
     let [position, position_score] = [0, Infinity];
     return nfts.map((nft, index) => {
       // Give those with the same score the same ordinal position.
-      const score = nft.wins * 10 - nft.losses;
+      const score = nft.score ?? 0; // Calc'd in SQL for ordering purposes.
       if (score < position_score) {
         position = index + 1;
         position_score = score;
       }
 
-      return {
+      const result: LeaderboardEntryProps = {
         token_id: Number(nft.token_id),
-        nft_contract: 'TODO',
+        nft_contract: nft.cde_name, // Not really used, just send something.
         wins: nft.wins,
         draws: 0,
         losses: nft.losses,
         total_games: nft.wins + nft.losses,
-        score: nft.wins * 10 - nft.losses,
-        current_streak: nft.streak,
-        longest_streak: nft.best_streak,
+        score,
+        current_streak: 'streak' in nft ? nft.streak : -1,
+        longest_streak: 'best_streak' in nft ? nft.best_streak : -1,
 
         position,
-        avatar_url: `/trainer-image/${nft.token_id}.png`,
-        name: `Tarochi Genesis Trainer #${nft.token_id}`,
         wallet_address: nft.nft_owner ?? '',
+      };
+
+      const meta = getNftMetadata(nft.cde_name, Number(nft.token_id));
+      if (meta) {
+        result.avatar_url = meta.image;
+        result.name = meta.name;
       }
+      if (nft.nft_owner) {
+        result.wallet_alias = generateNameFromString(nft.nft_owner);
+      }
+
+      return result;
     });
   }
 }

@@ -1,7 +1,13 @@
 import { getOwnedNfts } from '@paima/utils-backend';
-import { requirePool } from '@tower-defense/db';
+import { getCardanoGenesisTrainersByOwner, requirePool } from '@tower-defense/db';
 import { Controller, Get, Query, Route } from 'tsoa';
-import { cdeName, getContractAddress, getNftMetadata } from '@tower-defense/utils';
+import {
+  CDE_CARDANO_GENESIS_TRAINER,
+  CDE_EVM_GENESIS_TRAINER,
+  CDE_XAI_SENTRY_KEY,
+  getNftMetadata,
+  SyntheticContractAddress,
+} from '@tower-defense/utils';
 import { getMainAddress, getRelatedWallets } from '@paima/db';
 
 interface AccountNftsResult {
@@ -39,23 +45,52 @@ export class AccountNftsController extends Controller {
       ...related.to.map(x => x.from_address),
     ];
 
-    let tokenIds = (await Promise.all(allAddresses.map(x => getOwnedNfts(pool, cdeName, x))))
+    let evmTokenIds = (
+      await Promise.all(allAddresses.map(x => getOwnedNfts(pool, CDE_EVM_GENESIS_TRAINER, x)))
+    )
       .flat()
       .sort();
 
-    const totalItems = tokenIds.length,
+    let cardanoTokens = await getCardanoGenesisTrainersByOwner.run({ owners: allAddresses }, pool);
+
+    let sentryKeys = (
+      await Promise.all(allAddresses.map(x => getOwnedNfts(pool, CDE_XAI_SENTRY_KEY, x)))
+    )
+      .flat()
+      .sort();
+    // One might own thousands of these, so just take the one with the lowest ID.
+    // They're not transferable so we don't need to worry about the lowest ID
+    // for a given account changing. But if we did we could take lowest ID *or*
+    // ever in nft selection history.
+    let firstSentryKey = sentryKeys[0];
+
+    let result = [
+      ...evmTokenIds.map(id => ({
+        metadata: getNftMetadata(CDE_EVM_GENESIS_TRAINER, id),
+        contract: SyntheticContractAddress.EVM_GENESIS_TRAINER,
+        tokenId: Number(id),
+      })),
+      ...cardanoTokens.map(row => ({
+        metadata: getNftMetadata(CDE_CARDANO_GENESIS_TRAINER, row.token_id),
+        contract: SyntheticContractAddress.CARDANO_GENESIS_TRAINER,
+        tokenId: Number(row.token_id),
+      })),
+      ...(firstSentryKey ? [{
+        metadata: getNftMetadata(CDE_XAI_SENTRY_KEY, firstSentryKey),
+        contract: SyntheticContractAddress.XAI_SENTRY_KEY,
+        tokenId: Number(firstSentryKey),
+      }] : []),
+    ];
+
+    const totalItems = result.length,
       pages = Math.ceil(totalItems / size);
-    tokenIds = tokenIds.slice(page * size, (page + 1) * size);
+    result = result.slice(page * size, (page + 1) * size);
 
     return {
       response: {
         pages,
         totalItems,
-        result: tokenIds.map(id => ({
-          metadata: getNftMetadata(id),
-          contract: getContractAddress(),
-          tokenId: Number(id),
-        })),
+        result,
       },
     };
   }

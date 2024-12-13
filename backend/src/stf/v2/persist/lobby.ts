@@ -25,6 +25,7 @@ import { PoolClient } from 'pg';
 export function persistLobbyCreation(
   blockHeight: number,
   user: WalletAddress,
+  cdeName: string | null,
   tokenId: number,
   inputData: CreatedLobbyInput,
   randomnessGenerator: Prando
@@ -33,6 +34,7 @@ export function persistLobbyCreation(
   const params: ICreateLobbyParams = {
     lobby_id: lobby_id,
     lobby_creator: user,
+    lobby_creator_cde_name: cdeName,
     lobby_creator_token_id: tokenId,
     creator_faction: inputData.creatorFaction,
     num_of_rounds: inputData.numOfRounds,
@@ -59,7 +61,9 @@ export function persistLobbyCreation(
 export async function persistPracticeLobbyCreation(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   user: WalletAddress,
+  cdeName: string | null,
   tokenId: number,
   inputData: CreatedLobbyInput,
   map: IGetMapLayoutResult,
@@ -70,6 +74,7 @@ export async function persistPracticeLobbyCreation(
   const params = {
     lobby_id: lobby_id,
     lobby_creator: user,
+    lobby_creator_cde_name: cdeName,
     lobby_creator_token_id: tokenId,
     creator_faction: inputData.creatorFaction,
     num_of_rounds: inputData.numOfRounds,
@@ -94,7 +99,9 @@ export async function persistPracticeLobbyCreation(
   const practiceLobbyTuples = await persistLobbyJoin(
     db,
     blockHeight,
+    blockTimestamp,
     PRACTICE_BOT_ADDRESS,
+    null,
     0,
     params,
     map,
@@ -108,7 +115,9 @@ export async function persistPracticeLobbyCreation(
 export async function persistLobbyJoin(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   user: WalletAddress,
+  cdeName: string | null,
   tokenId: number,
   lobby: IGetLobbyByIdResult,
   map: IGetMapLayoutResult,
@@ -122,8 +131,10 @@ export async function persistLobbyJoin(
   const matchState = generateMatchState(
     lobby.creator_faction,
     lobby.lobby_creator,
+    lobby.lobby_creator_cde_name,
     lobby.lobby_creator_token_id,
     user,
+    cdeName,
     tokenId,
     lobby.map,
     map.layout,
@@ -143,6 +154,7 @@ export async function persistLobbyJoin(
       ? await practiceRound(
           db,
           blockHeight,
+          blockTimestamp,
           { ...lobby, current_round: 1 },
           matchConfig,
           // We have to pass it fake round data as the round hasn't been persisted yet.

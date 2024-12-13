@@ -27,6 +27,9 @@ export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState)
   const [p1Gold, p2Gold] = p1isAttacker
     ? [matchState.attackerGold, matchState.defenderGold]
     : [matchState.defenderGold, matchState.attackerGold];
+  const [p1cde, p2cde] = p1isAttacker
+    ? [matchState.attackerCdeName, matchState.defenderCdeName]
+    : [matchState.defenderCdeName, matchState.attackerCdeName];
   const [p1Token, p2Token] = p1isAttacker
     ? [matchState.attackerTokenId, matchState.defenderTokenId]
     : [matchState.defenderTokenId, matchState.attackerTokenId];
@@ -39,12 +42,14 @@ export function matchResults(lobby: IGetLobbyByIdResult, matchState: MatchState)
       result: p1Result,
       gold: p1Gold,
       wallet: lobby.lobby_creator,
+      cdeName: p1cde,
       tokenId: p1Token,
     },
     {
       result: p2Result,
       gold: p2Gold,
       wallet: lobby.player_two!,
+      cdeName: p2cde,
       tokenId: p2Token,
     },
   ];

@@ -6,8 +6,7 @@ import {
   IGetNewLobbiesForDiscordResult,
   setLobbyForDiscord,
 } from '@tower-defense/db/build/discord.queries.js';
-import { GameENV, MatchState } from '@tower-defense/utils';
-import { generateNameFromString } from './name_generator.js';
+import { GameENV, MatchState, generateNameFromString } from '@tower-defense/utils';
 
 // ----------------------------------------------------------------------------
 

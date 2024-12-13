@@ -28,13 +28,15 @@ export function indexerQueryAccountNfts(account: string, size?: number, page?: n
 export function indexerQueryHistoricalOwner(
   contract: string,
   tokenId: number,
-  blockHeight: number
+  blockHeight: number,
+  address: string,
 ): string {
   const endpoint = 'historical-owner';
   const options = {
     contract,
     tokenId,
     blockHeight,
+    address,
   };
   return buildIndexerQuery(endpoint, options);
 }

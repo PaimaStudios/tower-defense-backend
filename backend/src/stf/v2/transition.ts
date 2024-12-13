@@ -16,6 +16,7 @@ import type {
   IGetRoundDataResult,
   IEndMatchParams,
   IAddNftScoreParams,
+  IAddNftScoreWeekParams,
 } from '@tower-defense/db';
 import {
   getLobbyById,
@@ -30,6 +31,7 @@ import {
   getMovesByLobby,
   getUserFinishedLobbies,
   getNftScore,
+  addNftScoreWeek,
 } from '@tower-defense/db';
 import type {
   ClosedLobbyInput,
@@ -51,7 +53,7 @@ import type {
   MatchState,
   TurnAction,
 } from '@tower-defense/utils';
-import { configParser, maps, moveToAction } from '@tower-defense/utils';
+import { configParser, iso8601YearAndWeek, maps, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   calculateMatchStats,
@@ -80,20 +82,18 @@ import {
   persistConfigRegistration,
 } from './persist/index.js';
 import { wipeOldLobbies } from './persist/wipe.js';
-import { cdeName } from '@tower-defense/utils';
-import {
-  AchievementAmounts,
-  AchievementNames,
-} from '../../achievements.js';
+import { AchievementAmounts, AchievementNames } from '../../achievements.js';
 
 export async function processCreateLobby(
   user: WalletAddress,
   blockHeight: number,
+  blockTimestamp: Date,
   input: CreatedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   const [creatorNft] = await getLatestUserNft.run({ wallet: user }, dbConn);
+  const cdeName = creatorNft?.cde_name ?? null;
   const tokenId = creatorNft?.token_id ?? 0;
 
   if (input.isPractice) {
@@ -105,7 +105,9 @@ export async function processCreateLobby(
     return await persistPracticeLobbyCreation(
       dbConn,
       blockHeight,
+      blockTimestamp,
       user,
+      cdeName,
       tokenId,
       input,
       map,
@@ -113,12 +115,13 @@ export async function processCreateLobby(
       randomnessGenerator
     );
   }
-  return await persistLobbyCreation(blockHeight, user, tokenId, input, randomnessGenerator);
+  return persistLobbyCreation(blockHeight, user, cdeName, tokenId, input, randomnessGenerator);
 }
 
 export async function processJoinLobby(
   user: WalletAddress,
   blockHeight: number,
+  blockTimestamp: Date,
   input: JoinedLobbyInput,
   randomnessGenerator: Prando,
   dbConn: PoolClient
@@ -136,7 +139,9 @@ export async function processJoinLobby(
   return await persistLobbyJoin(
     dbConn,
     blockHeight,
+    blockTimestamp,
     user,
+    joinerNft?.cde_name,
     joinerNft?.token_id ?? 0,
     lobbyState,
     map,
@@ -166,6 +171,7 @@ export function processSetNFT(user: WalletAddress, blockHeight: number, expanded
 export async function practiceRound(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   lobbyState: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   roundData: IGetRoundDataResult,
@@ -185,6 +191,7 @@ export async function practiceRound(
   const roundExecutionTuples = await executeRound(
     db,
     blockHeight,
+    blockTimestamp,
     lobbyState,
     matchConfig,
     moves,
@@ -201,6 +208,7 @@ export async function practiceRound(
 
 export async function processSubmittedTurn(
   blockHeight: number,
+  blockTimestamp: Date,
   user: string,
   input: SubmittedTurnInput,
   randomnessGenerator: Prando,
@@ -259,6 +267,7 @@ export async function processSubmittedTurn(
   const roundExecutionTuples = await executeRound(
     dbConn,
     blockHeight,
+    blockTimestamp,
     lobby,
     matchConfig,
     input.actions,
@@ -272,6 +281,7 @@ export async function processSubmittedTurn(
     const practiceTuples = await practiceRound(
       dbConn,
       blockHeight,
+      blockTimestamp,
       { ...lobby, current_round: lobby.current_round + 1 },
       matchConfig,
       round, // match state here should have been mutated by the previous round execution...
@@ -285,11 +295,12 @@ export async function processSubmittedTurn(
 export async function processScheduledData(
   input: ScheduledDataInput,
   blockHeight: number,
+  blockTimestamp: Date,
   randomnessGenerator: Prando,
   dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
   if (isZombieRound(input)) {
-    return processZombieEffect(input, blockHeight, randomnessGenerator, dbConn);
+    return processZombieEffect(input, blockHeight, blockTimestamp, randomnessGenerator, dbConn);
   }
   if (isUserStats(input)) {
     return processStatsEffect(input, dbConn);
@@ -301,6 +312,7 @@ export async function processScheduledData(
 export async function processZombieEffect(
   input: ZombieRound,
   blockHeight: number,
+  blockTimestamp: Date,
   randomnessGenerator: Prando,
   dbConn: PoolClient
 ): Promise<SQLUpdate[]> {
@@ -342,6 +354,7 @@ export async function processZombieEffect(
   const roundExecutionTuples = await executeRound(
     dbConn,
     blockHeight,
+    blockTimestamp,
     lobby,
     matchConfig,
     moves,
@@ -356,6 +369,7 @@ export async function processZombieEffect(
       ? await practiceRound(
           dbConn,
           blockHeight,
+          blockTimestamp,
           { ...lobby, current_round: lobby.current_round + 1 },
           matchConfig,
           round, // match state here should have been mutated by the previous round execution...
@@ -379,6 +393,7 @@ export async function processStatsEffect(
 export async function executeRound(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   lobby: IGetLobbyByIdResult,
   matchConfig: MatchConfig,
   moves: TurnAction[],
@@ -412,7 +427,13 @@ export async function executeRound(
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
     console.log(newState.defenderBase.health, 'match ended, finalizing');
-    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(db, blockHeight, lobby, newState);
+    const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(
+      db,
+      blockHeight,
+      blockTimestamp,
+      lobby,
+      newState
+    );
     return [lobbyUpdate, ...executedRoundUpdate, ...finalizeMatchTuples];
   }
   // Create a new round and update match state if not at final round
@@ -432,6 +453,7 @@ export async function executeRound(
 async function finalizeMatch(
   db: PoolClient,
   blockHeight: number,
+  blockTimestamp: Date,
   lobby: IGetLobbyByIdResult,
   matchState: MatchState
 ): Promise<SQLUpdate[]> {
@@ -495,7 +517,7 @@ async function finalizeMatch(
 
     let nft;
     if (results[i].wallet === matchState.attacker) {
-      nft = matchState.attackerTokenId;
+      nft = { cde_name: matchState.attackerCdeName, token_id: String(matchState.attackerTokenId) };
       if (nft && matchState.defenderTokenId) {
         // Parrot Patton
         // Attacker gets credit for towers destroyed with Macaws.
@@ -508,7 +530,7 @@ async function finalizeMatch(
         updates.push([setAchievementProgress, prog satisfies ISetAchievementProgressParams]);
       }
     } else if (results[i].wallet === matchState.defender) {
-      nft = matchState.defenderTokenId;
+      nft = { cde_name: matchState.defenderCdeName, token_id: String(matchState.defenderTokenId) };
       if (nft && matchState.attackerTokenId) {
         // Hold The Line!
         // Defender gets credit for undead killed.
@@ -524,8 +546,8 @@ async function finalizeMatch(
 
     // Tropical Trooper
     if (nft) {
-      const nftScore = await getNftScore.run({ cde_name: cdeName, token_id: String(nft) }, db);
-      if (nftScore.length > 0 && (nftScore[0].wins + nftScore[0].losses) === 24) {
+      const nftScore = await getNftScore.run(nft, db);
+      if (nftScore.length > 0 && nftScore[0].wins + nftScore[0].losses === 24) {
         // wins + losses *was* 24, so this is the 25th finished game, so award.
         // Effectively the achievement goes to the owner of the NFT at the time
         // of its 25th win, so this achievement can only be awarded once per NFT
@@ -543,28 +565,57 @@ async function finalizeMatch(
   }
 
   // Create the new scheduled data for updating user stats
+  const week = iso8601YearAndWeek(blockTimestamp);
   updates.push(
     scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1),
-    scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1),
-    [
-      addNftScore,
-      {
-        cde_name: cdeName,
-        token_id: String(results[0].tokenId),
-        wins: results[0].result === 'win' ? 1 : 0,
-        losses: results[0].result === 'loss' ? 1 : 0,
-      } satisfies IAddNftScoreParams,
-    ],
-    [
-      addNftScore,
-      {
-        cde_name: cdeName,
-        token_id: String(results[1].tokenId),
-        wins: results[1].result === 'win' ? 1 : 0,
-        losses: results[1].result === 'loss' ? 1 : 0,
-      } satisfies IAddNftScoreParams,
-    ]
+    scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1)
   );
+  if (results[0].cdeName) {
+    updates.push(
+      [
+        addNftScore,
+        {
+          cde_name: results[0].cdeName,
+          token_id: String(results[0].tokenId),
+          wins: results[0].result === 'win' ? 1 : 0,
+          losses: results[0].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreParams,
+      ],
+      [
+        addNftScoreWeek,
+        {
+          cde_name: results[0].cdeName,
+          token_id: String(results[0].tokenId),
+          week,
+          wins: results[0].result === 'win' ? 1 : 0,
+          losses: results[0].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreWeekParams,
+      ]
+    );
+  }
+  if (results[1].cdeName) {
+    updates.push(
+      [
+        addNftScore,
+        {
+          cde_name: results[1].cdeName,
+          token_id: String(results[1].tokenId),
+          wins: results[1].result === 'win' ? 1 : 0,
+          losses: results[1].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreParams,
+      ],
+      [
+        addNftScoreWeek,
+        {
+          cde_name: results[1].cdeName,
+          token_id: String(results[1].tokenId),
+          week,
+          wins: results[1].result === 'win' ? 1 : 0,
+          losses: results[1].result === 'loss' ? 1 : 0,
+        } satisfies IAddNftScoreWeekParams,
+      ],
+    );
+  }
 
   return updates;
 }
@@ -672,9 +723,12 @@ async function wonGameAchievements(
     }
 
     // Get all finished lobbies, recent first.
-    let finished = await getUserFinishedLobbies.run({
-      wallet: main.address,
-    }, db);
+    let finished = await getUserFinishedLobbies.run(
+      {
+        wallet: main.address,
+      },
+      db
+    );
     // Filter to ranked games only.
     finished = finished.filter(l => {
       let ms = l.current_match_state as unknown as MatchState;
@@ -702,7 +756,7 @@ async function wonGameAchievements(
       const position = selectFaction(finishedLobby, main.address);
       uniques.add(`${map}_${position}`);
     }
-    const total = 2 * maps.length;
+    const total = 2 * 8; // maps.length is 12 but 4 are unused, so 8 real maps
     updates.push([
       setAchievementProgress,
       {
@@ -752,7 +806,7 @@ function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' |
   if (wallet === lobby.lobby_creator) {
     if (lobby.creator_faction === 'random') {
       console.error('selectFaction', lobby, wallet);
-      throw new Error("selectFaction: cannot accept still-random lobbies");
+      throw new Error('selectFaction: cannot accept still-random lobbies');
     }
     return lobby.creator_faction;
   } else if (wallet === lobby.player_two) {
@@ -762,10 +816,10 @@ function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' |
       return 'attacker';
     } else {
       console.error('selectFaction', lobby, wallet);
-      throw new Error("selectFaction: cannot accept still-random lobbies");
+      throw new Error('selectFaction: cannot accept still-random lobbies');
     }
   } else {
     console.error('selectFaction', lobby, wallet);
-    throw new Error("selectFaction: asked for faction of non-participant");
+    throw new Error('selectFaction: asked for faction of non-participant');
   }
 }

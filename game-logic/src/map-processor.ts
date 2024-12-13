@@ -16,8 +16,10 @@ type WalletAddress = string;
 export function generateMatchState(
   creatorFaction: RoleSetting,
   lobbyCreator: WalletAddress,
+  lobbyCreatorCdeName: string | null,
   lobbyCreatorTokenId: number,
   playerTwo: WalletAddress,
+  playerTwoCdeName: string | null,
   playerTwoTokenId: number,
   mapName: string,
   mapLayout: string,
@@ -47,7 +49,9 @@ export function generateMatchState(
     currentRound: 1,
     finishedSpawning: [],
     roundEnded: false,
+    attackerCdeName: attacker === lobbyCreator ? lobbyCreatorCdeName : playerTwoCdeName,
     attackerTokenId: attacker === lobbyCreator ? lobbyCreatorTokenId : playerTwoTokenId,
+    defenderCdeName: attacker === lobbyCreator ? playerTwoCdeName : lobbyCreatorCdeName,
     defenderTokenId: attacker === lobbyCreator ? playerTwoTokenId : lobbyCreatorTokenId,
   };
 }

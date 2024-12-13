@@ -56,6 +56,8 @@ const localWalletResult = (async () => {
   return await paimaEndpoints.userWalletLogin(loginInfo);
 })();
 
+const detectedWallets: Map<string, AddressType> = new Map();
+
 const endpoints = {
   ...paimaEndpoints,
   ...queryEndpoints,
@@ -73,11 +75,19 @@ const endpoints = {
     });
     console.log('allInjectedWallets =', all);
 
+    detectedWallets.clear();
+    for (let wallet of all[WalletMode.EvmInjected]) {
+      detectedWallets.set(wallet.metadata.displayName, AddressType.EVM);
+    }
+    for (let wallet of all[WalletMode.Cardano]) {
+      detectedWallets.set(wallet.metadata.displayName, AddressType.CARDANO);
+    }
+
     return {
       success: true,
       result: {
         ...result.result,
-        detectedWallets: all[WalletMode.EvmInjected].map(w => w.metadata.displayName),
+        detectedWallets: [...detectedWallets.keys()],
       }
     };
   },
@@ -87,7 +97,7 @@ const endpoints = {
 
     const localWalletAddress = await localWallet.getAddress();
     const externalSignsLocal = await new WalletConnectHelper().connectExternalWalletAndSign(
-      AddressType.EVM,
+      detectedWallets.get(name) ?? AddressType.EVM,
       name,
       localWalletAddress
     );
