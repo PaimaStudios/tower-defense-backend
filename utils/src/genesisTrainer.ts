@@ -1,4 +1,5 @@
 import { ENV } from '@paima/utils';
+import { GameENV } from './index.js';
 
 export enum SyntheticContractAddress {
   EVM_GENESIS_TRAINER = '0x1',
@@ -25,7 +26,7 @@ export function getNftMetadata(cdeName: string, id: bigint | number) {
       return {
         name: `Xai Sentry Key #${id}`,
         // See TrainerImageController.
-        image: `/images/xai-square.png`,
+        image: `${GameENV.FRONTEND_URI}/TemplateData/xai.png`,
       };
   }
 }
