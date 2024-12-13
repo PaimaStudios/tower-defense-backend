@@ -154,19 +154,18 @@ export async function verifyNft(
   let res: Response;
 
   try {
-    const query = indexerQueryHistoricalOwner(nftId.nftAddress, nftId.tokenId, latestBlockHeight);
+    const query = indexerQueryHistoricalOwner(nftId.nftAddress, nftId.tokenId, latestBlockHeight, address.toLowerCase());
     res = await fetch(query);
   } catch (err) {
     return errorFxn(MiddlewareErrorCode.ERROR_QUERYING_INDEXER_ENDPOINT, err);
   }
 
   try {
-    const j = await res.json();
-    // TODO: properly type check
+    const j: { success: false } | { success: true, result: boolean } = await res.json();
     if (!j.success) {
       return errorFxn(MiddlewareErrorCode.UNABLE_TO_VERIFY_NFT_OWNERSHIP);
     }
-    if (j.result.toLowerCase() !== address.toLowerCase()) {
+    if (!j.result) {
       return errorFxn(MiddlewareErrorCode.NFT_OWNED_BY_DIFFERENT_ADDRESS);
     }
   } catch (err) {
