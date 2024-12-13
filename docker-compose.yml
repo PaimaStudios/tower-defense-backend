@@ -33,6 +33,9 @@ services:
       # to rebuild it any time hardhat restarts from block #0 anyways.
       - "./node_modules/@paima/db/migrations/up.sql:/docker-entrypoint-initdb.d/00-paima-init.sql"
       - "./db/migrations/init.sql:/docker-entrypoint-initdb.d/01-game-init.sql"
+      - "./db/migrations/1.sql:/docker-entrypoint-initdb.d/02-game-001.sql"
+      - "./db/migrations/2.sql:/docker-entrypoint-initdb.d/02-game-002.sql"
+      - "./db/migrations/3.sql:/docker-entrypoint-initdb.d/02-game-003.sql"
       - "./db/migrations/batcher.sql:/docker-entrypoint-initdb.d/99-paima-batcher-up.sql"
     healthcheck:
       # Use pg_isready to check postgres is running.
