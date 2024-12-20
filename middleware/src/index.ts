@@ -58,12 +58,21 @@ const localWalletResult = (async () => {
 
 const detectedWallets: Map<string, AddressType> = new Map();
 
+interface UserWalletLoginResult extends Wallet {
+  currentConnections: number,
+  detectedWallets: string[],
+}
+
+interface ExternalConnectResult extends PostDataResponse {
+  currentConnections: number,
+}
+
 const endpoints = {
   ...paimaEndpoints,
   ...queryEndpoints,
   ...writeEndpoints,
 
-  async userWalletLogin(name: string): Promise<Result<Wallet & { detectedWallets: string[] }>> {
+  async userWalletLogin(name: string): Promise<Result<UserWalletLoginResult>> {
     const result = await localWalletResult;
     if (!result.success) {
       return result;
@@ -87,12 +96,13 @@ const endpoints = {
       success: true,
       result: {
         ...result.result,
+        currentConnections: 17,
         detectedWallets: [...detectedWallets.keys()],
       }
     };
   },
 
-  async externalWalletConnect(name: string): Promise<Result<PostDataResponse>> {
+  async externalWalletConnect(name: string): Promise<Result<ExternalConnectResult>> {
     await localWalletReady;
 
     const localWalletAddress = await localWallet.getAddress();
@@ -117,7 +127,11 @@ const endpoints = {
       localSignsExternal.signedMessage
     );
 
-    return posted;
+    if (!posted.success) {
+      return posted;
+    }
+
+    return { success: true, result: { ...posted.result, currentConnections: 200 } };
   },
 };
 
