@@ -25,6 +25,14 @@ export function indexerQueryAccountNfts(account: string, size?: number, page?: n
   return buildIndexerQuery(endpoint, options);
 }
 
+export function indexerQueryAccount(account: string): string {
+  const endpoint = 'account';
+  const options: QueryOptions = {
+    account,
+  };
+  return buildIndexerQuery(endpoint, options);
+}
+
 export function indexerQueryHistoricalOwner(
   contract: string,
   tokenId: number,

@@ -24,6 +24,7 @@ import { allInjectedWallets, WalletMode } from '@paima/providers';
 
 import { LocalWallet } from '@thirdweb-dev/wallets';
 import { AddressType, Result } from '@paima/utils';
+import { indexerQueryAccount } from './helpers/query-constructors';
 
 initMiddlewareCore(GAME_NAME, gameBackendVersion);
 
@@ -92,11 +93,19 @@ const endpoints = {
       detectedWallets.set(wallet.metadata.displayName, AddressType.CARDANO);
     }
 
+    let currentConnections = 0;
+    try {
+      const response = await fetch(indexerQueryAccount(result.result.walletAddress));
+      currentConnections = (await response.json()).response.currentConnections;
+    } catch (err) {
+      console.error('currentConnections', err);
+    }
+
     return {
       success: true,
       result: {
         ...result.result,
-        currentConnections: 17,
+        currentConnections,
         detectedWallets: [...detectedWallets.keys()],
       }
     };
@@ -131,7 +140,15 @@ const endpoints = {
       return posted;
     }
 
-    return { success: true, result: { ...posted.result, currentConnections: 200 } };
+    let currentConnections = 0;
+    try {
+      const response = await fetch(indexerQueryAccount(localWalletAddress));
+      currentConnections = (await response.json()).response.currentConnections;
+    } catch (err) {
+      console.error('currentConnections', err);
+    }
+
+    return { success: true, result: { ...posted.result, currentConnections } };
   },
 };
 
