@@ -24,6 +24,7 @@ import { allInjectedWallets, WalletMode } from '@paima/providers';
 
 import { LocalWallet } from '@thirdweb-dev/wallets';
 import { AddressType, Result } from '@paima/utils';
+import { indexerQueryAccount } from './helpers/query-constructors';
 
 initMiddlewareCore(GAME_NAME, gameBackendVersion);
 
@@ -58,12 +59,21 @@ const localWalletResult = (async () => {
 
 const detectedWallets: Map<string, AddressType> = new Map();
 
+interface UserWalletLoginResult extends Wallet {
+  currentConnections: number,
+  detectedWallets: string[],
+}
+
+interface ExternalConnectResult extends PostDataResponse {
+  currentConnections: number,
+}
+
 const endpoints = {
   ...paimaEndpoints,
   ...queryEndpoints,
   ...writeEndpoints,
 
-  async userWalletLogin(name: string): Promise<Result<Wallet & { detectedWallets: string[] }>> {
+  async userWalletLogin(name: string): Promise<Result<UserWalletLoginResult>> {
     const result = await localWalletResult;
     if (!result.success) {
       return result;
@@ -83,16 +93,25 @@ const endpoints = {
       detectedWallets.set(wallet.metadata.displayName, AddressType.CARDANO);
     }
 
+    let currentConnections = 0;
+    try {
+      const response = await fetch(indexerQueryAccount(result.result.walletAddress));
+      currentConnections = (await response.json()).response.currentConnections;
+    } catch (err) {
+      console.error('currentConnections', err);
+    }
+
     return {
       success: true,
       result: {
         ...result.result,
+        currentConnections,
         detectedWallets: [...detectedWallets.keys()],
       }
     };
   },
 
-  async externalWalletConnect(name: string): Promise<Result<PostDataResponse>> {
+  async externalWalletConnect(name: string): Promise<Result<ExternalConnectResult>> {
     await localWalletReady;
 
     const localWalletAddress = await localWallet.getAddress();
@@ -117,7 +136,19 @@ const endpoints = {
       localSignsExternal.signedMessage
     );
 
-    return posted;
+    if (!posted.success) {
+      return posted;
+    }
+
+    let currentConnections = 0;
+    try {
+      const response = await fetch(indexerQueryAccount(localWalletAddress));
+      currentConnections = (await response.json()).response.currentConnections;
+    } catch (err) {
+      console.error('currentConnections', err);
+    }
+
+    return { success: true, result: { ...posted.result, currentConnections } };
   },
 };
 

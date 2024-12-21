@@ -31,13 +31,21 @@ interface LeaderboardEntryProps extends LeaderboardEntryType {
   wrapperClassname?: string;
 }
 
+interface LeaderboardResult {
+  week?: {
+    start: Date,
+    end: Date,
+  },
+  entries: LeaderboardEntryProps[],
+}
+
 @Route('leaderboards')
 export class LeaderboardsController extends Controller {
   @Get()
   public async get(
     @Query() frequency: string,
     @Query() previous: boolean
-  ): Promise<LeaderboardEntryProps[]> {
+  ): Promise<LeaderboardResult> {
     const pool = requirePool();
 
     const date = new Date();
@@ -45,24 +53,26 @@ export class LeaderboardsController extends Controller {
     date.setUTCDate(date.getUTCDate() - 7);
     const lastWeek = iso8601YearAndWeek(date);
 
-    let nfts;
+    let nfts, weekData;
     switch (frequency) {
       case 'global':
       case 'streak':
         nfts = await getNftLeaderboards.run(undefined, pool);
         break;
       case 'weekly-genesis-trainer':
-        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [CDE_EVM_GENESIS_TRAINER, CDE_CARDANO_GENESIS_TRAINER] }, pool);
+        weekData = previous ? lastWeek : week;
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek.str : week.str, cde: [CDE_EVM_GENESIS_TRAINER, CDE_CARDANO_GENESIS_TRAINER] }, pool);
         break;
       case 'weekly-xai-sentry':
-        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek : week, cde: [CDE_XAI_SENTRY_KEY] }, pool);
+        weekData = previous ? lastWeek : week;
+        nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek.str : week.str, cde: [CDE_XAI_SENTRY_KEY] }, pool);
         break;
       default:
-        return [];
+        return { entries: [] };
     }
 
     let [position, position_score] = [0, Infinity];
-    return nfts.map((nft, index) => {
+    const entries = nfts.map((nft, index) => {
       // Give those with the same score the same ordinal position.
       const score = nft.score ?? 0; // Calc'd in SQL for ordering purposes.
       if (score < position_score) {
@@ -96,5 +106,6 @@ export class LeaderboardsController extends Controller {
 
       return result;
     });
+    return { week: weekData, entries };
   }
 }

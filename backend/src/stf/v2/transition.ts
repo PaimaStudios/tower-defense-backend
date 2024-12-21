@@ -565,7 +565,7 @@ async function finalizeMatch(
   }
 
   // Create the new scheduled data for updating user stats
-  const week = iso8601YearAndWeek(blockTimestamp);
+  const week = iso8601YearAndWeek(blockTimestamp).str;
   updates.push(
     scheduleStatsUpdate(results[0].wallet, results[0].result, blockHeight + 1),
     scheduleStatsUpdate(results[1].wallet, results[1].result, blockHeight + 1)

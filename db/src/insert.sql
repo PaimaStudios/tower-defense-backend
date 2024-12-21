@@ -31,11 +31,12 @@ losses = EXCLUDED.losses;
 /*  NFTs  */
 
 /* @name newNFT */
-INSERT INTO nfts(wallet, block_height, address, token_id, timestamp)
-VALUES(:wallet!, :block_height!, :address!, :token_id!, :timestamp!)
+INSERT INTO nfts(wallet, block_height, address, cde_name, token_id, timestamp)
+VALUES(:wallet!, :block_height!, :address!, :cde_name!, :token_id!, :timestamp!)
 ON CONFLICT (wallet, block_height)
 DO UPDATE SET
 address = EXCLUDED.address,
+cde_name = EXCLUDED.cde_name,
 token_id = EXCLUDED.token_id,
 timestamp = EXCLUDED.timestamp;
 

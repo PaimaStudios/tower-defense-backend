@@ -1,11 +1,12 @@
 #!/bin/bash
 # middleware/debug-build: copy paimaMiddleware.js, source map, and env.js into
 # a Unity build output directory.
-# $1 = where to put the files
-# $NETWORK = what .env to use, default `localhost`
+# $1 = what .env to use
+# $2 = where to put the files
 set -euo pipefail
 
-dest="${1:?first argument should be destination directory}"
+env="${1:?first argument should be .env file to use}"
+dest="${2:?second argument should be destination directory}"
 if ! test -f "$dest/index.html"; then
     printf "destination directory should already contain 'index.html' from Unity build" >&2
     exit 1
@@ -13,4 +14,4 @@ fi
 set -x
 npm -w middleware run build
 cp middleware/packaged/paimaMiddleware.js{,.map} "$dest"
-middleware/make-env-json ".env.${NETWORK:-localhost}" >"$dest/env.js"
+middleware/make-env-json "$env" >"$dest/env.js"
