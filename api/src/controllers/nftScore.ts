@@ -18,8 +18,6 @@ interface NftScore {
 export class NftScoreController extends Controller {
   @Get()
   public async get(@Query() nft_contract: string, @Query() token_id: number): Promise<NftScore> {
-    console.log('nft-score', nft_contract, token_id);
-
     const cde_name = synthAddressToCdeName(nft_contract);
 
     const pool = requirePool();

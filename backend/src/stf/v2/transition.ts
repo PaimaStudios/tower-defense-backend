@@ -426,7 +426,7 @@ export async function executeRound(
   const matchEnded =
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
-    console.log(newState.defenderBase.health, 'match ended, finalizing');
+    console.log('Match ended:', lobby.lobby_id, 'with defender health:', newState.defenderBase.health);
     const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(
       db,
       blockHeight,
