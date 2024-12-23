@@ -72,11 +72,14 @@ WHERE random() < 0.1
 AND lobbies.lobby_state = 'active'
 LIMIT 1;
 
-/* @name getUserFinishedLobbies */
+/*
+    @name getUserFinishedLobbies
+    @param wallets -> (...)
+*/
 SELECT * FROM lobbies
 WHERE lobbies.lobby_state = 'finished'
-AND (lobbies.lobby_creator = :wallet
-OR lobbies.player_two = :wallet)
+AND (lobbies.lobby_creator IN :wallets
+    OR lobbies.player_two IN :wallets)
 ORDER BY created_at DESC
 LIMIT :count
 OFFSET :page;
