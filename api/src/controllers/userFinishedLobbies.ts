@@ -35,7 +35,7 @@ export class UserFinishedLobbiesController extends Controller {
     const c = valCount.right;
     const offset = (p - 1) * c;
     const userLobbies = await getUserFinishedLobbies.run(
-      { wallet: wallet, count: `${c}`, page: `${offset}` },
+      { wallets: [wallet], count: `${c}`, page: `${offset}` },
       pool
     );
     return { lobbies: userLobbies };

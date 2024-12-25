@@ -24,7 +24,7 @@ export default async function (
 ): Promise<{ stateTransitions: SQLUpdate[], events: [] }> {
   const { blockHeight, msTimestamp } = blockHeader;
   const blockTimestamp = new Date(msTimestamp);
-  console.log(inputData, 'parsing input data');
+  console.log('Chain input:', inputData);
 
   if (inputData.inputData.startsWith('&')) {
     // DelegateWallet command, we can ignore it.
@@ -36,9 +36,8 @@ export default async function (
   }
 
   const user = inputData.realAddress.toLowerCase();
-  console.log(`Processing input string: ${inputData.inputData}`);
   const parsed = parseInput(inputData.inputData);
-  console.log(`Input string parsed as: ${parsed.input}`);
+  console.log('Game action:', parsed);
   let queries: SQLUpdate[] = [];
   if (parsed.input === 'createdLobby')
     queries = await processCreateLobby(user, blockHeight, blockTimestamp, parsed, randomnessGenerator, dbConn);

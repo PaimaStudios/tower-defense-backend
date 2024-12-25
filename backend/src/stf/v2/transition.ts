@@ -3,6 +3,7 @@ import type Prando from '@paima/prando';
 import {
   getAchievementProgress,
   getMainAddress,
+  getRelatedWallets,
   IGetAchievementProgressResult,
   ISetAchievementProgressParams,
   Json,
@@ -426,7 +427,7 @@ export async function executeRound(
   const matchEnded =
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
-    console.log(newState.defenderBase.health, 'match ended, finalizing');
+    console.log('Match ended:', lobby.lobby_id, 'with defender health:', newState.defenderBase.health);
     const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(
       db,
       blockHeight,
@@ -723,9 +724,15 @@ async function wonGameAchievements(
     }
 
     // Get all finished lobbies, recent first.
+    const related = await getRelatedWallets(main.address, db);
+    const allAddresses = [
+      ...related.from.map(x => x.to_address),
+      main.address,
+      ...related.to.map(x => x.from_address),
+    ];
     let finished = await getUserFinishedLobbies.run(
       {
-        wallet: main.address,
+        wallets: allAddresses,
       },
       db
     );
@@ -738,7 +745,7 @@ async function wonGameAchievements(
     finished.splice(0, 0, { ...lobby, current_match_state: matchState as unknown as Json });
 
     // Mask Trick
-    if (finished.slice(0, 3).every(lobby => winnerOf(lobby) === main.address)) {
+    if (finished.slice(0, 3).every(lobby => allAddresses.includes(winnerOf(lobby) ?? ''))) {
       updates.push([
         setAchievementProgress,
         {
@@ -753,7 +760,7 @@ async function wonGameAchievements(
     const uniques = new Set();
     for (const finishedLobby of finished) {
       const map = finishedLobby.map;
-      const position = selectFaction(finishedLobby, main.address);
+      const position = selectFaction(finishedLobby, allAddresses);
       uniques.add(`${map}_${position}`);
     }
     const total = 2 * 8; // maps.length is 12 but 4 are unused, so 8 real maps
@@ -802,24 +809,24 @@ function getProgress<Name extends string>(
   );
 }
 
-function selectFaction(lobby: IGetLobbyByIdResult, wallet: string): 'attacker' | 'defender' {
-  if (wallet === lobby.lobby_creator) {
+function selectFaction(lobby: IGetLobbyByIdResult, wallets: string[]): 'attacker' | 'defender' {
+  if (wallets.includes(lobby.lobby_creator)) {
     if (lobby.creator_faction === 'random') {
-      console.error('selectFaction', lobby, wallet);
+      console.error('selectFaction', lobby, wallets);
       throw new Error('selectFaction: cannot accept still-random lobbies');
     }
     return lobby.creator_faction;
-  } else if (wallet === lobby.player_two) {
+  } else if (wallets.includes(lobby.player_two ?? '')) {
     if (lobby.creator_faction === 'attacker') {
       return 'defender';
     } else if (lobby.creator_faction === 'defender') {
       return 'attacker';
     } else {
-      console.error('selectFaction', lobby, wallet);
+      console.error('selectFaction', lobby, wallets);
       throw new Error('selectFaction: cannot accept still-random lobbies');
     }
   } else {
-    console.error('selectFaction', lobby, wallet);
+    console.error('selectFaction', lobby, wallets);
     throw new Error('selectFaction: asked for faction of non-participant');
   }
 }

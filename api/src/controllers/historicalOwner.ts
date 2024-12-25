@@ -22,7 +22,6 @@ export class HistoricalOwnerController extends Controller {
   ): Promise<HistoricalOwner> {
     // NOTE: This is not a REAL historical owner endpoint! Block height is ignored!
     // This is fine for now because the frontend only asks about the current state anyways.
-    console.log('historical-owner', contract, tokenId, blockHeight, address);
     const pool = requirePool();
 
     // Do like accountNfts does and get all related addresses.

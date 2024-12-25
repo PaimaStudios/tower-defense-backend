@@ -33,8 +33,6 @@ export class AccountNftsController extends Controller {
     @Query() page: number,
     @Query() size: number
   ): Promise<{ response: AccountNftsData }> {
-    console.log('account-nfts', account, page, size);
-
     const pool = requirePool();
     account = (await getMainAddress(account, pool)).address;
 

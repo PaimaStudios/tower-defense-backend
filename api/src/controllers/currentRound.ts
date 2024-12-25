@@ -33,7 +33,7 @@ export class currentRoundController extends Controller {
     const currentRound =
       lobby.lobby_state === 'finished' ? lobby.current_round + 1 : lobby.current_round;
     const roundStartHeight =
-      lobby.lobby_creator === 'finished'
+      lobby.lobby_state === 'finished'
         ? (roundData.execution_block_height as number)
         : roundData.starting_block_height;
     return { currentRound, roundStartHeight };
