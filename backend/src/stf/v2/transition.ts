@@ -54,7 +54,7 @@ import type {
   MatchState,
   TurnAction,
 } from '@tower-defense/utils';
-import { configParser, iso8601YearAndWeek, maps, moveToAction } from '@tower-defense/utils';
+import { CDE_XAI_SENTRY_KEY, configParser, iso8601YearAndWeek, maps, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   calculateMatchStats,
@@ -585,7 +585,7 @@ async function finalizeMatch(
           wins: results[0].result === 'win' ? 1 : 0,
           losses: results[0].result === 'loss' ? 1 : 0,
         },
-        [week]
+        [week, ...tournaments(results[0].cdeName, blockTimestamp)]
       )
     );
   }
@@ -598,12 +598,18 @@ async function finalizeMatch(
           wins: results[1].result === 'win' ? 1 : 0,
           losses: results[1].result === 'loss' ? 1 : 0,
         },
-        [week]
+        [week, ...tournaments(results[1].cdeName, blockTimestamp)]
       )
     );
   }
 
   return updates;
+}
+
+function* tournaments(cdeName: string, blockTimestamp: Date): Generator<string, void, void> {
+  if (cdeName === CDE_XAI_SENTRY_KEY && Date.UTC(2025, 2, 14) <= blockTimestamp.valueOf() && blockTimestamp.valueOf() < Date.UTC(2025, 2, 28)) {
+    yield "2025xai1";
+  }
 }
 
 function makeAddNftScore(base: IAddNftScoreParams, weeks: string[]): SQLUpdate[] {
