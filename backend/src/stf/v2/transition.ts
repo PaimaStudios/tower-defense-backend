@@ -54,7 +54,7 @@ import type {
   MatchState,
   TurnAction,
 } from '@tower-defense/utils';
-import { configParser, iso8601YearAndWeek, maps, moveToAction } from '@tower-defense/utils';
+import { CDE_XAI_SENTRY_KEY, configParser, iso8601YearAndWeek, maps, moveToAction } from '@tower-defense/utils';
 import { PRACTICE_BOT_ADDRESS } from '@tower-defense/utils';
 import processTick, {
   calculateMatchStats,
@@ -427,7 +427,12 @@ export async function executeRound(
   const matchEnded =
     newState.defenderBase.health <= 0 || lobby.current_round === lobby.num_of_rounds;
   if (matchEnded) {
-    console.log('Match ended:', lobby.lobby_id, 'with defender health:', newState.defenderBase.health);
+    console.log(
+      'Match ended:',
+      lobby.lobby_id,
+      'with defender health:',
+      newState.defenderBase.health
+    );
     const finalizeMatchTuples: SQLUpdate[] = await finalizeMatch(
       db,
       blockHeight,
@@ -573,52 +578,48 @@ async function finalizeMatch(
   );
   if (results[0].cdeName) {
     updates.push(
-      [
-        addNftScore,
+      ...makeAddNftScore(
         {
           cde_name: results[0].cdeName,
           token_id: String(results[0].tokenId),
           wins: results[0].result === 'win' ? 1 : 0,
           losses: results[0].result === 'loss' ? 1 : 0,
-        } satisfies IAddNftScoreParams,
-      ],
-      [
-        addNftScoreWeek,
-        {
-          cde_name: results[0].cdeName,
-          token_id: String(results[0].tokenId),
-          week,
-          wins: results[0].result === 'win' ? 1 : 0,
-          losses: results[0].result === 'loss' ? 1 : 0,
-        } satisfies IAddNftScoreWeekParams,
-      ]
+        },
+        [week, ...tournaments(results[0].cdeName, blockTimestamp)]
+      )
     );
   }
   if (results[1].cdeName) {
     updates.push(
-      [
-        addNftScore,
+      ...makeAddNftScore(
         {
           cde_name: results[1].cdeName,
           token_id: String(results[1].tokenId),
           wins: results[1].result === 'win' ? 1 : 0,
           losses: results[1].result === 'loss' ? 1 : 0,
-        } satisfies IAddNftScoreParams,
-      ],
-      [
-        addNftScoreWeek,
-        {
-          cde_name: results[1].cdeName,
-          token_id: String(results[1].tokenId),
-          week,
-          wins: results[1].result === 'win' ? 1 : 0,
-          losses: results[1].result === 'loss' ? 1 : 0,
-        } satisfies IAddNftScoreWeekParams,
-      ],
+        },
+        [week, ...tournaments(results[1].cdeName, blockTimestamp)]
+      )
     );
   }
 
   return updates;
+}
+
+function* tournaments(cdeName: string, blockTimestamp: Date): Generator<string, void, void> {
+  if (cdeName === CDE_XAI_SENTRY_KEY && Date.UTC(2025, 2, 14) <= blockTimestamp.valueOf() && blockTimestamp.valueOf() < Date.UTC(2025, 2, 28)) {
+    yield "2025xai1";
+  }
+}
+
+function makeAddNftScore(base: IAddNftScoreParams, weeks: string[]): SQLUpdate[] {
+  return [
+    [addNftScore, base],
+    ...weeks.map(
+      week =>
+        [addNftScoreWeek, { ...base, week } satisfies IAddNftScoreWeekParams] satisfies SQLUpdate
+    ),
+  ];
 }
 
 // Evil copy-pasta from /api/src/controllers/matchExecutor.ts

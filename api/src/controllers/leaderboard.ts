@@ -68,7 +68,8 @@ export class LeaderboardsController extends Controller {
         nfts = await getNftLeaderboardsWeek.run({ week: previous ? lastWeek.str : week.str, cde: [CDE_XAI_SENTRY_KEY] }, pool);
         break;
       default:
-        return { entries: [] };
+        nfts = await getNftLeaderboardsWeek.run({ week: frequency, cde: [CDE_EVM_GENESIS_TRAINER, CDE_CARDANO_GENESIS_TRAINER, CDE_XAI_SENTRY_KEY] }, pool);
+        break;
     }
 
     let [position, position_score] = [0, Infinity];
